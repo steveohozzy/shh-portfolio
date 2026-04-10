@@ -1,6 +1,5 @@
 "use client"
 
-import type React from "react"
 import { useState } from "react"
 import { Send, Mail, MapPin, ArrowUpRight, Github, Linkedin, Code } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -18,16 +17,51 @@ const socialLinks = [
 export function ContactPageContent() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
   const { ref: headerRef, isVisible: headerVisible } = useScrollAnimation<HTMLDivElement>()
   const { ref: leftRef, isVisible: leftVisible } = useScrollAnimation<HTMLDivElement>()
   const { ref: rightRef, isVisible: rightVisible } = useScrollAnimation<HTMLDivElement>()
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsSubmitting(true)
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-    setIsSubmitting(false)
-    setIsSubmitted(true)
+    setError(null)
+
+    const form = e.currentTarget
+    const formData = new FormData(form)
+
+    // 🛡️ Honeypot check (spam protection)
+    if (formData.get("_gotcha")) {
+      setIsSubmitting(false)
+      return
+    }
+
+    try {
+      const res = await fetch("https://formspree.io/f/maqlgaoy", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+        },
+        body: formData,
+      })
+
+      const data = await res.json().catch(() => null)
+
+      if (res.ok) {
+        setIsSubmitted(true)
+        form.reset()
+      } else {
+        setError(
+          data?.errors?.[0]?.message ||
+          "Something went wrong. Please try again."
+        )
+      }
+    } catch {
+      setError("Network error. Please check your connection and try again.")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -37,22 +71,19 @@ export function ContactPageContent() {
       <div className="absolute bottom-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
 
       <div className="container mx-auto px-6 lg:px-12 relative">
-        {/* Page Header */}
+
+        {/* HEADER */}
         <div ref={headerRef} className={cn("max-w-3xl mb-16 animate-on-scroll", headerVisible && "is-visible")}>
           <p className="text-primary font-mono text-sm tracking-wider uppercase mb-4">Contact</p>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-6 text-balance">
             Let's Build Something Amazing Together
           </h1>
-          <p className="text-muted-foreground text-lg leading-relaxed">
-            Have a project in mind? I'd love to hear about it. Whether it's a new website, a redesign, or a complex web
-            application, I'm here to help bring your vision to life.
-          </p>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-16 lg:gap-24">
-          {/* Left Column - Info */}
+
+          {/* LEFT */}
           <div ref={leftRef} className={cn("space-y-8 animate-on-scroll-left", leftVisible && "is-visible")}>
-            {/* Contact Info */}
             <div className="space-y-6">
               <h2 className="text-xl font-semibold mb-6">Get in Touch</h2>
 
@@ -79,7 +110,6 @@ export function ContactPageContent() {
               </div>
             </div>
 
-            {/* Social Links */}
             <div className="pt-8 border-t border-border">
               <p className="text-sm text-muted-foreground mb-6">Find me on social media</p>
               <div className="grid gap-4">
@@ -103,7 +133,6 @@ export function ContactPageContent() {
               </div>
             </div>
 
-            {/* Availability */}
             <div className="p-6 bg-card border border-border rounded-2xl">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse" />
@@ -115,7 +144,7 @@ export function ContactPageContent() {
             </div>
           </div>
 
-          {/* Right Column - Form */}
+          {/* RIGHT */}
           <div
             ref={rightRef}
             className={cn(
@@ -138,68 +167,52 @@ export function ContactPageContent() {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
+
                 <h2 className="text-xl font-semibold mb-6">Send a Message</h2>
+
+                {/* 🛡️ Honeypot (hidden spam trap) */}
+                <input
+                  type="text"
+                  name="_gotcha"
+                  className="hidden"
+                  tabIndex={-1}
+                  autoComplete="off"
+                />
 
                 <div className="grid sm:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label htmlFor="name" className="text-sm font-medium">
-                      Name
-                    </label>
-                    <Input
-                      id="name"
-                      placeholder="Your name"
-                      className="bg-background border-border focus:border-primary"
-                      required
-                    />
+                    <label className="text-sm font-medium">Name</label>
+                    <Input name="name" id="name" placeholder="Your name" required />
                   </div>
+
                   <div className="space-y-2">
-                    <label htmlFor="email" className="text-sm font-medium">
-                      Email
-                    </label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="you@example.com"
-                      className="bg-background border-border focus:border-primary"
-                      required
-                    />
+                    <label className="text-sm font-medium">Email</label>
+                    <Input name="email" id="email" type="email" placeholder="you@example.com" required />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <label htmlFor="subject" className="text-sm font-medium">
-                    Subject
-                  </label>
-                  <Input
-                    id="subject"
-                    placeholder="Project inquiry"
-                    className="bg-background border-border focus:border-primary"
-                    required
-                  />
+                  <label className="text-sm font-medium">Subject</label>
+                  <Input name="subject" id="subject" placeholder="Project inquiry" required />
                 </div>
 
                 <div className="space-y-2">
-                  <label htmlFor="budget" className="text-sm font-medium">
-                    Budget Range (Optional)
-                  </label>
-                  <Input
-                    id="budget"
-                    placeholder="e.g., £5,000 - £10,000"
-                    className="bg-background border-border focus:border-primary"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label htmlFor="message" className="text-sm font-medium">
-                    Message
-                  </label>
+                  <label className="text-sm font-medium">Message</label>
                   <Textarea
+                    name="message"
                     id="message"
                     placeholder="Tell me about your project..."
                     className="min-h-[150px] bg-background border-border focus:border-primary resize-none"
                     required
                   />
                 </div>
+
+                {/* INLINE ERROR (no alerts anymore) */}
+                {error && (
+                  <div className="text-sm text-red-500 bg-red-500/10 border border-red-500/20 p-3 rounded-lg">
+                    {error}
+                  </div>
+                )}
 
                 <Button
                   type="submit"
@@ -218,9 +231,11 @@ export function ContactPageContent() {
                     </span>
                   )}
                 </Button>
+
               </form>
             )}
           </div>
+
         </div>
       </div>
     </section>
