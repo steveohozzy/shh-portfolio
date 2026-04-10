@@ -92,7 +92,7 @@ export function ContactSection() {
                 <span className="text-primary font-mono text-xs tracking-wider uppercase">Get in Touch</span>
               </div>
 
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-6">
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-6 leading-[1.2]">
                 {leftVisible && <SplitText>Let's Build Something Amazing Together</SplitText>}
               </h2>
 
