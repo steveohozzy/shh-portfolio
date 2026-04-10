@@ -242,13 +242,9 @@ export function ContactSection() {
 
                   <MagneticButton
                     as="button"
-                    onClick={() => {}}
-                    className="w-full"
-                  >
-                    <Button
                       type="submit"
                       disabled={isSubmitting}
-                      className="w-full bg-primary text-primary-foreground hover:bg-primary/90 rounded-full h-12 text-base font-medium hover:shadow-xl hover:shadow-primary/30 transition-all duration-300"
+                      className="w-full bg-primary text-primary-foreground hover:bg-primary/90 rounded-full h-12 text-base font-medium hover:shadow-xl hover:shadow-primary/30 transition-all duration-300 cursor-pointer"
                     >
                       {isSubmitting ? (
                         <span className="flex items-center gap-2">
@@ -261,7 +257,6 @@ export function ContactSection() {
                           <Send className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                         </span>
                       )}
-                    </Button>
                   </MagneticButton>
                 </form>
               )}

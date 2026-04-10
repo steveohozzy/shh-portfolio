@@ -4,26 +4,33 @@ import type React from "react"
 import { useRef, useCallback } from "react"
 import { cn } from "@/lib/utils"
 
-interface MagneticButtonProps {
+type BaseProps = {
   children: React.ReactNode
   className?: string
   as?: "button" | "a"
-  href?: string
-  onClick?: () => void
-  target?: string
-  rel?: string
 }
 
-export function MagneticButton({
-  children,
-  className,
-  as = "button",
-  href,
-  onClick,
-  target,
-  rel,
-}: MagneticButtonProps) {
-  const buttonRef = useRef<HTMLButtonElement & HTMLAnchorElement>(null)
+type ButtonProps = BaseProps &
+  React.ButtonHTMLAttributes<HTMLButtonElement> & {
+    as?: "button"
+  }
+
+type AnchorProps = BaseProps &
+  React.AnchorHTMLAttributes<HTMLAnchorElement> & {
+    as: "a"
+  }
+
+type MagneticButtonProps = ButtonProps | AnchorProps
+
+export function MagneticButton(props: MagneticButtonProps) {
+  const {
+    children,
+    className,
+    as = "button",
+    ...rest
+  } = props as any
+
+  const buttonRef = useRef<HTMLElement>(null)
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     const button = buttonRef.current
@@ -33,7 +40,6 @@ export function MagneticButton({
     const x = e.clientX - rect.left - rect.width / 2
     const y = e.clientY - rect.top - rect.height / 2
 
-    // Limit the magnetic pull
     const pullStrength = 0.2
     button.style.transform = `translate(${x * pullStrength}px, ${y * pullStrength}px)`
   }, [])
@@ -48,11 +54,8 @@ export function MagneticButton({
 
   return (
     <Component
-      ref={buttonRef}
-      href={href}
-      onClick={onClick}
-      target={target}
-      rel={rel}
+      ref={buttonRef as any}
+      {...rest}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       className={cn(
