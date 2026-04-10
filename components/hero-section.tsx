@@ -9,9 +9,9 @@ import { SplitText } from "@/components/text-reveal"
 import { AnimatedCounter } from "@/components/animated-counter"
 
 const socialLinks = [
-  { icon: Code, href: "https://codepen.io", label: "CodePen" },
-  { icon: Linkedin, href: "https://linkedin.com", label: "LinkedIn" },
-  { icon: Github, href: "https://github.com", label: "GitHub" },
+  { icon: Code, href: "https://codepen.io/hoskinshozzy", label: "CodePen" },
+  { icon: Linkedin, href: "https://uk.linkedin.com/in/steven-hoskins-8072709", label: "LinkedIn" },
+  { icon: Github, href: "https://github.com/steveohozzy", label: "GitHub" },
 ]
 
 const techStack = ["React", "TypeScript", "Next.js", "SASS", "Node.js", "Figma"]
