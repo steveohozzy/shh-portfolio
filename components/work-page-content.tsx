@@ -32,6 +32,7 @@ const allProjects = [
     link: "https://www.annsummers.com",
     color: "from-pink-500/30 to-rose-500/30",
     accent: "#ec4899",
+    category: "E-commerce",
   },
   {
     id: 3,
@@ -44,6 +45,7 @@ const allProjects = [
     link: "https://www.phase-eight.com/",
     color: "from-blue-500/30 to-cyan-500/30",
     accent: "#3b82f6",
+    category: "E-commerce",
   },
   {
     id: 4,
@@ -56,6 +58,7 @@ const allProjects = [
     link: "https://www.camelbak.com",
     color: "from-green-500/30 to-emerald-500/30",
     accent: "#22c55e",
+    category: "E-commerce",
   },
   {
     id: 5,
