@@ -118,7 +118,7 @@ const allProjects = [
     image: "/silentnight.png",
     link: "https://www.silentnight.co.uk/",
     color: "from-blue-500/20 to-cyan-800/20",
-    category: "E-commerce",
+    category: "web-app",
   },
   {
     id: 10,
