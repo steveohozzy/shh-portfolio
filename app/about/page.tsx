@@ -6,7 +6,7 @@ import { AboutPageContent } from "@/components/about-page-content"
 export const metadata: Metadata = {
   title: "About | Steven Howard Hoskins",
   description:
-    "Learn more about Steven Howard Hoskins - Frontend Developer with 7+ years of experience crafting digital experiences.",
+    "Learn more about Steven Howard Hoskins - Frontend Developer with 18+ years of experience crafting digital experiences.",
 }
 
 export default function AboutPage() {

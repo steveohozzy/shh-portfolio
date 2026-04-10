@@ -51,9 +51,7 @@ const experience = [
 ]
 
 const stats = [
-  { value: "7+", label: "Years Experience" },
-  { value: "50+", label: "Projects Completed" },
-  { value: "30+", label: "Happy Clients" },
+  { value: "18+", label: "Years Experience" },
   { value: "100%", label: "Code Quality" },
 ]
 

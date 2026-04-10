@@ -38,9 +38,7 @@ const skills = [
 ]
 
 const stats = [
-  { value: 50, suffix: "+", label: "Projects Completed" },
-  { value: 7, suffix: "+", label: "Years Experience" },
-  { value: 30, suffix: "+", label: "Happy Clients" },
+  { value: 18, suffix: "+", label: "Years Experience" },
   { value: 100, suffix: "%", label: "Code Quality" },
 ]
 
@@ -162,38 +160,6 @@ export function SkillsSection() {
         <div ref={gridRef} className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {skills.map((skill, index) => (
             <SkillCard key={skill.category} skill={skill} index={index} isVisible={gridVisible} />
-          ))}
-        </div>
-
-        {/* Stats Bar with animated counters */}
-        <div
-          ref={statsRef}
-          className={cn(
-            "mt-20 grid grid-cols-2 md:grid-cols-4 gap-8 p-8 bg-card/50 backdrop-blur-sm border border-border rounded-2xl animate-on-scroll-scale relative overflow-hidden",
-            statsVisible && "is-visible",
-          )}
-        >
-          {/* Gradient decoration */}
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 pointer-events-none" />
-          
-          {stats.map((stat, index) => (
-            <div 
-              key={stat.label} 
-              className={cn(
-                "text-center relative group",
-                index !== 0 && "border-l border-border"
-              )}
-            >
-              <div className="text-3xl lg:text-4xl font-bold text-primary mb-2">
-                {statsVisible && (
-                  <AnimatedCounter end={stat.value} suffix={stat.suffix} duration={2000 + index * 200} />
-                )}
-              </div>
-              <div className="text-sm text-muted-foreground">{stat.label}</div>
-              
-              {/* Hover glow */}
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-t from-primary/5 to-transparent pointer-events-none" />
-            </div>
           ))}
         </div>
       </div>

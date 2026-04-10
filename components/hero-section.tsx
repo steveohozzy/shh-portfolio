@@ -111,15 +111,6 @@ export function HeroSection() {
           {/* Left Column - Text Content */}
           <div className="space-y-8">
             <div className="space-y-6">
-              {/* Animated role tag */}
-              <div
-                className={`inline-flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/20 rounded-full transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-              >
-                <span className="w-2 h-2 bg-primary rounded-full animate-pulse" />
-                <span className="text-primary font-mono text-sm tracking-wider uppercase">
-                  Available for hire
-                </span>
-              </div>
               
               {/* Main heading with text reveal */}
               <div className="space-y-2">
@@ -218,7 +209,7 @@ export function HeroSection() {
               <div className="absolute inset-12 rounded-full bg-card/90 backdrop-blur-sm border border-border flex items-center justify-center overflow-hidden shadow-2xl">
                 <div className="text-center space-y-2">
                   <div className="text-6xl xl:text-7xl font-bold text-primary">
-                    <AnimatedCounter end={7} suffix="+" duration={2000} />
+                    <AnimatedCounter end={18} suffix="+" duration={2000} />
                   </div>
                   <div className="text-xs text-muted-foreground uppercase tracking-wider">Years Experience</div>
                 </div>
