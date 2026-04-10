@@ -152,8 +152,7 @@ export function SkillsSection() {
           </h2>
           <p className="text-muted-foreground text-lg leading-relaxed">
             I specialize in building modern, performant web applications using cutting-edge technologies and best
-            practices. With a strong attention to detail and a passion for delivering exceptional user experiences, I
-            am dedicated to creating innovative solutions that push the boundaries of what is possible.
+            practices.
           </p>
         </div>
 
