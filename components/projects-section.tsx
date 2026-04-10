@@ -13,30 +13,43 @@ import { SplitText } from "@/components/text-reveal"
 const projects = [
   {
     id: 1,
+    title: "The Entertainer",
+    subtitle: "SAP + All Front-end",
+    description:
+      "Lead front-end developer for Britain's bigest toy store. Overseeing design process and creating editable and dynamic components for the client.",
+    tags: ["SAP", "HTML", "JS", "SASS", "Mulitiple Front-end"],
+    image: "/TheEntertainer.png",
+    link: "https://www.thetoyshop.com/",
+    color: "from-[#0d5d9c]/40 to-[#407ec9]/40",
+    accent: "#2ab2d1",
+    category: "E-commerce",
+  },
+  {
+    id: 2,
     title: "Ann Summers",
     subtitle: "SFCC Implementation",
     description:
       "A fresh, engaging and clean site with great performance in a competitive market. Full redesign and UX updates to their SFCC site with intuitive, modern and responsive design.",
     tags: ["SFCC", "HTML", "ISML", "SASS", "JavaScript"],
-    image: "/modern-ecommerce-website-fashion-lingerie-pink-ele.jpg",
+    image: "/ann.png",
     link: "https://www.annsummers.com",
     color: "from-pink-500/30 to-rose-500/30",
     accent: "#ec4899",
   },
   {
-    id: 2,
-    title: "The Commerce Team Global",
-    subtitle: "Zesty CMS Design & Build",
+    id: 3,
+    title: "Phase Eight",
+    subtitle: "SFCC Implementation",
     description:
-      "Complete design and build responsibility. Tasked with a fresh new look and feel with performance being key. Built with Zesty CMS for maximum flexibility.",
-    tags: ["Parsley", "HTML", "SASS", "JavaScript", "Figma"],
-    image: "/professional-corporate-website-blue-modern-busines.jpg",
-    link: "https://thecommerceteam.com",
+      "Frontend building and replatforming website onto SFCC. High-end fashion site with a clean design was to be applied.",
+    tags: ["SFCC", "ISML", "SASS", "JavaScript", "Figma"],
+    image: "/phase-eight.png",
+    link: "https://www.phase-eight.com/",
     color: "from-blue-500/30 to-cyan-500/30",
     accent: "#3b82f6",
   },
   {
-    id: 3,
+    id: 4,
     title: "CamelBak",
     subtitle: "SFCC Implementation",
     description:
@@ -46,18 +59,6 @@ const projects = [
     link: "https://www.camelbak.com",
     color: "from-green-500/30 to-emerald-500/30",
     accent: "#22c55e",
-  },
-  {
-    id: 4,
-    title: "Knickerbox",
-    subtitle: "SFCC Implementation",
-    description:
-      "A modern and clean SFCC site for a new to market company. Overseeing design process and creating editable and dynamic components for the client.",
-    tags: ["SFCC", "HTML", "ISML", "SASS", "JavaScript"],
-    image: "/fashion-underwear-lingerie-elegant-purple-modern-e.jpg",
-    link: "https://www.knickerbox.com",
-    color: "from-violet-500/30 to-purple-500/30",
-    accent: "#8b5cf6",
   },
 ]
 

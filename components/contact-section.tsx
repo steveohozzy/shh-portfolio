@@ -96,9 +96,9 @@ export function ContactSection() {
               <p className="text-sm text-muted-foreground mb-4">Or find me on</p>
               <div className="flex flex-wrap gap-3">
                 {[
-                  { name: "CodePen", href: "#" },
-                  { name: "LinkedIn", href: "#" },
-                  { name: "GitHub", href: "#" },
+                   { href: "https://codepen.io/hoskinshozzy", name: "CodePen" },
+                    {href: "https://uk.linkedin.com/in/steven-hoskins-8072709", name: "LinkedIn" },
+                    { href: "https://github.com/steveohozzy", name: "GitHub" },
                 ].map((link, index) => (
                   <MagneticButton
                     key={link.name}

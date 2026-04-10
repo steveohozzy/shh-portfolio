@@ -14,9 +14,9 @@ const navLinks = [
 ]
 
 const socialLinks = [
-  { icon: Github, href: "#", label: "GitHub" },
-  { icon: Linkedin, href: "#", label: "LinkedIn" },
-  { icon: Code, href: "#", label: "CodePen" },
+  { icon: Github, href: "https://github.com/steveohozzy", label: "GitHub" },
+  { icon: Linkedin, href: "https://uk.linkedin.com/in/steven-hoskins-8072709", label: "LinkedIn" },
+  { icon: Code, href: "https://codepen.io/hoskinshozzy", label: "CodePen" },
   { icon: Mail, href: "mailto:hello@shhdesign.co.uk", label: "Email" },
 ]
 

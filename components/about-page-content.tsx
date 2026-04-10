@@ -10,43 +10,82 @@ const skills = [
     category: "Frontend",
     icon: Code2,
     items: ["React", "Next.js", "TypeScript", "JavaScript", "HTML5", "CSS3"],
+    color: "#3b82f6",
   },
   {
     category: "Styling",
     icon: Palette,
     items: ["SASS/SCSS", "Tailwind CSS", "CSS Modules", "Styled Components", "Animations"],
+    color: "#ec4899",
   },
   {
     category: "Platforms",
     icon: Globe,
-    items: ["SFCC", "Shopify", "WordPress", "Zesty CMS", "Contentful"],
+    items: ["SFCC", "Shopify", "SAP", "Zesty CMS", "Contentful"],
+    color: "#22c55e",
   },
   {
     category: "Tools",
     icon: Zap,
-    items: ["Git", "Figma", "VS Code", "Docker", "Webpack", "Vite"],
+    items: ["Git", "Figma", "Photoshop", "Webpack", "Webflow"],
+    color: "#f59e0b",
   },
 ]
 
 const experience = [
   {
-    role: "Senior Frontend Developer",
-    company: "The Commerce Team",
-    period: "2020 - Present",
+    role: "Lead Web Developer",
+    company: "The Entertainer",
+    period: "Jun 2025 - Present",
     description:
-      "Leading frontend development for enterprise e-commerce clients, implementing SFCC solutions and modern web applications.",
+      "In working for Britain’s largest toy store I lead and develop everything front-end. Complete site redesigns, content hubs, new features, competitions, games and more! Working with our back-end agency I create everything you see on The Entertainer website and am a leader in the decision making on approaches, testing, UI/UX, tooling etc. I work hand in hand with our testing lead to create meaningful multi-variant tests in Dynamic Yield to establish what our users really want and deliver on them and constantly look to improve all experiences for our users. I also lead they way in improving our performance, our platform and partners we use. I am also responsible for implementing any new tools or partners. Since joining the business it has been noted that I have vastly improved revenue with the new content the business can offer it customers and working with retailers LEGO to create exclusive content.",
   },
   {
-    role: "Frontend Developer",
-    company: "Digital Agency",
-    period: "2017 - 2020",
-    description: "Built responsive websites and web applications for various clients across different industries.",
+    role: "Senior Front-End Developer",
+    company: "The Commerce Team Global",
+    period: "Oct 2022 - Dec 2024",
+    description: `Responsible for Front-End implementations of stores mainly on the
+Salesforce Commerce Cloud but also includes Shopify, BigCommerce, Zesty and
+some React development. Leading the design reviews, coding practices,
+decision making of tools to be used with applications and ensuring
+performance and accessibility of applications is as high as possible. Also
+responsible for designing products offered by the company such as go to
+market sites and POC’s and some clients sites.Offer guidance from start to
+finish of design process with client adding amendments, interaction design,
+UX, latest design trends and performance and accessibility guidance.`,
   },
   {
-    role: "Junior Developer",
-    company: "Web Studio",
-    period: "2015 - 2017",
-    description: "Started career building WordPress sites and learning modern frontend technologies.",
+    role: "Senior Developer",
+    company: "DEPT",
+    period: "Jul 2019 - Oct 2022",
+    description: `After BE Excellent became part of DEPT I continued with my role as senior
+front-end developer. Responsible for implementing designs and building
+functionality using Salesforce Commerce Cloud, Shopify, Parsley/YAML, React
+storybook andmany other platforms and languages. I also help guide on designs
+and use my UX expertise with clients. Working on projects in many different
+areas of business and with different teams within DEPT around the world. I
+help lead the front-end, review code and offer guidance to more junior
+members.`,
+  },
+  {
+    role: "Senior Web Developer",
+    company: "Be Excellent",
+    period: "Sep 2016 - Jan 2019",
+  },
+  {
+    role: "Senior Front-End Developer and Manager",
+    company: "Figleaves",
+    period: "Jan 2012 - Sep 2016",
+  },
+  {
+    role: "Front-End Developer",
+    company: "Impero",
+    period: "Sep 2011 - Dec 2011",
+  },
+  {
+    role: "Creative Web Designer and Developer",
+    company: "Clock Ltd",
+    period: "Jun 2006 - Sep 2011",
   },
 ]
 
@@ -69,20 +108,21 @@ export function AboutPageContent() {
           <div ref={heroRef} className={cn("animate-on-scroll-left", heroVisible && "is-visible")}>
             <p className="text-primary font-mono text-sm tracking-wider uppercase mb-4">About Me</p>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-6 text-balance">
-              Crafting Digital Experiences Since 2015
+              Crafting elegant digital experiences.
             </h1>
             <p className="text-muted-foreground text-lg leading-relaxed mb-8">
-              I'm Steven Howard Hoskins, a frontend developer based in the United Kingdom with over 7 years of
+              I'm Steven Howard Hoskins, a frontend developer based in the United Kingdom with over 18 years of
               experience building performant, accessible, and visually stunning web experiences.
             </p>
             <p className="text-muted-foreground leading-relaxed mb-8">
               My journey began with a passion for both design and code. Today, I specialize in enterprise e-commerce
-              solutions, particularly Salesforce Commerce Cloud (SFCC), while continuously expanding my expertise in
-              modern frameworks like React and Next.js.
+              solutions, continuously expanding my expertise in
+              modern frameworks like React and Next.js. My approach is always the same to be experimental and
+              innovative whilst maintaining a high level of quality, permormance and accessibility.
             </p>
             <div className="flex flex-wrap gap-4">
               <a
-                href="#"
+                href="/cv.pdf"
                 className="group inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-medium rounded-full hover:bg-primary/90 transition-all duration-300"
               >
                 <Download className="w-4 h-4" />

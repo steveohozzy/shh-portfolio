@@ -10,9 +10,9 @@ import { useScrollAnimation } from "@/hooks/use-scroll-animation"
 import { cn } from "@/lib/utils"
 
 const socialLinks = [
-  { name: "CodePen", href: "https://codepen.io", icon: Code },
-  { name: "LinkedIn", href: "https://linkedin.com", icon: Linkedin },
-  { name: "GitHub", href: "https://github.com", icon: Github },
+  { name: "CodePen", href: "https://codepen.io/hoskinshozzy", icon: Code },
+  { name: "LinkedIn", href: "https://linkedin.com/in/steven-hoskins-8072709", icon: Linkedin },
+  { name: "GitHub", href: "https://github.com/steveohozzy", icon: Github },
 ]
 
 export function ContactPageContent() {
