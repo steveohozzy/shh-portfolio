@@ -55,7 +55,7 @@ const projects = [
     description:
       "Frontend building and replatforming website onto SFCC. New design applied with improved interactions and dynamic page designer components.",
     tags: ["SFCC", "HTML", "ISML", "SASS", "JavaScript"],
-    image: "/outdoor-sports-water-bottles-adventure-green-mount.jpg",
+    image: "/camelbak.png",
     link: "https://www.camelbak.com",
     color: "from-green-500/30 to-emerald-500/30",
     accent: "#22c55e",
