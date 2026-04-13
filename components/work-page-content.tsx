@@ -19,7 +19,7 @@ const allProjects = [
     link: "https://www.thetoyshop.com/",
     color: "from-[#0d5d9c]/40 to-[#407ec9]/40",
     accent: "#2ab2d1",
-    category: "E-commerce",
+    categories: ["E-commerce", "SAP", "Web App"],
   },
   {
     id: 2,
@@ -32,7 +32,7 @@ const allProjects = [
     link: "https://www.annsummers.com",
     color: "from-pink-500/30 to-rose-500/30",
     accent: "#ec4899",
-    category: "E-commerce",
+    categories: ["E-commerce", "SFCC"],
   },
   {
     id: 3,
@@ -45,7 +45,7 @@ const allProjects = [
     link: "https://www.phase-eight.com/",
     color: "from-blue-500/30 to-cyan-500/30",
     accent: "#3b82f6",
-    category: "E-commerce",
+    categories: ["E-commerce", "SFCC"],
   },
   {
     id: 4,
@@ -58,7 +58,7 @@ const allProjects = [
     link: "https://www.camelbak.com",
     color: "from-green-500/30 to-emerald-500/30",
     accent: "#22c55e",
-    category: "E-commerce",
+    categories: ["E-commerce", "SFCC"],
   },
   {
     id: 5,
@@ -70,7 +70,7 @@ const allProjects = [
     image: "/knickerbox.png",
     link: "https://www.knickerbox.com",
     color: "from-purple-500/20 to-violet-500/20",
-    category: "E-commerce",
+    categories: ["E-commerce", "SFCC"],
   },
   {
     id: 6,
@@ -82,7 +82,7 @@ const allProjects = [
     image: "/tctg.webp",
     link: "https://thecommerceteam.com",
     color: "from-blue-500/20 to-cyan-500/20",
-    category: "CMS",
+    categories: ["Web App", "CMS"],
   },
   {
     id: 7,
@@ -94,7 +94,7 @@ const allProjects = [
     image: "/bogner.png",
     link: "https://www.bogner.com/en-gb/",
     color: "from-black/50 to-white/70",
-    category: "E-commerce",
+    categories: ["E-commerce", "SFCC"],
   },
   {
     id: 8,
@@ -106,7 +106,7 @@ const allProjects = [
     image: "/hobbs.png",
     link: "https://www.hobbs.com/",
     color: "from-emrald-500/20 to-blue-500/20",
-    category: "E-commerce",
+    categories: ["E-commerce", "SFCC"],
   },
   {
     id: 9,
@@ -118,7 +118,7 @@ const allProjects = [
     image: "/silentnight.png",
     link: "https://www.silentnight.co.uk/",
     color: "from-blue-500/20 to-cyan-800/20",
-    category: "web-app",
+    categories: ["E-commerce", "Web App"],
   },
   {
     id: 10,
@@ -130,7 +130,7 @@ const allProjects = [
     image: "/revelyst.png",
     link: "https://www.revelyst.com/",
     color: "from-yellow-800/20 to-orange-500/50",
-    category: "E-commerce",
+    categories: ["E-commerce", "SFCC"],
   },
   {
     id: 11,
@@ -142,7 +142,7 @@ const allProjects = [
     image: "/green-pan.png",
     link: "https://greenpan.co.uk/",
     color: "from-green-500/20 to-yellow-500/20",
-    category: "E-commerce",
+    categories: ["E-commerce", "SFCC"],
   },
   {
     id: 12,
@@ -154,7 +154,7 @@ const allProjects = [
     image: "/whistles.png",
     link: "https://www.whistles.com/",
     color: "from-yellow-500/20 to-gold-500/20",
-    category: "E-commerce",
+    categories: ["E-commerce", "SFCC"],
   },
   {
     id: 13,
@@ -166,7 +166,7 @@ const allProjects = [
     image: "/campchef.png",
     link: "https://www.campchef.com/",
     color: "from-red-900/30 to-black/60",
-    category: "E-commerce",
+    categories: ["E-commerce", "SFCC"],
   },
   {
     id: 14,
@@ -178,7 +178,7 @@ const allProjects = [
     image: "/bell-helmets.png",
     link: "https://uk.bellhelmets.com/",
     color: "from-red-700/20 to-orange-900/20",
-    category: "E-commerce",
+    categories: ["E-commerce", "SFCC"],
   },
   {
     id: 15,
@@ -190,7 +190,7 @@ const allProjects = [
     image: "/kneipp.jpg",
     link: "https://www.kneipp.com/",
     color: "from-[#004542]/20 to-cyan-500/20",
-    category: "E-commerce",
+    categories: ["E-commerce", "SFCC"],
   },
   {
     id: 16,
@@ -202,7 +202,7 @@ const allProjects = [
     image: "/remington.webp",
     link: "https://thecommerceteam.com",
     color: "from-green-500/20 to-emerald-500/20",
-    category: "E-commerce",
+    categories: ["E-commerce", "SFCC"],
   },
   {
     id: 17,
@@ -214,7 +214,7 @@ const allProjects = [
     image: "/giro.png",
     link: "https://www.giro.com/",
     color: "from-red-500/20 to-orange-500/20",
-    category: "E-commerce",
+    categories: ["E-commerce", "SFCC"],
   },
   {
     id: 18,
@@ -226,17 +226,28 @@ const allProjects = [
     image: "/bushnell.png",
     link: "https://www.bushnell.com/",
     color: "from-[#e89438]/20 to-[#c76061]/20",
-    category: "E-commerce",
+    categories: ["E-commerce", "SFCC"],
   },
 ]
 
-const categories = ["All", "E-commerce", "CMS", "Web App"]
+const categories = ["All", "E-commerce", "SFCC", "SAP", "CMS", "Web App"]
 
 function WorkProjectCard({
   project,
   index,
 }: {
-  project: (typeof allProjects)[0]
+  project: {
+  id: number
+  title: string
+  subtitle: string
+  description: string
+  tags: string[]
+  image: string
+  link: string
+  color: string
+  accent?: string
+  categories: string[]
+}
   index: number
 }) {
   const { ref, isVisible } = useScrollAnimation<HTMLDivElement>()
@@ -276,9 +287,14 @@ function WorkProjectCard({
 
           {/* Category Badge */}
           <div className="absolute top-4 left-4 z-20">
-            <span className="px-3 py-1 text-xs font-medium bg-background/90 backdrop-blur-sm rounded-full">
-              {project.category}
-            </span>
+            {project.categories.map((cat) => (
+              <span
+                key={cat}
+                className="px-3 py-1 text-xs font-medium bg-background/90 backdrop-blur-sm rounded-full mr-1"
+              >
+                {cat}
+              </span>
+            ))}
           </div>
         </div>
 
@@ -315,7 +331,11 @@ export function WorkPageContent() {
   const { ref: ctaRef, isVisible: ctaVisible } = useScrollAnimation<HTMLDivElement>()
 
   const filteredProjects =
-    activeCategory === "All" ? allProjects : allProjects.filter((p) => p.category === activeCategory)
+  activeCategory === "All"
+    ? allProjects
+    : allProjects.filter((p) =>
+        p.categories.includes(activeCategory)
+      )
 
   return (
     <section className="pt-32 pb-24 lg:pb-32">
