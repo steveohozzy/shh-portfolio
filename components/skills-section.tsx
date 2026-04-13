@@ -36,11 +36,6 @@ const skills = [
   },
 ]
 
-const stats = [
-  { value: 18, suffix: "+", label: "Years Experience" },
-  { value: 100, suffix: "%", label: "Code Quality" },
-]
-
 function SkillCard({ skill, index, isVisible }: { skill: typeof skills[0]; index: number; isVisible: boolean }) {
   const cardRef = useRef<HTMLDivElement>(null)
   

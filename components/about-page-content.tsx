@@ -109,8 +109,8 @@ const getYearsExperience = (startYear: number, startMonth: number): string => {
 };
 
 const stats: Stat[] = [
-  { value: getYearsExperience(2006, 5), label: "Years Experience" }, // June = 5
-  { value: "100%", label: "Code Quality" },
+  { value: getYearsExperience(2006, 5), label: "Years Experience" },
+  { value: "100%", label: "Passion" },
 ];
 
 function SkillCard({ skill, index, isVisible }: { skill: typeof skills[0]; index: number; isVisible: boolean }) {
