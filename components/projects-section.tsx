@@ -17,7 +17,7 @@ const projects = [
     subtitle: "SAP + All Front-end",
     description:
       "Lead front-end developer for Britain's bigest toy store. Overseeing design process and creating editable and dynamic components for the client.",
-    tags: ["SAP", "HTML", "JS", "SASS", "Mulitiple Front-end"],
+    tags: ["SAP", "HTML", "JS", "CSS"],
     image: "/TheEntertainer.png",
     link: "https://www.thetoyshop.com/",
     color: "from-[#0d5d9c]/40 to-[#407ec9]/40",
@@ -30,7 +30,7 @@ const projects = [
     subtitle: "SFCC Implementation",
     description:
       "A fresh, engaging and clean site with great performance in a competitive market. Full redesign and UX updates to their SFCC site with intuitive, modern and responsive design.",
-    tags: ["SFCC", "HTML", "ISML", "SASS", "JavaScript"],
+    tags: ["SFCC", "ISML", "SASS", "JavaScript"],
     image: "/ann.png",
     link: "https://www.annsummers.com",
     color: "from-pink-500/30 to-rose-500/30",
@@ -42,7 +42,7 @@ const projects = [
     subtitle: "SFCC Implementation",
     description:
       "Frontend building and replatforming website onto SFCC. High-end fashion site with a clean design was to be applied.",
-    tags: ["SFCC", "ISML", "SASS", "JavaScript", "Figma"],
+    tags: ["SFCC", "ISML", "SASS", "JavaScript"],
     image: "/phase-eight.png",
     link: "https://www.phase-eight.com/",
     color: "from-blue-500/30 to-cyan-500/30",
@@ -54,7 +54,7 @@ const projects = [
     subtitle: "SFCC Implementation",
     description:
       "Frontend building and replatforming website onto SFCC. New design applied with improved interactions and dynamic page designer components.",
-    tags: ["SFCC", "HTML", "ISML", "SASS", "JavaScript"],
+    tags: ["SFCC", "ISML", "SASS", "JavaScript"],
     image: "/camelbak.png",
     link: "https://www.camelbak.com",
     color: "from-green-500/30 to-emerald-500/30",
@@ -119,7 +119,7 @@ const ProjectCard = memo(function ProjectCard({
           />
           
           {/* Dark overlay for text readability */}
-          <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent z-10" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/70 to-transparent z-10" />
 
           {/* Image */}
           <img
@@ -161,7 +161,7 @@ const ProjectCard = memo(function ProjectCard({
               </span>
             </div>
 
-            <p className="text-muted-foreground text-sm leading-relaxed line-clamp-2 mb-4 opacity-80 group-hover:opacity-100 transition-opacity">
+            <p className="text-foreground text-sm leading-relaxed line-clamp-2 mb-4 opacity-80 group-hover:opacity-100 transition-opacity">
               {project.description}
             </p>
 

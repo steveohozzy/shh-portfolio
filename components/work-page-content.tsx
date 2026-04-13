@@ -232,17 +232,18 @@ const allProjects = [
 
 const categories = ["All", "E-commerce", "CMS", "Web App"]
 
-const WorkProjectCard = memo(function WorkProjectCard({
+function WorkProjectCard({
   project,
   index,
-  isVisible,
 }: {
   project: (typeof allProjects)[0]
   index: number
-  isVisible: boolean
 }) {
+  const { ref, isVisible } = useScrollAnimation<HTMLDivElement>()
+
   return (
     <article
+      ref={ref}
       className={cn("group relative animate-on-scroll", isVisible && "is-visible")}
       style={{ transitionDelay: `${index * 100}ms` }}
     >
@@ -306,12 +307,11 @@ const WorkProjectCard = memo(function WorkProjectCard({
       </a>
     </article>
   )
-})
+}
 
 export function WorkPageContent() {
   const [activeCategory, setActiveCategory] = useState("All")
   const { ref: headerRef, isVisible: headerVisible } = useScrollAnimation<HTMLDivElement>()
-  const { ref: gridRef, isVisible: gridVisible } = useScrollAnimation<HTMLDivElement>()
   const { ref: ctaRef, isVisible: ctaVisible } = useScrollAnimation<HTMLDivElement>()
 
   const filteredProjects =
@@ -351,9 +351,9 @@ export function WorkPageContent() {
         </div>
 
         {/* Projects Grid */}
-        <div ref={gridRef} className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredProjects.map((project, index) => (
-            <WorkProjectCard key={project.id} project={project} index={index} isVisible={gridVisible} />
+            <WorkProjectCard key={project.id} project={project} index={index} />
           ))}
         </div>
 
