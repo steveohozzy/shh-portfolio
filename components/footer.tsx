@@ -64,7 +64,7 @@ export function Footer() {
 
           {/* Navigation */}
           <div>
-            <h4 className="text-sm font-semibold uppercase tracking-wider mb-4">Navigation</h4>
+            <div className="text-sm font-semibold uppercase tracking-wider mb-4">Navigation</div>
             <ul className="space-y-3">
               {navLinks.map((link) => (
                 <li key={link.label}>
@@ -81,7 +81,7 @@ export function Footer() {
 
           {/* Contact Info */}
           <div>
-            <h4 className="text-sm font-semibold uppercase tracking-wider mb-4">Contact</h4>
+            <div className="text-sm font-semibold uppercase tracking-wider mb-4">Contact</div>
             <ul className="space-y-3">
               <li>
                 <a 
