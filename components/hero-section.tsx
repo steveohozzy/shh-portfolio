@@ -3,7 +3,6 @@
 import type React from "react"
 import { useEffect, useRef, useCallback, memo, useState } from "react"
 import { Github, Linkedin, ArrowRight, FileText, Code } from "lucide-react"
-import Link from "next/link"
 import { MagneticButton } from "@/components/magnetic-button"
 import { SplitText } from "@/components/text-reveal"
 import { AnimatedCounter } from "@/components/animated-counter"
@@ -157,7 +156,7 @@ export function HeroSection() {
               
               <MagneticButton
                 as="a"
-                href="#"
+                href="/cv.pdf"
                 className="group px-8 py-4 border-2 border-border text-foreground font-medium rounded-full hover:border-primary/50 hover:bg-primary/5 transition-all duration-300"
               >
                 <span className="flex items-center gap-2">

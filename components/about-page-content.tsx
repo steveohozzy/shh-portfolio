@@ -1,10 +1,11 @@
 "use client"
 
-import { Code2, Palette, Zap, Globe, Download, ArrowRight } from "lucide-react"
+import { Code2, Palette, Zap, Globe, ArrowRight, FileText } from "lucide-react"
 import Link from "next/link"
 import { useScrollAnimation } from "@/hooks/use-scroll-animation"
 import { cn } from "@/lib/utils"
 import { TiltCard } from "./tilt-card"
+import { MagneticButton } from "@/components/magnetic-button"
 import { useRef, useCallback } from "react"
 
 const skills = [
@@ -228,20 +229,24 @@ export function AboutPageContent() {
               innovative whilst maintaining a high level of quality, permormance and accessibility.
             </p>
             <div className="flex flex-wrap gap-4">
-              <a
+              <MagneticButton
+                as="a"
                 href="/cv.pdf"
-                className="group inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-medium rounded-full hover:bg-primary/90 transition-all duration-300"
+                className="group px-8 py-4 border-2 border-border bg-primary text-primary-foreground font-medium rounded-full hover:text-foreground hover:border-primary/50 hover:bg-primary/5 transition-all duration-300"
               >
-                <Download className="w-4 h-4" />
-                Download CV
-              </a>
-              <Link
+                <span className="flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  Download CV
+                </span>
+              </MagneticButton>
+              <MagneticButton
+                as="a"
                 href="/contact"
-                className="group inline-flex items-center gap-2 px-6 py-3 border border-border text-foreground font-medium rounded-full hover:bg-secondary transition-all duration-300"
+                className="group px-8 py-4 border-2 border-border text-foreground font-medium rounded-full hover:text-primary-foreground hover:border-primary/50 hover:bg-primary transition-all duration-300"
               >
                 Get in Touch
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </Link>
+              </MagneticButton>
             </div>
           </div>
 

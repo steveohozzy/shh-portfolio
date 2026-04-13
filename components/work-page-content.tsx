@@ -339,7 +339,7 @@ export function WorkPageContent() {
               key={category}
               onClick={() => setActiveCategory(category)}
               className={cn(
-                "px-5 py-2.5 text-sm font-medium rounded-full transition-all duration-300",
+                "px-5 py-2.5 text-sm font-medium rounded-full transition-all duration-300 cursor-pointer",
                 activeCategory === category
                   ? "bg-primary text-primary-foreground"
                   : "bg-secondary text-secondary-foreground hover:bg-secondary/80",

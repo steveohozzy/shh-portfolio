@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useScrollAnimation } from "@/hooks/use-scroll-animation"
 import { cn } from "@/lib/utils"
+import { MagneticButton } from "./magnetic-button"
 
 const socialLinks = [
   { name: "CodePen", href: "https://codepen.io/hoskinshozzy", icon: Code },
@@ -214,10 +215,11 @@ export function ContactPageContent() {
                   </div>
                 )}
 
-                <Button
+                <MagneticButton
+                  as="button"
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 rounded-full h-12 text-base font-medium"
+                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 rounded-full h-12 text-base font-medium hover:shadow-xl hover:shadow-primary/30 transition-all duration-300 cursor-pointer"
                 >
                   {isSubmitting ? (
                     <span className="flex items-center gap-2">
@@ -227,10 +229,10 @@ export function ContactPageContent() {
                   ) : (
                     <span className="flex items-center gap-2">
                       Send Message
-                      <Send className="w-4 h-4" />
+                      <Send className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </span>
                   )}
-                </Button>
+                </MagneticButton>
 
               </form>
             )}
