@@ -12,9 +12,8 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "Steven Howard Hoskins | Frontend Developer",
-  description: "Frontend Developer crafting elegant digital experiences with modern web technologies",
-    generator: 'v0.app'
+  title: "SHH Design | Steven Howard Hoskins | Frontend Developer",
+  description: "SHH Design is the portfolio site of Steven Hoskins an experienced Frontend Developer with over 18 years of experience building performant, accessible, and visually stunning web experiences.",
 }
 
 export const viewport: Viewport = {

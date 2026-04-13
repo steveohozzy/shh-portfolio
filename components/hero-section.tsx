@@ -209,7 +209,11 @@ export function HeroSection() {
               <div className="absolute inset-12 rounded-full bg-card/90 backdrop-blur-sm border border-border flex items-center justify-center overflow-hidden shadow-2xl">
                 <div className="text-center space-y-2">
                   <div className="text-6xl xl:text-7xl font-bold text-primary">
-                    <AnimatedCounter end={18} suffix="+" duration={2000} />
+                    <AnimatedCounter
+                        end={new Date().getFullYear() - 2006 - (new Date().getMonth() < 5 ? 1 : 0)}
+                        suffix="+"
+                        duration={2000}
+                      />
                   </div>
                   <div className="text-xs text-muted-foreground uppercase tracking-wider">Years Experience</div>
                 </div>

@@ -5,7 +5,6 @@ import React from "react"
 import { Code2, Palette, Zap, Globe } from "lucide-react"
 import { useScrollAnimation } from "@/hooks/use-scroll-animation"
 import { cn } from "@/lib/utils"
-import { AnimatedCounter } from "@/components/animated-counter"
 import { SplitText } from "@/components/text-reveal"
 import { TiltCard } from "@/components/tilt-card"
 import { useRef, useCallback } from "react"
@@ -132,7 +131,6 @@ function SkillCard({ skill, index, isVisible }: { skill: typeof skills[0]; index
 export function SkillsSection() {
   const { ref: headerRef, isVisible: headerVisible } = useScrollAnimation<HTMLDivElement>()
   const { ref: gridRef, isVisible: gridVisible } = useScrollAnimation<HTMLDivElement>()
-  const { ref: statsRef, isVisible: statsVisible } = useScrollAnimation<HTMLDivElement>()
 
   return (
     <section id="skills" className="py-24 lg:py-32 relative overflow-hidden">

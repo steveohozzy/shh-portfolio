@@ -4,6 +4,8 @@ import { Code2, Palette, Zap, Globe, Download, ArrowRight } from "lucide-react"
 import Link from "next/link"
 import { useScrollAnimation } from "@/hooks/use-scroll-animation"
 import { cn } from "@/lib/utils"
+import { TiltCard } from "./tilt-card"
+import { useRef, useCallback } from "react"
 
 const skills = [
   {
@@ -89,16 +91,121 @@ members.`,
   },
 ]
 
-const stats = [
-  { value: "18+", label: "Years Experience" },
+type Stat = {
+  value: string;
+  label: string;
+};
+
+const getYearsExperience = (startYear: number, startMonth: number): string => {
+  const now = new Date();
+  let years = now.getFullYear() - startYear;
+
+  if (now.getMonth() < startMonth) {
+    years--;
+  }
+
+  return `${years}+`;
+};
+
+const stats: Stat[] = [
+  { value: getYearsExperience(2006, 5), label: "Years Experience" }, // June = 5
   { value: "100%", label: "Code Quality" },
-]
+];
+
+function SkillCard({ skill, index, isVisible }: { skill: typeof skills[0]; index: number; isVisible: boolean }) {
+  const cardRef = useRef<HTMLDivElement>(null)
+  
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    const card = cardRef.current
+    if (!card) return
+    
+    const rect = card.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
+    
+    card.style.setProperty("--mouse-x", `${x}px`)
+    card.style.setProperty("--mouse-y", `${y}px`)
+  }, [])
+
+  return (
+    <TiltCard
+      className={cn(
+        "animate-on-scroll",
+        isVisible && "is-visible",
+      )}
+      tiltAmount={8}
+    >
+      <div
+        ref={cardRef}
+        onMouseMove={handleMouseMove}
+        className="group relative h-full p-6 bg-card border border-border rounded-2xl hover:border-primary/50 transition-all duration-500 overflow-hidden"
+        style={{ 
+          transitionDelay: `${index * 100}ms`,
+          "--mouse-x": "50%",
+          "--mouse-y": "50%",
+        } as React.CSSProperties}
+      >
+        {/* Spotlight effect */}
+        <div 
+          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+          style={{
+            background: `radial-gradient(300px circle at var(--mouse-x) var(--mouse-y), ${skill.color}15, transparent 60%)`
+          }}
+        />
+        
+        {/* Animated border glow */}
+        <div 
+          className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+          style={{
+            background: `linear-gradient(135deg, ${skill.color}20, transparent 50%, ${skill.color}10)`,
+          }}
+        />
+
+        {/* Icon with animated background */}
+        <div 
+          className="relative w-14 h-14 rounded-xl flex items-center justify-center mb-6 transition-all duration-500 group-hover:scale-110"
+          style={{ backgroundColor: `${skill.color}15` }}
+        >
+          <skill.icon className="w-7 h-7 transition-colors duration-300" style={{ color: skill.color }} />
+          <div 
+            className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 animate-pulse-glow"
+            style={{ boxShadow: `0 0 20px ${skill.color}40` }}
+          />
+        </div>
+
+        {/* Category */}
+        <h3 className="relative text-lg font-semibold mb-4 group-hover:text-primary transition-colors duration-300">
+          {skill.category}
+        </h3>
+
+        {/* Skills List with stagger */}
+        <ul className="relative space-y-2.5">
+          {skill.items.map((item, itemIndex) => (
+            <li 
+              key={item} 
+              className="text-sm text-muted-foreground flex items-center gap-3 group-hover:text-foreground/80 transition-all duration-300"
+              style={{ transitionDelay: `${itemIndex * 50}ms` }}
+            >
+              <span 
+                className="w-1.5 h-1.5 rounded-full transition-all duration-300 group-hover:scale-150"
+                style={{ backgroundColor: skill.color }}
+              />
+              {item}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </TiltCard>
+  )
+}
 
 export function AboutPageContent() {
   const { ref: heroRef, isVisible: heroVisible } = useScrollAnimation<HTMLDivElement>()
   const { ref: statsRef, isVisible: statsVisible } = useScrollAnimation<HTMLDivElement>()
   const { ref: skillsRef, isVisible: skillsVisible } = useScrollAnimation<HTMLDivElement>()
   const { ref: experienceRef, isVisible: experienceVisible } = useScrollAnimation<HTMLDivElement>()
+  const { ref: headerRef, isVisible: headerVisible } = useScrollAnimation<HTMLDivElement>()
+  const { ref: gridRef, isVisible: gridVisible } = useScrollAnimation<HTMLDivElement>()
 
   return (
     <section className="pt-32 pb-24 lg:pb-32">
@@ -156,33 +263,25 @@ export function AboutPageContent() {
           </div>
         </div>
 
+
         {/* Skills Section */}
-        <div className="mb-24">
-          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-12">Skills & Technologies</h2>
-          <div ref={skillsRef} className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {skills.map((skill, index) => (
-              <div
-                key={skill.category}
-                className={cn(
-                  "group p-6 bg-card border border-border rounded-2xl hover:border-primary/50 transition-all duration-500 hover:shadow-lg hover:shadow-primary/5 animate-on-scroll",
-                  skillsVisible && "is-visible",
-                )}
-                style={{ transitionDelay: `${index * 100}ms` }}
-              >
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors">
-                  <skill.icon className="w-6 h-6 text-primary" />
-                </div>
-                <h3 className="text-lg font-semibold mb-4">{skill.category}</h3>
-                <ul className="space-y-2">
-                  {skill.items.map((item) => (
-                    <li key={item} className="text-sm text-muted-foreground flex items-center gap-2">
-                      <span className="w-1 h-1 rounded-full bg-primary" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+        <div id="skills" className="pb-24 lg:pb-32 relative overflow-hidden">
+          {/* Animated background gradients */}
+          <div className="absolute top-0 left-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-gradient opacity-30" />
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-gradient opacity-20" style={{ animationDelay: "-4s" }} />
+    
+          <div className="container mx-auto relative">
+            {/* Section Header */}
+            <div ref={headerRef} className={cn("max-w-2xl mb-16 animate-on-scroll", headerVisible && "is-visible")}>
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-12">Skills & Technologies</h2>
+            </div>
+    
+            {/* Skills Grid */}
+            <div ref={gridRef} className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {skills.map((skill, index) => (
+                <SkillCard key={skill.category} skill={skill} index={index} isVisible={gridVisible} />
+              ))}
+            </div>
           </div>
         </div>
 
