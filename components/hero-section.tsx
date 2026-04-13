@@ -64,6 +64,18 @@ export function HeroSection() {
     })
   }, [])
 
+  const [isShortHeight, setIsShortHeight] = useState(false)
+
+useEffect(() => {
+  const checkHeight = () => {
+    setIsShortHeight(window.innerHeight < 700)
+  }
+
+  checkHeight()
+  window.addEventListener("resize", checkHeight)
+  return () => window.removeEventListener("resize", checkHeight)
+}, [])
+
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
@@ -75,8 +87,14 @@ export function HeroSection() {
   return (
     <section
       ref={containerRef}
-      id="about"
-      className="relative min-h-screen flex items-center overflow-hidden noise-bg"
+  id="about"
+  className="
+    relative
+    min-h-[100dvh]
+    pt-[96px]
+    flex items-start lg:items-center
+    overflow-hidden noise-bg
+  "
       style={
         {
           "--mouse-x": "0.5",
