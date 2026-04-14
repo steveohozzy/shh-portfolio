@@ -1,11 +1,10 @@
 "use client"
 
-import { useState, memo } from "react"
+import { useState } from "react"
 import { ExternalLink, ArrowRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 import { useScrollAnimation } from "@/hooks/use-scroll-animation"
-import { ta } from "date-fns/locale"
 
 const allProjects = [
   {

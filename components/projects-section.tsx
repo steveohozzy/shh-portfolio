@@ -3,9 +3,8 @@
 import React from "react"
 
 import { memo, useRef, useCallback } from "react"
-import { ExternalLink, ArrowRight, ArrowUpRight } from "lucide-react"
+import { ArrowRight, ArrowUpRight } from "lucide-react"
 import { cn } from "@/lib/utils"
-import Link from "next/link"
 import { useScrollAnimation } from "@/hooks/use-scroll-animation"
 import { MagneticButton } from "@/components/magnetic-button"
 import { SplitText } from "@/components/text-reveal"

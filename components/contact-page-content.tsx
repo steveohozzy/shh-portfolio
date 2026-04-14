@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { Send, Mail, MapPin, ArrowUpRight, Github, Linkedin, Code } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useScrollAnimation } from "@/hooks/use-scroll-animation"

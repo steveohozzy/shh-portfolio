@@ -1,7 +1,6 @@
 "use client"
 
 import { Code2, Palette, Zap, Globe, ArrowRight, FileText } from "lucide-react"
-import Link from "next/link"
 import { useScrollAnimation } from "@/hooks/use-scroll-animation"
 import { cn } from "@/lib/utils"
 import { TiltCard } from "./tilt-card"
