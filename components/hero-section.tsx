@@ -175,6 +175,7 @@ useEffect(() => {
               <MagneticButton
                 as="a"
                 href="/cv.pdf"
+                target="_blank"
                 className="group px-8 py-4 border-2 border-border text-foreground font-medium rounded-full hover:border-primary/50 hover:bg-primary/5 transition-all duration-300"
               >
                 <span className="flex items-center gap-2">
