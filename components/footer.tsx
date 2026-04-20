@@ -53,6 +53,7 @@ export function Footer() {
                   key={social.label}
                   as="a"
                   href={social.href}
+                  target="_blank"
                   className="p-3 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-full transition-all duration-300"
                 >
                   <social.icon className="w-5 h-5" />

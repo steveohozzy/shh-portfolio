@@ -143,6 +143,7 @@ export function ContactSection() {
                     key={link.name}
                     as="a"
                     href={link.href}
+                    target="_blank"
                     className="group inline-flex items-center gap-1.5 px-5 py-2.5 border border-border rounded-full text-sm font-medium hover:border-primary/50 hover:bg-primary/5 transition-all duration-300"
                   >
                     {link.name}
