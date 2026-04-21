@@ -140,9 +140,11 @@ export function SkillsSection() {
             <span className="w-1.5 h-1.5 bg-primary rounded-full" />
             <span className="text-primary font-mono text-xs tracking-wider uppercase">Expertise</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-[1.2] mb-6">
-            {headerVisible && <SplitText>Technologies & Tools I Work With</SplitText>}
-          </h2>
+          {headerVisible && (
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-[1.2] mb-6">
+              <SplitText>Technologies & Tools I Work With</SplitText>
+            </h2>
+          )}
           <p className="text-muted-foreground text-lg leading-relaxed">
             I specialize in building modern, performant web applications using cutting-edge technologies and best
             practices.

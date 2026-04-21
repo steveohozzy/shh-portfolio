@@ -206,9 +206,11 @@ export function ProjectsSection() {
               <span className="w-1.5 h-1.5 bg-primary rounded-full" />
               <span className="text-primary font-mono text-xs tracking-wider uppercase">Selected Work</span>
             </div>
+            {headerVisible && (
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight">
-              {headerVisible && <SplitText>Projects That Define My Craft</SplitText>}
+              <SplitText>Projects That Define My Craft</SplitText>
             </h2>
+            )}
           </div>
           <MagneticButton
             as="a"

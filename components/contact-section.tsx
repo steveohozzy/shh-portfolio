@@ -91,10 +91,11 @@ export function ContactSection() {
                 <span className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
                 <span className="text-primary font-mono text-xs tracking-wider uppercase">Get in Touch</span>
               </div>
-
+              {leftVisible && (
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-6 leading-[1.2]">
-                {leftVisible && <SplitText>Let's Build Something Amazing Together</SplitText>}
+                <SplitText>Let's Build Something Amazing Together</SplitText>
               </h2>
+              )}
 
               <p className="text-muted-foreground text-lg leading-relaxed">
                 Have a project in mind? I'd love to hear about it. Whether it's a new website, a redesign, or a complex
