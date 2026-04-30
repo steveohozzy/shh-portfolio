@@ -210,6 +210,7 @@ const quotes = [
    THE NAKED GUN (1988)
 ========================= */
 "Nice Party, Hapsburg. I See A Lot Of Familiar Face-Lifts",
+"Nice Beaver!",
 "Thank you. I just had it stuffed",
 "It's Enrico Pallazzo!",
 "I'm a locksmith... and I'm a locksmith",
@@ -227,6 +228,7 @@ const quotes = [
 "You Take A Chance Getting Up In The Morning, Crossing The Street, Or Sticking Your Face In A Fan",
 "It's True What They Say: Cops And Women Don't Mix. It's Like Eating A Spoonful Of Drano. Sure, It'll Clean You Out, But It'll Leave You Hollow Inside",
 "It's The Same Old Story. Boy Finds Girl, Boy Loses Girl, Girl Finds Boy, Boy Forgets Girl, Boy Remembers Girl, Girl Dies In A Tragic Blimp Accident Over The Orange Bowl On New Year's Day",
+"Wilma, I Promise You, Whatever Scum Did This, Not One Man On This Force Will Rest One Minute Until He's Behind Bars. Now, Let's Grab A Bite To Eat",
 
 /* =========================
    NAKED GUN 2½ (1991)
@@ -295,6 +297,8 @@ const themed = {
 };
 
 let lastQuote = "";
+const recentQuotes = [];
+const RECENT_LIMIT = 12;
 
 function rand(arr){
   if(arr.length === 1) return arr[0];
@@ -303,11 +307,16 @@ function rand(arr){
   let attempts = 0;
 
   do {
-    q = arr[Math.floor(Math.random()*arr.length)];
+    q = arr[Math.floor(Math.random() * arr.length)];
     attempts++;
-  } while(q === lastQuote && attempts < 10);
+  } while(recentQuotes.includes(q) && attempts < 20);
 
-  lastQuote = q;
+  recentQuotes.push(q);
+
+  if(recentQuotes.length > RECENT_LIMIT){
+    recentQuotes.shift(); // remove oldest
+  }
+
   return q;
 }
 
@@ -337,8 +346,12 @@ function sentenceTemplates(q1,q2){
 function buildSentence(){
   const size=document.getElementById('size').value;
   const count=size==='short'?2:size==='medium'?3:4;
-  let q1=pickWeighted();
-  let q2=pickWeighted();
+  let q1 = pickWeighted();
+let q2;
+
+do {
+  q2 = pickWeighted();
+} while (q2 === q1);
   let s=sentenceTemplates(q1,q2);
   if(count>2){
     for(let i=0;i<count-2;i++){
