@@ -5,7 +5,6 @@ import { ArrowUpRight, ArrowRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 import { useScrollAnimation } from "@/hooks/use-scroll-animation"
-import { id } from "date-fns/locale"
 
 const allProjects = [
   {
