@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leslie Nielsen Ipsum Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#e9eef5;
+  --card:#ffffff;
+  --text:#0f172a;
+  --muted:#64748b;
+  --accent:#1d4ed8;
+  --accent2:#ef4444;
+  --accent3:#e70b84;
+}
+
+*{
+  box-sizing:border-box
+}
+
+body{
+  margin:0;
+  font-family: Arial, Helvetica, sans-serif;
+  background:linear-gradient(180deg,#dbeafe,#f1f5f9);
+  color:var(--text);
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+}
+
+/* soft “film poster paper” feel */
+.wrap{
+  width:min(980px,100%);
+  background:var(--card);
+  border:1px solid rgba(15,23,42,.08);
+  border-radius:18px;
+  padding:28px;
+  box-shadow:0 20px 50px rgba(15,23,42,.12);
+}
+
+/* title = film header card */
+h1{
+  margin:0 0 6px;
+  font-size:3rem;
+  letter-spacing:1px;
+  color:#d0045d;
+  font-weight: 900;
+   font-family:"Bebas Neue", Impact, Arial Black, sans-serif;
+}
+
+/* subtitle like studio tagline */
+.sub{
+  color:var(--muted);
+  margin-bottom:22px;
+  font-size:.95rem;
+}
+
+/* control layout stays clean and “UI panel” */
+.controls{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:14px;
+  margin-bottom:18px;
+}
+
+label{
+  display:block;
+  font-size:.85rem;
+  color:var(--muted);
+  margin-bottom:6px;
+}
+
+/* clean form fields */
+input,select,button{
+  width:100%;
+  padding:12px 14px;
+  border-radius:10px;
+  border:1px solid rgba(15,23,42,.12);
+  background:#fff;
+  color:var(--text);
+  font-size:14px;
+}
+
+/* primary action button = “film action button” */
+button{
+  cursor:pointer;
+  background:var(--accent);
+  color:#fff;
+  font-weight:700;
+  border:none;
+  transition:.15s;
+}
+
+button:hover{
+  filter:brightness(1.08);
+  transform:translateY(-1px);
+}
+
+/* secondary buttons */
+.actions{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-top:8px;
+}
+
+.actions button{
+  flex:1;
+  background:#0f172a;
+}
+
+.actions button:nth-child(2){
+  background:var(--accent2);
+}
+
+.actions button:nth-child(3){
+  background:var(--accent3);
+}
+
+/* output = screenplay / script sheet */
+#output{
+  margin-top:18px;
+  background:#f8fafc;
+  border:1px solid rgba(15,23,42,.08);
+  border-radius:14px;
+  padding:18px;
+  min-height:260px;
+  line-height:1.7;
+  white-space:pre-wrap;
+}
+
+/* subtle “script header” feel */
+#output:before{
+  content:"LESNIE NIELSEN IPSUM — SCRIPT OUTPUT";
+  display:block;
+  font-size:.8rem;
+  color:var(--muted);
+  margin-bottom:10px;
+  letter-spacing:.5px;
+}
+
+/* footer note */
+.small{
+  font-size:.85rem;
+  color:var(--muted);
+  margin-top:10px;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Leslie Nielsen Ipsum</h1>
+<div class="sub">Generate placeholder text from iconic lines across Leslie Nielsen's career.</div>
+<div class="controls">
+<div><label>Paragraphs</label><input id="count" type="number" min="1" max="20" value="4"></div>
+<div><label>Sentence Size</label><select id="size"><option value="short">Short</option><option value="medium" selected>Medium</option><option value="long">Long</option></select></div>
+
+</div>
+<div class="controls"><div><label>Mode</label><select id="mode"><option value="all">All Quotes</option><option value="airplane">Airplane!</option><option value="nakedgun">Naked Gun</option><option value="policesquad">Police Squad</option><option value="dracula">Dracula</option><option value="business">Corporate Leslie</option><option value="shakespeare">Shakespeare Leslie</option></select></div></div><div class="actions">
+<button onclick="generate()">Generate</button>
+<button onclick="copyText()">Copy</button><button onclick="copyHTML()">Copy HTML</button>
+</div>
+<div id="output"></div>
+<div class="small">Quotes inspired by roles in Airplane!, Police Squad!, The Naked Gun series, Dracula: Dead and Loving It, Scary Movie films, and more.</div>
+</div>
+<script>
+const quotes=[
+"Surely you can't be serious",
+"I am serious and don't call me Shirley",
+"I just want to tell you both good luck we're all counting on you",
+"Good luck we're all counting on you",
+"Looks like I picked the wrong week to quit smoking",
+"Looks like I picked the wrong week to quit drinking",
+"Looks like I picked the wrong week to quit sniffing glue",
+"Looks like I picked the wrong week to quit amphetamines",
+"We have clearance Clarence",
+"Roger Roger",
+"What's our vector Victor",
+"Have you ever seen a grown man naked",
+"Joey do you like movies about gladiators",
+"Ever been in a Turkish prison",
+"This is a big building with patients but that's not important right now",
+"Rumack speaking",
+"Captain how soon can you land",
+"I can't tell",
+"You can tell me I'm a doctor",
+"First time",
+"No I've been nervous lots of times",
+"Looks bad doesn't it",
+"Nervous",
+"Nice beaver",
+"Thank you I just had it stuffed",
+"Frank Drebin Police Squad",
+"Nothing to see here please disperse",
+"Move along",
+"It's Enrico Pallazzo",
+"I'm a locksmith and I'm a locksmith",
+"Just think next time I shoot someone I could be arrested",
+"Like a midget at a urinal I was going to have to stay on my toes",
+"The truth hurts maybe not as much as jumping on a bicycle with the seat missing",
+"Who are you and how did you get in here",
+"Take him away and book him",
+"No wait the flower shop",
+"This is Police Squad in color",
+"No one tells me anything",
+"I only think in emergencies",
+"Another successful failure",
+"We need answers preferably easy ones",
+"I suspect foul play and possibly regular play too",
+"Justice is blind but I still like to peek",
+"The suspect is armed dangerous and probably annoyed",
+"I solved the case by accident but I'll take it",
+"Crime doesn't pay unless you're very good at it",
+"No matter where you go there you are",
+"We would have come earlier but your husband wasn't dead then",
+"Dracula has risen from the grave again",
+"I loved her not wisely but too well",
+"Welcome to fear",
+"Follow that baseball",
+"Nothing escapes my attention except facts",
+"The case is closed unless it opens again",
+"This investigation is airtight except for the holes",
+"I'm not one to blow my own horn unless no one else is available",
+"The evidence points everywhere",
+"This is worse than I thought and I thought it was bad",
+"Let's get out there and make mistakes",
+"Nobody move unless you want to",
+"I never forget a face but in your case I'll make an exception",
+"Remain calm while I overreact",
+"I'm not lost I'm investigating",
+"Stand back this calls for random behavior",
+"When the going gets tough I take a nap",
+"This is no time for panic that's later",
+"We need answers preferably easy ones",
+"The truth is out there and avoiding me",
+"I was born ready then postponed it",
+"No clue left behind",
+"I came to stop crime and chew gum and I'm all out of gum",
+"This city is safe again until tomorrow",
+"Step away from the queen",
+"I can smell corruption or lunch",
+"This case bites back",
+"The castle has many secrets and poor lighting",
+"Justice in the dark is still justice",
+"Something is rotten in the state of paperwork",
+"I have no idea what I'm doing but confidently",
+"This is under control which is how I know it isn't",
+"I will now proceed with extreme confusion",
+"Evidence is wherever I point at it",
+"This suspect is guilty unless proven otherwise by someone else",
+"We are making progress backwards at speed",
+"I came here for justice and possibly snacks",
+"Remain calm and follow my panic",
+"I have narrowed it down to everyone",
+"This meeting could have been a memo",
+"Let's circle back after I solve crime accidentally",
+"I suspect everything and trust nothing including myself",
+"The situation is deteriorating professionally",
+"I am trained for this unfortunately",
+"My instincts are wrong but committed",
+"All leads are currently fleeing the scene",
+"This is an emergency or Tuesday",
+"We are approaching competence briefly",
+"I will handle this delicately by not doing that",
+"The plan is simple: improvise and hope",
+"Everything is fine said no evidence ever",
+"I am fully qualified according to no one",
+"I bring order to chaos by adding more chaos",
+"This investigation requires patience I do not have",
+"I will interrogate the suspect or a chair",
+"This is the most suspicious nothing I have seen",
+"Follow me I also don't know where I'm going",
+"I am certain of uncertainty",
+"This case is airtight except for all the air",
+"Justice will be served slightly cold",
+"I am in complete control of nothing",
+"I will now overreact professionally"
+];
+
+const themed={
+  airplane:quotes.filter(q=>q.includes("cleared")||q.includes("vector")||q.includes("Shirley")||q.includes("serious")||q.includes("wrong week")||q.includes("good luck")||q.includes("nervous")||q.includes("Rumack")||q.includes("grown man naked")||q.includes("big building")),
+  nakedgun:quotes.filter(q=>q.includes("Police Squad")||q.includes("beaver")||q.includes("Enrico")||q.includes("locksmith")||q.includes("midget")||q.includes("arrested")||q.includes("inspect")||q.includes("book him")||q.includes("Crime")||q.includes("justice")||q.includes("suspect")),
+  policesquad:quotes.filter(q=>q.includes("Police Squad")||q.includes("nothing to see")||q.includes("move along")||q.includes("emergencies")||q.includes("failure")),
+  dracula:quotes.filter(q=>q.includes("Dracula")||q.includes("fear")||q.includes("husband")),
+  business:[],
+  shakespeare:[]
+};
+
+function rand(arr){return arr[Math.floor(Math.random()*arr.length)]}
+
+function pickPool(){
+  const m=document.getElementById('mode')?.value||'all';
+  if(m==='all') return quotes;
+  if(m==='cinematic'){
+    return Object.values(themed).flat();
+  }
+  return themed[m]||quotes;
+}
+
+function pickWeighted(){
+  const pool=pickPool();
+  // bias toward famous lines by duplicating pool lightly
+  const boosted=pool.concat(pool.slice(0,Math.floor(pool.length*0.3)));
+  return rand(boosted);
+}
+
+function sentenceTemplates(q1,q2){
+  const templates=[
+    `${q1}.`,
+    `${q1}, ${q2}.`,
+    `${q1} — ${q2}.`,
+    `${q1}... ${q2}.`,
+  ];
+  return templates[Math.floor(Math.random()*templates.length)];
+}
+
+function buildSentence(){
+  const size=document.getElementById('size').value;
+  const count=size==='short'?2:size==='medium'?3:4;
+  let q1=pickWeighted();
+  let q2=pickWeighted();
+  let s=sentenceTemplates(q1,q2);
+  if(count>2){
+    for(let i=0;i<count-2;i++){
+      s+=" " + pickWeighted() + ".";
+    }
+  }
+  return s;
+}
+
+function generate(){
+  const count=Math.max(1,Math.min(20,parseInt(document.getElementById('count').value)||4));
+  let paras=[];
+
+  for(let p=0;p<count;p++){
+    let sentences=2+Math.floor(Math.random()*3);
+    let lines=[];
+    for(let i=0;i<sentences;i++){
+      lines.push(buildSentence());
+    }
+    paras.push(lines.join(' '));
+  }
+
+  document.getElementById('output').textContent=paras.join('\n\n');
+}
+
+async function copyHTML(){
+  const text=document.getElementById('output').textContent;
+  if(!text.trim()){
+    alert("Nothing to copy");
+    return;
+  }
+
+  const paragraphs=text.split(/\n\n+/);
+
+  const html=paragraphs
+    .map(p=>{
+      const safe=p
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;");
+      return `<p>${safe}</p>`;
+    })
+    .join("\n");
+
+  await navigator.clipboard.writeText(html);
+  alert("Copied as HTML paragraphs");
+}
+
+async function copyText(){
+  await navigator.clipboard.writeText(document.getElementById('output').textContent);
+  alert('Copied');
+}
+
+generate();
+</script>
+</body>
+</html>
