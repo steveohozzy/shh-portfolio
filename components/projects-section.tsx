@@ -48,16 +48,16 @@ const projects = [
     accent: "#3b82f6",
   },
   {
-    id: 4,
-    title: "CamelBak",
-    subtitle: "SFCC Implementation",
+    title: "The Early Learning Centre",
+    subtitle: "SAP + All Front-end",
     description:
-      "Frontend building and replatforming website onto SFCC. New design applied with improved interactions and dynamic page designer components.",
-    tags: ["SFCC", "ISML", "SASS", "JavaScript"],
-    image: "/camelbak.png",
-    link: "https://www.camelbak.com",
-    color: "from-green-500/30 to-emerald-500/30",
-    accent: "#22c55e",
+      "Lead front-end developer for the ELC store. Overseeing design process and creating editable and dynamic components for the client.",
+    tags: ["SAP", "HTML", "JS", "CSS"],
+    image: "/elc.png",
+    link: "https://www.elc.co.uk/",
+    color: "from-[#0D943F]/40 to-[#407ec9]/40",
+    accent: "#0D943F",
+    category: "E-commerce",
   },
 ]
 

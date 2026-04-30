@@ -1,10 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { ExternalLink, ArrowRight } from "lucide-react"
+import { ArrowUpRight, ArrowRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 import { useScrollAnimation } from "@/hooks/use-scroll-animation"
+import { id } from "date-fns/locale"
 
 const allProjects = [
   {
@@ -48,6 +49,19 @@ const allProjects = [
   },
   {
     id: 4,
+    title: "The Early Learning Centre",
+    subtitle: "SAP + All Front-end",
+    description:
+      "Lead front-end developer for the ELC store. Overseeing design process and creating editable and dynamic components for the client.",
+    tags: ["SAP", "HTML", "JS", "CSS"],
+    image: "/elc.png",
+    link: "https://www.elc.co.uk/",
+    color: "from-[#0D943F]/40 to-[#407ec9]/40",
+    accent: "#0D943F",
+    categories: ["E-commerce", "SAP", "Web App"],
+  },
+  {
+    id: 5,
     title: "CamelBak",
     subtitle: "SFCC Implementation",
     description:
@@ -60,7 +74,7 @@ const allProjects = [
     categories: ["E-commerce", "SFCC"],
   },
   {
-    id: 5,
+    id: 6,
     title: "Knickerbox",
     subtitle: "SFCC Implementation",
     description:
@@ -69,10 +83,11 @@ const allProjects = [
     image: "/knickerbox.png",
     link: "https://www.knickerbox.com",
     color: "from-purple-500/20 to-violet-500/20",
+    accent: "#a22ad1",
     categories: ["E-commerce", "SFCC"],
   },
   {
-    id: 6,
+    id: 7,
     title: "The Commerce Team Global",
     subtitle: "Zesty CMS Design & Build",
     description:
@@ -81,10 +96,11 @@ const allProjects = [
     image: "/tctg.webp",
     link: "https://thecommerceteam.com",
     color: "from-blue-500/20 to-cyan-500/20",
+    accent: "#2a5fd1",
     categories: ["Web App", "CMS"],
   },
   {
-    id: 7,
+    id: 8,
     title: "Bogner",
     subtitle: "SFCC Implementation",
     description:
@@ -93,10 +109,11 @@ const allProjects = [
     image: "/bogner.png",
     link: "https://www.bogner.com/en-gb/",
     color: "from-black/50 to-white/70",
+    accent: "#000000",
     categories: ["E-commerce", "SFCC"],
   },
   {
-    id: 8,
+    id: 9,
     title: "Hobbs",
     subtitle: "SFCC Implementation",
     description:
@@ -105,10 +122,11 @@ const allProjects = [
     image: "/hobbs.png",
     link: "https://www.hobbs.com/",
     color: "from-emrald-500/20 to-blue-500/20",
+    accent: "#004e8c",
     categories: ["E-commerce", "SFCC"],
   },
   {
-    id: 9,
+    id: 10,
     title: "Silentnight",
     subtitle: "React Storybook Implementation",
     description:
@@ -117,10 +135,11 @@ const allProjects = [
     image: "/silentnight.png",
     link: "https://www.silentnight.co.uk/",
     color: "from-blue-500/20 to-cyan-800/20",
+    accent: "#43505c",
     categories: ["E-commerce", "Web App"],
   },
   {
-    id: 10,
+    id: 11,
     title: "Revelyst",
     subtitle: "SFCC Implementation",
     description:
@@ -129,10 +148,11 @@ const allProjects = [
     image: "/revelyst.png",
     link: "https://www.revelyst.com/",
     color: "from-yellow-800/20 to-orange-500/50",
+    accent: "#f9a825",
     categories: ["E-commerce", "SFCC"],
   },
   {
-    id: 11,
+    id: 12,
     title: "Green Pan",
     subtitle: "SFCC Implementation",
     description:
@@ -141,10 +161,11 @@ const allProjects = [
     image: "/green-pan.png",
     link: "https://greenpan.co.uk/",
     color: "from-green-500/20 to-yellow-500/20",
+    accent: "#007a3d",
     categories: ["E-commerce", "SFCC"],
   },
   {
-    id: 12,
+    id: 13,
     title: "Whistles",
     subtitle: "SFCC Implementation",
     description:
@@ -153,10 +174,11 @@ const allProjects = [
     image: "/whistles.png",
     link: "https://www.whistles.com/",
     color: "from-yellow-500/20 to-gold-500/20",
+    accent: "#f9a825",
     categories: ["E-commerce", "SFCC"],
   },
   {
-    id: 13,
+    id: 14,
     title: "Camp Chef",
     subtitle: "SFCC Implementation",
     description:
@@ -165,10 +187,11 @@ const allProjects = [
     image: "/campchef.png",
     link: "https://www.campchef.com/",
     color: "from-red-900/30 to-black/60",
+    accent: "#e74c3c",
     categories: ["E-commerce", "SFCC"],
   },
   {
-    id: 14,
+    id: 15,
     title: "Bell Helmets",
     subtitle: "SFCC Implementation",
     description:
@@ -177,10 +200,11 @@ const allProjects = [
     image: "/bell-helmets.png",
     link: "https://uk.bellhelmets.com/",
     color: "from-red-700/20 to-orange-900/20",
+    accent: "#e60b04",
     categories: ["E-commerce", "SFCC"],
   },
   {
-    id: 15,
+    id: 16,
     title: "Kneipp",
     subtitle: "SFCC Implementation",
     description:
@@ -189,34 +213,11 @@ const allProjects = [
     image: "/kneipp.jpg",
     link: "https://www.kneipp.com/",
     color: "from-[#004542]/20 to-cyan-500/20",
-    categories: ["E-commerce", "SFCC"],
-  },
-  {
-    id: 16,
-    title: "Remington",
-    subtitle: "Zesty CMS Design & Build",
-    description:
-      "Implementation of the Remington Amuunition e-commerce website. Translating UI Design into a working website and adding interactivity.",
-    tags: ["SFCC", "HTML", "ISML", "SASS", "JavaScript", "Figma"],
-    image: "/remington.webp",
-    link: "https://thecommerceteam.com",
-    color: "from-green-500/20 to-emerald-500/20",
+    accent: "#004542",
     categories: ["E-commerce", "SFCC"],
   },
   {
     id: 17,
-    title: "GIRO",
-    subtitle: "SFCC Implementation",
-    description:
-      "Implementation of the GIRO e-commerce website. Translating UI Design into a working ighly performant website and adding interactivity.",
-    tags: ["SFCC", "HTML", "ISML", "SASS", "JavaScript", "Figma"],
-    image: "/giro.png",
-    link: "https://www.giro.com/",
-    color: "from-red-500/20 to-orange-500/20",
-    categories: ["E-commerce", "SFCC"],
-  },
-  {
-    id: 18,
     title: "Bushnell",
     subtitle: "SFCC Implementation",
     description:
@@ -225,6 +226,59 @@ const allProjects = [
     image: "/bushnell.png",
     link: "https://www.bushnell.com/",
     color: "from-[#e89438]/20 to-[#c76061]/20",
+    accent: "#c76061",
+    categories: ["E-commerce", "SFCC"],
+  },
+  {
+    id: 18,
+    title: "GIRO",
+    subtitle: "SFCC Implementation",
+    description:
+      "Implementation of the GIRO e-commerce website. Translating UI Design into a working ighly performant website and adding interactivity.",
+    tags: ["SFCC", "HTML", "ISML", "SASS", "JavaScript", "Figma"],
+    image: "/giro.png",
+    link: "https://www.giro.com/",
+    color: "from-red-500/20 to-orange-500/20",
+    accent: "#e74c3c",
+    categories: ["E-commerce", "SFCC"],
+  },
+  {
+    id: 19,
+    title: "Remington",
+    subtitle: "SFCC Implementation",
+    description:
+      "Implementation of the Remington Amuunition e-commerce website. Translating UI Design into a working website and adding interactivity.",
+    tags: ["SFCC", "HTML", "ISML", "SASS", "JavaScript", "Figma"],
+    image: "/remington.webp",
+    link: "https://www.remington.com/",
+    color: "from-green-500/20 to-emerald-500/20",
+    accent: "#00a870",
+    categories: ["E-commerce", "SFCC"],
+  },
+  {
+    id: 19,
+    title: "Fahrrad.de",
+    subtitle: "SFCC Implementation",
+    description:
+      "Implementation of the Fahrrad.de bycicle e-commerce website. Translating UI Design into a working website and adding interactivity.",
+    tags: ["SFCC", "HTML", "ISML", "SASS", "JavaScript", "Figma"],
+    image: "/fahrrad.png",
+    link: "https://www.fahrrad.de/",
+    color: "from-red-500/20 to-orange-500/20",
+    accent: "#ec0909",
+    categories: ["E-commerce", "SFCC"],
+  },
+  {
+    id: 19,
+    title: "Lechuza",
+    subtitle: "SFCC Implementation",
+    description:
+      "Implementation of the Lechuza e-commerce website. Translating UI Design into a working website and adding interactivity.",
+    tags: ["SFCC", "HTML", "ISML", "SASS", "JavaScript", "Figma"],
+    image: "/lechuza.png",
+    link: "https://thelechuza.co.uk/",
+    color: "from-green-500/20 to-emerald-500/20",
+    accent: "#00a870",
     categories: ["E-commerce", "SFCC"],
   },
 ]
@@ -277,10 +331,16 @@ function WorkProjectCard({
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
           />
 
-          {/* Hover Icon */}
-          <div className="absolute top-4 right-4 z-20 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
-            <div className="w-10 h-10 rounded-full bg-foreground flex items-center justify-center">
-              <ExternalLink className="w-4 h-4 text-background" />
+          {/* Hover Icon - with magnetic effect */}
+          <div className="absolute top-4 right-4 z-20 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0 scale-75 group-hover:scale-100">
+            <div 
+              className="w-12 h-12 rounded-full flex items-center justify-center border-2 backdrop-blur-sm transition-all duration-300"
+              style={{ 
+                backgroundColor: `${project.accent}20`,
+                borderColor: project.accent
+              }}
+            >
+              <ArrowUpRight className="w-5 h-5" style={{ color: project.accent }} />
             </div>
           </div>
 
