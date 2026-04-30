@@ -276,36 +276,28 @@ const quotes = [
 
 const themed = {
   all: quotes,
-  airplane: quotes.filter(q =>
-    q.includes("Shirley") ||
-    q.includes("wrong week") ||
-    q.includes("Roger") ||
-    q.includes("vector") ||
-    q.includes("clarence")
-  ),
-  nakedgun: quotes.filter(q =>
-    q.includes("Police Squad") ||
-    q.includes("beaver") ||
-    q.includes("Enrico") ||
-    q.includes("book him") ||
-    q.includes("Nice beaver")
-  ),
-  dracula: quotes.filter(q =>
-    q.includes("dead") ||
-    q.includes("husband") ||
-    q.includes("no idea")
-  )
+
+  airplane: quotes.filter(q => /airplane|shirley|flying|good luck|lasagna|important right now|counting on you/i.test(q)),
+
+  policesquad: quotes.filter(q => /police squad|drebin|disperse|move along|clue|emergency|book/i.test(q)),
+
+  nakedgun: quotes.filter(q => /enrico|pallazzo|locksmith|hapsburg|beaver|arrested|clues/i.test(q)),
+
+  nakedgun25: quotes.filter(q => /midget|toes|wrong plan|confident/i.test(q)),
+
+  nakedgun33: quotes.filter(q => /breakthrough|disaster|unstable/i.test(q)),
+
+  dracula: quotes.filter(q => /dracula|castle|dead|husband|night|mess/i.test(q)),
+
+  business: quotes.filter(q => /confusion|fine|prepared|normal|confident/i.test(q))
 };
 
 function rand(arr){return arr[Math.floor(Math.random()*arr.length)]}
 
 function pickPool(){
-  const m=document.getElementById('mode')?.value||'all';
-  if(m==='all') return quotes;
-  if(m==='cinematic'){
-    return Object.values(themed).flat();
-  }
-  return themed[m]||quotes;
+  const m = document.getElementById('mode').value;
+  const pool = themed[m];
+  return (pool && pool.length) ? pool : quotes;
 }
 
 function pickWeighted(){
