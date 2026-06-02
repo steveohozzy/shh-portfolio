@@ -137,7 +137,7 @@ useEffect(() => {
                 <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-[1.1] tracking-tight">
                   {mounted && (
                     <SplitText className="text-primary block" staggerDelay={40}>
-                      Steven Howard Hoskins
+                      Steven Hoskins
                     </SplitText>
                   )}
                 </h1>

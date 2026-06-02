@@ -12,7 +12,7 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "SHH Design | Steven Howard Hoskins | Frontend Developer",
+  title: "SHH Design | Steven Hoskins | Frontend Developer",
   description: "SHH Design is the portfolio site of Steven Hoskins an experienced Frontend Developer with over 18 years of experience building performant, accessible, and visually stunning web experiences.",
 }
 

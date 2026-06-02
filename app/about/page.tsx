@@ -17,8 +17,8 @@ const getYearsExperience = (startYear: number, startMonth: number): string => {
 const experience = getYearsExperience(2006, 5);
 
 export const metadata: Metadata = {
-  title: "About | SHH Design | Steven Howard Hoskins | Frontend Developer",
-  description: `Learn more about Steven Howard Hoskins - Frontend Developer with ${experience} years of experience crafting digital experiences.`,
+  title: "About | SHH Design | Steven Hoskins | Frontend Developer",
+  description: `Learn more about Steven Hoskins - Frontend Developer with ${experience} years of experience crafting digital experiences.`,
 };
 
 export default function AboutPage() {
