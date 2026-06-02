@@ -4,8 +4,8 @@ import { Footer } from "@/components/footer"
 import { ContactPageContent } from "@/components/contact-page-content"
 
 export const metadata: Metadata = {
-  title: "Contact | SHH Design | Steven Howard Hoskins | Frontend Developer",
-  description: "Get in touch with Steven Howard Hoskins for frontend development projects and collaborations.",
+  title: "Contact | SHH Design | Steven Hoskins | Frontend Developer",
+  description: "Get in touch with Steven Hoskins for frontend development projects and collaborations.",
 }
 
 export default function ContactPage() {

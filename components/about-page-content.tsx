@@ -218,7 +218,7 @@ export function AboutPageContent() {
               Crafting elegant digital experiences.
             </h1>
             <p className="text-muted-foreground text-lg leading-relaxed mb-8">
-              I'm Steven Howard Hoskins, a frontend developer based in the United Kingdom with over 18 years of
+              I'm Steven Hoskins, a frontend developer based in the United Kingdom with over 18 years of
               experience building performant, accessible, and visually stunning web experiences.
             </p>
             <p className="text-muted-foreground leading-relaxed mb-8">

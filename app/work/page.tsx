@@ -4,7 +4,7 @@ import { Footer } from "@/components/footer"
 import { WorkPageContent } from "@/components/work-page-content"
 
 export const metadata: Metadata = {
-  title: "Work | SHH Design | Steven Howard Hoskins | Frontend Developer",
+  title: "Work | SHH Design | Steven Hoskins | Frontend Developer",
   description:
     "Explore my portfolio of frontend development projects including e-commerce, CMS implementations, and web applications.",
 }
