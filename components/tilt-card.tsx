@@ -56,7 +56,7 @@ export function TiltCard({ children, className, tiltAmount = 10, glareEnabled = 
       ref={cardRef}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      className={cn("card-3d relative", className)}
+      className={cn("card-3d relative rounded-2xl overflow-hidden", className)}
       style={{
         "--rotate-x": "0deg",
         "--rotate-y": "0deg",
