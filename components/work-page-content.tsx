@@ -1,7 +1,5 @@
 "use client"
-
-import { useState } from "react"
-import { useSearchParams, useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
 import { ArrowUpRight, ArrowRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
@@ -385,10 +383,22 @@ function WorkProjectCard({
 }
 
 export function WorkPageContent() {
-  const searchParams = useSearchParams()
-  const router = useRouter()
+  const [activeCategory, setActiveCategory] = useState("All")
 
-  const activeCategory = searchParams.get("category") || "All"
+  useEffect(() => {
+    const savedCategory = localStorage.getItem("workCategory")
+
+    if (
+      savedCategory &&
+      categories.includes(savedCategory)
+    ) {
+      setActiveCategory(savedCategory)
+    }
+  }, [])
+
+  useEffect(() => {
+    localStorage.setItem("workCategory", activeCategory)
+  }, [activeCategory])
   const { ref: headerRef, isVisible: headerVisible } = useScrollAnimation<HTMLDivElement>()
   const { ref: ctaRef, isVisible: ctaVisible } = useScrollAnimation<HTMLDivElement>()
 
@@ -419,19 +429,7 @@ export function WorkPageContent() {
           {categories.map((category) => (
             <button
               key={category}
-              onClick={() => {
-                const params = new URLSearchParams(searchParams.toString())
-
-                if (category === "All") {
-                  params.delete("category")
-                } else {
-                  params.set("category", category)
-                }
-
-                router.replace(`?${params.toString()}`, {
-                  scroll: false,
-                })
-              }}
+              onClick={() => setActiveCategory(category)}
               className={cn(
                 "px-5 py-2.5 text-sm font-medium rounded-full transition-all duration-300 cursor-pointer",
                 activeCategory === category
@@ -441,11 +439,14 @@ export function WorkPageContent() {
             >
               {category}
             </button>
-          ))}
+          ))}<div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
         </div>
 
         {/* Projects Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div
+          key={activeCategory}
+          className="grid md:grid-cols-2 lg:grid-cols-3 gap-8"
+        >
           {filteredProjects.map((project, index) => (
             <WorkProjectCard key={project.id} project={project} index={index} />
           ))}
