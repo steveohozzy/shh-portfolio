@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
 import { ArrowUpRight, ArrowRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
@@ -255,7 +256,7 @@ const allProjects = [
     categories: ["E-commerce", "SFCC"],
   },
   {
-    id: 19,
+    id: 20,
     title: "Fahrrad.de",
     subtitle: "SFCC Implementation",
     description:
@@ -268,7 +269,7 @@ const allProjects = [
     categories: ["E-commerce", "SFCC"],
   },
   {
-    id: 19,
+    id: 21,
     title: "Lechuza",
     subtitle: "SFCC Implementation",
     description:
@@ -384,7 +385,10 @@ function WorkProjectCard({
 }
 
 export function WorkPageContent() {
-  const [activeCategory, setActiveCategory] = useState("All")
+  const searchParams = useSearchParams()
+  const router = useRouter()
+
+  const activeCategory = searchParams.get("category") || "All"
   const { ref: headerRef, isVisible: headerVisible } = useScrollAnimation<HTMLDivElement>()
   const { ref: ctaRef, isVisible: ctaVisible } = useScrollAnimation<HTMLDivElement>()
 
@@ -415,7 +419,19 @@ export function WorkPageContent() {
           {categories.map((category) => (
             <button
               key={category}
-              onClick={() => setActiveCategory(category)}
+              onClick={() => {
+                const params = new URLSearchParams(searchParams.toString())
+
+                if (category === "All") {
+                  params.delete("category")
+                } else {
+                  params.set("category", category)
+                }
+
+                router.replace(`?${params.toString()}`, {
+                  scroll: false,
+                })
+              }}
               className={cn(
                 "px-5 py-2.5 text-sm font-medium rounded-full transition-all duration-300 cursor-pointer",
                 activeCategory === category
