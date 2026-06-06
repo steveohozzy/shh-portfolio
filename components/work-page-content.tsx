@@ -439,7 +439,7 @@ export function WorkPageContent() {
             >
               {category}
             </button>
-          ))}<div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          ))}
         </div>
 
         {/* Projects Grid */}
