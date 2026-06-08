@@ -9,7 +9,7 @@ interface UseScrollAnimationOptions {
 }
 
 export function useScrollAnimation<T extends HTMLElement = HTMLElement>({
-  threshold = 0,
+  threshold = 0.02,
   rootMargin = "150px 0px",
   triggerOnce = true,
 }: UseScrollAnimationOptions = {}) {
