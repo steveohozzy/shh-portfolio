@@ -307,7 +307,7 @@ function WorkProjectCard({
     <article
       ref={ref}
       className={cn("group relative animate-on-scroll", isVisible && "is-visible")}
-      style={{ transitionDelay: `${index * 100}ms` }}
+      style={{ transitionDelay: `${index * 60}ms` }}
     >
       <a href={project.link} target="_blank" rel="noopener noreferrer" className="block">
         {/* Image Container */}

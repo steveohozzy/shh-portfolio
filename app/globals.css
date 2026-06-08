@@ -126,7 +126,6 @@
   }
 }
 
-/* Performant scroll animations using CSS */
 .animate-on-scroll {
   opacity: 0;
   transform: translateY(24px);
@@ -171,7 +170,6 @@
   transform: scale(1);
 }
 
-/* Stagger delays - use via style prop */
 .stagger-1 {
   transition-delay: 100ms;
 }
@@ -188,7 +186,7 @@
   transition-delay: 500ms;
 }
 
-/* Custom scrollbar - only on hover for performance */
+
 @media (hover: hover) {
   ::-webkit-scrollbar {
     width: 8px;
@@ -208,14 +206,14 @@
   }
 }
 
-/* Smooth scroll - respects user preferences */
+
 @media (prefers-reduced-motion: no-preference) {
   html {
     scroll-behavior: smooth;
   }
 }
 
-/* Reduced motion support */
+
 @media (prefers-reduced-motion: reduce) {
   .animate-on-scroll,
   .animate-on-scroll-left,
