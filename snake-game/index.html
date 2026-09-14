@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Snake</title>
+  <style>
+    body {
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0;
+      background-color: black;
+      overflow: hidden;
+    }
+
+    #game-board {
+      background-color: #CCC;
+      width: 100vmin;
+      height: 100vmin;
+      display: grid;
+      grid-template-rows: repeat(21, 1fr);
+      grid-template-columns: repeat(21, 1fr);
+    }
+
+    .snake {
+      background-color: #569527;
+      border: .25vmin solid #72a12e;
+    }
+
+    .snake:first-of-type {
+      border-color: #4e7613;
+      position: relative;
+    }
+
+    .snake:first-of-type::before {
+      content: '';
+      width: 2px;
+      height: 10px;
+      background-color: red;
+      position: absolute;
+      bottom: -8px;
+      left: 50%;
+    }
+
+    .snake:first-of-type::after {
+      content: '..';
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 4vw;
+      line-height: 4vw;
+      width: 100%;
+      text-align: center;
+      height: 4vw;
+      overflow: hidden;
+      position: absolute;
+      left: 0;
+      top: -2vw;
+    }
+
+    .food {
+      background-color: #fdff00;
+      border: .25vmin solid #acad1d;
+      border-radius: 40%;
+    }
+
+    .up .snake:first-of-type  {
+      transform: rotate(180deg);
+    }
+
+    .down .snake:first-of-type  {
+      transform: rotate(0deg);
+    }
+
+    .right .snake:first-of-type  {
+      transform: rotate(270deg);
+    }
+
+    .left .snake:first-of-type  {
+      transform: rotate(90deg);
+    }
+
+    @media screen and (min-width: 768px) {
+      .snake:first-of-type::after {
+        top: -2.5vw;
+      }
+
+      .snake:first-of-type::before {
+        height: 20px;
+        bottom: -18px;
+      }
+    }
+  </style>
+  <script src="game.js" defer type="module"></script>
+</head>
+<body>
+  <div id="game-board"></div>
+</body>
+</html>
