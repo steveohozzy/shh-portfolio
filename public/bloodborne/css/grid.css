@@ -1,0 +1,134 @@
+[class*="desktop-"] {
+  float: left;
+  padding: 0px 20px 20px 20px;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  transition: all 0.3s;
+}
+
+[class*="mobile-"].right,
+[class*="desktop-"].right {
+  float: right;
+}
+
+  .desktop-1 {
+    width: 8.33%;
+  }
+  .desktop-2 {
+    width: 16.66%;
+  }
+  .desktop-3 {
+    width: 25%;
+  }
+  .desktop-4 {
+    width: 33.33%;
+  }
+  .desktop-5 {
+    width: 41.66%;
+  }
+  .desktop-6 {
+    width: 50%;
+  }
+  .desktop-7 {
+    width: 58.33%;
+  }
+  .desktop-8 {
+    width: 66.66%;
+  }
+  .desktop-9 {
+    width: 75%;
+  }
+  .desktop-10 {
+    width: 83.33%;
+  }
+  .desktop-11 {
+    width: 91.66%;
+  }
+  .desktop-12 {
+    width: 100%;
+  }
+  .full {
+	 padding: 0px 0px 20px 0px;
+  }
+  .full-left {
+	padding: 0px 5px 20px 0px; 
+  }
+  .full-right {
+	padding: 0px 0px 20px 5px;  
+  }
+  .full-height {
+	 padding-bottom: 0px;
+  }
+  .max-1320 {
+	max-width: 1320px;
+	float: none!important;  
+	margin: 0 auto;
+  }
+  .max-540 {
+	max-width: 540px;  
+  }
+  .dis-table {
+	display: table;  
+	float: none!important; 
+	width: 100%;
+	text-align:left;
+  }
+  .dis-table-cell {
+	display: table-cell; 
+	float: none!important; 
+	vertical-align: middle;
+  }
+  .ver-middle {
+	vertical-align: middle;  
+  }
+  .swap-flow {
+	 direction: rtl; 
+  }
+.center {
+	float: none;
+	margin: 0 auto;
+}
+@media screen and (max-width: 739px) {
+	[class*="mobile-"] {
+		-webkit-box-sizing: border-box;
+ 		-moz-box-sizing: border-box;
+  		box-sizing: border-box;
+		transition: all 0.3s;
+	}
+  .mobile-2 {
+    width: 33.33%;
+  }
+  .mobile-3 {
+	  width: 50%;
+  }
+  .mobile-4 {
+    width: 66.66%;
+  }
+  .mobile-6 {
+    width: 100%;
+  }
+  .full-height {
+	 padding-bottom: 0px;
+  }
+  .mobile-nav .dis-table  {
+	display: table;  
+  }
+  .mobile-nav .dis-table-cell {
+	 display: table-cell; 
+  }
+    .mobile-nav .dis-table-cell.desktop-10 {
+		width: 85%;
+	}
+	.mobile-nav .dis-table-cell.desktop-2 {
+		width: 15%;
+	}
+  .dis-table-cell, .dis-table {
+	display: block;  
+	width: 100%; 
+  }
+  .max-1320, .max-540 {
+	 max-width: 100%;
+	 transition: all 0.3s;
+  }
+}
