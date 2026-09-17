@@ -4,7 +4,6 @@ import type React from "react"
 import { useEffect, useRef, useCallback, memo, useState } from "react"
 import { Github, Linkedin, ArrowRight, FileText, Code } from "lucide-react"
 import { MagneticButton } from "@/components/magnetic-button"
-import { SplitText } from "@/components/text-reveal"
 import { AnimatedCounter } from "@/components/animated-counter"
 
 const socialLinks = [
@@ -132,14 +131,11 @@ useEffect(() => {
               {/* Main heading with text reveal */}
               <div className="space-y-2">
                 <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-[1.1] tracking-tight">
-                  {mounted && <SplitText className="block">Hello, I'm</SplitText>}
-                </h1>
-                <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-[1.1] tracking-tight">
-                  {mounted && (
-                    <SplitText className="text-primary block" staggerDelay={40}>
+                  Hello, I'm
+                
+                <span className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-[1.1] tracking-tight">
                       Steven Hoskins
-                    </SplitText>
-                  )}
+                </span>
                 </h1>
               </div>
               
