@@ -18,7 +18,6 @@ const FloatingBadge = memo(function FloatingBadge({
   label,
   className,
   delay,
-  index,
 }: {
   label: string
   className: string
@@ -133,9 +132,9 @@ useEffect(() => {
                 <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-[1.1] tracking-tight">
                   Hello, I'm
                 
-                <span className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-[1.1] tracking-tight">
+                  <span className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-[1.1] tracking-tight text-primary block">
                       Steven Hoskins
-                </span>
+                  </span>
                 </h1>
               </div>
               
