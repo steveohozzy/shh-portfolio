@@ -11,13 +11,16 @@ interface AnimatedCounterProps {
 }
 
 export function AnimatedCounter({ end, suffix = "", duration = 2000, className }: AnimatedCounterProps) {
-  const [count, setCount] = useState(0)
+  // Initialize state to `end` so server HTML renders "20+" instead of "0+"
+  const [count, setCount] = useState(end)
   const { ref, isVisible } = useScrollAnimation<HTMLSpanElement>({ threshold: 0.5 })
   const hasAnimated = useRef(false)
 
   useEffect(() => {
     if (!isVisible || hasAnimated.current) return
     hasAnimated.current = true
+
+    setCount(0)
 
     const startTime = performance.now()
     const startValue = 0
