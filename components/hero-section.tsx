@@ -148,7 +148,7 @@ background: `radial-gradient(800px circle at calc(var(--mouse-x) * 100%) calc(va
                 lg:text-left
               "
             >
-              Hello, I'm
+              Hello, I'm{" "}
               <span className="text-primary block">
                 Steven Hoskins
               </span>
@@ -162,9 +162,9 @@ background: `radial-gradient(800px circle at calc(var(--mouse-x) * 100%) calc(va
             }`}
           >
             <div className="h-px flex-1 max-w-20 bg-gradient-to-r from-primary to-transparent" />
-            <span className="text-muted-foreground font-mono text-sm">
+            <h2 className="text-muted-foreground font-mono text-sm">
               Frontend Developer
-            </span>
+            </h2>
           </div>
         </div>
 
