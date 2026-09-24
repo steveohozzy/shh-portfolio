@@ -11,7 +11,7 @@ const allProjects = [
     title: "The Entertainer",
     subtitle: "SAP + All Front-end",
     description:
-      "Lead front-end developer for Britain's bigest toy store. Overseeing design process and creating editable and dynamic components for the client.",
+      "Lead front-end developer for Britain's biggest toy store. Overseeing design process and creating editable and dynamic components for the client.",
     tags: ["SAP", "HTML", "JS", "SASS", "Mulitiple Front-end"],
     image: "/TheEntertainer.png",
     link: "https://www.thetoyshop.com/",
