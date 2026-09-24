@@ -41,7 +41,12 @@ style={{ animationDelay: `${delay}s` }}
 export function HeroSection() {
 const containerRef = useRef<HTMLDivElement>(null)
 const [mounted, setMounted] = useState(false)
-const [isShortHeight, setIsShortHeight] = useState(false)
+
+const yearsOfExperience = new Date().getFullYear() - 2006 - (new Date().getMonth() < 5 ? 1 : 0)
+
+useEffect(() => {
+  setMounted(true)
+}, [])
 
 useEffect(() => {
 setMounted(true)
@@ -274,16 +279,12 @@ background: `radial-gradient(800px circle at calc(var(--mouse-x) * 100%) calc(va
               <div className="text-6xl xl:text-7xl font-bold text-primary">
                 {mounted ? (
                   <AnimatedCounter
-                    end={
-                      new Date().getFullYear() -
-                      2006 -
-                      (new Date().getMonth() < 5 ? 1 : 0)
-                    }
+                    end={yearsOfExperience}
                     suffix="+"
                     duration={2000}
                   />
                 ) : (
-                  <span>20+</span>
+                  <span>{yearsOfExperience}+</span>
                 )}
               </div>
 
