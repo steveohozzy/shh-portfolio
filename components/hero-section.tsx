@@ -41,6 +41,7 @@ style={{ animationDelay: `${delay}s` }}
 export function HeroSection() {
 const containerRef = useRef<HTMLDivElement>(null)
 const [mounted, setMounted] = useState(false)
+const [isShortHeight, setIsShortHeight] = useState(false)
 
 const yearsOfExperience = new Date().getFullYear() - 2006 - (new Date().getMonth() < 5 ? 1 : 0)
 
@@ -48,9 +49,6 @@ useEffect(() => {
   setMounted(true)
 }, [])
 
-useEffect(() => {
-setMounted(true)
-}, [])
 
 const handleMouseMove = useCallback((e: MouseEvent) => {
 const container = containerRef.current
