@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { Header } from "@/components/header"
 import { HeroSection } from "@/components/hero-section"
 import { ProjectsSection } from "@/components/projects-section"
@@ -5,13 +6,20 @@ import { SkillsSection } from "@/components/skills-section"
 import { ContactSection } from "@/components/contact-section"
 import { Footer } from "@/components/footer"
 
+export const metadata: Metadata = {
+  metadataBase: new URL('https://www.shhdesign.co.uk'),
+  alternates: {
+    canonical: '/',
+  },
+}
+
 export default function Home() {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Person",
     "name": "Steven Hoskins",
     "jobTitle": "Senior Frontend Developer",
-    "url": "https://shhdesign.co.uk",
+    "url": "https://www.shhdesign.co.uk", // Updated to match www
     "sameAs": [
       "https://uk.linkedin.com/in/steven-hoskins-8072709",
       "https://github.com/steveohozzy",
