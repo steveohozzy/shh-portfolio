@@ -8,13 +8,35 @@ const nextConfig = {
   },
   async redirects() {
     return [
+      // Exact matches for parent routes
       {
-        source: '/posts/:path*',
+        source: '/posts',
         destination: '/',
         permanent: true,
       },
       {
-        source: '/blog/:path*',
+        source: '/posts/',
+        destination: '/',
+        permanent: true,
+      },
+      // Wildcard matches for sub-routes
+      {
+        source: '/posts/:path+',
+        destination: '/',
+        permanent: true,
+      },
+      {
+        source: '/blog',
+        destination: '/',
+        permanent: true,
+      },
+      {
+        source: '/blog/',
+        destination: '/',
+        permanent: true,
+      },
+      {
+        source: '/blog/:path+',
         destination: '/',
         permanent: true,
       },
