@@ -6,6 +6,6 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: '*',
       allow: '/',
     },
-    sitemap: 'https://shhdesign.co.uk/sitemap.xml',
+    sitemap: 'https://www.shhdesign.co.uk/sitemap.xml',
   }
 }
