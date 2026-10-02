@@ -78,15 +78,14 @@ const nextConfig = {
         permanent: true,
       },
 
-      // Old responsive presentation page
       {
         source: '/responsive-presentation',
-        destination: '/',
+        destination: '/responsive-presentation/index.html',
         permanent: true,
       },
       {
         source: '/responsive-presentation/',
-        destination: '/',
+        destination: '/responsive-presentation/index.html',
         permanent: true,
       },
 
