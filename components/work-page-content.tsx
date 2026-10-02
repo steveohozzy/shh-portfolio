@@ -119,7 +119,7 @@ const allProjects = [
     tags: ["SFCC", "HTML", "ISML", "SASS", "JavaScript", "Figma"],
     image: "/hobbs.png",
     link: "https://www.hobbs.com/",
-    color: "from-emrald-500/20 to-blue-500/20",
+    color: "from-emerald-500/20 to-blue-500/20",
     accent: "#004e8c",
     categories: ["E-commerce", "SFCC"],
   },
@@ -309,7 +309,7 @@ function WorkProjectCard({
       className={cn("group relative animate-on-scroll", isVisible && "is-visible")}
       style={{ transitionDelay: `${index * 60}ms` }}
     >
-      <a href={project.link} target="_blank" rel="noopener noreferrer" className="block">
+      <a href={project.link} target="_blank" aria-label={`View ${project.title} website`} rel="noopener noreferrer" className="block">
         {/* Image Container */}
         <div className="relative aspect-[4/3] rounded-2xl overflow-hidden mb-6">
           {/* Gradient Overlay */}
@@ -323,7 +323,7 @@ function WorkProjectCard({
           {/* Image */}
           <img
             src={project.image || "/placeholder.svg"}
-            alt={project.title}
+            alt={`${project.title} website project`}
             loading="lazy"
             decoding="async"
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
