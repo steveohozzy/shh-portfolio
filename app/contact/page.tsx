@@ -6,6 +6,9 @@ import { ContactPageContent } from "@/components/contact-page-content"
 export const metadata: Metadata = {
   title: "Contact | SHH Design | Steven Hoskins | Frontend Developer",
   description: "Get in touch with Steven Hoskins for frontend development projects and collaborations.",
+  alternates: {
+    canonical: "https://www.shhdesign.co.uk/contact",
+  },
 }
 
 export default function ContactPage() {

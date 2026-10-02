@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   title: "Work | SHH Design | Steven Hoskins | Frontend Developer",
   description:
     "Explore my portfolio of frontend development projects including e-commerce, CMS implementations, and web applications.",
+  alternates: {
+    canonical: "https://www.shhdesign.co.uk/work",
+  },
 }
 
 export default function WorkPage() {

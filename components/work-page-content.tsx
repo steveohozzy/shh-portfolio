@@ -12,7 +12,7 @@ const allProjects = [
     subtitle: "SAP + All Front-end",
     description:
       "Lead front-end developer for Britain's biggest toy store. Overseeing design process and creating editable and dynamic components for the client.",
-    tags: ["SAP", "HTML", "JS", "SASS", "Mulitiple Front-end"],
+    tags: ["SAP", "HTML", "JS", "SASS", "Mulitiple frontend"],
     image: "/TheEntertainer.png",
     link: "https://www.thetoyshop.com/",
     color: "from-[#0d5d9c]/40 to-[#407ec9]/40",
@@ -102,7 +102,7 @@ const allProjects = [
     title: "Bogner",
     subtitle: "SFCC Implementation",
     description:
-      "I was responsible for all frontend related work on this project, creating many creative page designer components. Intuitive and easy to understand in the backend for the client, so a creative multiple layout website was availble to the customer.",
+      "I was responsible for all frontend related work on this project, creating many creative page designer components. Intuitive and easy to understand in the backend for the client, so a creative multiple layout website was availible to the customer.",
     tags: ["SFCC", "HTML", "ISML", "SASS", "JavaScript", "Figma"],
     image: "/bogner.png",
     link: "https://www.bogner.com/en-gb/",
@@ -180,7 +180,7 @@ const allProjects = [
     title: "Camp Chef",
     subtitle: "SFCC Implementation",
     description:
-      "New SFCC implementation of the Camp Chef Site, creating reusuable components that were fully editable by the client. Free reign on redesign of site to make it more modern and useable.",
+      "New SFCC implementation of the Camp Chef Site, creating re-usuable components that were fully editable by the client. Free reign on redesign of site to make it more modern and useable.",
     tags: ["SFCC", "HTML", "ISML", "SASS", "JavaScript", "Figma"],
     image: "/campchef.png",
     link: "https://www.campchef.com/",
@@ -232,7 +232,7 @@ const allProjects = [
     title: "GIRO",
     subtitle: "SFCC Implementation",
     description:
-      "Implementation of the GIRO e-commerce website. Translating UI Design into a working ighly performant website and adding interactivity.",
+      "Implementation of the GIRO e-commerce website. Translating UI Design into a working highly performant website and adding interactivity.",
     tags: ["SFCC", "HTML", "ISML", "SASS", "JavaScript", "Figma"],
     image: "/giro.png",
     link: "https://www.giro.com/",
@@ -245,7 +245,7 @@ const allProjects = [
     title: "Remington",
     subtitle: "SFCC Implementation",
     description:
-      "Implementation of the Remington Amuunition e-commerce website. Translating UI Design into a working website and adding interactivity.",
+      "Implementation of the Remington Amunition e-commerce website. Translating UI Design into a working website and adding interactivity.",
     tags: ["SFCC", "HTML", "ISML", "SASS", "JavaScript", "Figma"],
     image: "/remington.webp",
     link: "https://www.remington.com/",
@@ -258,7 +258,7 @@ const allProjects = [
     title: "Fahrrad.de",
     subtitle: "SFCC Implementation",
     description:
-      "Implementation of the Fahrrad.de bycicle e-commerce website. Translating UI Design into a working website and adding interactivity.",
+      "Implementation of the Fahrrad.de bicycle e-commerce website. Translating UI Design into a working website and adding interactivity.",
     tags: ["SFCC", "HTML", "ISML", "SASS", "JavaScript", "Figma"],
     image: "/fahrrad.png",
     link: "https://www.fahrrad.de/",
