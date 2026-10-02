@@ -89,6 +89,12 @@ const nextConfig = {
         permanent: true,
       },
 
+      {
+        source: '/index.html',
+        destination: '/',
+        permanent: true,
+      },
+
     ]
   },
 
