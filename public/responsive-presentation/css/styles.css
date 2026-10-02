@@ -1,0 +1,337 @@
+@media screen {
+	@font-face {
+		font-family: 'Qwigley';
+		font-style: normal;
+		font-weight: 400;
+		src: url('../fonts/Qwigley-Regular.ttf') format('truetype');
+	}
+
+	@font-face {
+		font-family: 'Yanone Kaffeesatz';
+		font-style: normal;
+		font-weight: 400;
+		src: url('../fonts/YanoneKaffeesatz-Regular.ttf') format('truetype');
+	}
+
+	@font-face {
+		font-family: 'Yanone Kaffeesatz';
+		font-style: normal;
+		font-weight: 200;
+		src: url('../fonts/YanoneKaffeesatz-ExtraLight.ttf') format('truetype');
+	}
+
+	@font-face {
+		font-family: 'Yanone Kaffeesatz';
+		font-style: normal;
+		font-weight: 300;
+		src: url('../fonts/YanoneKaffeesatz-Light.ttf') format('truetype');
+	}
+}
+
+body {
+	background: url('../img/bg.jpg');
+	color: #2d3e46;
+	font-family: 'Yanone Kaffeesatz', Helvetica, Arial, sans-serif;
+	font-size: 58px;
+	font-weight: 300;
+}
+
+h1, .h1 {
+	color: #3e606f;
+	font-family: 'Qwigley', Georgia, cursive;
+	font-size: 124px;
+	font-weight: 400;
+	line-height: 70px;
+	margin: 0 0 50px 0;
+}
+
+h2, .h2 {
+	font-size: 64px;
+	font-weight: 400;
+	line-height: 60px;
+	margin: 10px 0 30px 0;
+}
+
+h3, .h3 {
+	color: #2d3e46;
+	font-family: 'Yanone Kaffeesatz', sans-serif;
+	font-size: 42px;
+	font-weight: 400;
+	line-height: 42px;
+	margin: 0;
+}
+
+ul {
+	margin: 0 0 20px;
+	padding-left: 70px;
+}
+
+strong {
+	font-weight: 400;
+}
+
+.compact {margin: 0;}
+
+.notes {
+	font-size: 36px;
+	line-height: 32px;
+}
+
+.fail {
+	color: #8b2828;
+	font-weight: bold;
+	margin-top: -20px;
+}
+
+.pass {
+	color: #304a34;
+	font-weight: bold;
+	margin-top: -20px;
+}
+
+.asterisk-div {
+	font-size: 42px;
+	padding: 0 6px;
+}
+
+.step {
+	height: 600px;
+	padding: 60px;
+	width: 880px;
+}
+
+.maxxed {
+	padding: 60px 0;
+	width: 1000px;
+}
+
+.maxxed-v {
+	height: 720px;
+	padding: 0;
+	width: 1000px;
+}
+
+.mid-width {
+	width: 820px;
+}
+
+.portrait {
+	height: 720px;
+	padding: 0;
+	width: 640px;
+}
+
+.centered {
+	height: 520px;
+	text-align: center;
+	padding-top: 200px;
+}
+
+.testing {
+	height: 520px;
+	padding: 200px 0 0 190px;
+	width: 810px;
+}
+
+.slide {
+	background: #d8e0c7;
+	border: 10px solid #fff;
+	-moz-border-radius: 25px;
+	-webkit-border-radius: 25px;
+	border-radius: 25px;
+	-moz-box-shadow: 0px 0px 5px rgba(0,0,0,.3);
+	-webkit-box-shadow: 0px 0px 5px rgba(0,0,0,.3);
+	box-shadow: 0px 0px 5px rgba(0,0,0,.3);
+}
+
+.slide-large {
+	height: 720px;
+	width: 1000px;
+}
+
+.impress-supported .fallback-message {
+	display: none;
+}
+
+.vspace {
+	margin-top: 10px;
+}
+
+/* SPECIFIC CONTAINER AND TEXT STYLES */
+
+.what-is-responsive {
+	height: 520px;
+	padding: 200px 0 0 70px;
+	width: 860px;
+}
+
+	.txt-whatis {
+		font-size: 64px;
+		padding-left: 90px;
+	}
+
+	.txt-ethan {
+		font-size: 40px;
+		margin-top: -5px;
+		padding-left: 150px;
+	}
+
+
+.getting-started {
+	height: 520px;
+	padding: 200px 0 0 0;
+	text-align: center;
+	width: 1000px;
+}
+
+	.getting-started h1 {
+		font-size: 150px;
+		padding: 0 0 0 70px;
+	}
+
+	.txt-getting-started {
+		margin-left: -90px;
+	}
+
+.tips-tricks {
+	height: 520px;
+	padding: 200px 0 0 0;
+	width: 1000px;
+}
+
+	.tips-tricks h1 {
+		padding-left: 130px;
+	}
+
+	.txt-tips-tricks {
+		margin-top: -55px;
+		padding-left: 230px;
+	}
+
+.quote {
+	height: 500px;
+	padding: 160px 0 60px 90px;
+	width: 910px;
+}
+
+	.credit {
+		padding-right: 105px;
+		text-align: right;
+	}
+
+.everybodys-doing-it {
+	padding: 150px 0 0 110px;
+}
+
+.title-slide {
+	padding-top: 200px;
+	text-align: center;
+}
+	.title-slide h1 {
+		margin-left: -25px;
+	}
+
+/* LISTS */
+
+.large-list {
+	font-size: 64px;
+	line-height: 64px;
+}
+
+	.large-list li {
+		margin-bottom: 35px;
+	}
+
+.small-list {
+	font-size: 44px;
+	line-height: 48px;
+}
+
+	.small-list li {
+		margin-bottom: 30px;
+	}
+
+.smallest-list {
+	font-size: 32px;
+	line-height: 34px;
+	margin-top: -10px;
+}
+
+	.smallest-list li {
+		margin-bottom: 18px;
+	}
+
+.thank-you {
+	height: 500px;
+	padding: 160px 60px 60px 160px;
+	width: 780px;
+}
+
+a, a:visited {
+	color: #3e606f;
+}
+
+
+/* CODE */
+
+pre {
+	background-color: rgba(255,255,255, .6);
+	border: 0;
+	-moz-border-radius: 15px;
+	-webkit-border-radius: 15px;
+	border-radius: 15px;
+	display: block;
+	font-family: Monaco, monospace;
+	font-size: 24px;
+	line-height: 38px;
+	margin: 12px 0 0 0;
+	padding: 20px 0 20px 20px;
+	outline: 0;
+	overflow: auto;
+}
+
+.highlight {
+	background: #8b2828;
+	color: #fff;
+	padding: 2px 4px;
+}
+
+/* IMAGES */
+.img-box {
+	background-color: #fff;
+	margin: 10px 0;
+	padding: 20px;
+}
+
+.img-box-full {
+	background-color: rgba(255,255,255, .6);
+	border: 0;
+	-moz-border-radius: 15px;
+	-webkit-border-radius: 15px;
+	border-radius: 15px;
+	padding: 20px;
+	text-align: center;
+}
+
+/* Example Page Styles */
+.example-page .slide {
+	font-size: 22px;
+	margin: 5% auto;
+	padding: 3%;
+	width: 60%;
+}
+
+.alert {
+	background-color: #8b2828;
+	-moz-border-radius: 10px;
+	-webkit-border-radius: 10px;
+	border-radius: 10px;
+	color: #fff;
+	display: none;
+	padding: 10px 12px 12px;
+}
+
+.console-text,
+.console-title {
+	display: none;
+}

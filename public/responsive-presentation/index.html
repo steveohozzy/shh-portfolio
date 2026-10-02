@@ -1,0 +1,269 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=1024" />
+	<meta name="apple-mobile-web-app-capable" content="yes" />
+	<title>Responsive Web Design Presentation by Stebven Hoskins</title>
+	<meta name="description" content="Responsive design is everywhere. This presentation aims to get you up to speed on what it is and what you need to know from wireframing onwards." />
+	<meta name="author" content="Rona Kilmer" />
+	<link href="css/styles.css" rel="stylesheet" />
+</head>
+
+<body class="impress-not-supported">
+
+<div class="fallback-message">
+	<p>Your browser <b>doesn't support the features required</b> by impress.js, so you are presented with a simplified version of this presentation.</p>
+	<p>For the best experience please use the latest <b>Chrome</b>, <b>Safari</b> or <b>Firefox</b> browser.</p>
+</div>
+
+<div id="impress">
+	<div class="step title-slide" data-x="0" data-y="0" data-rotate="90">
+		<h1>Responsive Web Design<br><span class="title-wordpress">&amp; Wireframing</span></h1>
+		Steve Hoskins <span class="asterisk-div">*</span> Webmaster
+	</div>
+
+	<div class="step what-is-responsive" data-x="0" data-y="1000">
+		<div class="txt-whatis">What is</div>
+		<h1 class="compact">Responsive Web Design</h1>
+        <div class="txt-ethan">and why is it important?</div>
+		<p style="margin: 20px 0px 0px 0px; padding: 0px; text-align: center;"><img src="img/screens.png" alt="Responsive screens" /></p>
+	</div>
+
+	<div class="step title-slide" data-x="1500" data-rotate="90" data-y="1000" style="padding-top: 0px;">
+		<h1 class="compact">It is flexible,<br><span class="title-wordpress" style="margin-left: 80px;">device-independent</span><br>design for the web</h1>
+        (one size fits all*)<br>
+		<img src="img/vs.png" alt="Regent College responsive website shots" />
+	</div>
+
+	<div class="step" data-x="3000" data-y="1000">
+		<img src="img/hmv.png" alt="Responsive screens" style="width: 100%; height: auto;" />
+	</div>
+
+
+	<div class="step" data-x="0" data-y="2000">
+		<h1>Responsive vs. Mobile Site</h1>
+		<h2>Responsive</h2>
+		<ul>
+			<li>1 set of content &amp; code to maintain</li>
+			<li>Everyone gets the same content</li>
+		</ul>
+		<h2>Mobile</h2>
+		<ul>
+			<li>Can focus user tasks</li>
+			<li>Can be lean and fast</li>
+		</ul>
+	</div>
+
+	<div class="step" data-x="1500" data-y="2000">
+		<h1>Basic Components</h1>
+		<ul class="large-list">
+			<li>Flexible layout</li>
+			<li>Fluid images and media</li>
+			<li>Media queries</li>
+		</ul>
+	</div>
+
+	<div class="step maxxed quote" data-x="3000" data-y="2000">
+		<em>"HTML is responsive by default; it's only not<br />responsive if you tell it not to be by giving a<br />pixel value somewhere"</em>
+		<div class="credit">-Chris Coyier</div>
+	</div>
+
+	<div class="step maxxed-v" data-x="4500" data-y="2000">
+    	<h1>Flexible grids</h1>
+        <img src="img/960.png" alt="flexible-grid" style="width: 45%; height: auto;"/>
+		<img src="img/flexible-grid.png" alt="flexible-grid" style="width: 45%; height: auto;" />
+	</div>
+
+	<div class="step portrait" data-x="6000" data-y="2000">
+		<h1>What are they?</h1>
+		They are grids just as you know them... but they have evolved!<br>
+		It is adapting the grid when there simply isn't enough room! (you try fitting 16 columns into a mobile screen I dare ya!)
+	</div>
+
+	<div class="step portrait" data-x="7500" data-y="2000">
+		<h1>Just like this</h1>
+		<img src="img/grid.png" alt="image fixed in mobile"  style="width: 100%; height: auto;"/>
+	</div>
+
+	<div class="step portrait" data-x="9000" data-y="2000">
+		uses 12 column grid<br>
+		<img src="img/grid-highlight.png" alt="image fixed in mobile" style="width: 100%; height: auto;" />
+	</div>
+
+	<div class="step portrait" data-x="10500" data-y="2000" style="padding-top: 0px;">
+		On mobile becomes<br>
+		<img src="img/grid-mobile.png" alt="responsive video problem" style="max-height: 100%;" />
+	</div>
+
+	<div class="step maxxed" data-x="12000" data-y="2000">
+		<h1>Real world examples</h1>
+        <img src="img/luck-is.png" alt="responsive video problem" style="max-height: 100%;" />
+	</div>
+
+	<div class="step maxxed" data-x="13500" data-y="2000">
+		<img src="img/spark-box.png" alt="responsive video problem" style="max-height: 100%;" />
+        <img src="img/smashing-mag.png" alt="responsive video problem" style="max-height: 100%;" />
+	</div>
+
+	<div class="step maxxed" data-x="15000" data-y="2000">
+		<h1>Why is the grid important</h1>
+		It always has been but today it is even more important to be able to build nice responsive sites.<br>It is all about understanding the ratio-based relationship between element and container.
+	</div>
+
+	<div class="step maxxed-v" data-x="16500" data-y="2000">
+		<h1>Say What???</h1>
+        Yeah exactly this is what us coders have to do!<br>
+        Target &divide; context x 100 = result
+		
+	</div>
+
+	<div class="step maxxed" data-x="18000" data-y="2000">
+		<h1>Seriously wtf?</h1>
+		ok ok, so we have this, but it is pixel based it will not be responsive:
+        <img src="img/measurements.png" alt="responsive video problem" style="max-height: 100%;" />
+	</div>
+    
+    <div class="step maxxed" data-x="20000" data-y="2000">
+		To make it responsive it needs to be percentages.<br>
+        columns - 320 &divide; 980 x 100 = 32.6530612244898%<br>
+        margin space - 10 &divide; 980 x 100 = 1.02040816%
+	</div>
+
+	<div class="step" data-x="23000" data-y="2000" data-rotate="90">
+		Styling is therefore:<br>
+		<pre>
+.third {
+	width: 32.6530612244898%;
+	margin-right: 1.020408163265306%;
+}
+</pre>
+	</div>
+    
+    <div class="step" data-x="25000" data-y="2000">
+		Now try doing that with a non-existent grid! and get it to work across multiple screen sizes! <br>
+<br>
+There are 99 screen sizes the iPhone is one. (say that like Jay-Z)
+	</div>
+    
+    <div class="step" data-x="30000" data-y="2000">
+		Generally myself I would use the more standard 33.33% and then use a fixed padding within columns to give the same space no matter what size screen you are on. But that can still only work on a responsive grid system.
+	</div>
+
+	<div class="step" data-x="1500" data-y="3000">
+		<h1>What about wireframing?</h1>
+		The same rules apply, you need to know your proposed layout will work. Will it flow naturally on smaller devices? It cannot be too rigid so that it cannot adapt to every screen size. Remember it is not just a desktop and a mobile version it is a structure that is fluid.
+	</div>
+
+	<div class="step maxxed" data-x="3000" data-y="3000" data-rotate="90">
+		<h1>Pencil and paper are your friends</h1>
+        <img src="img/paper.png" alt="responsive video problem" style="max-height: 100%;" />
+	</div>
+
+	<div class="step" data-x="4500" data-y="3000">
+		Doodle out a quick wireframe idea. Why spend all the time drawing them if then they don't work? Run some tests fold the note in half can you see where it could naturally flow down? A column drop? Will the content shrink too much? if so what should it do? Should it drop? Cut? Increase depth?
+	</div>
+
+	<div class="step" data-x="6000" data-y="3000" style="padding-top: 0px;">
+		<h1>Checkout this tool</h1>
+		<a href="http://www.lifeishao.com/rwdwire/" target="_blank">http://www.lifeishao.com/rwdwire/</a>
+        <img src="img/wireframes.png" alt="responsive video problem" style="max-height: 100%;" />
+	</div>
+
+	<div class="step tips-tricks" data-x="7500" data-y="3000" data-rotate="90">
+		It is an in browser tool that enables you to add break points for your main screen sizes and show how you expect your wireframe to react at certain points. You can save your wireframes and send them too, cool ey! It can help you get a better understanding of how your proposed wireframe will work and how possible or how much work it will be.
+	</div>
+
+	<div class="step title-slide" data-x="1500" data-y="4000">
+		<h1>Mindsets</h1>
+		<h2>Mobile first or progressive enhancement<br>V<br>Graceful degradation or desktop first</h2>
+	</div>
+
+	<div class="step" data-x="3000" data-y="4000" data-rotate="90">
+		<h1>Mobile first</h1>
+		This is where a site is made to work and fit best on a mobile device. Keeping images, scripts etc to as minimal as possible and giving the user a very nice and quick experience. Then, for larger devices, bringing in more content or adding more to it. This is probably the most popular way at the moment.
+	</div>
+
+	<div class="step" data-x="4500" data-y="4000">
+		<h1>Desktop First</h1>
+		This is where you give the site all the whizz bang large graphics and whatever else you want and make the desktop version first and then bring that all back as the screen and device changes. Remember just because that image looks smaller the actual physical size is still as big as the original so that mobile user will be downloading that huge image.
+	</div>
+
+	<div class="step" data-x="1500" data-y="5000">
+		<h1>What do I think?</h1>
+		<strong>Well thanks for asking!</strong> But basically the choice is yours! All that I 100% say is take elements from the mobile first approach. This should always be in your mind when you are designing or wireframing your project. If it has to work on mobile then you have to build the full version to be able to adapt down the screen sizes. Putting in a million breakpoints is not the answer!!!
+	</div>
+
+	<div class="step" data-x="1500" data-y="6000">
+		<h1>You just said breakpoints... do go on</h1>
+		But let's keep this one short yeah, there has been enough jibba-jabba!
+	</div>
+
+
+	<div class="step" data-x="3000" data-y="6000">
+		Break points in RWD are browser widths that have a media query declaration to change the layout once the browser is within the declared range.
+	</div>
+
+	<div class="step" data-x="1500" data-y="7000">
+		<h2>Nope, you've lost me again!</h2>
+        ok ok, let me simplify this a bit
+	</div>
+
+	<div class="step maxxed-v" data-x="3000" data-y="7000">
+		Media queries are something the developer puts in place to adjust the layout when it is needed to. i.e these 4 columns look realy silly at 25% of a mobile screen so when you are on a mobile screen go full width please.
+	</div>
+    
+    <div class="step maxxed-v" data-x="4500" data-y="7000">
+		<h1>Like this</h1>
+        <pre>
+/* Desktop styles */
+.quarter {
+	width: 25%;
+}
+/* Smartphones (portrait and landscape) */
+@media only screen 
+and (min-device-width : 320px) 
+and (max-device-width : 480px) {
+	.quarter {
+    	width: 100%;
+    }
+}
+        </pre>
+	</div>
+
+	<div class="step maxxed-v" data-x="6000" data-y="7000">
+		But that's enough of that! The least amount of breakpoints you have to put in the better it means the design and wireframe were and how 'fluid' it is.
+	</div>
+
+
+	<div class="step" data-x="1500" data-y="8000" data-rotate="90">
+		<h1>Conclusion</h1>
+		In a nutshell when it comes to wireframing and designing responsively it all comes down to having it gridded out correctly and to need to 'break' as least as possible (that is why they are called breakpoints). If it is laid out correctly in a working fluid grid from the very start the quicker the process will be for all teams and the better the final result and user experience.
+	</div>
+
+	<div class="step maxxed" data-x="3000" data-y="8000" data-rotate="180">
+		<em>"Webdesign is responsive design.<br>Responsive Webdesign is web design done right"</em>
+	<div class="credit">-Andy Clarke</div>
+	</div>
+
+	<div class="step maxxed-v mid-width" data-x="4500" data-y="8000">
+		<h1>Further help, inspiration and suggestions</h1>
+        <ul>
+        	<li><a href="http://www.abookapart.com/products/responsive-web-design" target="_blank">A Book Apart responsive web design</a></li>
+            <li><a href="http://www.thismanslife.co.uk/projects/lab/responsivewireframes/" target="_blank">Example layouts and how they could respond wireframes</a></li>
+            <li><a href="http://blog.mockupbuilder.com/10-awesome-examples-of-responsive-wireframes/" target="_blank">10 awesome examples of responsive wireframes</a></li>
+            <li><a href="http://www.lifeishao.com/rwdwire/" target="_blank">That responsive wireframing tool I mentioned earlier</a></li>
+            <li><a href="http://shhdesign.co.uk/designing-responsively/" target="_blank">An article by me - designing responsively</a></li>
+        </ul>
+	</div>
+
+	
+</div>
+
+<script src="js/impress.js"></script>
+<script>impress().init();</script>
+<script src="js/jquery-1.8.2.min.js"></script>
+<script src="js/scripts.js"></script>
+</body>
+</html>
