@@ -13,7 +13,6 @@ const nextConfig = {
   async redirects() {
     return [
 
-      // Old posts
       {
         source: '/posts',
         destination: '/',
@@ -29,8 +28,6 @@ const nextConfig = {
         destination: '/',
         permanent: true,
       },
-
-      // Old blog
       {
         source: '/blog',
         destination: '/',
@@ -46,15 +43,11 @@ const nextConfig = {
         destination: '/',
         permanent: true,
       },
-
-      // Old individual work/project pages
       {
         source: '/work/:path+',
         destination: '/work',
         permanent: true,
       },
-
-      // Old Bloodborne URL
       {
         source: '/bloodborne',
         destination: '/bloodborne/index.html',
@@ -65,8 +58,6 @@ const nextConfig = {
         destination: '/bloodborne/index.html',
         permanent: true,
       },
-
-      // Old author page
       {
         source: '/author/hoskinshozzy',
         destination: '/',
@@ -91,6 +82,30 @@ const nextConfig = {
 
       {
         source: '/index.html',
+        destination: '/',
+        permanent: true,
+      },
+
+      {
+        source: '/rock-paper-scissors',
+        destination: '/rock-paper-scissors/index.html',
+        permanent: true,
+      },
+
+      {
+        source: '/rock-paper-scissors/',
+        destination: '/rock-paper-scissors/index.html',
+        permanent: true,
+      },
+
+      {
+        source: '/the-use-of-basic-shapes-and-colour-in-design-the-influence-of-the-bauhaus',
+        destination: '/',
+        permanent: true,
+      },
+
+      {
+        source: '/the-use-of-basic-shapes-and-colour-in-design-the-influence-of-the-bauhaus/',
         destination: '/',
         permanent: true,
       },
