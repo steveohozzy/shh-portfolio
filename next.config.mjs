@@ -110,6 +110,12 @@ const nextConfig = {
         permanent: true,
       },
 
+      {
+        source: '/wp-content/uploads/2016/07/May-the-film-be-with-you.pdf',
+        destination: '/',
+        permanent: true,
+      },
+
     ]
   },
 
