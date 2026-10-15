@@ -17,7 +17,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore"
 import { db } from "@/lib/firebase"
-import "./squishy-dumpling-game.css"
+import "./squishy-dumpling-game.css";
 
 type GamePhase = "ready" | "playing" | "finished"
 
@@ -181,7 +181,7 @@ export function SquishyDumplingGameContent() {
   const [phase, setPhase] = useState<GamePhase>("ready")
   const [baos, setBaos] = useState<Bao[]>([])
   const [score, setScore] = useState(0)
-  const [timeLeft, setTimeLeft] = useState(ROUND_LENGTH)
+  const [timeLeft, setTimeLeft] = useState<number>(GAME_CONFIG.roundLength)
   const [combo, setCombo] = useState(0)
   const [bestScore, setBestScore] = useState(0)
   const [collection, setCollection] = useState<BaoType[]>([])
@@ -216,7 +216,8 @@ export function SquishyDumplingGameContent() {
   const lastSpawnAt = useRef(0)
   const endAt = useRef(0)
   const frenzyUntil = useRef(0)
-  const frenzyTriggered = useRef(false)
+  const frenzyCount = useRef(0)
+  const nextFrenzyCombo = useRef<number>(GAME_CONFIG.frenzyCombo)
   const collectionRef = useRef<BaoType[]>([])
   const popupId = useRef(0)
   const launchEffectId = useRef(0)
@@ -312,7 +313,8 @@ export function SquishyDumplingGameContent() {
     lastSpawnAt.current = now - 500
     endAt.current = now + ROUND_LENGTH * 1000
     frenzyUntil.current = 0
-    frenzyTriggered.current = false
+    frenzyCount.current = 0
+    nextFrenzyCombo.current = GAME_CONFIG.frenzyCombo
     nextId.current = 0
     launchEffectId.current = 0
     burstSpawnsRemaining.current = 0
@@ -431,7 +433,7 @@ export function SquishyDumplingGameContent() {
         (burstSpawnsRemaining.current > 0
           ? 300
           : Math.max(
-              400,
+              350,
               GAME_CONFIG.spawnInterval - scoreRef.current * 1.5,
             )) * (matchaSlowIsActive ? 1.8 : 1)
 
@@ -606,14 +608,21 @@ export function SquishyDumplingGameContent() {
       ])
 
       if (
-        nextCombo >= GAME_CONFIG.frenzyCombo &&
-        !frenzyTriggered.current
+        nextCombo >= nextFrenzyCombo.current &&
+        frenzyUntil.current <= now
       ) {
-        frenzyTriggered.current = true
+        frenzyCount.current += 1
+
+        nextFrenzyCombo.current =
+          GAME_CONFIG.frenzyCombo + frenzyCount.current * 5
+
         frenzyUntil.current = now + GAME_CONFIG.frenzyDuration
+
         setFrenzyActive(true)
-        setFrenzyTimeLeft(Math.ceil(GAME_CONFIG.frenzyDuration / 1000))
-      }
+        setFrenzyTimeLeft(
+          Math.ceil(GAME_CONFIG.frenzyDuration / 1000),
+        )
+}
 
       if (!collectionRef.current.includes(bao.type)) {
         const updatedCollection = [...collectionRef.current, bao.type]
@@ -683,15 +692,12 @@ export function SquishyDumplingGameContent() {
       setPlayerName(name)
       setScoreSubmitted(true)
       setSubmitMessage("Your score is on the leaderboard!")
-    
-      } catch (error) {
-        console.error("Bao score submission failed:", error)
-
-        setSubmitMessage("Couldn't submit your score. Please try again.")
-      } finally {
-        setScoreSubmitting(false)
-      }
-
+    } catch (error) {
+      console.error("Bao score submission failed:", error)
+      setSubmitMessage("Couldn't submit your score. Please try again.")
+    } finally {
+      setScoreSubmitting(false)
+    }
   }, [phase, playerName, score, scoreSubmitted, scoreSubmitting])
 
   const isNewBest =

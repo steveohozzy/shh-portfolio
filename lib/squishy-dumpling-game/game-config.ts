@@ -1,8 +1,8 @@
 export const GAME_CONFIG = {
   roundLength: 60,
-  spawnInterval: 1050,
+  spawnInterval: 800,
   minimumSpawnInterval: 350,
-  maximumVisibleBaos: 7,
+  maximumVisibleBaos: 8,
 
   comboWindow: 1500,
   comboStep: 3,
