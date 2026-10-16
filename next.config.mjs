@@ -1,7 +1,5 @@
 /** @type {import('next').NextConfig} */
-
 const nextConfig = {
-
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -12,113 +10,62 @@ const nextConfig = {
 
   async redirects() {
     return [
-
+      // Clean catch-alls for old WordPress paths
       {
-        source: '/posts',
+        source: '/posts/:path*',
         destination: '/',
         permanent: true,
       },
       {
-        source: '/posts/',
+        source: '/blog/:path*',
         destination: '/',
         permanent: true,
       },
       {
-        source: '/posts/:path+',
+        source: '/author/hoskinshozzy/:path*',
         destination: '/',
         permanent: true,
       },
       {
-        source: '/blog',
+        source: '/the-use-of-basic-shapes-and-colour-in-design-the-influence-of-the-bauhaus/:path*',
         destination: '/',
         permanent: true,
       },
-      {
-        source: '/blog/',
-        destination: '/',
-        permanent: true,
-      },
-      {
-        source: '/blog/:path+',
-        destination: '/',
-        permanent: true,
-      },
+      // Collapse sub-work paths safely
       {
         source: '/work/:path+',
         destination: '/work',
         permanent: true,
       },
+      // Mini-games and presentations (handles /bloodborne AND /bloodborne/ cleanly)
       {
-        source: '/bloodborne',
+        source: '/bloodborne/:path*',
         destination: '/bloodborne/index.html',
         permanent: true,
       },
       {
-        source: '/bloodborne/',
-        destination: '/bloodborne/index.html',
-        permanent: true,
-      },
-      {
-        source: '/author/hoskinshozzy',
-        destination: '/',
-        permanent: true,
-      },
-      {
-        source: '/author/hoskinshozzy/',
-        destination: '/',
-        permanent: true,
-      },
-
-      {
-        source: '/responsive-presentation',
-        destination: '/responsive-presentation/index.html',
-        permanent: true,
-      },
-      {
-        source: '/responsive-presentation/',
-        destination: '/responsive-presentation/index.html',
-        permanent: true,
-      },
-
-      {
-        source: '/index.html',
-        destination: '/',
-        permanent: true,
-      },
-
-      {
-        source: '/rock-paper-scissors',
+        source: '/rock-paper-scissors/:path*',
         destination: '/rock-paper-scissors/index.html',
         permanent: true,
       },
-
       {
-        source: '/rock-paper-scissors/',
-        destination: '/rock-paper-scissors/index.html',
+        source: '/responsive-presentation/:path*',
+        destination: '/responsive-presentation/index.html',
         permanent: true,
       },
-
-      {
-        source: '/the-use-of-basic-shapes-and-colour-in-design-the-influence-of-the-bauhaus',
-        destination: '/',
-        permanent: true,
-      },
-
-      {
-        source: '/the-use-of-basic-shapes-and-colour-in-design-the-influence-of-the-bauhaus/',
-        destination: '/',
-        permanent: true,
-      },
-
+      // Old files/pages
       {
         source: '/wp-content/uploads/2016/07/May-the-film-be-with-you.pdf',
         destination: '/',
         permanent: true,
       },
-
+      {
+        source: '/index.html',
+        destination: '/',
+        permanent: true,
+      },
     ]
   },
-
 }
 
 export default nextConfig

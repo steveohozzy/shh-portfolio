@@ -1,0 +1,670 @@
+
+.squishy-game {
+  --squishy-ink: #573e4a;
+  --squishy-pink: #f7dce7;
+  --squishy-pink-dark: #e8b7cc;
+  --squishy-cream: #fffaf5;
+
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 48px 24px 36px;
+  color: var(--squishy-ink);
+}
+
+.squishy-game,
+.squishy-game * {
+  box-sizing: border-box;
+}
+
+.squishy-game__intro {
+  max-width: 690px;
+  margin: 0 auto 30px;
+  text-align: center;
+}
+
+.squishy-game__eyebrow {
+  display: inline-block;
+  margin-bottom: 12px;
+  color: #b16c91;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.19em;
+}
+
+.squishy-game__intro h1 {
+  margin: 0;
+  color: var(--squishy-ink);
+  font-size: clamp(36px, 6vw, 64px);
+  font-weight: 800;
+  letter-spacing: -0.055em;
+  line-height: 1.05;
+}
+
+.squishy-game__intro p {
+  max-width: 490px;
+  margin: 15px auto 0;
+  color: #866d7a;
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.squishy-game__toy {
+  overflow: hidden;
+  border: 1px solid #f0dce5;
+  border-radius: 28px;
+  background: var(--squishy-cream);
+  box-shadow:
+    0 24px 70px rgba(105, 63, 85, 0.09),
+    0 4px 12px rgba(105, 63, 85, 0.04);
+}
+
+.squishy-game__topbar {
+  display: flex;
+  min-height: 66px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 15px 22px;
+  border-bottom: 1px solid #f1e3e9;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.squishy-game__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: #937b88;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+}
+
+.squishy-game__status-dot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  border-radius: 50%;
+  background: #b8cba2;
+  box-shadow: 0 0 0 4px rgba(184, 203, 162, 0.17);
+  transition: background 180ms ease, box-shadow 180ms ease;
+}
+
+.squishy-game__status-dot.is-active {
+  background: #e889b1;
+  box-shadow: 0 0 0 5px rgba(232, 137, 177, 0.18);
+}
+
+.squishy-game__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.squishy-game__icon-button {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 7px 12px;
+  border: 1px solid #f0dce5;
+  border-radius: 999px;
+  background: #fff;
+  color: #785b6b;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    transform 160ms ease;
+}
+
+.squishy-game__icon-button:hover {
+  transform: translateY(-1px);
+  border-color: #e3b5ca;
+  background: #fff6fa;
+}
+
+.squishy-game__icon-button:focus-visible,
+.squishy-game__choice:focus-visible {
+  outline: 3px solid #ca8eac;
+  outline-offset: 3px;
+}
+
+.squishy-game__icon-button:first-letter {
+  font-size: 17px;
+}
+
+.squishy-game__playfield {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 50% 40%, #fff7fb 0%, #fffaf5 62%, #fcf0f5 100%);
+}
+
+.squishy-game__canvas {
+  display: block;
+  width: 100%;
+  height: clamp(360px, 54vw, 550px);
+  touch-action: none;
+  cursor: grab;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.squishy-game__canvas {
+  touch-action: none;
+}
+
+.squishy-game__hint {
+  position: absolute;
+  right: 16px;
+  bottom: 15px;
+  left: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  pointer-events: none;
+  color: #a18494;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.squishy-game__hint-icon {
+  color: #d38baa;
+  font-size: 16px;
+}
+
+.squishy-game__picker {
+  padding: 22px 24px 26px;
+  border-top: 1px solid #f1e3e9;
+  background: #fff;
+}
+
+.squishy-game__picker-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.squishy-game__picker-heading > span:first-child {
+  color: #997b8b;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+}
+
+.squishy-game__picker-subtitle {
+  color: #b09aa6;
+  font-size: 12px;
+}
+
+.squishy-game__choices {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.squishy-game__choice {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 6px 10px;
+  border: 1px solid transparent;
+  border-radius: 17px;
+  background: transparent;
+  color: var(--squishy-ink);
+  cursor: pointer;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    transform 180ms ease;
+}
+
+.squishy-game__choice:hover {
+  transform: translateY(-3px);
+  background: #fff8fb;
+}
+
+.squishy-game__choice.is-selected {
+  border-color: #e8bed1;
+  background: #fff5f9;
+  box-shadow: 0 4px 14px rgba(186, 117, 150, 0.1);
+}
+
+.squishy-game__swatch {
+  position: relative;
+  display: block;
+  width: 66px;
+  height: 57px;
+  flex: 0 0 auto;
+  border: 1px solid var(--swatch-dark);
+  border-radius: 48% 48% 43% 43% / 54% 54% 43% 43%;
+  background:
+    radial-gradient(ellipse at 32% 22%, rgba(255, 255, 255, 0.95), transparent 28%),
+    linear-gradient(145deg, var(--swatch-light), var(--swatch) 58%, var(--swatch-dark));
+  box-shadow:
+    inset 0 -4px 0 rgba(91, 53, 58, 0.06),
+    0 4px 0 rgba(107, 64, 83, 0.08);
+  transition: transform 180ms ease;
+}
+
+.squishy-game__choice:hover .squishy-game__swatch {
+  transform: rotate(-5deg) scale(1.06);
+}
+
+.squishy-game__choice.is-selected .squishy-game__swatch {
+  animation: squishy-choice-pop 360ms ease-out;
+}
+
+.squishy-game__swatch::before {
+  position: absolute;
+  top: 5px;
+  left: 50%;
+  width: 24px;
+  height: 13px;
+  border-top: 2px solid var(--swatch-dark);
+  border-radius: 50%;
+  content: "";
+  transform: translateX(-50%);
+}
+
+.squishy-game__swatch-face {
+  position: absolute;
+  top: 24px;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  transform: translateX(-50%);
+}
+
+.squishy-game__swatch-face > span {
+  width: 4px;
+  height: 5px;
+  border-radius: 50%;
+  background: #573e4a;
+}
+
+.squishy-game__swatch-face > i {
+  position: absolute;
+  top: 7px;
+  left: 50%;
+  width: 7px;
+  height: 4px;
+  border-bottom: 1.5px solid #573e4a;
+  border-radius: 0 0 50% 50%;
+  transform: translateX(-50%);
+}
+
+.squishy-game__choice-name {
+  max-width: 100%;
+  color: #806777;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.squishy-game__choice.is-selected .squishy-game__choice-name {
+  color: #ad6488;
+}
+
+.squishy-game__footer-note {
+  margin: 22px 0 0;
+  color: #a68d9b;
+  font-size: 12px;
+  text-align: center;
+}
+
+.squishy-game__footer-note span {
+  color: #d58bab;
+}
+
+@keyframes squishy-choice-pop {
+  0% {
+    transform: scale(0.86);
+  }
+
+  55% {
+    transform: scale(1.12, 0.9);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (max-width: 600px) {
+  .squishy-game {
+    padding: 30px 12px 26px;
+  }
+
+  .squishy-game__intro {
+    margin-bottom: 23px;
+    padding: 0 8px;
+  }
+
+  .squishy-game__intro h1 {
+    font-size: clamp(34px, 10vw, 48px);
+  }
+
+  .squishy-game__intro p {
+    max-width: 340px;
+    font-size: 14px;
+  }
+
+  .squishy-game__toy {
+    border-radius: 21px;
+  }
+
+  .squishy-game__topbar {
+    min-height: 58px;
+    padding: 11px 12px;
+  }
+
+  .squishy-game__status {
+    gap: 7px;
+    font-size: 9px;
+    letter-spacing: 0.07em;
+  }
+
+  .squishy-game__actions {
+    gap: 5px;
+  }
+
+  .squishy-game__icon-button {
+    min-height: 33px;
+    gap: 5px;
+    padding: 6px 9px;
+    font-size: 11px;
+  }
+
+  .squishy-game__canvas {
+    height: 420px;
+  }
+
+  .squishy-game__picker {
+    padding: 18px 10px 20px;
+  }
+
+  .squishy-game__picker-heading {
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 15px;
+  }
+
+  .squishy-game__choices {
+    gap: 4px;
+  }
+
+  .squishy-game__choice {
+    gap: 8px;
+    padding: 10px 2px 8px;
+    border-radius: 12px;
+  }
+
+  .squishy-game__swatch {
+    width: clamp(43px, 12vw, 57px);
+    height: clamp(39px, 10.5vw, 50px);
+  }
+
+  .squishy-game__swatch::before {
+    top: 4px;
+    width: 18px;
+    height: 10px;
+  }
+
+  .squishy-game__swatch-face {
+    top: 20px;
+    gap: 11px;
+  }
+
+  .squishy-game__swatch-face > span {
+    width: 3px;
+    height: 4px;
+  }
+
+  .squishy-game__swatch-face > i {
+    top: 6px;
+    width: 6px;
+  }
+
+  .squishy-game__choice-name {
+    font-size: 9px;
+  }
+
+  .squishy-game__hint {
+    bottom: 13px;
+    font-size: 11px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .squishy-game__choice,
+  .squishy-game__swatch,
+  .squishy-game__icon-button {
+    transition: none;
+  }
+
+  .squishy-game__choice.is-selected .squishy-game__swatch {
+    animation: none;
+  }
+}
+
+/* Squishy interaction mode selector */
+.squishy-game__mode-picker {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 20px 24px;
+}
+
+.squishy-game__mode-button {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+  padding: 15px 16px;
+  border: 2px solid #f0dce5;
+  border-radius: 18px;
+  background: #fff;
+  color: var(--squishy-ink);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  box-shadow: 0 3px 0 rgba(105, 63, 85, 0.04);
+  transition:
+    border-color 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.squishy-game__mode-button:hover {
+  transform: translateY(-2px);
+  border-color: #e5b4ca;
+  background: #fff8fb;
+}
+
+.squishy-game__mode-button.is-active {
+  border-color: #d77fa5;
+  background: linear-gradient(135deg, #fff0f6, #fff9fc);
+  box-shadow:
+    0 0 0 3px rgba(215, 127, 165, 0.13),
+    0 5px 14px rgba(186, 117, 150, 0.1);
+}
+
+.squishy-game__mode-icon {
+  display: flex;
+  width: 46px;
+  height: 46px;
+  flex: 0 0 46px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #f0dce5;
+  border-radius: 14px;
+  background: #fff7fa;
+  font-size: 24px;
+  transition:
+    background 180ms ease,
+    transform 180ms ease;
+}
+
+.squishy-game__mode-button.is-active .squishy-game__mode-icon {
+  border-color: #e8b7cc;
+  background: #f9dce8;
+  transform: scale(1.05);
+}
+
+.squishy-game__mode-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.squishy-game__mode-copy strong {
+  color: #785568;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.squishy-game__mode-button.is-active .squishy-game__mode-copy strong {
+  color: #a84f7b;
+}
+
+.squishy-game__mode-copy small {
+  color: #a18494;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.squishy-game__mode-button.is-active::after {
+  position: absolute;
+  top: 9px;
+  right: 10px;
+  width: 19px;
+  height: 19px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #d77fa5;
+  color: #fff;
+  content: "✓";
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.squishy-game__mode-button:focus-visible {
+  outline: 3px solid #ca8eac;
+  outline-offset: 3px;
+}
+
+@media (max-width: 600px) {
+  .squishy-game__mode-picker {
+    gap: 8px;
+    padding: 14px 10px;
+  }
+
+  .squishy-game__mode-button {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 9px;
+    padding: 12px 10px;
+    border-radius: 15px;
+  }
+
+  .squishy-game__mode-icon {
+    width: 38px;
+    height: 38px;
+    flex-basis: 38px;
+    border-radius: 12px;
+    font-size: 21px;
+  }
+
+  .squishy-game__mode-copy strong {
+    font-size: 12px;
+  }
+
+  .squishy-game__mode-copy small {
+    font-size: 10px;
+  }
+
+  .squishy-game__mode-button.is-active::after {
+    top: 8px;
+    right: 8px;
+    width: 17px;
+    height: 17px;
+    font-size: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .squishy-game__mode-button,
+  .squishy-game__mode-icon {
+    transition: none;
+  }
+}
+/* Match the selected class used by the component */
+.squishy-game__mode-button.is-selected {
+  border-color: #d77fa5;
+  background: linear-gradient(135deg, #fff0f6, #fff9fc);
+  box-shadow:
+    0 0 0 3px rgba(215, 127, 165, 0.13),
+    0 5px 14px rgba(186, 117, 150, 0.1);
+}
+
+.squishy-game__mode-button.is-selected .squishy-game__mode-icon {
+  border-color: #e8b7cc;
+  background: #f9dce8;
+  transform: scale(1.05);
+}
+
+.squishy-game__mode-button.is-selected .squishy-game__mode-copy strong {
+  color: #a84f7b;
+}
+
+.squishy-game__mode-button.is-selected::after {
+  position: absolute;
+  top: 9px;
+  right: 10px;
+  display: flex;
+  width: 19px;
+  height: 19px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #d77fa5;
+  color: #fff;
+  content: "✓";
+  font-size: 12px;
+  font-weight: 800;
+}
+
+@media (max-width: 600px) {
+  .squishy-game__mode-button.is-selected::after {
+    top: 8px;
+    right: 8px;
+    width: 17px;
+    height: 17px;
+    font-size: 10px;
+  }
+}
+
