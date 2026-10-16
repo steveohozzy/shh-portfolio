@@ -37,19 +37,34 @@ const nextConfig = {
         destination: '/work',
         permanent: true,
       },
-      // Mini-games and presentations (handles /bloodborne AND /bloodborne/ cleanly)
+      // Target only the folder roots (avoids trapping index.html in a loop)
       {
-        source: '/bloodborne/:path*',
+        source: '/bloodborne',
         destination: '/bloodborne/index.html',
         permanent: true,
       },
       {
-        source: '/rock-paper-scissors/:path*',
+        source: '/bloodborne/',
+        destination: '/bloodborne/index.html',
+        permanent: true,
+      },
+      {
+        source: '/rock-paper-scissors',
         destination: '/rock-paper-scissors/index.html',
         permanent: true,
       },
       {
-        source: '/responsive-presentation/:path*',
+        source: '/rock-paper-scissors/',
+        destination: '/rock-paper-scissors/index.html',
+        permanent: true,
+      },
+      {
+        source: '/responsive-presentation',
+        destination: '/responsive-presentation/index.html',
+        permanent: true,
+      },
+      {
+        source: '/responsive-presentation/',
         destination: '/responsive-presentation/index.html',
         permanent: true,
       },
