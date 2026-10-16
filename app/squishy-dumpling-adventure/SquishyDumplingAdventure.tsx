@@ -409,46 +409,99 @@ const BONUS_LEVEL_CONFIGS = [
   },
 ] as const;
 
+
 function createBonusLevel(
   config: (typeof BONUS_LEVEL_CONFIGS)[number],
   levelNumber: number,
 ): GameLevel {
+  const steps: [number, number, number][] = config.steps.map(
+    ([x, y, width]) => [x, y, width],
+  );
+
+  // Later levels get more platforms.
+  const extraStepCount = levelNumber - 1;
+
+  for (let i = 0; i < extraStepCount; i++) {
+    const previous = steps[steps.length - 1];
+
+    const heights = [255, 210, 270, 230, 190];
+
+    steps.push([
+      previous[0] + 165,
+      heights[(i + levelNumber) % heights.length],
+      Math.max(85, previous[2] - 5),
+    ]);
+  }
+
+  const movingIndexes: number[] = [...config.moving];
+  const hazardIndexes: number[] = [...config.hazards];
+
+  // Add more moving platforms and hazards as levels progress.
+  for (let i = 0; i < extraStepCount; i++) {
+    const stepIndex = config.steps.length + i;
+    const difficultyIndex = i + levelNumber;
+
+    if (difficultyIndex % 3 === 0) {
+      hazardIndexes.push(stepIndex);
+    } else if (difficultyIndex % 2 === 0) {
+      movingIndexes.push(stepIndex);
+    }
+  }
+
+  // Extend the level to fit all the additional platforms.
+  const lastStep = steps[steps.length - 1];
+
+  const width = Math.max(
+    config.width,
+    lastStep[0] + lastStep[2] + 480,
+  );
+
   const platforms: Platform[] = [
     { x: 0, y: 350, width: 220 },
-    ...config.steps.map(([x, y, width], index) => ({
+    ...steps.map(([x, y, platformWidth], index) => ({
       x,
       y,
-      width,
-      ...(config.moving.includes(index)
+      width: platformWidth,
+      ...(movingIndexes.includes(index)
         ? {
             moving: true,
-            range: 30 + ((index + levelNumber) % 3) * 10,
-            speed: 0.0014 + (index % 3) * 0.0002,
+            range:
+              30 +
+              ((index + levelNumber) % 3) * 10 +
+              Math.max(0, levelNumber - 4) * 4,
+            speed:
+              0.0014 +
+              (index % 3) * 0.0002 +
+              Math.max(0, levelNumber - 4) * 0.00008,
           }
         : {}),
     })),
-    { x: config.width - 300, y: 345, width: 300 },
+    { x: width - 300, y: 345, width: 300 },
   ];
 
-  const hazards: Hazard[] = config.hazards.map((platformIndex, index) => {
-    const platform = platforms[platformIndex + 1];
+  const hazards: Hazard[] = hazardIndexes.map(
+    (platformIndex, index) => {
+      const platform = platforms[platformIndex + 1];
 
-    return {
-      x: platform.x + platform.width * 0.45,
-      y: platform.y - 25,
-      width: 38 + (index % 2) * 4,
-    };
-  });
+      return {
+        x: platform.x + platform.width * 0.45,
+        y: platform.y - 25,
+        width: 38 + (index % 2) * 4,
+      };
+    },
+  );
 
-  const drops: GooDrop[] = platforms.slice(1, -1).map((platform, index) => ({
+  // Every extra platform also provides a goo drop.
+  const drops: GooDrop[] = platforms.slice(1, -1).map((platform) => ({
     x: platform.x + platform.width / 2,
     y: platform.y - 38,
   }));
 
+  // Stars appear on alternate platforms.
   const stars: GooDrop[] = platforms
     .slice(1, -1)
     .filter((platform, index) => index % 2 === 1)
-    .map((platform, index) => ({
+    .map((platform) => ({
       x: platform.x + platform.width / 2,
       y: platform.y - 53,
     }));
@@ -460,7 +513,7 @@ function createBonusLevel(
     horizon: config.horizon,
     platform: config.platform,
     edge: config.edge,
-    width: config.width,
+    width,
     platforms,
     hazards,
     drops,
