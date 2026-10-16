@@ -55,6 +55,11 @@ type DumplingPhysics = {
   pullX2: number;
   pullY2: number;
   multiTouch: boolean;
+  squeeze: number;
+  squeezeX: number;
+  squeezeY: number;
+  pinchStartDistance: number;
+  pinchActive: boolean;
   compression: number;
   pointerStartX: number;
   pointerStartY: number;
@@ -157,7 +162,6 @@ function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
 }
 
-
 function deformPoint(
   game: DumplingPhysics,
   px: number,
@@ -180,11 +184,8 @@ function deformPoint(
     const dirX = pullX / distance;
     const dirY = pullY / distance;
 
-    // Allow a much longer stretch without letting the skin
-    // move infinitely far and fold back over itself.
     const stretchAmount = Math.min(distance * 1.2, 265);
 
-    // Determine which side of the dumpling is being pulled.
     const projection = pointX * dirX + pointY * dirY;
     const extent = Math.sqrt(
       BODY_WIDTH * BODY_WIDTH * dirX * dirX +
@@ -197,12 +198,9 @@ function deformPoint(
       1,
     );
 
-    // Smooth the transition between the anchored side and
-    // the side stretching towards the finger.
     const sideWeight =
       sidePosition * sidePosition * (3 - 2 * sidePosition);
 
-    // Keep the grabbed area attached to the moving finger.
     const dx = pointX - grabX;
     const dy = pointY - grabY;
     const distanceFromGrab = Math.hypot(dx, dy);
@@ -221,13 +219,17 @@ function deformPoint(
     };
   };
 
+  // Reduce individual finger stretching while pinching inward,
+  // so the two effects do not fight each other.
+  const pullStrength = 1 - game.squeeze;
+
   let point = applyPull(
     px,
     py,
     game.grabX,
     game.grabY,
-    game.pullX,
-    game.pullY,
+    game.pullX * pullStrength,
+    game.pullY * pullStrength,
   );
 
   if (game.multiTouch) {
@@ -236,9 +238,34 @@ function deformPoint(
       point.y,
       game.grabX2,
       game.grabY2,
-      game.pullX2,
-      game.pullY2,
+      game.pullX2 * pullStrength,
+      game.pullY2 * pullStrength,
     );
+  }
+
+  if (game.squeeze > 0) {
+    const squeezeX = game.squeezeX;
+    const squeezeY = game.squeezeY;
+
+    const projection =
+      point.x * squeezeX + point.y * squeezeY;
+
+    const influence = Math.exp(
+      -(projection * projection) / (2 * 105 * 105),
+    );
+
+    const squeezeAmount = game.squeeze * 48 * influence;
+
+    point = {
+      x:
+        point.x -
+        squeezeX * projection * 0.018 -
+        squeezeX * squeezeAmount,
+      y:
+        point.y -
+        squeezeY * projection * 0.018 -
+        squeezeY * squeezeAmount,
+    };
   }
 
   return point;
@@ -283,7 +310,6 @@ function drawDumpling(
   ctx.rotate(rotation);
   ctx.scale(scaleX + idleWobble, scaleY - idleWobble);
 
-  // Soft ground shadow.
   ctx.save();
   ctx.translate(0, BODY_HEIGHT * 0.86);
   ctx.scale(1 + speed * 0.12, 0.2);
@@ -314,7 +340,6 @@ function drawDumpling(
   ctx.fill();
   ctx.restore();
 
-  // Draw the complete deformed body path.
   const bodyGradient = ctx.createLinearGradient(
     -BODY_WIDTH * 0.8,
     -BODY_HEIGHT,
@@ -366,12 +391,9 @@ function drawDumpling(
   ctx.fill();
   ctx.stroke();
 
-  // Clip all toy details to the actual deformed body outline.
-  // This keeps fold lines, facial features and decorations attached.
   ctx.save();
   ctx.clip();
 
-  // Glitter flecks on special dumplings.
   if (dumpling.glitter) {
     ctx.save();
     ctx.fillStyle = dumpling.glitter;
@@ -404,7 +426,6 @@ function drawDumpling(
     ctx.restore();
   }
 
-  // Pressure shading where the dough is being handled.
   if (game.held || compression > 0.02 || stretch > 0.05) {
     const pressure = ctx.createRadialGradient(
       game.grabX,
@@ -430,7 +451,6 @@ function drawDumpling(
     ctx.fill();
   }
 
-  // Soft highlight.
   const highlight = deformPoint(game, -38, -44);
 
   ctx.save();
@@ -449,7 +469,6 @@ function drawDumpling(
   ctx.fill();
   ctx.restore();
 
-  // Folded top follows the stretched dough and stays inside the body.
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
 
@@ -486,7 +505,6 @@ function drawDumpling(
 
   ctx.globalAlpha = 1;
 
-  // Face features.
   ctx.save();
 
   const faceY = 13;
@@ -590,7 +608,6 @@ function drawDumpling(
 
   ctx.restore();
 
-  // Strawberry seeds.
   if (dumpling.id === "strawberry") {
     ctx.fillStyle = "#fff8ee";
 
@@ -620,7 +637,6 @@ function drawDumpling(
     });
   }
 
-  // Matcha leaves.
   if (dumpling.id === "matcha") {
     ctx.strokeStyle = "#6d9b5b";
     ctx.lineWidth = 2;
@@ -651,7 +667,6 @@ function drawDumpling(
     ctx.stroke();
   }
 
-  // Blueberry spots.
   if (dumpling.id === "blueberry") {
     ctx.fillStyle = "#8d78c3";
 
@@ -668,7 +683,6 @@ function drawDumpling(
     });
   }
 
-  // Golden sprinkles.
   if (dumpling.id === "golden") {
     ctx.fillStyle = "#fff2ba";
 
@@ -685,10 +699,8 @@ function drawDumpling(
     });
   }
 
-  // End clipping so the held sparkles can sit outside the body.
   ctx.restore();
 
-  // Sparkles while held.
   if (game.held) {
     ctx.strokeStyle = "rgba(255,255,255,0.95)";
     ctx.lineWidth = 3;
@@ -738,6 +750,11 @@ function createInitialPhysics(
     pullX2: 0,
     pullY2: 0,
     multiTouch: false,
+    squeeze: 0,
+    squeezeX: 0,
+    squeezeY: 0,
+    pinchStartDistance: 0,
+    pinchActive: false,
     compression: 0,
     pointerStartX: 0,
     pointerStartY: 0,
@@ -901,7 +918,6 @@ export default function OnlineSquishyDumpling() {
           game.vx = 0;
           game.vy = 0;
         } else {
-          // Stronger, more natural throwing motion.
           game.vy += 920 * dt;
           game.y += game.vy * dt;
           game.x += game.vx * dt;
@@ -909,7 +925,6 @@ export default function OnlineSquishyDumpling() {
 
         game.rotation += game.rotationVelocity * dt;
 
-        // Keep much more momentum in throw mode.
         game.vx *= Math.pow(
           playMode === "throw" ? 0.997 : 0.985,
           dt * 60,
@@ -1026,6 +1041,7 @@ export default function OnlineSquishyDumpling() {
         game.pullY += (0 - game.pullY) * Math.min(1, dt * 3.1);
         game.pullX2 += (0 - game.pullX2) * Math.min(1, dt * 3.1);
         game.pullY2 += (0 - game.pullY2) * Math.min(1, dt * 3.1);
+        game.squeeze += (0 - game.squeeze) * Math.min(1, dt * 5);
         game.stretch += (0 - game.stretch) * Math.min(1, dt * 3.2);
         game.wobble += dt * (4 + Math.abs(game.vx) * 0.008);
         game.releaseWobble *= Math.pow(0.94, dt * 60);
@@ -1139,6 +1155,22 @@ export default function OnlineSquishyDumpling() {
       game.grabY2 = track.grabY;
       game.pullX2 = 0;
       game.pullY2 = 0;
+
+      const firstPointer = Array.from(
+        pointersRef.current.values(),
+      ).find((existingPointer) => existingPointer.slot === 1);
+
+      if (firstPointer) {
+        game.pinchStartDistance = Math.hypot(
+          track.startX - firstPointer.startX,
+          track.startY - firstPointer.startY,
+        );
+      }
+
+      game.squeeze = 0;
+      game.squeezeX = 0;
+      game.squeezeY = 0;
+      game.pinchActive = true;
       game.multiTouch = true;
     }
 
@@ -1215,7 +1247,6 @@ export default function OnlineSquishyDumpling() {
         bottomLimit,
       );
 
-      // Amplify the swipe so a quick flick produces a proper throw.
       game.vx = clamp(
         (dx / elapsed) * THROW_BOOST,
         -MAX_SPEED,
@@ -1232,7 +1263,6 @@ export default function OnlineSquishyDumpling() {
         2.4,
       );
 
-      // Update every move so elapsed time stays accurate.
       game.lastPointerTime = now;
       game.lastPointerX = pointer.x;
       game.lastPointerY = pointer.y;
@@ -1266,6 +1296,35 @@ export default function OnlineSquishyDumpling() {
         : 0;
       const totalPull = firstPull + secondPull;
 
+      if (game.multiTouch) {
+        const firstPointer = Array.from(
+          pointersRef.current.values(),
+        ).find((existingPointer) => existingPointer.slot === 1);
+
+        const secondPointer = Array.from(
+          pointersRef.current.values(),
+        ).find((existingPointer) => existingPointer.slot === 2);
+
+        if (firstPointer && secondPointer) {
+          const pinchX = secondPointer.x - firstPointer.x;
+          const pinchY = secondPointer.y - firstPointer.y;
+          const distance = Math.hypot(pinchX, pinchY);
+          const initialDistance = game.pinchStartDistance;
+
+          game.squeeze = Math.min(
+            Math.max(0, (initialDistance - distance) / 65),
+            1,
+          );
+
+          game.squeezeX = pinchX / Math.max(distance, 1);
+          game.squeezeY = pinchY / Math.max(distance, 1);
+        }
+      } else {
+        game.squeeze = 0;
+        game.squeezeX = 0;
+        game.squeezeY = 0;
+      }
+
       game.stretch = Math.min(totalPull / 85, 3.5);
       game.rotation = clamp(
         (game.pullX + game.pullX2) / 1200,
@@ -1289,8 +1348,6 @@ export default function OnlineSquishyDumpling() {
 
     if (!track || !game) return;
 
-    // Include a final pointer movement if release happens before
-    // the last movement event has been processed.
     if (playMode === "throw") {
       const pointer = getPointerPosition(event);
       const now = performance.now();
@@ -1324,11 +1381,46 @@ export default function OnlineSquishyDumpling() {
 
     if (!removed) return;
 
+    // If one finger remains, reset the pinch and continue with
+    // the remaining finger as a normal single-pointer interaction.
     if (pointersRef.current.size > 0) {
+      const remainingTrack = Array.from(
+        pointersRef.current.values(),
+      )[0];
+
+      remainingTrack.slot = 1;
+      remainingTrack.startX = remainingTrack.x;
+      remainingTrack.startY = remainingTrack.y;
+
+      game.grabX = remainingTrack.grabX;
+      game.grabY = remainingTrack.grabY;
+      game.pullX = 0;
+      game.pullY = 0;
+      game.pullX2 = 0;
+      game.pullY2 = 0;
+
+      game.multiTouch = false;
+      game.squeeze = 0;
+      game.squeezeX = 0;
+      game.squeezeY = 0;
+      game.pinchStartDistance = 0;
+      game.pinchActive = false;
+
+      game.pointerStartX = remainingTrack.x;
+      game.pointerStartY = remainingTrack.y;
+      game.lastPointerX = remainingTrack.x;
+      game.lastPointerY = remainingTrack.y;
+      game.lastPointerTime = performance.now();
+
       return;
     }
 
     game.dragging = false;
+    game.squeeze = 0;
+    game.squeezeX = 0;
+    game.squeezeY = 0;
+    game.pinchStartDistance = 0;
+    game.pinchActive = false;
     game.held = false;
     game.multiTouch = false;
     game.pullX2 = 0;
@@ -1374,6 +1466,11 @@ export default function OnlineSquishyDumpling() {
       game.pullX2 = 0;
       game.pullY2 = 0;
       game.multiTouch = false;
+      game.squeeze = 0;
+      game.squeezeX = 0;
+      game.squeezeY = 0;
+      game.pinchStartDistance = 0;
+      game.pinchActive = false;
       game.stretch = 0;
       game.compression = 0;
       game.vx = 0;
@@ -1414,6 +1511,11 @@ export default function OnlineSquishyDumpling() {
       game.pullX2 = 0;
       game.pullY2 = 0;
       game.multiTouch = false;
+      game.squeeze = 0;
+      game.squeezeX = 0;
+      game.squeezeY = 0;
+      game.pinchStartDistance = 0;
+      game.pinchActive = false;
       game.compression = 0;
       game.stretch = 0;
       game.impactSquash = 0;
@@ -1453,7 +1555,7 @@ export default function OnlineSquishyDumpling() {
   const hintText = isDragging
     ? playMode === "squish"
       ? pointersRef.current.size > 1
-        ? "Pull both sides to stretch the dough!"
+        ? "Pinch in to squish, spread out to stretch!"
         : "Pull it further… stretch that dough!"
       : "Ready… let go to throw!"
     : playMode === "squish"
