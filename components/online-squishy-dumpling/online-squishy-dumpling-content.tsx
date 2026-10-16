@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -183,7 +182,6 @@ function deformPoint(
 
     const dirX = pullX / distance;
     const dirY = pullY / distance;
-
     const stretchAmount = Math.min(distance * 1.2, 265);
 
     const projection = pointX * dirX + pointY * dirY;
@@ -219,8 +217,8 @@ function deformPoint(
     };
   };
 
-  // Reduce individual finger stretching while pinching inward,
-  // so the two effects do not fight each other.
+  // Reduce the individual finger pulls while pinching so they
+  // cannot overpower the inward squeeze.
   const pullStrength = 1 - game.squeeze;
 
   let point = applyPull(
@@ -247,24 +245,28 @@ function deformPoint(
     const squeezeX = game.squeezeX;
     const squeezeY = game.squeezeY;
 
-    const projection =
-      point.x * squeezeX + point.y * squeezeY;
+    // Axis running between the two fingers.
+    const along = point.x * squeezeX + point.y * squeezeY;
 
-    const influence = Math.exp(
-      -(projection * projection) / (2 * 105 * 105),
-    );
+    // Axis perpendicular to the two fingers.
+    const across = -point.x * squeezeY + point.y * squeezeX;
 
-    const squeezeAmount = game.squeeze * 48 * influence;
+    // Compress between the fingers and bulge outward in the
+    // perpendicular direction, like squeezing a soft toy.
+    const squeezeStrength = game.squeeze;
+    const compressedAlong =
+      along * (1 - squeezeStrength * 0.48);
+
+    const expandedAcross =
+      across * (1 + squeezeStrength * 0.28);
 
     point = {
       x:
-        point.x -
-        squeezeX * projection * 0.018 -
-        squeezeX * squeezeAmount,
+        compressedAlong * squeezeX -
+        expandedAcross * squeezeY,
       y:
-        point.y -
-        squeezeY * projection * 0.018 -
-        squeezeY * squeezeAmount,
+        compressedAlong * squeezeY +
+        expandedAcross * squeezeX,
     };
   }
 
@@ -504,7 +506,6 @@ function drawDumpling(
   }
 
   ctx.globalAlpha = 1;
-
   ctx.save();
 
   const faceY = 13;
@@ -1041,7 +1042,6 @@ export default function OnlineSquishyDumpling() {
         game.pullY += (0 - game.pullY) * Math.min(1, dt * 3.1);
         game.pullX2 += (0 - game.pullX2) * Math.min(1, dt * 3.1);
         game.pullY2 += (0 - game.pullY2) * Math.min(1, dt * 3.1);
-        game.squeeze += (0 - game.squeeze) * Math.min(1, dt * 5);
         game.stretch += (0 - game.stretch) * Math.min(1, dt * 3.2);
         game.wobble += dt * (4 + Math.abs(game.vx) * 0.008);
         game.releaseWobble *= Math.pow(0.94, dt * 60);
@@ -1059,7 +1059,6 @@ export default function OnlineSquishyDumpling() {
       }
 
       ctx.clearRect(0, 0, width, height);
-
       ctx.fillStyle = "rgba(179, 137, 153, 0.14)";
 
       for (let px = 22; px < width; px += 34) {
@@ -1128,6 +1127,7 @@ export default function OnlineSquishyDumpling() {
     event.currentTarget.setPointerCapture(event.pointerId);
 
     const slot: 1 | 2 = isSecondPointer ? 2 : 1;
+
     const track: PointerTrack = {
       x: pointer.x,
       y: pointer.y,
@@ -1156,21 +1156,21 @@ export default function OnlineSquishyDumpling() {
       game.pullX2 = 0;
       game.pullY2 = 0;
 
+      // Start a fresh pinch using the actual distance between fingers.
       const firstPointer = Array.from(
         pointersRef.current.values(),
-      ).find((existingPointer) => existingPointer.slot === 1);
+      ).find((item) => item.slot === 1);
 
       if (firstPointer) {
         game.pinchStartDistance = Math.hypot(
-          track.startX - firstPointer.startX,
-          track.startY - firstPointer.startY,
+          track.x - firstPointer.x,
+          track.y - firstPointer.y,
         );
       }
 
       game.squeeze = 0;
       game.squeezeX = 0;
       game.squeezeY = 0;
-      game.pinchActive = true;
       game.multiTouch = true;
     }
 
@@ -1290,47 +1290,52 @@ export default function OnlineSquishyDumpling() {
         game.pullY2 = pullY;
       }
 
+      const firstPointer = Array.from(
+        pointersRef.current.values(),
+      ).find((item) => item.slot === 1);
+
+      const secondPointer = Array.from(
+        pointersRef.current.values(),
+      ).find((item) => item.slot === 2);
+
+      if (game.multiTouch && firstPointer && secondPointer) {
+        const pinchDX = secondPointer.x - firstPointer.x;
+        const pinchDY = secondPointer.y - firstPointer.y;
+        const distance = Math.hypot(pinchDX, pinchDY);
+
+        // Compare with the separation when the second finger touched down.
+        const initialDistance = game.pinchStartDistance;
+
+        game.squeeze = clamp(
+          (initialDistance - distance) / 42,
+          0,
+          1,
+        );
+
+        game.squeezeX = pinchDX / Math.max(distance, 1);
+        game.squeezeY = pinchDY / Math.max(distance, 1);
+
+        game.pinchActive = game.squeeze > 0;
+      } else {
+        game.squeeze = 0;
+        game.pinchActive = false;
+      }
+
       const firstPull = Math.hypot(game.pullX, game.pullY);
       const secondPull = game.multiTouch
         ? Math.hypot(game.pullX2, game.pullY2)
         : 0;
-      const totalPull = firstPull + secondPull;
 
-      if (game.multiTouch) {
-        const firstPointer = Array.from(
-          pointersRef.current.values(),
-        ).find((existingPointer) => existingPointer.slot === 1);
+      game.stretch = game.squeeze > 0
+        ? 0
+        : Math.min((firstPull + secondPull) / 85, 3.5);
 
-        const secondPointer = Array.from(
-          pointersRef.current.values(),
-        ).find((existingPointer) => existingPointer.slot === 2);
-
-        if (firstPointer && secondPointer) {
-          const pinchX = secondPointer.x - firstPointer.x;
-          const pinchY = secondPointer.y - firstPointer.y;
-          const distance = Math.hypot(pinchX, pinchY);
-          const initialDistance = game.pinchStartDistance;
-
-          game.squeeze = Math.min(
-            Math.max(0, (initialDistance - distance) / 65),
-            1,
-          );
-
-          game.squeezeX = pinchX / Math.max(distance, 1);
-          game.squeezeY = pinchY / Math.max(distance, 1);
-        }
-      } else {
-        game.squeeze = 0;
-        game.squeezeX = 0;
-        game.squeezeY = 0;
-      }
-
-      game.stretch = Math.min(totalPull / 85, 3.5);
       game.rotation = clamp(
         (game.pullX + game.pullX2) / 1200,
         -0.22,
         0.22,
       );
+
       game.vx = 0;
       game.vy = 0;
     }
@@ -1377,40 +1382,33 @@ export default function OnlineSquishyDumpling() {
       }
     }
 
-    const removed = pointersRef.current.delete(event.pointerId);
+    if (!pointersRef.current.delete(event.pointerId)) return;
 
-    if (!removed) return;
-
-    // If one finger remains, reset the pinch and continue with
-    // the remaining finger as a normal single-pointer interaction.
+    // If one finger is still down, turn it back into the primary
+    // pointer and stop the old pinch instead of leaving stale state.
     if (pointersRef.current.size > 0) {
-      const remainingTrack = Array.from(
+      const remainingPointer = Array.from(
         pointersRef.current.values(),
       )[0];
 
-      remainingTrack.slot = 1;
-      remainingTrack.startX = remainingTrack.x;
-      remainingTrack.startY = remainingTrack.y;
+      remainingPointer.slot = 1;
+      remainingPointer.startX = remainingPointer.x;
+      remainingPointer.startY = remainingPointer.y;
+      remainingPointer.grabX = game.grabX;
+      remainingPointer.grabY = game.grabY;
 
-      game.grabX = remainingTrack.grabX;
-      game.grabY = remainingTrack.grabY;
+      game.grabX = remainingPointer.grabX;
+      game.grabY = remainingPointer.grabY;
       game.pullX = 0;
       game.pullY = 0;
       game.pullX2 = 0;
       game.pullY2 = 0;
-
-      game.multiTouch = false;
       game.squeeze = 0;
       game.squeezeX = 0;
       game.squeezeY = 0;
-      game.pinchStartDistance = 0;
       game.pinchActive = false;
-
-      game.pointerStartX = remainingTrack.x;
-      game.pointerStartY = remainingTrack.y;
-      game.lastPointerX = remainingTrack.x;
-      game.lastPointerY = remainingTrack.y;
-      game.lastPointerTime = performance.now();
+      game.multiTouch = false;
+      game.pinchStartDistance = 0;
 
       return;
     }
@@ -1419,8 +1417,8 @@ export default function OnlineSquishyDumpling() {
     game.squeeze = 0;
     game.squeezeX = 0;
     game.squeezeY = 0;
-    game.pinchStartDistance = 0;
     game.pinchActive = false;
+    game.pinchStartDistance = 0;
     game.held = false;
     game.multiTouch = false;
     game.pullX2 = 0;
@@ -1469,8 +1467,8 @@ export default function OnlineSquishyDumpling() {
       game.squeeze = 0;
       game.squeezeX = 0;
       game.squeezeY = 0;
-      game.pinchStartDistance = 0;
       game.pinchActive = false;
+      game.pinchStartDistance = 0;
       game.stretch = 0;
       game.compression = 0;
       game.vx = 0;
@@ -1514,8 +1512,8 @@ export default function OnlineSquishyDumpling() {
       game.squeeze = 0;
       game.squeezeX = 0;
       game.squeezeY = 0;
-      game.pinchStartDistance = 0;
       game.pinchActive = false;
+      game.pinchStartDistance = 0;
       game.compression = 0;
       game.stretch = 0;
       game.impactSquash = 0;
@@ -1555,7 +1553,7 @@ export default function OnlineSquishyDumpling() {
   const hintText = isDragging
     ? playMode === "squish"
       ? pointersRef.current.size > 1
-        ? "Pinch in to squish, spread out to stretch!"
+        ? "Pinch inward to squeeze the dough!"
         : "Pull it further… stretch that dough!"
       : "Ready… let go to throw!"
     : playMode === "squish"
