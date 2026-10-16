@@ -28,15 +28,6 @@ type PointerTrack = {
   slot: 1 | 2;
 };
 
-type GooDrop = {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  radius: number;
-  life: number;
-};
-
 type DumplingPhysics = {
   x: number;
   y: number;
@@ -48,8 +39,6 @@ type DumplingPhysics = {
   scaleY: number;
   dragging: boolean;
   held: boolean;
-  splitOpen: boolean;
-  tearProgress: number;
   dragOffsetX: number;
   dragOffsetY: number;
   lastPointerX: number;
@@ -71,8 +60,6 @@ type DumplingPhysics = {
   pointerStartY: number;
   releaseWobble: number;
   impactSquash: number;
-  gooDrops: GooDrop[];
-  gooSpawnTimer: number;
 };
 
 const DUMPLINGS: DumplingType[] = [
@@ -163,51 +150,98 @@ const DUMPLINGS: DumplingType[] = [
 
 const BODY_WIDTH = 112;
 const BODY_HEIGHT = 91;
-const MAX_SPEED = 1500;
-
-// The dumpling stretches naturally before it tears.
-const TEAR_THRESHOLD = 300;
-const TWO_FINGER_TEAR_THRESHOLD = 340;
+const MAX_SPEED = 2400;
+const THROW_BOOST = 1.5;
 
 function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
 }
 
-function easeInOut(value: number) {
-  const t = clamp(value, 0, 1);
-  return t * t * (3 - 2 * t);
-}
 
 function deformPoint(
   game: DumplingPhysics,
   px: number,
   py: number,
 ) {
-  const dx = px - game.grabX;
-  const dy = py - game.grabY;
-  const distanceSquared = dx * dx + dy * dy;
-  const influence = Math.exp(
-    -distanceSquared / (2 * 66 * 66),
-  );
+  const applyPull = (
+    pointX: number,
+    pointY: number,
+    grabX: number,
+    grabY: number,
+    pullX: number,
+    pullY: number,
+  ) => {
+    const distance = Math.hypot(pullX, pullY);
 
-  // Keep the pull soft and elastic rather than letting it distort
-  // the entire dumpling into a long, pointed shape.
-  let x = px + game.pullX * influence * 0.72;
-  let y = py + game.pullY * influence * 0.72;
+    if (distance < 0.5) {
+      return { x: pointX, y: pointY };
+    }
 
-  if (game.multiTouch) {
-    const dx2 = px - game.grabX2;
-    const dy2 = py - game.grabY2;
-    const distanceSquared2 = dx2 * dx2 + dy2 * dy2;
-    const influence2 = Math.exp(
-      -distanceSquared2 / (2 * 66 * 66),
+    const dirX = pullX / distance;
+    const dirY = pullY / distance;
+
+    // Allow a much longer stretch without letting the skin
+    // move infinitely far and fold back over itself.
+    const stretchAmount = Math.min(distance * 1.2, 265);
+
+    // Determine which side of the dumpling is being pulled.
+    const projection = pointX * dirX + pointY * dirY;
+    const extent = Math.sqrt(
+      BODY_WIDTH * BODY_WIDTH * dirX * dirX +
+        BODY_HEIGHT * BODY_HEIGHT * dirY * dirY,
     );
 
-    x += game.pullX2 * influence2 * 0.72;
-    y += game.pullY2 * influence2 * 0.72;
+    const sidePosition = clamp(
+      0.5 + projection / (2 * extent),
+      0,
+      1,
+    );
+
+    // Smooth the transition between the anchored side and
+    // the side stretching towards the finger.
+    const sideWeight =
+      sidePosition * sidePosition * (3 - 2 * sidePosition);
+
+    // Keep the grabbed area attached to the moving finger.
+    const dx = pointX - grabX;
+    const dy = pointY - grabY;
+    const distanceFromGrab = Math.hypot(dx, dy);
+
+    const localInfluence = Math.exp(
+      -(distanceFromGrab * distanceFromGrab) /
+        (2 * 78 * 78),
+    );
+
+    const influence = Math.max(sideWeight, localInfluence);
+    const displacement = stretchAmount * influence;
+
+    return {
+      x: pointX + dirX * displacement,
+      y: pointY + dirY * displacement,
+    };
+  };
+
+  let point = applyPull(
+    px,
+    py,
+    game.grabX,
+    game.grabY,
+    game.pullX,
+    game.pullY,
+  );
+
+  if (game.multiTouch) {
+    point = applyPull(
+      point.x,
+      point.y,
+      game.grabX2,
+      game.grabY2,
+      game.pullX2,
+      game.pullY2,
+    );
   }
 
-  return { x, y };
+  return point;
 }
 
 function deformFacePoint(
@@ -215,260 +249,7 @@ function deformFacePoint(
   px: number,
   py: number,
 ) {
-  const point = deformPoint(game, px, py);
-
-  return {
-    x: clamp(point.x, -BODY_WIDTH * 0.62, BODY_WIDTH * 0.62),
-    y: clamp(point.y, -BODY_HEIGHT * 0.48, BODY_HEIGHT * 0.43),
-  };
-}
-
-function drawGoo(
-  ctx: CanvasRenderingContext2D,
-  game: DumplingPhysics,
-  dumpling: DumplingType,
-  progress: number,
-  time: number,
-) {
-  if (progress < 0.12) return;
-
-  const reveal = clamp((progress - 0.12) / 0.48, 0, 1);
-  const wobble = Math.sin(time * 0.006) * 1.5;
-  const gooWidth = 13 + reveal * 35;
-  const gooHeight = 5 + reveal * 15;
-
-  ctx.save();
-  ctx.globalAlpha = clamp(reveal * 1.4, 0, 1);
-
-  const gooGradient = ctx.createLinearGradient(
-    -gooWidth,
-    -gooHeight,
-    gooWidth,
-    gooHeight * 2,
-  );
-
-  gooGradient.addColorStop(0, "#fff5d9");
-  gooGradient.addColorStop(0.3, "#ffd9b6");
-  gooGradient.addColorStop(0.7, "#f5a8a7");
-  gooGradient.addColorStop(1, dumpling.accent);
-
-  // Glossy filling becomes visible as the tear opens.
-  ctx.fillStyle = gooGradient;
-  ctx.beginPath();
-  ctx.moveTo(-gooWidth, -2);
-
-  ctx.bezierCurveTo(
-    -gooWidth * 0.72,
-    -gooHeight * 1.8,
-    -gooWidth * 0.3,
-    -gooHeight * 1.2,
-    -gooWidth * 0.08,
-    -gooHeight * 0.65,
-  );
-
-  ctx.bezierCurveTo(
-    gooWidth * 0.22,
-    -gooHeight * 1.9,
-    gooWidth * 0.62,
-    -gooHeight * 1.3,
-    gooWidth,
-    0,
-  );
-
-  ctx.bezierCurveTo(
-    gooWidth * 0.72,
-    gooHeight * 1.15,
-    gooWidth * 0.25,
-    gooHeight * 1.4 + wobble,
-    0,
-    gooHeight,
-  );
-
-  ctx.bezierCurveTo(
-    -gooWidth * 0.4,
-    gooHeight * 1.2,
-    -gooWidth * 0.8,
-    gooHeight * 0.9,
-    -gooWidth,
-    -2,
-  );
-
-  ctx.fill();
-
-  // A wet highlight makes the filling look shiny.
-  ctx.strokeStyle = "rgba(255,255,255,0.9)";
-  ctx.lineWidth = 3;
-  ctx.lineCap = "round";
-  ctx.beginPath();
-  ctx.moveTo(-gooWidth * 0.52, -gooHeight * 0.42);
-  ctx.quadraticCurveTo(
-    -gooWidth * 0.1,
-    -gooHeight * 1.05,
-    gooWidth * 0.25,
-    -gooHeight * 0.52,
-  );
-  ctx.stroke();
-
-  // These drips remain attached to the opening while the goo stretches.
-  if (progress > 0.3) {
-    const dripProgress = clamp((progress - 0.3) / 0.55, 0, 1);
-    const dripLength = 5 + dripProgress * 30;
-    const dripPositions = [-0.68, -0.12, 0.46, 0.78];
-
-    dripPositions.forEach((position, index) => {
-      const length = dripLength * (index % 2 === 0 ? 0.72 : 1);
-      const dripX = gooWidth * position;
-      const dripY = gooHeight * 0.55;
-      const dripW = 3.5 + reveal * 2.5;
-      const animatedLength =
-        length * (0.92 + Math.sin(time * 0.004 + index) * 0.08);
-
-      ctx.fillStyle = gooGradient;
-      ctx.beginPath();
-      ctx.moveTo(dripX - dripW, dripY);
-      ctx.quadraticCurveTo(
-        dripX - dripW * 0.7,
-        dripY + animatedLength * 0.65,
-        dripX,
-        dripY + animatedLength,
-      );
-      ctx.quadraticCurveTo(
-        dripX + dripW * 0.9,
-        dripY + animatedLength * 0.65,
-        dripX + dripW,
-        dripY,
-      );
-      ctx.closePath();
-      ctx.fill();
-
-      ctx.beginPath();
-      ctx.ellipse(
-        dripX,
-        dripY + animatedLength,
-        dripW * 0.8,
-        dripW * 1.05,
-        0,
-        0,
-        Math.PI * 2,
-      );
-      ctx.fill();
-    });
-  }
-
-  ctx.restore();
-}
-
-function drawFallingGoo(
-  ctx: CanvasRenderingContext2D,
-  game: DumplingPhysics,
-  dumpling: DumplingType,
-  dt: number,
-  width: number,
-  height: number,
-) {
-  if (!game.splitOpen) return;
-
-  // Release drops from the tear only while it is opening.
-  if (game.tearProgress > 0.24 && game.tearProgress < 0.96) {
-    game.gooSpawnTimer -= dt;
-
-    if (game.gooSpawnTimer <= 0) {
-      const progress = game.tearProgress;
-      const localX = (Math.random() - 0.5) * BODY_WIDTH *
-        (0.25 + progress * 0.55);
-      const localY = 12 + Math.random() * 12;
-
-      // Convert the point under the tear into canvas coordinates,
-      // accounting for the dumpling's scale and rotation.
-      const cos = Math.cos(game.rotation);
-      const sin = Math.sin(game.rotation);
-      const scaledX = localX * game.scaleX;
-      const scaledY = localY * game.scaleY;
-
-      const startX =
-        game.x + scaledX * cos - scaledY * sin;
-      const startY =
-        game.y + scaledX * sin + scaledY * cos;
-
-      game.gooDrops.push({
-        x: startX,
-        y: startY,
-        vx: (Math.random() - 0.5) * 65 + game.rotation * 25,
-        vy: 35 + Math.random() * 45,
-        radius: 3 + Math.random() * 4.5,
-        life: 1.5 + Math.random() * 0.8,
-      });
-
-      game.gooSpawnTimer = 0.09 + Math.random() * 0.13;
-    }
-  }
-
-  const remaining: GooDrop[] = [];
-
-  game.gooDrops.forEach((drop) => {
-    drop.life -= dt;
-    drop.vy += 640 * dt;
-    drop.x += drop.vx * dt;
-    drop.y += drop.vy * dt;
-
-    if (
-      drop.life <= 0 ||
-      drop.y > height + 30 ||
-      drop.x < -30 ||
-      drop.x > width + 30
-    ) {
-      return;
-    }
-
-    remaining.push(drop);
-
-    const radius = drop.radius;
-    const gradient = ctx.createRadialGradient(
-      drop.x - radius * 0.3,
-      drop.y - radius * 0.4,
-      0.5,
-      drop.x,
-      drop.y,
-      radius * 1.35,
-    );
-
-    gradient.addColorStop(0, "#fff8df");
-    gradient.addColorStop(0.35, "#ffd7b7");
-    gradient.addColorStop(0.75, "#f5a8a7");
-    gradient.addColorStop(1, dumpling.accent);
-
-    ctx.save();
-    ctx.globalAlpha = clamp(drop.life * 1.8, 0, 1);
-    ctx.fillStyle = gradient;
-    ctx.beginPath();
-    ctx.ellipse(
-      drop.x,
-      drop.y,
-      radius * 0.82,
-      radius * 1.15,
-      clamp(drop.vx / 250, -0.35, 0.35),
-      0,
-      Math.PI * 2,
-    );
-    ctx.fill();
-
-    // Tiny reflected highlight.
-    ctx.fillStyle = "rgba(255,255,255,0.9)";
-    ctx.beginPath();
-    ctx.ellipse(
-      drop.x - radius * 0.24,
-      drop.y - radius * 0.36,
-      radius * 0.22,
-      radius * 0.34,
-      -0.35,
-      0,
-      Math.PI * 2,
-    );
-    ctx.fill();
-    ctx.restore();
-  });
-
-  game.gooDrops = remaining;
+  return deformPoint(game, px, py);
 }
 
 function drawDumpling(
@@ -487,8 +268,6 @@ function drawDumpling(
     wobble,
     compression,
     impactSquash,
-    splitOpen,
-    tearProgress,
   } = game;
 
   const speed = Math.min(
@@ -535,7 +314,7 @@ function drawDumpling(
   ctx.fill();
   ctx.restore();
 
-  // Dough outline with local stretching.
+  // Draw the complete deformed body path.
   const bodyGradient = ctx.createLinearGradient(
     -BODY_WIDTH * 0.8,
     -BODY_HEIGHT,
@@ -587,8 +366,13 @@ function drawDumpling(
   ctx.fill();
   ctx.stroke();
 
+  // Clip all toy details to the actual deformed body outline.
+  // This keeps fold lines, facial features and decorations attached.
+  ctx.save();
+  ctx.clip();
+
   // Glitter flecks on special dumplings.
-  if (dumpling.glitter && !splitOpen) {
+  if (dumpling.glitter) {
     ctx.save();
     ctx.fillStyle = dumpling.glitter;
 
@@ -621,7 +405,7 @@ function drawDumpling(
   }
 
   // Pressure shading where the dough is being handled.
-  if (!splitOpen && (game.held || compression > 0.02 || stretch > 0.05)) {
+  if (game.held || compression > 0.02 || stretch > 0.05) {
     const pressure = ctx.createRadialGradient(
       game.grabX,
       game.grabY,
@@ -647,338 +431,265 @@ function drawDumpling(
   }
 
   // Soft highlight.
-  if (tearProgress < 0.82) {
-    const highlight = deformPoint(game, -38, -44);
+  const highlight = deformPoint(game, -38, -44);
 
-    ctx.save();
-    ctx.globalAlpha = 0.52 * (1 - tearProgress * 0.75);
-    ctx.fillStyle = "#ffffff";
-    ctx.beginPath();
-    ctx.ellipse(
-      highlight.x,
-      highlight.y,
-      34,
-      15,
-      -0.48,
-      0,
-      Math.PI * 2,
+  ctx.save();
+  ctx.globalAlpha = 0.52;
+  ctx.fillStyle = "#ffffff";
+  ctx.beginPath();
+  ctx.ellipse(
+    highlight.x,
+    highlight.y,
+    34,
+    15,
+    -0.48,
+    0,
+    Math.PI * 2,
+  );
+  ctx.fill();
+  ctx.restore();
+
+  // Folded top follows the stretched dough and stays inside the body.
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+
+  for (let i = -3; i <= 3; i++) {
+    const startX = i * 17;
+    const startY =
+      -BODY_HEIGHT * 0.76 + Math.abs(i) * 2.2;
+    const endX = i * 12;
+    const endY = -BODY_HEIGHT * 0.17;
+
+    const start = deformPoint(game, startX, startY);
+    const control = deformPoint(
+      game,
+      startX + (endX - startX) * 0.45 + stretch * i * 0.3,
+      -BODY_HEIGHT * 0.42,
     );
-    ctx.fill();
-    ctx.restore();
+    const end = deformPoint(game, endX, endY);
+
+    ctx.beginPath();
+    ctx.moveTo(start.x, start.y);
+    ctx.quadraticCurveTo(
+      control.x,
+      control.y,
+      end.x,
+      end.y,
+    );
+
+    ctx.strokeStyle =
+      i % 2 === 0 ? dumpling.dark : dumpling.light;
+    ctx.globalAlpha = i % 2 === 0 ? 0.62 : 0.85;
+    ctx.lineWidth = i === 0 ? 3.5 : 2.6;
+    ctx.stroke();
   }
 
-  // Folded top follows the stretched dough.
-  if (tearProgress < 0.76) {
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
+  ctx.globalAlpha = 1;
 
-    for (let i = -3; i <= 3; i++) {
-      const startX = i * 17;
-      const startY =
-        -BODY_HEIGHT * 0.76 + Math.abs(i) * 2.2;
-      const endX = i * 12;
-      const endY = -BODY_HEIGHT * 0.17;
+  // Face features.
+  ctx.save();
 
-      const start = deformPoint(game, startX, startY);
-      const control = deformPoint(
-        game,
-        startX + (endX - startX) * 0.45 + stretch * i * 0.3,
-        -BODY_HEIGHT * 0.42,
-      );
-      const end = deformPoint(game, endX, endY);
+  const faceY = 13;
+  const leftEye = deformFacePoint(game, -27, faceY);
+  const rightEye = deformFacePoint(game, 27, faceY);
+
+  ctx.fillStyle = "#49343b";
+  ctx.beginPath();
+  ctx.ellipse(
+    leftEye.x,
+    leftEye.y,
+    5.2,
+    7.1,
+    -0.12,
+    0,
+    Math.PI * 2,
+  );
+  ctx.ellipse(
+    rightEye.x,
+    rightEye.y,
+    5.2,
+    7.1,
+    0.12,
+    0,
+    Math.PI * 2,
+  );
+  ctx.fill();
+
+  const leftEyeHighlight = deformFacePoint(
+    game,
+    -28.5,
+    faceY - 2.1,
+  );
+  const rightEyeHighlight = deformFacePoint(
+    game,
+    25.5,
+    faceY - 2.1,
+  );
+
+  ctx.fillStyle = "#ffffff";
+  ctx.beginPath();
+  ctx.arc(
+    leftEyeHighlight.x,
+    leftEyeHighlight.y,
+    1.7,
+    0,
+    Math.PI * 2,
+  );
+  ctx.arc(
+    rightEyeHighlight.x,
+    rightEyeHighlight.y,
+    1.7,
+    0,
+    Math.PI * 2,
+  );
+  ctx.fill();
+
+  const leftCheek = deformFacePoint(game, -45, faceY + 15);
+  const rightCheek = deformFacePoint(game, 45, faceY + 15);
+
+  ctx.globalAlpha = 0.72;
+  ctx.fillStyle = dumpling.cheek;
+  ctx.beginPath();
+  ctx.ellipse(
+    leftCheek.x,
+    leftCheek.y,
+    10,
+    5.5,
+    -0.15,
+    0,
+    Math.PI * 2,
+  );
+  ctx.ellipse(
+    rightCheek.x,
+    rightCheek.y,
+    10,
+    5.5,
+    0.15,
+    0,
+    Math.PI * 2,
+  );
+  ctx.fill();
+
+  ctx.globalAlpha = 1;
+
+  const smileStart = deformFacePoint(game, -8, faceY + 13);
+  const smileControl = deformFacePoint(game, 0, faceY + 22);
+  const smileEnd = deformFacePoint(game, 8, faceY + 13);
+
+  ctx.strokeStyle = "#49343b";
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(smileStart.x, smileStart.y);
+  ctx.quadraticCurveTo(
+    smileControl.x,
+    smileControl.y,
+    smileEnd.x,
+    smileEnd.y,
+  );
+  ctx.stroke();
+
+  ctx.restore();
+
+  // Strawberry seeds.
+  if (dumpling.id === "strawberry") {
+    ctx.fillStyle = "#fff8ee";
+
+    const seeds: [number, number][] = [
+      [-54, -19],
+      [-36, -47],
+      [48, -31],
+      [55, 0],
+      [-58, 16],
+      [31, -57],
+    ];
+
+    seeds.forEach(([sx, sy]) => {
+      const point = deformPoint(game, sx, sy);
 
       ctx.beginPath();
-      ctx.moveTo(start.x, start.y);
-      ctx.quadraticCurveTo(
-        control.x,
-        control.y,
-        end.x,
-        end.y,
+      ctx.ellipse(
+        point.x,
+        point.y,
+        2.2,
+        3.5,
+        0.3,
+        0,
+        Math.PI * 2,
       );
-
-      ctx.strokeStyle =
-        i % 2 === 0 ? dumpling.dark : dumpling.light;
-      ctx.globalAlpha =
-        (i % 2 === 0 ? 0.62 : 0.85) * (1 - tearProgress);
-      ctx.lineWidth = i === 0 ? 3.5 : 2.6;
-      ctx.stroke();
-    }
-
-    ctx.globalAlpha = 1;
+      ctx.fill();
+    });
   }
 
-  // Face features fade as the dumpling tears and collapses.
-  if (tearProgress < 0.62) {
-    ctx.save();
-    ctx.globalAlpha = 1 - tearProgress / 0.62;
-
-    const faceY = 13;
-    const leftEye = deformFacePoint(game, -27, faceY);
-    const rightEye = deformFacePoint(game, 27, faceY);
-
-    ctx.fillStyle = "#49343b";
-    ctx.beginPath();
-    ctx.ellipse(
-      leftEye.x,
-      leftEye.y,
-      5.2,
-      7.1,
-      -0.12,
-      0,
-      Math.PI * 2,
-    );
-    ctx.ellipse(
-      rightEye.x,
-      rightEye.y,
-      5.2,
-      7.1,
-      0.12,
-      0,
-      Math.PI * 2,
-    );
-    ctx.fill();
-
-    const leftEyeHighlight = deformFacePoint(
-      game,
-      -28.5,
-      faceY - 2.1,
-    );
-    const rightEyeHighlight = deformFacePoint(
-      game,
-      25.5,
-      faceY - 2.1,
-    );
-
-    ctx.fillStyle = "#ffffff";
-    ctx.beginPath();
-    ctx.arc(
-      leftEyeHighlight.x,
-      leftEyeHighlight.y,
-      1.7,
-      0,
-      Math.PI * 2,
-    );
-    ctx.arc(
-      rightEyeHighlight.x,
-      rightEyeHighlight.y,
-      1.7,
-      0,
-      Math.PI * 2,
-    );
-    ctx.fill();
-
-    const leftCheek = deformFacePoint(game, -45, faceY + 15);
-    const rightCheek = deformFacePoint(game, 45, faceY + 15);
-
-    ctx.globalAlpha *= 0.72;
-    ctx.fillStyle = dumpling.cheek;
-    ctx.beginPath();
-    ctx.ellipse(
-      leftCheek.x,
-      leftCheek.y,
-      10,
-      5.5,
-      -0.15,
-      0,
-      Math.PI * 2,
-    );
-    ctx.ellipse(
-      rightCheek.x,
-      rightCheek.y,
-      10,
-      5.5,
-      0.15,
-      0,
-      Math.PI * 2,
-    );
-    ctx.fill();
-    ctx.globalAlpha = 1 - tearProgress / 0.62;
-
-    const smileStart = deformFacePoint(game, -8, faceY + 13);
-    const smileControl = deformFacePoint(game, 0, faceY + 22);
-    const smileEnd = deformFacePoint(game, 8, faceY + 13);
-
-    ctx.strokeStyle = "#49343b";
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    ctx.moveTo(smileStart.x, smileStart.y);
-    ctx.quadraticCurveTo(
-      smileControl.x,
-      smileControl.y,
-      smileEnd.x,
-      smileEnd.y,
-    );
-    ctx.stroke();
-
-    ctx.restore();
-
-    // Strawberry seeds.
-    if (dumpling.id === "strawberry") {
-      ctx.fillStyle = "#fff8ee";
-
-      const seeds: [number, number][] = [
-        [-54, -19],
-        [-36, -47],
-        [48, -31],
-        [55, 0],
-        [-58, 16],
-        [31, -57],
-      ];
-
-      seeds.forEach(([sx, sy]) => {
-        const point = deformPoint(game, sx, sy);
-
-        ctx.beginPath();
-        ctx.ellipse(
-          point.x,
-          point.y,
-          2.2,
-          3.5,
-          0.3,
-          0,
-          Math.PI * 2,
-        );
-        ctx.fill();
-      });
-    }
-
-    // Matcha leaves.
-    if (dumpling.id === "matcha") {
-      ctx.strokeStyle = "#6d9b5b";
-      ctx.lineWidth = 2;
-
-      const leaf1Start = deformPoint(game, -54, -25);
-      const leaf1Control = deformPoint(game, -43, -39);
-      const leaf1End = deformPoint(game, -34, -25);
-
-      const leaf2Start = deformPoint(game, 42, -44);
-      const leaf2Control = deformPoint(game, 53, -56);
-      const leaf2End = deformPoint(game, 59, -42);
-
-      ctx.beginPath();
-      ctx.moveTo(leaf1Start.x, leaf1Start.y);
-      ctx.quadraticCurveTo(
-        leaf1Control.x,
-        leaf1Control.y,
-        leaf1End.x,
-        leaf1End.y,
-      );
-      ctx.moveTo(leaf2Start.x, leaf2Start.y);
-      ctx.quadraticCurveTo(
-        leaf2Control.x,
-        leaf2Control.y,
-        leaf2End.x,
-        leaf2End.y,
-      );
-      ctx.stroke();
-    }
-
-    // Blueberry spots.
-    if (dumpling.id === "blueberry") {
-      ctx.fillStyle = "#8d78c3";
-
-      [
-        [-53, -4, 3],
-        [54, -35, 3],
-        [52, 34, 2.5],
-      ].forEach(([sx, sy, radius]) => {
-        const point = deformPoint(game, sx, sy);
-
-        ctx.beginPath();
-        ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
-        ctx.fill();
-      });
-    }
-
-    // Golden sprinkles.
-    if (dumpling.id === "golden") {
-      ctx.fillStyle = "#fff2ba";
-
-      [
-        [-49, -38, 4],
-        [52, -12, 3],
-        [39, -53, 2.5],
-      ].forEach(([sx, sy, radius]) => {
-        const point = deformPoint(game, sx, sy);
-
-        ctx.beginPath();
-        ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
-        ctx.fill();
-      });
-    }
-  }
-
-  // The tear opens progressively as the filling appears.
-  if (splitOpen) {
-    const progress = clamp(tearProgress, 0, 1);
-    const opening = 2 + easeInOut(progress / 0.5) * 17;
-    const tearWidth = BODY_WIDTH * (0.12 + progress * 0.65);
-
-    ctx.save();
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-
-    // Dark inner gap.
-    ctx.fillStyle = "rgba(111, 55, 67, 0.88)";
-    ctx.beginPath();
-    ctx.moveTo(-tearWidth, -opening * 0.2);
-
-    for (let i = 0; i <= 14; i++) {
-      const px = -tearWidth + (i / 14) * tearWidth * 2;
-      const py =
-        (i % 2 === 0 ? -1 : 1) *
-        opening *
-        (0.4 + progress * 0.25);
-
-      ctx.lineTo(px, py);
-    }
-
-    ctx.lineTo(tearWidth, opening * 0.7);
-    ctx.quadraticCurveTo(
-      0,
-      opening * 1.8,
-      -tearWidth,
-      opening * 0.7,
-    );
-    ctx.closePath();
-    ctx.fill();
-
-    // Ragged edges of the torn dough.
-    ctx.strokeStyle = dumpling.accent;
-    ctx.lineWidth = 4 + progress * 2;
-    ctx.beginPath();
-    ctx.moveTo(-tearWidth, -opening * 0.2);
-
-    for (let i = 0; i <= 14; i++) {
-      const px = -tearWidth + (i / 14) * tearWidth * 2;
-      const py =
-        (i % 2 === 0 ? -1 : 1) *
-        opening *
-        (0.4 + progress * 0.25);
-
-      ctx.lineTo(px, py);
-    }
-
-    ctx.stroke();
-
-    ctx.strokeStyle = dumpling.light;
+  // Matcha leaves.
+  if (dumpling.id === "matcha") {
+    ctx.strokeStyle = "#6d9b5b";
     ctx.lineWidth = 2;
+
+    const leaf1Start = deformPoint(game, -54, -25);
+    const leaf1Control = deformPoint(game, -43, -39);
+    const leaf1End = deformPoint(game, -34, -25);
+
+    const leaf2Start = deformPoint(game, 42, -44);
+    const leaf2Control = deformPoint(game, 53, -56);
+    const leaf2End = deformPoint(game, 59, -42);
+
     ctx.beginPath();
-    ctx.moveTo(-tearWidth * 0.8, -opening * 0.7);
-    ctx.lineTo(-tearWidth * 0.45, -opening * 0.2);
-    ctx.lineTo(-tearWidth * 0.18, -opening * 0.8);
-    ctx.moveTo(tearWidth * 0.15, opening * 0.1);
-    ctx.lineTo(tearWidth * 0.42, -opening * 0.55);
-    ctx.lineTo(tearWidth * 0.72, -opening * 0.1);
+    ctx.moveTo(leaf1Start.x, leaf1Start.y);
+    ctx.quadraticCurveTo(
+      leaf1Control.x,
+      leaf1Control.y,
+      leaf1End.x,
+      leaf1End.y,
+    );
+    ctx.moveTo(leaf2Start.x, leaf2Start.y);
+    ctx.quadraticCurveTo(
+      leaf2Control.x,
+      leaf2Control.y,
+      leaf2End.x,
+      leaf2End.y,
+    );
     ctx.stroke();
-
-    ctx.restore();
-
-    drawGoo(ctx, game, dumpling, progress, time);
   }
+
+  // Blueberry spots.
+  if (dumpling.id === "blueberry") {
+    ctx.fillStyle = "#8d78c3";
+
+    [
+      [-53, -4, 3],
+      [54, -35, 3],
+      [52, 34, 2.5],
+    ].forEach(([sx, sy, radius]) => {
+      const point = deformPoint(game, sx, sy);
+
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  }
+
+  // Golden sprinkles.
+  if (dumpling.id === "golden") {
+    ctx.fillStyle = "#fff2ba";
+
+    [
+      [-49, -38, 4],
+      [52, -12, 3],
+      [39, -53, 2.5],
+    ].forEach(([sx, sy, radius]) => {
+      const point = deformPoint(game, sx, sy);
+
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  }
+
+  // End clipping so the held sparkles can sit outside the body.
+  ctx.restore();
 
   // Sparkles while held.
-  if (game.held && !splitOpen) {
+  if (game.held) {
     ctx.strokeStyle = "rgba(255,255,255,0.95)";
     ctx.lineWidth = 3;
     ctx.beginPath();
@@ -1011,8 +722,6 @@ function createInitialPhysics(
     scaleY: 1,
     dragging: false,
     held: false,
-    splitOpen: false,
-    tearProgress: 0,
     dragOffsetX: 0,
     dragOffsetY: 0,
     lastPointerX: 0,
@@ -1034,8 +743,6 @@ function createInitialPhysics(
     pointerStartY: 0,
     releaseWobble: 0,
     impactSquash: 0,
-    gooDrops: [],
-    gooSpawnTimer: 0,
   };
 }
 
@@ -1052,7 +759,6 @@ export default function OnlineSquishyDumpling() {
   const [selectedId, setSelectedId] = useState("classic");
   const [soundOn, setSoundOn] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
-  const [isSplitOpen, setIsSplitOpen] = useState(false);
   const [playMode, setPlayMode] = useState<PlayMode>("squish");
   const [resetKey, setResetKey] = useState(0);
 
@@ -1143,7 +849,7 @@ export default function OnlineSquishyDumpling() {
       } else {
         const game = gameRef.current;
 
-        if (playMode === "squish" && !game.splitOpen && !game.dragging) {
+        if (playMode === "squish" && !game.dragging) {
           game.x = width / 2;
           game.y = height / 2;
         } else {
@@ -1188,172 +894,152 @@ export default function OnlineSquishyDumpling() {
       const dt = Math.min((time - lastTime) / 1000, 0.032);
       lastTime = time;
 
-      if (game.splitOpen) {
-        // Allow the crack to open before the dumpling flattens.
-        game.tearProgress = Math.min(
-          1,
-          game.tearProgress + dt * 0.62,
-        );
-
-        const progress = game.tearProgress;
-        const opening = easeInOut(progress / 0.48);
-        const collapse = easeInOut((progress - 0.34) / 0.66);
-
-        // A little widening first, followed by a soft, gradual collapse.
-        game.scaleX = 1 + opening * 0.2 - collapse * 0.08;
-        game.scaleY = 1 - collapse * 0.5;
-
-        game.pullX = 0;
-        game.pullY = 0;
-        game.pullX2 = 0;
-        game.pullY2 = 0;
-        game.stretch = 0;
-        game.compression = 0;
-        game.vx = 0;
-        game.vy = 0;
-        game.rotationVelocity = 0;
-      } else {
-        if (!game.dragging) {
-          if (playMode === "squish") {
-            // Return to the exact centre in Squish & Stretch mode.
-            game.x += (width / 2 - game.x) * Math.min(1, dt * 5);
-            game.y += (height / 2 - game.y) * Math.min(1, dt * 5);
-            game.vx = 0;
-            game.vy = 0;
-          } else {
-            // Gravity and bouncing are only used in throw mode.
-            game.vy += 920 * dt;
-            game.y += game.vy * dt;
-            game.x += game.vx * dt;
-          }
-
-          game.rotation += game.rotationVelocity * dt;
-
-          game.vx *= Math.pow(0.985, dt * 60);
-          game.rotationVelocity *= Math.pow(0.975, dt * 60);
-
-          if (playMode === "throw") {
-            const horizontalLimit = Math.min(
-              BODY_WIDTH * Math.max(game.scaleX, 1),
-              width / 2,
-            );
-
-            if (game.x < horizontalLimit) {
-              game.x = horizontalLimit;
-
-              if (game.vx < 0) {
-                game.vx = Math.abs(game.vx) * 0.72;
-                game.rotationVelocity += game.vy * 0.00012;
-              }
-            } else if (game.x > width - horizontalLimit) {
-              game.x = width - horizontalLimit;
-
-              if (game.vx > 0) {
-                game.vx = -Math.abs(game.vx) * 0.72;
-                game.rotationVelocity += game.vy * 0.00012;
-              }
-            }
-
-            const topLimit = Math.min(
-              BODY_HEIGHT * Math.max(game.scaleY, 1),
-              height / 2,
-            );
-
-            const bottomLimit = Math.max(
-              topLimit,
-              height - BODY_HEIGHT * Math.max(0.82, game.scaleY) - 38,
-            );
-
-            if (game.y < topLimit) {
-              game.y = topLimit;
-
-              if (game.vy < 0) {
-                game.vy = Math.abs(game.vy) * 0.55;
-              }
-            } else if (game.y >= bottomLimit) {
-              game.y = bottomLimit;
-
-              if (game.vy > 100) {
-                const impact = Math.min(game.vy / 1000, 1);
-
-                game.impactSquash = Math.max(
-                  game.impactSquash,
-                  0.45 + impact * 0.4,
-                );
-
-                game.vy = -Math.abs(game.vy) * 0.58;
-                game.vx *= 0.88;
-                game.rotationVelocity += game.vx * 0.00035;
-                playSound(dumplingRef.current.sound + 100);
-              } else if (game.vy > 0) {
-                game.vy = 0;
-                game.vx *= Math.pow(0.96, dt * 60);
-              }
-            }
-          }
-
-          game.vx = clamp(game.vx, -MAX_SPEED, MAX_SPEED);
-          game.vy = clamp(game.vy, -MAX_SPEED, MAX_SPEED);
+      if (!game.dragging) {
+        if (playMode === "squish") {
+          game.x += (width / 2 - game.x) * Math.min(1, dt * 5);
+          game.y += (height / 2 - game.y) * Math.min(1, dt * 5);
+          game.vx = 0;
+          game.vy = 0;
+        } else {
+          // Stronger, more natural throwing motion.
+          game.vy += 920 * dt;
+          game.y += game.vy * dt;
+          game.x += game.vx * dt;
         }
 
-        const targetCompression = game.held
-          ? playMode === "squish"
-            ? 0.78
-            : 0.24
-          : 0;
+        game.rotation += game.rotationVelocity * dt;
 
-        game.compression +=
-          (targetCompression - game.compression) *
-          Math.min(1, dt * (game.held ? 12 : 3.8));
-
-        game.impactSquash +=
-          (0 - game.impactSquash) * Math.min(1, dt * 5.5);
-
-        const movementSpeed = Math.min(
-          Math.hypot(game.vx, game.vy) / 3200,
-          0.14,
+        // Keep much more momentum in throw mode.
+        game.vx *= Math.pow(
+          playMode === "throw" ? 0.997 : 0.985,
+          dt * 60,
         );
-
-        const impact = game.impactSquash;
-
-        const targetScaleX = game.held
-          ? 1 + game.compression * 0.58
-          : 1 + movementSpeed + impact * 0.7;
-
-        const targetScaleY = game.held
-          ? 1 - game.compression * 0.55
-          : 1 -
-            Math.min(Math.abs(game.vx) / 4500, 0.1) -
-            impact * 0.55;
-
-        game.scaleX +=
-          (targetScaleX - game.scaleX) *
-          Math.min(1, dt * (game.held ? 12 : 9));
-
-        game.scaleY +=
-          (targetScaleY - game.scaleY) *
-          Math.min(1, dt * (game.held ? 12 : 9));
-
-        if (!game.dragging) {
-          game.pullX += (0 - game.pullX) * Math.min(1, dt * 3.1);
-          game.pullY += (0 - game.pullY) * Math.min(1, dt * 3.1);
-          game.pullX2 += (0 - game.pullX2) * Math.min(1, dt * 3.1);
-          game.pullY2 += (0 - game.pullY2) * Math.min(1, dt * 3.1);
-          game.stretch += (0 - game.stretch) * Math.min(1, dt * 3.2);
-          game.wobble += dt * (4 + Math.abs(game.vx) * 0.008);
-          game.releaseWobble *= Math.pow(0.94, dt * 60);
-          game.rotationVelocity += -game.rotation * dt * 1.8;
-          game.rotation *= Math.pow(0.985, dt * 60);
-        }
+        game.rotationVelocity *= Math.pow(
+          playMode === "throw" ? 0.99 : 0.975,
+          dt * 60,
+        );
 
         if (playMode === "throw") {
-          const safeBottom = Math.max(
-            Math.min(BODY_HEIGHT, height / 2),
+          const horizontalLimit = Math.min(
+            BODY_WIDTH * Math.max(game.scaleX, 1),
+            width / 2,
+          );
+
+          if (game.x < horizontalLimit) {
+            game.x = horizontalLimit;
+
+            if (game.vx < 0) {
+              game.vx = Math.abs(game.vx) * 0.82;
+              game.rotationVelocity += game.vy * 0.00012;
+            }
+          } else if (game.x > width - horizontalLimit) {
+            game.x = width - horizontalLimit;
+
+            if (game.vx > 0) {
+              game.vx = -Math.abs(game.vx) * 0.82;
+              game.rotationVelocity += game.vy * 0.00012;
+            }
+          }
+
+          const topLimit = Math.min(
+            BODY_HEIGHT * Math.max(game.scaleY, 1),
+            height / 2,
+          );
+
+          const bottomLimit = Math.max(
+            topLimit,
             height - BODY_HEIGHT * Math.max(0.82, game.scaleY) - 38,
           );
 
-          game.y = Math.min(game.y, safeBottom);
+          if (game.y < topLimit) {
+            game.y = topLimit;
+
+            if (game.vy < 0) {
+              game.vy = Math.abs(game.vy) * 0.62;
+            }
+          } else if (game.y >= bottomLimit) {
+            game.y = bottomLimit;
+
+            if (game.vy > 100) {
+              const impact = Math.min(game.vy / 1000, 1);
+
+              game.impactSquash = Math.max(
+                game.impactSquash,
+                0.45 + impact * 0.4,
+              );
+
+              game.vy = -Math.abs(game.vy) * 0.68;
+              game.vx *= 0.94;
+              game.rotationVelocity += game.vx * 0.00035;
+              playSound(dumplingRef.current.sound + 100);
+            } else if (game.vy > 0) {
+              game.vy = 0;
+              game.vx *= Math.pow(0.99, dt * 60);
+            }
+          }
         }
+
+        game.vx = clamp(game.vx, -MAX_SPEED, MAX_SPEED);
+        game.vy = clamp(game.vy, -MAX_SPEED, MAX_SPEED);
+      }
+
+      const targetCompression = game.held
+        ? playMode === "squish"
+          ? 0.78
+          : 0.24
+        : 0;
+
+      game.compression +=
+        (targetCompression - game.compression) *
+        Math.min(1, dt * (game.held ? 12 : 3.8));
+
+      game.impactSquash +=
+        (0 - game.impactSquash) * Math.min(1, dt * 5.5);
+
+      const movementSpeed = Math.min(
+        Math.hypot(game.vx, game.vy) / 3200,
+        0.14,
+      );
+
+      const impact = game.impactSquash;
+
+      const targetScaleX = game.held
+        ? 1 + game.compression * 0.58
+        : 1 + movementSpeed + impact * 0.7;
+
+      const targetScaleY = game.held
+        ? 1 - game.compression * 0.55
+        : 1 -
+          Math.min(Math.abs(game.vx) / 4500, 0.1) -
+          impact * 0.55;
+
+      game.scaleX +=
+        (targetScaleX - game.scaleX) *
+        Math.min(1, dt * (game.held ? 12 : 9));
+
+      game.scaleY +=
+        (targetScaleY - game.scaleY) *
+        Math.min(1, dt * (game.held ? 12 : 9));
+
+      if (!game.dragging) {
+        game.pullX += (0 - game.pullX) * Math.min(1, dt * 3.1);
+        game.pullY += (0 - game.pullY) * Math.min(1, dt * 3.1);
+        game.pullX2 += (0 - game.pullX2) * Math.min(1, dt * 3.1);
+        game.pullY2 += (0 - game.pullY2) * Math.min(1, dt * 3.1);
+        game.stretch += (0 - game.stretch) * Math.min(1, dt * 3.2);
+        game.wobble += dt * (4 + Math.abs(game.vx) * 0.008);
+        game.releaseWobble *= Math.pow(0.94, dt * 60);
+        game.rotationVelocity += -game.rotation * dt * 1.8;
+        game.rotation *= Math.pow(0.985, dt * 60);
+      }
+
+      if (playMode === "throw") {
+        const safeBottom = Math.max(
+          Math.min(BODY_HEIGHT, height / 2),
+          height - BODY_HEIGHT * Math.max(0.82, game.scaleY) - 38,
+        );
+
+        game.y = Math.min(game.y, safeBottom);
       }
 
       ctx.clearRect(0, 0, width, height);
@@ -1369,16 +1055,6 @@ export default function OnlineSquishyDumpling() {
       }
 
       drawDumpling(ctx, game, dumplingRef.current, time);
-
-      // Detached filling falls independently of the dumpling.
-      drawFallingGoo(
-        ctx,
-        game,
-        dumplingRef.current,
-        dt,
-        width,
-        height,
-      );
 
       frameRef.current = requestAnimationFrame(animate);
     };
@@ -1405,43 +1081,13 @@ export default function OnlineSquishyDumpling() {
     };
   };
 
-  const startTear = () => {
-    const game = gameRef.current;
-
-    if (!game || game.splitOpen) return;
-
-    game.splitOpen = true;
-    game.tearProgress = 0;
-    game.dragging = false;
-    game.held = false;
-    game.vx = 0;
-    game.vy = 0;
-    game.rotationVelocity = 0;
-    game.pullX = 0;
-    game.pullY = 0;
-    game.pullX2 = 0;
-    game.pullY2 = 0;
-    game.stretch = 0;
-    game.compression = 0;
-    game.multiTouch = false;
-    game.gooDrops = [];
-    game.gooSpawnTimer = 0;
-
-    pointersRef.current.clear();
-
-    setIsDragging(false);
-    setIsSplitOpen(true);
-    playSound(dumplingRef.current.sound * 0.65);
-  };
-
   const handlePointerDown = (
     event: React.PointerEvent<HTMLCanvasElement>,
   ) => {
     const game = gameRef.current;
 
-    if (!game || game.splitOpen) return;
+    if (!game) return;
 
-    // A second pointer is supported in Squish & Stretch mode only.
     if (
       pointersRef.current.size >= 1 &&
       (playMode !== "squish" || pointersRef.current.size >= 2)
@@ -1505,6 +1151,8 @@ export default function OnlineSquishyDumpling() {
     if (playMode === "throw") {
       game.dragOffsetX = game.x - pointer.x;
       game.dragOffsetY = game.y - pointer.y;
+      game.vx = 0;
+      game.vy = 0;
     } else {
       game.vx = 0;
       game.vy = 0;
@@ -1520,7 +1168,7 @@ export default function OnlineSquishyDumpling() {
     const game = gameRef.current;
     const track = pointersRef.current.get(event.pointerId);
 
-    if (!game || !track || !game.dragging || game.splitOpen) return;
+    if (!game || !track || !game.dragging) return;
 
     event.preventDefault();
 
@@ -1567,26 +1215,38 @@ export default function OnlineSquishyDumpling() {
         bottomLimit,
       );
 
-      game.vx = clamp(dx / elapsed, -MAX_SPEED, MAX_SPEED);
-      game.vy = clamp(dy / elapsed, -MAX_SPEED, MAX_SPEED);
-
-      game.rotationVelocity = clamp(
-        (dx / elapsed) / 1500,
-        -1.8,
-        1.8,
+      // Amplify the swipe so a quick flick produces a proper throw.
+      game.vx = clamp(
+        (dx / elapsed) * THROW_BOOST,
+        -MAX_SPEED,
+        MAX_SPEED,
       );
+      game.vy = clamp(
+        (dy / elapsed) * THROW_BOOST,
+        -MAX_SPEED,
+        MAX_SPEED,
+      );
+      game.rotationVelocity = clamp(
+        (dx / elapsed) / 1000,
+        -2.4,
+        2.4,
+      );
+
+      // Update every move so elapsed time stays accurate.
+      game.lastPointerTime = now;
+      game.lastPointerX = pointer.x;
+      game.lastPointerY = pointer.y;
     } else {
-      // Restrained pull limits preserve the soft dumpling shape.
       const pullX = clamp(
         (pointer.x - track.startX) / Math.max(game.scaleX, 0.5),
-        -300,
-        300,
+        -420,
+        420,
       );
 
       const pullY = clamp(
         (pointer.y - track.startY) / Math.max(game.scaleY, 0.5),
-        -250,
-        250,
+        -420,
+        420,
       );
 
       if (track.slot === 1) {
@@ -1606,7 +1266,7 @@ export default function OnlineSquishyDumpling() {
         : 0;
       const totalPull = firstPull + secondPull;
 
-      game.stretch = Math.min(totalPull / 110, 2.8);
+      game.stretch = Math.min(totalPull / 85, 3.5);
       game.rotation = clamp(
         (game.pullX + game.pullX2) / 1200,
         -0.22,
@@ -1614,15 +1274,6 @@ export default function OnlineSquishyDumpling() {
       );
       game.vx = 0;
       game.vy = 0;
-
-      const tearThreshold = game.multiTouch
-        ? TWO_FINGER_TEAR_THRESHOLD
-        : TEAR_THRESHOLD;
-
-      if (totalPull > tearThreshold) {
-        startTear();
-        return;
-      }
     }
 
     if (Math.hypot(dx, dy) > 12) {
@@ -1633,10 +1284,45 @@ export default function OnlineSquishyDumpling() {
   const handlePointerUp = (
     event: React.PointerEvent<HTMLCanvasElement>,
   ) => {
-    const removed = pointersRef.current.delete(event.pointerId);
+    const track = pointersRef.current.get(event.pointerId);
     const game = gameRef.current;
 
-    if (!removed || !game || game.splitOpen) return;
+    if (!track || !game) return;
+
+    // Include a final pointer movement if release happens before
+    // the last movement event has been processed.
+    if (playMode === "throw") {
+      const pointer = getPointerPosition(event);
+      const now = performance.now();
+      const elapsed = Math.max(
+        (now - game.lastPointerTime) / 1000,
+        0.008,
+      );
+      const dx = pointer.x - track.x;
+      const dy = pointer.y - track.y;
+
+      if (Math.hypot(dx, dy) > 1.5) {
+        game.vx = clamp(
+          (dx / elapsed) * THROW_BOOST,
+          -MAX_SPEED,
+          MAX_SPEED,
+        );
+        game.vy = clamp(
+          (dy / elapsed) * THROW_BOOST,
+          -MAX_SPEED,
+          MAX_SPEED,
+        );
+        game.rotationVelocity = clamp(
+          (dx / elapsed) / 1000,
+          -2.4,
+          2.4,
+        );
+      }
+    }
+
+    const removed = pointersRef.current.delete(event.pointerId);
+
+    if (!removed) return;
 
     if (pointersRef.current.size > 0) {
       return;
@@ -1659,13 +1345,13 @@ export default function OnlineSquishyDumpling() {
       game.vy = 0;
       game.rotationVelocity = -game.rotation * 2.5;
     } else {
-      game.vx = clamp(game.vx * 1.15, -MAX_SPEED, MAX_SPEED);
-      game.vy = clamp(game.vy * 1.15, -MAX_SPEED, MAX_SPEED);
+      game.vx = clamp(game.vx * 1.25, -MAX_SPEED, MAX_SPEED);
+      game.vy = clamp(game.vy * 1.25, -MAX_SPEED, MAX_SPEED);
 
       game.rotationVelocity = clamp(
         game.rotationVelocity,
-        -2.2,
-        2.2,
+        -2.4,
+        2.4,
       );
     }
 
@@ -1694,12 +1380,8 @@ export default function OnlineSquishyDumpling() {
       game.vy = 0;
       game.rotation = 0;
       game.rotationVelocity = 0;
-      game.splitOpen = false;
-      game.tearProgress = 0;
       game.scaleX = 1;
       game.scaleY = 1;
-      game.gooDrops = [];
-      game.gooSpawnTimer = 0;
 
       if (mode === "squish") {
         game.x = width / 2;
@@ -1711,13 +1393,11 @@ export default function OnlineSquishyDumpling() {
     }
 
     setIsDragging(false);
-    setIsSplitOpen(false);
   };
 
   const chooseDumpling = (id: string) => {
     pointersRef.current.clear();
     setSelectedId(id);
-    setIsSplitOpen(false);
 
     const game = gameRef.current;
     const { width, height } = sizeRef.current;
@@ -1739,10 +1419,6 @@ export default function OnlineSquishyDumpling() {
       game.impactSquash = 0;
       game.held = false;
       game.dragging = false;
-      game.splitOpen = false;
-      game.tearProgress = 0;
-      game.gooDrops = [];
-      game.gooSpawnTimer = 0;
 
       if (playMode === "squish") {
         game.x = width / 2;
@@ -1770,22 +1446,19 @@ export default function OnlineSquishyDumpling() {
     }
 
     setIsDragging(false);
-    setIsSplitOpen(false);
     setResetKey((value) => value + 1);
     playSound(selectedDumpling.sound);
   };
 
-  const hintText = isSplitOpen
-    ? "Oh no! Your dumpling split! Reset or pick another."
-    : isDragging
-      ? playMode === "squish"
-        ? pointersRef.current.size > 1
-          ? "Pull both sides apart to stretch the dough!"
-          : "Pull it further… stretch that dough!"
-        : "Ready… let go to throw!"
-      : playMode === "squish"
-        ? "Press and pull the dough, then let go"
-        : "Pick it up, flick it, and watch it splat!";
+  const hintText = isDragging
+    ? playMode === "squish"
+      ? pointersRef.current.size > 1
+        ? "Pull both sides to stretch the dough!"
+        : "Pull it further… stretch that dough!"
+      : "Ready… let go to throw!"
+    : playMode === "squish"
+      ? "Press and pull the dough, then let go"
+      : "Pick it up, flick it, and watch it splat!";
 
   return (
     <main className="squishy-game">
@@ -1813,13 +1486,11 @@ export default function OnlineSquishyDumpling() {
                 isDragging ? " is-active" : ""
               }`}
             />
-            {isSplitOpen
-              ? "SPLIT OPEN!"
-              : isDragging
-                ? playMode === "squish"
-                  ? "SQUISHING!"
-                  : "PICKED UP!"
-                : "READY TO PLAY"}
+            {isDragging
+              ? playMode === "squish"
+                ? "SQUISHING!"
+                : "PICKED UP!"
+              : "READY TO PLAY"}
           </span>
 
           <div className="squishy-game__actions">
@@ -1909,18 +1580,16 @@ export default function OnlineSquishyDumpling() {
             onPointerCancel={handlePointerUp}
             onLostPointerCapture={handlePointerUp}
             aria-label={
-              isSplitOpen
-                ? `${selectedDumpling.name} has split open. Reset it or choose another dumpling.`
-                : playMode === "squish"
-                  ? `Interactive ${selectedDumpling.name}. Press and pull the dough to stretch it, then release.`
-                  : `Interactive ${selectedDumpling.name}. Pick it up, flick it, and release to throw it.`
+              playMode === "squish"
+                ? `Interactive ${selectedDumpling.name}. Press and pull the dough to stretch it, then release.`
+                : `Interactive ${selectedDumpling.name}. Pick it up, flick it, and release to throw it.`
             }
             role="img"
           />
 
           <div className="squishy-game__hint" aria-live="polite">
             <span className="squishy-game__hint-icon">
-              {isSplitOpen ? "♡" : isDragging ? "♡" : "✦"}
+              {isDragging ? "♡" : "✦"}
             </span>
             {hintText}
           </div>
