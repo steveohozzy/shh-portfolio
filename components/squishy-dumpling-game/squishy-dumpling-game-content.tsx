@@ -17,7 +17,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore"
 import { db } from "@/lib/firebase"
-import "./squishy-dumpling-game.css";
+import "./squishy-dumpling-game.css"
 
 type GamePhase = "ready" | "playing" | "finished"
 
@@ -57,6 +57,85 @@ const ROUND_LENGTH = GAME_CONFIG.roundLength
 const HIGH_SCORE_KEY = GAME_CONFIG.highScoreKey
 const COLLECTION_KEY = GAME_CONFIG.collectionKey
 const PLAYER_NAME_KEY = "bao-player-name"
+const SOUND_KEY = "bao-bonanza-sound-enabled"
+
+type SoundNote = {
+  frequency: number
+  duration: number
+  delay?: number
+  wave?: OscillatorType
+  volume?: number
+}
+
+const SOUND_PATTERNS: Record<string, SoundNote[]> = {
+  start: [
+    { frequency: 392, duration: 0.12, delay: 0 },
+    { frequency: 523, duration: 0.12, delay: 0.11 },
+    { frequency: 659, duration: 0.2, delay: 0.22 },
+  ],
+  catch: [
+    { frequency: 520, duration: 0.075, wave: "sine", volume: 0.09 },
+    { frequency: 760, duration: 0.09, delay: 0.035, wave: "sine", volume: 0.06 },
+  ],
+  strawberry: [
+    { frequency: 660, duration: 0.11, delay: 0 },
+    { frequency: 880, duration: 0.14, delay: 0.09 },
+    { frequency: 1046, duration: 0.18, delay: 0.18 },
+  ],
+  matcha: [
+    { frequency: 587, duration: 0.2, delay: 0, wave: "sine" },
+    { frequency: 440, duration: 0.25, delay: 0.12, wave: "sine" },
+    { frequency: 349, duration: 0.3, delay: 0.25, wave: "sine" },
+  ],
+  golden: [
+    { frequency: 784, duration: 0.1, delay: 0 },
+    { frequency: 988, duration: 0.12, delay: 0.08 },
+    { frequency: 1175, duration: 0.12, delay: 0.17 },
+    { frequency: 1568, duration: 0.25, delay: 0.27 },
+  ],
+  rainbow: [
+    { frequency: 523, duration: 0.11, delay: 0 },
+    { frequency: 659, duration: 0.11, delay: 0.08 },
+    { frequency: 784, duration: 0.11, delay: 0.16 },
+    { frequency: 1046, duration: 0.25, delay: 0.24 },
+  ],
+  combo: [
+    { frequency: 587, duration: 0.08, delay: 0 },
+    { frequency: 740, duration: 0.1, delay: 0.07 },
+  ],
+  frenzy: [
+    { frequency: 523, duration: 0.12, delay: 0 },
+    { frequency: 659, duration: 0.12, delay: 0.1 },
+    { frequency: 784, duration: 0.12, delay: 0.2 },
+    { frequency: 1046, duration: 0.18, delay: 0.3 },
+    { frequency: 1318, duration: 0.35, delay: 0.43 },
+  ],
+  escape: [
+    { frequency: 390, duration: 0.12, delay: 0, wave: "triangle" },
+    { frequency: 290, duration: 0.16, delay: 0.1, wave: "triangle" },
+  ],
+  tick: [
+    { frequency: 880, duration: 0.055, wave: "sine", volume: 0.045 },
+  ],
+  discovery: [
+    { frequency: 523, duration: 0.12, delay: 0 },
+    { frequency: 659, duration: 0.12, delay: 0.1 },
+    { frequency: 784, duration: 0.12, delay: 0.2 },
+    { frequency: 1046, duration: 0.22, delay: 0.3 },
+  ],
+  finish: [
+    { frequency: 523, duration: 0.14, delay: 0 },
+    { frequency: 440, duration: 0.14, delay: 0.13 },
+    { frequency: 392, duration: 0.28, delay: 0.26 },
+  ],
+  newBest: [
+    { frequency: 659, duration: 0.12, delay: 0 },
+    { frequency: 784, duration: 0.12, delay: 0.11 },
+    { frequency: 988, duration: 0.12, delay: 0.22 },
+    { frequency: 1318, duration: 0.18, delay: 0.33 },
+    { frequency: 1568, duration: 0.4, delay: 0.48 },
+  ],
+}
 
 function Dumpling({ type }: { type: BaoType }) {
   const gradientId = `bao-rainbow-${type}`
@@ -198,6 +277,7 @@ export function SquishyDumplingGameContent() {
   const [comboShieldActive, setComboShieldActive] = useState(false)
   const [matchaSlowActive, setMatchaSlowActive] = useState(false)
   const [goldenRushActive, setGoldenRushActive] = useState(false)
+  const [soundEnabled, setSoundEnabled] = useState(true)
 
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [playerName, setPlayerName] = useState("")
@@ -228,6 +308,275 @@ export function SquishyDumplingGameContent() {
   const matchaSlowUntil = useRef(0)
   const goldenRushUntil = useRef(0)
   const specialMessageUntil = useRef(0)
+
+  const audioContextRef = useRef<AudioContext | null>(null)
+  const soundEnabledRef = useRef(true)
+  const lastCountdownSound = useRef<number | null>(null)
+  const finishSoundPlayed = useRef(false)
+
+  // Background music refs.
+  const musicTimerRef = useRef<number | null>(null)
+  const musicGainRef = useRef<GainNode | null>(null)
+  const musicStepRef = useRef(0)
+
+  useEffect(() => {
+    soundEnabledRef.current = soundEnabled
+  }, [soundEnabled])
+
+  useEffect(() => {
+    try {
+      const savedSound = window.localStorage.getItem(SOUND_KEY)
+
+      if (savedSound !== null) {
+        const enabled = savedSound === "true"
+        soundEnabledRef.current = enabled
+        setSoundEnabled(enabled)
+      }
+    } catch {
+      // Sound preferences are optional.
+    }
+  }, [])
+
+  const getAudioContext = useCallback(() => {
+    if (typeof window === "undefined") return null
+
+    const AudioContextConstructor = window.AudioContext
+
+    if (!AudioContextConstructor) return null
+
+    if (!audioContextRef.current) {
+      audioContextRef.current = new AudioContextConstructor()
+    }
+
+    const audio = audioContextRef.current
+
+    if (audio.state === "suspended") {
+      void audio.resume()
+    }
+
+    return audio
+  }, [])
+
+  const playSound = useCallback(
+    (sound: string) => {
+      if (!soundEnabledRef.current) return
+
+      const pattern = SOUND_PATTERNS[sound]
+      if (!pattern) return
+
+      try {
+        const audio = getAudioContext()
+        if (!audio) return
+
+        const startAt = audio.currentTime
+
+        pattern.forEach((note) => {
+          const oscillator = audio.createOscillator()
+          const gain = audio.createGain()
+          const noteStart = startAt + (note.delay || 0)
+          const volume = note.volume ?? 0.07
+
+          oscillator.type = note.wave || "sine"
+          oscillator.frequency.setValueAtTime(
+            note.frequency,
+            noteStart,
+          )
+
+          gain.gain.setValueAtTime(0.001, noteStart)
+          gain.gain.exponentialRampToValueAtTime(
+            volume,
+            noteStart + 0.012,
+          )
+          gain.gain.exponentialRampToValueAtTime(
+            0.001,
+            noteStart + note.duration,
+          )
+
+          oscillator.connect(gain)
+          gain.connect(audio.destination)
+
+          oscillator.start(noteStart)
+          oscillator.stop(noteStart + note.duration + 0.02)
+        })
+      } catch {
+        // Audio is an optional enhancement; gameplay continues without it.
+      }
+    },
+    [getAudioContext],
+  )
+
+  // Soft pentatonic background music with plucked, bell-like notes.
+  const stopBackgroundMusic = useCallback(() => {
+    if (musicTimerRef.current !== null) {
+      window.clearInterval(musicTimerRef.current)
+      musicTimerRef.current = null
+    }
+
+    const oldGain = musicGainRef.current
+    musicGainRef.current = null
+
+    if (!oldGain) return
+
+    try {
+      const audio = audioContextRef.current
+
+      if (audio && audio.state !== "closed") {
+        const now = audio.currentTime
+
+        oldGain.gain.cancelScheduledValues(now)
+        oldGain.gain.setValueAtTime(
+          Math.max(oldGain.gain.value, 0.0001),
+          now,
+        )
+        oldGain.gain.linearRampToValueAtTime(0.0001, now + 0.45)
+
+        window.setTimeout(() => {
+          try {
+            oldGain.disconnect()
+          } catch {
+            // The audio node may already be disconnected.
+          }
+        }, 550)
+      }
+    } catch {
+      // Music should never interrupt gameplay.
+    }
+  }, [])
+
+  const startBackgroundMusic = useCallback(() => {
+    if (!soundEnabledRef.current) return
+
+    stopBackgroundMusic()
+
+    try {
+      const audio = getAudioContext()
+      if (!audio) return
+
+      const masterGain = audio.createGain()
+      masterGain.gain.setValueAtTime(0.0001, audio.currentTime)
+      masterGain.gain.linearRampToValueAtTime(
+        0.22,
+        audio.currentTime + 1.8,
+      )
+      masterGain.connect(audio.destination)
+
+      musicGainRef.current = masterGain
+      musicStepRef.current = 0
+
+      // A gentle pentatonic melody, with a lower note every few beats.
+      const melody = [
+        587.33, 659.25, 783.99, 659.25,
+        880, 783.99, 659.25, 587.33,
+        523.25, 587.33, 659.25, 783.99,
+        880, 783.99, 659.25, 587.33,
+        659.25, 783.99, 880, 783.99,
+        659.25, 587.33, 523.25, 587.33,
+      ]
+
+      const bassNotes = [146.83, 174.61, 196, 174.61, 146.83, 164.81]
+
+      const playPluckedNote = (
+        frequency: number,
+        volume: number,
+        duration: number,
+        wave: OscillatorType = "triangle",
+      ) => {
+        const now = audio.currentTime
+        const oscillator = audio.createOscillator()
+        const envelope = audio.createGain()
+
+        oscillator.type = wave
+        oscillator.frequency.setValueAtTime(frequency, now)
+
+        envelope.gain.setValueAtTime(0.0001, now)
+        envelope.gain.linearRampToValueAtTime(volume, now + 0.018)
+        envelope.gain.exponentialRampToValueAtTime(
+          0.0001,
+          now + duration,
+        )
+
+        oscillator.connect(envelope)
+        envelope.connect(masterGain)
+
+        oscillator.start(now)
+        oscillator.stop(now + duration + 0.03)
+      }
+
+      const playMusicStep = () => {
+        if (!soundEnabledRef.current || !musicGainRef.current) return
+
+        const step = musicStepRef.current
+        const frequency = melody[step % melody.length]
+
+        // Main plucked melody.
+        playPluckedNote(frequency, 0.19, 0.42, "triangle")
+
+        // A quieter bell-like overtone gives the melody a softer sparkle.
+        if (step % 2 === 0) {
+          playPluckedNote(frequency * 2, 0.035, 0.28, "sine")
+        }
+
+        // Gentle low notes add warmth without becoming a heavy beat.
+        if (step % 4 === 0) {
+          const bassFrequency =
+            bassNotes[Math.floor(step / 4) % bassNotes.length]
+
+          playPluckedNote(bassFrequency, 0.13, 0.65, "sine")
+        }
+
+        musicStepRef.current += 1
+      }
+
+      playMusicStep()
+
+      musicTimerRef.current = window.setInterval(() => {
+        if (!soundEnabledRef.current) {
+          stopBackgroundMusic()
+          return
+        }
+
+        playMusicStep()
+      }, 340)
+    } catch {
+      // Background music is optional; gameplay continues without it.
+    }
+  }, [getAudioContext, stopBackgroundMusic])
+
+  const toggleSound = useCallback(() => {
+    const nextEnabled = !soundEnabledRef.current
+
+    soundEnabledRef.current = nextEnabled
+    setSoundEnabled(nextEnabled)
+
+    try {
+      window.localStorage.setItem(SOUND_KEY, String(nextEnabled))
+    } catch {
+      // Sound preferences are optional.
+    }
+
+    if (nextEnabled) {
+      if (phase === "playing") {
+        startBackgroundMusic()
+      } else {
+        playSound("start")
+      }
+    } else {
+      stopBackgroundMusic()
+    }
+  }, [phase, playSound, startBackgroundMusic, stopBackgroundMusic])
+
+  useEffect(() => {
+    return () => {
+      if (musicTimerRef.current !== null) {
+        window.clearInterval(musicTimerRef.current)
+      }
+
+      if (audioContextRef.current) {
+        void audioContextRef.current.close()
+        audioContextRef.current = null
+      }
+    }
+  }, [])
 
   useEffect(() => {
     try {
@@ -324,6 +673,8 @@ export function SquishyDumplingGameContent() {
     matchaSlowUntil.current = 0
     goldenRushUntil.current = 0
     specialMessageUntil.current = 0
+    lastCountdownSound.current = null
+    finishSoundPlayed.current = false
 
     setLaunchEffect(null)
     setSpecialMessage("")
@@ -343,8 +694,11 @@ export function SquishyDumplingGameContent() {
     setScoreSubmitted(false)
     setScoreSubmitting(false)
     setSubmitMessage("")
+
+    playSound("start")
+    startBackgroundMusic()
     setPhase("playing")
-  }, [])
+  }, [playSound, startBackgroundMusic])
 
   useEffect(() => {
     if (phase !== "playing") return
@@ -368,6 +722,15 @@ export function SquishyDumplingGameContent() {
         setMatchaSlowActive(false)
         setGoldenRushActive(false)
         return
+      }
+
+      if (
+        remaining <= 5 &&
+        remaining > 0 &&
+        lastCountdownSound.current !== remaining
+      ) {
+        lastCountdownSound.current = remaining
+        playSound("tick")
       }
 
       const frenzyRemaining = Math.max(
@@ -411,6 +774,7 @@ export function SquishyDumplingGameContent() {
           setComboShieldActive(false)
           comboRef.current = 0
           setCombo(0)
+          playSound("escape")
         }
       }
 
@@ -489,7 +853,23 @@ export function SquishyDumplingGameContent() {
     }, 80)
 
     return () => window.clearInterval(tick)
-  }, [phase])
+  }, [phase, playSound])
+
+  useEffect(() => {
+    if (phase !== "finished") return
+
+    stopBackgroundMusic()
+
+    if (finishSoundPlayed.current) return
+
+    finishSoundPlayed.current = true
+
+    if (score > bestScore) {
+      playSound("newBest")
+    } else {
+      playSound("finish")
+    }
+  }, [phase, score, bestScore, playSound, stopBackgroundMusic])
 
   useEffect(() => {
     if (phase !== "finished") return
@@ -593,8 +973,24 @@ export function SquishyDumplingGameContent() {
         specialMessageUntil.current = now + 3000
       }
 
+      if (bao.type === "strawberry") {
+        playSound("strawberry")
+      } else if (bao.type === "matcha") {
+        playSound("matcha")
+      } else if (bao.type === "golden") {
+        playSound("golden")
+      } else if (bao.type === "rainbow") {
+        playSound("rainbow")
+      } else {
+        playSound("catch")
+      }
+
       setCombo(nextCombo)
       setScore(scoreRef.current)
+
+      if (nextCombo >= 2 && nextCombo % 3 === 0) {
+        playSound("combo")
+      }
 
       setScorePopups((current) => [
         ...current,
@@ -622,7 +1018,8 @@ export function SquishyDumplingGameContent() {
         setFrenzyTimeLeft(
           Math.ceil(GAME_CONFIG.frenzyDuration / 1000),
         )
-}
+        playSound("frenzy")
+      }
 
       if (!collectionRef.current.includes(bao.type)) {
         const updatedCollection = [...collectionRef.current, bao.type]
@@ -630,6 +1027,7 @@ export function SquishyDumplingGameContent() {
         collectionRef.current = updatedCollection
         setCollection(updatedCollection)
         setNewDiscovery(bao.type)
+        playSound("discovery")
 
         try {
           window.localStorage.setItem(
@@ -655,7 +1053,7 @@ export function SquishyDumplingGameContent() {
       baosRef.current = updatedBaos
       setBaos(updatedBaos)
     },
-    [phase],
+    [phase, playSound],
   )
 
   const submitScore = useCallback(async () => {
@@ -715,6 +1113,33 @@ export function SquishyDumplingGameContent() {
             Three baskets. Loads of Baos. How many can you catch before
             time runs out?
           </p>
+
+          <button
+            type="button"
+            className="bao-sound-toggle"
+            onClick={toggleSound}
+            aria-pressed={soundEnabled}
+            aria-label={soundEnabled ? "Mute game sounds" : "Enable game sounds"}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px",
+              marginTop: "12px",
+              padding: "9px 15px",
+              border: "1px solid rgba(125, 85, 75, 0.2)",
+              borderRadius: "999px",
+              background: soundEnabled ? "#fff0d9" : "#f1ece8",
+              color: "#543b39",
+              font: "inherit",
+              fontSize: "0.9rem",
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            <span aria-hidden="true">{soundEnabled ? "🔊" : "🔇"}</span>
+            {soundEnabled ? "Sound on" : "Sound off"}
+          </button>
         </header>
 
         <div className="bao-game-hud">
