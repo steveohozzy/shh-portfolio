@@ -9,6 +9,9 @@ import {
   Home,
   RotateCcw,
   Star,
+  Music,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import "./squishy-dumpling-adventure.css";
 
@@ -54,6 +57,20 @@ type Player = {
   grounded: boolean;
   facing: number;
   squash: number;
+};
+
+type SoundSettings = {
+  music: boolean;
+  effects: boolean;
+  musicVolume: number;
+  effectsVolume: number;
+};
+
+const DEFAULT_SOUND_SETTINGS: SoundSettings = {
+  music: true,
+  effects: true,
+  musicVolume: 0.18,
+  effectsVolume: 0.45,
 };
 
 const LEVELS: GameLevel[] = [
@@ -806,6 +823,227 @@ export default function SquishyDumplingAdventurePage() {
     };
   }, []);
 
+  const [soundSettings, setSoundSettings] =
+  useState<SoundSettings>(DEFAULT_SOUND_SETTINGS);
+
+const [soundPanelOpen, setSoundPanelOpen] = useState(false);
+
+const soundSettingsRef = useRef<SoundSettings>(DEFAULT_SOUND_SETTINGS);
+const audioContextRef = useRef<AudioContext | null>(null);
+const musicTimerRef = useRef<number | null>(null);
+const musicStepRef = useRef(0);
+
+const getAudioContext = useCallback(() => {
+  if (typeof window === "undefined") return null;
+
+  if (!audioContextRef.current) {
+    audioContextRef.current = new AudioContext();
+  }
+
+  if (audioContextRef.current.state === "suspended") {
+    void audioContextRef.current.resume();
+  }
+
+  return audioContextRef.current;
+}, []);
+
+const updateSoundSettings = (updates: Partial<SoundSettings>) => {
+  setSoundSettings((current) => ({
+    ...current,
+    ...updates,
+  }));
+};
+
+useEffect(() => {
+  soundSettingsRef.current = soundSettings;
+
+  try {
+    window.localStorage.setItem(
+      "sda-sound-settings",
+      JSON.stringify(soundSettings),
+    );
+  } catch {
+    // Audio settings can still be used without local storage.
+  }
+}, [soundSettings]);
+
+useEffect(() => {
+  try {
+    const saved = window.localStorage.getItem("sda-sound-settings");
+
+    if (saved) {
+      const parsed = JSON.parse(saved);
+
+      setSoundSettings({
+        music: typeof parsed.music === "boolean"
+          ? parsed.music
+          : DEFAULT_SOUND_SETTINGS.music,
+        effects: typeof parsed.effects === "boolean"
+          ? parsed.effects
+          : DEFAULT_SOUND_SETTINGS.effects,
+        musicVolume: typeof parsed.musicVolume === "number"
+          ? Math.max(0, Math.min(1, parsed.musicVolume))
+          : DEFAULT_SOUND_SETTINGS.musicVolume,
+        effectsVolume: typeof parsed.effectsVolume === "number"
+          ? Math.max(0, Math.min(1, parsed.effectsVolume))
+          : DEFAULT_SOUND_SETTINGS.effectsVolume,
+      });
+    }
+  } catch {
+    // Use the default sound settings.
+  }
+}, []);
+
+useEffect(() => {
+  if (!soundSettings.music || mode !== "playing") {
+    if (musicTimerRef.current !== null) {
+      window.clearInterval(musicTimerRef.current);
+      musicTimerRef.current = null;
+    }
+
+    return;
+  }
+
+  const context = getAudioContext();
+  if (!context) return;
+
+  const melody = [
+    523.25, 659.25, 783.99, 659.25,
+    587.33, 783.99, 880, 783.99,
+    523.25, 587.33, 659.25, 783.99,
+    659.25, 587.33, 523.25, 392,
+  ];
+
+  const playNote = (frequency: number) => {
+    const currentSettings = soundSettingsRef.current;
+
+    if (!currentSettings.music || context.state !== "running") {
+      return;
+    }
+
+    const now = context.currentTime;
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(frequency, now);
+
+    gain.gain.setValueAtTime(
+      Math.max(0.001, currentSettings.musicVolume * 0.24),
+      now,
+    );
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
+
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+
+    oscillator.start(now);
+    oscillator.stop(now + 0.68);
+  };
+
+  musicStepRef.current = 0;
+  playNote(melody[0]);
+
+  musicTimerRef.current = window.setInterval(() => {
+    const note = melody[musicStepRef.current % melody.length];
+
+    playNote(note);
+    musicStepRef.current += 1;
+  }, 480);
+
+  return () => {
+    if (musicTimerRef.current !== null) {
+      window.clearInterval(musicTimerRef.current);
+      musicTimerRef.current = null;
+    }
+  };
+}, [mode, soundSettings.music, getAudioContext]);
+
+const playSound = useCallback(
+  (sound: "jump" | "land" | "goo" | "star" | "hit" | "complete") => {
+    const settings = soundSettingsRef.current;
+
+    if (!settings.effects) return;
+
+    const context = getAudioContext();
+    if (!context) return;
+
+    const now = context.currentTime;
+    const master = context.createGain();
+
+    master.gain.setValueAtTime(
+      Math.max(0.001, settings.effectsVolume),
+      now,
+    );
+    master.connect(context.destination);
+
+    const tone = (
+      frequency: number,
+      duration: number,
+      type: OscillatorType = "sine",
+      volume = 0.3,
+      endFrequency?: number,
+    ) => {
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+
+      oscillator.type = type;
+      oscillator.frequency.setValueAtTime(frequency, now);
+
+      if (endFrequency) {
+        oscillator.frequency.exponentialRampToValueAtTime(
+          endFrequency,
+          now + duration,
+        );
+      }
+
+      gain.gain.setValueAtTime(Math.max(0.001, volume), now);
+      gain.gain.exponentialRampToValueAtTime(
+        0.001,
+        now + duration,
+      );
+
+      oscillator.connect(gain);
+      gain.connect(master);
+      oscillator.start(now);
+      oscillator.stop(now + duration);
+    };
+
+    if (sound === "jump") {
+      tone(260, 0.16, "sine", 0.32, 520);
+      tone(390, 0.12, "triangle", 0.12, 620);
+    }
+
+    if (sound === "land") {
+      tone(190, 0.13, "sine", 0.22, 110);
+    }
+
+    if (sound === "goo") {
+      tone(520, 0.12, "sine", 0.24, 780);
+      tone(780, 0.18, "sine", 0.17, 1050);
+    }
+
+    if (sound === "star") {
+      tone(880, 0.22, "sine", 0.24);
+      tone(1175, 0.28, "sine", 0.2);
+      tone(1568, 0.34, "sine", 0.14);
+    }
+
+    if (sound === "hit") {
+      tone(180, 0.24, "triangle", 0.3, 75);
+      tone(110, 0.2, "sine", 0.16, 65);
+    }
+
+    if (sound === "complete") {
+      tone(523.25, 0.3, "sine", 0.22);
+      window.setTimeout(() => tone(659.25, 0.3, "sine", 0.22), 120);
+      window.setTimeout(() => tone(783.99, 0.35, "sine", 0.22), 240);
+      window.setTimeout(() => tone(1046.5, 0.55, "sine", 0.25), 360);
+    }
+  },
+  [getAudioContext],
+);
+
   useEffect(() => {
     const viewport = viewportRef.current;
     if (!viewport) return;
@@ -860,6 +1098,7 @@ export default function SquishyDumplingAdventurePage() {
         p.vy = -12.5;
         p.grounded = false;
         p.squash = 1.16;
+        playSound("jump");
       }
 
       jumpRef.current = false;
@@ -898,6 +1137,7 @@ export default function SquishyDumplingAdventurePage() {
 
           if (!wasGrounded && previousVy > 2) {
             p.squash = Math.max(0.68, 0.88 - previousVy * 0.012);
+            playSound("land");
           }
         }
       });
@@ -949,6 +1189,8 @@ export default function SquishyDumplingAdventurePage() {
           setMode("gameOver");
           return;
         }
+
+        playSound("hit");
       }
 
       const newDrops: number[] = [];
@@ -971,6 +1213,7 @@ export default function SquishyDumplingAdventurePage() {
           gooRef.current + newDrops.length * 18,
         );
         setGoo(gooRef.current);
+        playSound("goo");
       }
 
       const newStars: number[] = [];
@@ -991,6 +1234,7 @@ export default function SquishyDumplingAdventurePage() {
         setTotalStars((value) => value + newStars.length);
         setStarFlash(true);
         window.setTimeout(() => setStarFlash(false), 350);
+        playSound("star");
       }
 
       const finishPlatform =
@@ -1002,6 +1246,7 @@ export default function SquishyDumplingAdventurePage() {
         p.y + PLAYER_HEIGHT >= finishPlatform.y - 4
       ) {
         setPlayer({ ...p });
+        playSound("complete");
         setMode(
           levelIndex === LEVELS.length - 1 ? "complete" : "levelComplete",
         );
@@ -1017,7 +1262,9 @@ export default function SquishyDumplingAdventurePage() {
     return () => {
       window.cancelAnimationFrame(frame);
     };
-  }, [mode, levelIndex]);
+  }, [mode, levelIndex, playSound]);
+
+  
 
   const camera = Math.max(
     0,
@@ -1044,6 +1291,86 @@ export default function SquishyDumplingAdventurePage() {
           <h1>Squishy Dumpling Adventure</h1>
           <p>Keep your goo, dodge the spikes and bounce your way home.</p>
         </header>
+
+        <div className="sda-sound-settings">
+  <button
+    type="button"
+    className="sda-sound-toggle"
+    onClick={() => setSoundPanelOpen((open) => !open)}
+    aria-expanded={soundPanelOpen}
+  >
+    {soundSettings.music || soundSettings.effects ? (
+      <Volume2 size={18} />
+    ) : (
+      <VolumeX size={18} />
+    )}
+    Sound settings
+  </button>
+
+  {soundPanelOpen && (
+    <div className="sda-sound-panel">
+      <label className="sda-sound-option">
+        <span>
+          <Music size={16} />
+          Background music
+        </span>
+        <input
+          type="checkbox"
+          checked={soundSettings.music}
+          onChange={(event) =>
+            updateSoundSettings({ music: event.target.checked })
+          }
+        />
+      </label>
+
+      <label className="sda-volume-option">
+        <span>Music volume</span>
+        <input
+          type="range"
+          min="0"
+          max="1"
+          step="0.05"
+          value={soundSettings.musicVolume}
+          onChange={(event) =>
+            updateSoundSettings({
+              musicVolume: Number(event.target.value),
+            })
+          }
+        />
+      </label>
+
+      <label className="sda-sound-option">
+        <span>
+          <Volume2 size={16} />
+          Game sound effects
+        </span>
+        <input
+          type="checkbox"
+          checked={soundSettings.effects}
+          onChange={(event) =>
+            updateSoundSettings({ effects: event.target.checked })
+          }
+        />
+      </label>
+
+      <label className="sda-volume-option">
+        <span>Effects volume</span>
+        <input
+          type="range"
+          min="0"
+          max="1"
+          step="0.05"
+          value={soundSettings.effectsVolume}
+          onChange={(event) =>
+            updateSoundSettings({
+              effectsVolume: Number(event.target.value),
+            })
+          }
+        />
+      </label>
+    </div>
+  )}
+</div>
 
         {mode === "intro" && (
           <section className="sda-intro">
@@ -1075,9 +1402,10 @@ export default function SquishyDumplingAdventurePage() {
               <button
                 className="sda-primary-button"
                 onClick={() => {
-                  setTotalStars(0);
-                  startLevel(0);
-                }}
+  getAudioContext();
+  setTotalStars(0);
+  startLevel(0);
+}}
               >
                 Let&apos;s bounce! <span>→</span>
               </button>
