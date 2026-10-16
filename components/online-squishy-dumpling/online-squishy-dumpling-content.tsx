@@ -245,28 +245,30 @@ function deformPoint(
     const squeezeX = game.squeezeX;
     const squeezeY = game.squeezeY;
 
-    // Axis running between the two fingers.
-    const along = point.x * squeezeX + point.y * squeezeY;
+    const projection =
+      point.x * squeezeX + point.y * squeezeY;
 
-    // Axis perpendicular to the two fingers.
-    const across = -point.x * squeezeY + point.y * squeezeX;
+    const perpendicular =
+      -point.x * squeezeY + point.y * squeezeX;
 
-    // Compress between the fingers and bulge outward in the
-    // perpendicular direction, like squeezing a soft toy.
-    const squeezeStrength = game.squeeze;
-    const compressedAlong =
-      along * (1 - squeezeStrength * 0.48);
+    const squeezeAmount = game.squeeze;
 
-    const expandedAcross =
-      across * (1 + squeezeStrength * 0.28);
+    // Compress along the direction the fingers move together.
+    const squeezedProjection =
+      projection * (1 - squeezeAmount * 0.48);
+
+    // Expand perpendicular to the squeeze direction.
+    const expandedPerpendicular =
+      perpendicular * (1 + squeezeAmount * 0.65);
 
     point = {
       x:
-        compressedAlong * squeezeX -
-        expandedAcross * squeezeY,
+        squeezedProjection * squeezeX -
+        expandedPerpendicular * squeezeY,
+
       y:
-        compressedAlong * squeezeY +
-        expandedAcross * squeezeX,
+        squeezedProjection * squeezeY +
+        expandedPerpendicular * squeezeX,
     };
   }
 
