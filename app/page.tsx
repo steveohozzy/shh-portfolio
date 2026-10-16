@@ -13,16 +13,25 @@ export const metadata: Metadata = {
   openGraph: {
     title: "SHH Design | Steven Hoskins | Senior Frontend Developer",
     description:
-      "Portfolio of Steven Hoskins – Senior Frontend Developer specializing in React, Next.js, TypeScript, and modern web application development.",
+      "Portfolio of Steven Hoskins – Senior Frontend Developer specializing in React, Next.js, TypeScript, and modern web applications.",
     url: "/",
     siteName: "SHH Design",
     type: "website",
+    images: [
+      {
+        url: "/og-image.jpeg",
+        width: 1200,
+        height: 630,
+        alt: "SHH Design - Steven Hoskins Portfolio",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "SHH Design | Steven Hoskins | Senior Frontend Developer",
     description:
-      "Portfolio of Steven Hoskins – Senior Frontend Developer specializing in React, Next.js, TypeScript, and modern web application development.",
+      "Portfolio of Steven Hoskins – Senior Frontend Developer specializing in React, Next.js, TypeScript, and modern web applications.",
+    images: ["/og-image.jpeg"],
   },
 }
 
