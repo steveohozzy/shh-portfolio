@@ -11,9 +11,14 @@ const jetbrainsMono = JetBrains_Mono({
   variable: "--font-mono",
 })
 
+// Calculate years of experience dynamically
+const yearsOfExperience =
+  new Date().getFullYear() - 2006 - (new Date().getMonth() < 5 ? 1 : 0)
+
 export const metadata: Metadata = {
   title: "SHH Design | Steven Hoskins | Frontend Developer",
-  description: `SHH Design is the portfolio site of Steven Hoskins, an experienced Frontend Developer with over ${new Date().getFullYear() - 2006 - (new Date().getMonth() < 5 ? 1 : 0)} years of experience building performant, accessible, and visually stunning web experiences.`,
+  description: `SHH Design is the portfolio site of Steven Hoskins, an experienced Frontend Developer with over ${yearsOfExperience} years of experience building performant, accessible, and visually stunning web experiences.`,
+  metadataBase: new URL("https://www.shhdesign.co.uk"),
 }
 
 export const viewport: Viewport = {

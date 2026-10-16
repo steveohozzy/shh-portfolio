@@ -1,4 +1,3 @@
-
 import type { Metadata } from "next";
 import OnlineSquishyDumpling from "@/components/online-squishy-dumpling/online-squishy-dumpling-content";
 
@@ -6,6 +5,14 @@ export const metadata: Metadata = {
   title: "Online Squishy Dumpling – Free Interactive Toy",
   description:
     "Play with a cute online squishy dumpling! Choose different dumplings, squeeze, stretch, pull and bounce your squishy toy in this free interactive experience.",
+  keywords: [
+    "online squishy dumpling",
+    "squishy dumpling",
+    "free interactive fidget toy",
+    "virtual squishy toy",
+    "dumpling fidget game",
+    "online squishy toy",
+  ],
   alternates: {
     canonical: "/online-squishy-dumpling",
   },
@@ -14,6 +21,7 @@ export const metadata: Metadata = {
     description:
       "Pick your favourite dumpling, squish it, stretch it and watch it bounce in this cute free online fidget toy.",
     url: "/online-squishy-dumpling",
+    siteName: "SHH Design",
     type: "website",
     images: [
       {
@@ -30,6 +38,10 @@ export const metadata: Metadata = {
     description:
       "Choose a dumpling, squeeze it, stretch it and bounce it around in this cute online squishy toy.",
     images: ["/online-squishy-dumpling.jpeg"],
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 

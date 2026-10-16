@@ -7,9 +7,22 @@ import { ContactSection } from "@/components/contact-section"
 import { Footer } from "@/components/footer"
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://www.shhdesign.co.uk'),
   alternates: {
     canonical: '/',
+  },
+  openGraph: {
+    title: "SHH Design | Steven Hoskins | Senior Frontend Developer",
+    description:
+      "Portfolio of Steven Hoskins – Senior Frontend Developer specializing in React, Next.js, TypeScript, and modern web application development.",
+    url: "/",
+    siteName: "SHH Design",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "SHH Design | Steven Hoskins | Senior Frontend Developer",
+    description:
+      "Portfolio of Steven Hoskins – Senior Frontend Developer specializing in React, Next.js, TypeScript, and modern web application development.",
   },
 }
 
@@ -19,7 +32,7 @@ export default function Home() {
     "@type": "Person",
     "name": "Steven Hoskins",
     "jobTitle": "Senior Frontend Developer",
-    "url": "https://www.shhdesign.co.uk", // Matches Vercel Production
+    "url": "https://www.shhdesign.co.uk",
     "sameAs": [
       "https://uk.linkedin.com/in/steven-hoskins-8072709",
       "https://github.com/steveohozzy",

@@ -5,6 +5,14 @@ export const metadata: Metadata = {
   title: "Squishy Dumpling Adventure – Free Online Game",
   description:
     "Play Squishy Dumpling Adventure, a cute free online platform game. Jump across colourful levels, collect goo and stars, dodge spikes and guide your squishy dumpling home.",
+  keywords: [
+    "squishy dumpling adventure",
+    "dumpling game",
+    "free online platform game",
+    "browser game",
+    "squishy game online",
+    "cute platformer"
+  ],
   alternates: {
     canonical: "/squishy-dumpling-adventure",
   },
@@ -13,6 +21,7 @@ export const metadata: Metadata = {
     description:
       "Jump, bounce and collect goo in this cute free online platform game. Can you guide your dumpling through every level?",
     url: "/squishy-dumpling-adventure",
+    siteName: "SHH Design",
     type: "website",
     images: [
       {
@@ -29,6 +38,10 @@ export const metadata: Metadata = {
     description:
       "Jump, collect goo and dodge spikes in this cute online platform game.",
     images: ["/squishy-dumpling-adventure.jpeg"],
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 

@@ -4,11 +4,37 @@ import { Footer } from "@/components/footer"
 import { WorkPageContent } from "@/components/work-page-content"
 
 export const metadata: Metadata = {
-  title: "Work | SHH Design | Steven Hoskins | Frontend Developer",
+  title: "Work & Portfolio | Steven Hoskins | Senior Frontend Developer",
   description:
-    "Explore my portfolio of frontend development projects including e-commerce, CMS implementations, and web applications.",
+    "Explore the web development portfolio of Steven Hoskins featuring e-commerce builds, headless CMS implementations, React/Next.js web apps, and interactive components.",
+  keywords: [
+    "frontend developer portfolio",
+    "steven hoskins work",
+    "react developer portfolio",
+    "next.js portfolio",
+    "headless cms projects",
+    "e-commerce web development"
+  ],
   alternates: {
-    canonical: "https://www.shhdesign.co.uk/work",
+    canonical: "/work",
+  },
+  openGraph: {
+    title: "Work & Portfolio | Steven Hoskins | Senior Frontend Developer",
+    description:
+      "Explore high-performance web applications, e-commerce features, and custom CMS implementations built by Steven Hoskins.",
+    url: "/work",
+    siteName: "SHH Design",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Work & Portfolio | Steven Hoskins | Senior Frontend Developer",
+    description:
+      "Explore high-performance web applications, e-commerce features, and custom CMS implementations built by Steven Hoskins.",
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 }
 
