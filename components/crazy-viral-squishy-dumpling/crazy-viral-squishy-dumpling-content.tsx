@@ -367,6 +367,120 @@ export default function CrazyViralSquishyDumplingContent() {
   const [isSquishing, setIsSquishing] = useState(false);
   const [squish, setSquish] = useState({ x: 1, y: 1 });
 
+    const [soundEnabled, setSoundEnabled] = useState(true);
+  const audioContextRef = useRef<AudioContext | null>(null);
+
+  useEffect(() => {
+    try {
+      const savedSound = window.localStorage.getItem("mystery-dumplings-sound");
+      if (savedSound !== null) {
+        setSoundEnabled(savedSound !== "off");
+      }
+    } catch {
+      // Sound preferences are optional.
+    }
+  }, []);
+
+  const playSound = useCallback(
+    (sound: "squish" | "open" | "reveal" | "rare" | "reward") => {
+      if (!soundEnabled || typeof window === "undefined") return;
+
+      try {
+        const AudioContextClass =
+          window.AudioContext ||
+          (window as typeof window & {
+            webkitAudioContext?: typeof AudioContext;
+          }).webkitAudioContext;
+
+        if (!AudioContextClass) return;
+
+        if (!audioContextRef.current) {
+          audioContextRef.current = new AudioContextClass();
+        }
+
+        const context = audioContextRef.current;
+
+        if (context.state === "suspended") {
+          void context.resume();
+        }
+
+        const sounds: Record<
+          typeof sound,
+          { notes: number[]; duration: number; wave: OscillatorType; volume: number }
+        > = {
+          squish: {
+            notes: [190, 145, 230],
+            duration: 0.075,
+            wave: "sine",
+            volume: 0.12,
+          },
+          open: {
+            notes: [330, 440, 554],
+            duration: 0.12,
+            wave: "triangle",
+            volume: 0.1,
+          },
+          reveal: {
+            notes: [523, 659, 784, 1047],
+            duration: 0.16,
+            wave: "sine",
+            volume: 0.13,
+          },
+          rare: {
+            notes: [523, 659, 784, 1047, 1175, 1568],
+            duration: 0.19,
+            wave: "sine",
+            volume: 0.14,
+          },
+          reward: {
+            notes: [587, 740, 880, 1175],
+            duration: 0.15,
+            wave: "triangle",
+            volume: 0.12,
+          },
+        };
+
+        const settings = sounds[sound];
+        const startAt = context.currentTime + 0.015;
+
+        settings.notes.forEach((frequency, index) => {
+          const start = startAt + index * settings.duration;
+          const oscillator = context.createOscillator();
+          const gain = context.createGain();
+
+          oscillator.type = settings.wave;
+          oscillator.frequency.setValueAtTime(frequency, start);
+
+          if (sound === "squish" && index === 1) {
+            oscillator.frequency.exponentialRampToValueAtTime(
+              110,
+              start + settings.duration,
+            );
+          }
+
+          gain.gain.setValueAtTime(0.001, start);
+          gain.gain.exponentialRampToValueAtTime(
+            settings.volume,
+            start + 0.015,
+          );
+          gain.gain.exponentialRampToValueAtTime(
+            0.001,
+            start + settings.duration * 1.8,
+          );
+
+          oscillator.connect(gain);
+          gain.connect(context.destination);
+
+          oscillator.start(start);
+          oscillator.stop(start + settings.duration * 1.9);
+        });
+      } catch {
+        // Sound should never interrupt gameplay.
+      }
+    },
+    [soundEnabled],
+  );
+
   const pointerMap = useRef(new Map<number, Point>());
   const pinchStart = useRef<{
     distance: number;
@@ -481,6 +595,7 @@ export default function CrazyViralSquishyDumplingContent() {
     setRevealed(null);
     setIsCollectionPreview(false);
     setStage("opening");
+    playSound("open");
     setSaveState("saving");
     setNotice("Listen for the little pop…");
 
@@ -559,6 +674,11 @@ export default function CrazyViralSquishyDumplingContent() {
         setRevealed(picked);
         setPendingDumpling(null);
         setStage("revealed");
+        playSound(
+          picked.rarity === "Ultra rare"
+            ? "rare"
+            : "reveal",
+        );
 
         const packMessage = result.isBonus
           ? " Your bonus pack has been used!"
@@ -588,7 +708,7 @@ export default function CrazyViralSquishyDumplingContent() {
         );
       }
     }
-  }, [uid, stage, canOpenPack, packUsed, today]);
+  }, [uid, stage, canOpenPack, packUsed, today, playSound]);
 
   const resetQuizForTesting = async () => {
   if (!uid || process.env.NODE_ENV === "production") return;
@@ -670,6 +790,7 @@ export default function CrazyViralSquishyDumplingContent() {
       setBonusPacks(result);
       setLastQuizDate(today);
       setQuizNotice("You got them all right! One bonus mystery pack is yours. ♡");
+      playSound("reward");
     } catch (error) {
       if (
         error instanceof Error &&
@@ -691,6 +812,10 @@ export default function CrazyViralSquishyDumplingContent() {
     if (!revealed) return;
 
     event.preventDefault();
+
+    if (pointerMap.current.size === 0) {
+      playSound("squish");
+    }
     event.currentTarget.setPointerCapture(event.pointerId);
     pointerMap.current.set(event.pointerId, {
       x: event.clientX,
@@ -880,6 +1005,32 @@ export default function CrazyViralSquishyDumplingContent() {
             friend a squeeze.
           </p>
 
+                    <button
+            className="md-button md-button-soft"
+            type="button"
+            aria-pressed={soundEnabled}
+            onClick={() => {
+              const next = !soundEnabled;
+
+              setSoundEnabled(next);
+
+              try {
+                window.localStorage.setItem(
+                  "mystery-dumplings-sound",
+                  next ? "on" : "off",
+                );
+              } catch {
+                // The toggle still works if storage is unavailable.
+              }
+
+              if (next) {
+                playSound("open");
+              }
+            }}
+          >
+            {soundEnabled ? "🔊 Sound on" : "🔇 Sound off"}
+          </button>
+
           <div className="md-stats">
             <div className="md-stat">
               <span className="md-stat-icon">♡</span>
@@ -1036,6 +1187,7 @@ export default function CrazyViralSquishyDumplingContent() {
                   className="md-button md-button-soft"
                   type="button"
                   onClick={() => {
+                    playSound("squish");
                     setSquish({ x: 1.22, y: 0.82 });
 
                     if (springTimer.current) {
