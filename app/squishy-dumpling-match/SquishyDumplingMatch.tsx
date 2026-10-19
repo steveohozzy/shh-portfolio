@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -35,6 +34,17 @@ type LeaderboardEntry = {
   level: number;
   cleared: number;
 };
+
+type BaoSound =
+  | "start"
+  | "move"
+  | "rotate"
+  | "drop"
+  | "land"
+  | "match"
+  | "combo"
+  | "level"
+  | "gameover";
 
 const COLS = 6;
 const ROWS = 10;
@@ -232,8 +242,8 @@ function DumplingTile({
     classic: { body: "#fff0d8", shade: "#f3d4ac", detail: "#dba98a" },
     strawberry: { body: "#ffd8e5", shade: "#f4aac3", detail: "#e98cab" },
     matcha: { body: "#d7edb9", shade: "#a9ce85", detail: "#7ca95e" },
-    golden: { body: "#ffe18a", shade: "#f3b83f", detail: "#c98c27" },
-    rainbow: { body: "#e4d7ff", shade: "#c3a5f5", detail: "#9c78db" },
+    golden: { body: "#fff064", shade: "#ffad08", detail: "#d97800" },
+    rainbow: { body: "#ff8cdb", shade: "#9d62ff", detail: "#6735db" },
   };
 
   const colour = colours[type];
@@ -241,39 +251,91 @@ function DumplingTile({
 
   return (
     <svg
-      className={`sdm-dumpling${small ? " sdm-dumpling--small" : ""}`}
+      className={`sdm-dumpling${small ? " sdm-dumpling--small" : ""}${
+        type === "golden" ? " sdm-dumpling--golden" : ""
+      }${type === "rainbow" ? " sdm-dumpling--rainbow" : ""}`}
       viewBox="0 0 120 112"
       role="img"
       aria-label={BAO_NAMES[type]}
     >
       <defs>
         <linearGradient id={gradientId} x1="0" y1="0" x2="0.8" y2="1">
-          <stop offset="0%" stopColor={colour.body} />
-          <stop offset="100%" stopColor={colour.shade} />
+          {type === "rainbow" ? (
+            <>
+              <stop offset="0%" stopColor="#ff78bb" />
+              <stop offset="28%" stopColor="#ffad69" />
+              <stop offset="50%" stopColor="#fff078" />
+              <stop offset="70%" stopColor="#71edc2" />
+              <stop offset="100%" stopColor="#8a70ff" />
+            </>
+          ) : (
+            <>
+              <stop offset="0%" stopColor={colour.body} />
+              <stop offset="100%" stopColor={colour.shade} />
+            </>
+          )}
         </linearGradient>
+
+        <linearGradient id={`sdm-${type}-shine`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity=".85" />
+          <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+        </linearGradient>
+
+        <clipPath id={`sdm-${type}-clip`}>
+          <path d="M15 70 Q9 53 25 39 Q35 30 45 26 Q52 18 60 25 Q68 18 75 27 Q90 30 99 43 Q112 57 105 75 Q98 95 60 98 Q22 97 15 70Z" />
+        </clipPath>
       </defs>
+
+      {type === "golden" && (
+        <>
+          <circle
+            className="sdm-special-halo"
+            cx="60"
+            cy="57"
+            r="47"
+            fill="#ffd43b"
+            opacity=".45"
+          />
+          <path
+            d="M16 46 L20 36 L24 46 L34 50 L24 54 L20 64 L16 54 L6 50Z"
+            fill="#ffbd20"
+          />
+          <path
+            d="M96 53 L100 43 L104 53 L114 57 L104 61 L100 71 L96 61 L86 57Z"
+            fill="#ffbd20"
+          />
+        </>
+      )}
 
       {type === "rainbow" && (
         <>
+          <circle
+            className="sdm-special-halo"
+            cx="60"
+            cy="57"
+            r="47"
+            fill="#e3a0ff"
+            opacity=".45"
+          />
           <path
-            d="M24 49 Q18 22 43 19"
+            d="M24 47 Q15 15 43 17"
             fill="none"
-            stroke="#ff9fb5"
-            strokeWidth="6"
+            stroke="#ff477e"
+            strokeWidth="8"
             strokeLinecap="round"
           />
           <path
-            d="M35 28 Q48 8 65 19"
+            d="M35 27 Q49 3 66 17"
             fill="none"
-            stroke="#ffd66b"
-            strokeWidth="6"
+            stroke="#ffcf35"
+            strokeWidth="8"
             strokeLinecap="round"
           />
           <path
-            d="M59 20 Q80 12 89 35"
+            d="M59 18 Q83 8 92 34"
             fill="none"
-            stroke="#8ed8b0"
-            strokeWidth="6"
+            stroke="#42dba0"
+            strokeWidth="8"
             strokeLinecap="round"
           />
         </>
@@ -283,9 +345,40 @@ function DumplingTile({
         d="M15 70 Q9 53 25 39 Q35 30 45 26 Q52 18 60 25 Q68 18 75 27 Q90 30 99 43 Q112 57 105 75 Q98 95 60 98 Q22 97 15 70Z"
         fill={`url(#${gradientId})`}
         stroke={colour.detail}
-        strokeWidth="2.5"
+        strokeWidth={type === "classic" || type === "strawberry" || type === "matcha" ? 2.5 : 4}
         strokeLinejoin="round"
       />
+
+      {type === "rainbow" && (
+        <g clipPath={`url(#sdm-${type}-clip)`}>
+          <path
+            d="M5 47 L115 78"
+            stroke="#ff477e"
+            strokeWidth="12"
+            opacity=".85"
+          />
+          <path
+            d="M5 61 L115 92"
+            stroke="#ffdc48"
+            strokeWidth="11"
+            opacity=".9"
+          />
+          <path
+            d="M5 75 L100 102"
+            stroke="#48e3a3"
+            strokeWidth="10"
+            opacity=".9"
+          />
+          <path
+            d="M18 39 Q45 26 73 35"
+            fill="none"
+            stroke="#ffffff"
+            strokeWidth="7"
+            strokeLinecap="round"
+            opacity=".65"
+          />
+        </g>
+      )}
 
       <path
         d="M29 43 Q39 32 47 32 M52 29 Q60 24 66 31 M74 32 Q84 34 91 45"
@@ -306,12 +399,26 @@ function DumplingTile({
       )}
 
       {type === "golden" && (
-        <path
-          d="M60 15 L64 23 L73 24 L66 30 L68 39 L60 34 L52 39 L54 30 L47 24 L56 23Z"
-          fill="#fff9d7"
-          stroke="#e8b53b"
-          strokeWidth="1.5"
-        />
+        <>
+          <path
+            d="M60 11 L67 23 L81 25 L71 35 L73 49 L60 42 L47 49 L49 35 L39 25 L53 23Z"
+            fill="#fffef0"
+            stroke="#e58b00"
+            strokeWidth="2.5"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M60 16 L64 26 L74 27 L66 34 L68 43 L60 38 L52 43 L54 34 L46 27 L56 26Z"
+            fill="#ffbe19"
+          />
+          <path
+            d="M28 65 Q32 58 36 65 M84 65 Q88 58 92 65"
+            fill="none"
+            stroke="#ffffff"
+            strokeWidth="3"
+            strokeLinecap="round"
+          />
+        </>
       )}
 
       {type === "strawberry" && (
@@ -321,6 +428,24 @@ function DumplingTile({
           stroke="#db7595"
           strokeWidth="1.5"
         />
+      )}
+
+      {type === "rainbow" && (
+        <>
+          <path
+            d="M32 51 L35 44 L38 51 L45 54 L38 57 L35 64 L32 57 L25 54Z"
+            fill="#fffef0"
+            stroke="#e7a5ff"
+            strokeWidth="1"
+          />
+          <path
+            d="M83 39 L86 32 L89 39 L96 42 L89 45 L86 52 L83 45 L76 42Z"
+            fill="#fffef0"
+            stroke="#e7a5ff"
+            strokeWidth="1"
+          />
+          <circle cx="60" cy="51" r="3" fill="#ffffff" />
+        </>
       )}
 
       <ellipse cx="44" cy="62" rx="3.7" ry="5" fill="#59464a" />
@@ -346,6 +471,146 @@ function DumplingTile({
   );
 }
 
+let baoAudioContext: AudioContext | null = null;
+let baoMusicTimer: number | null = null;
+let baoMusicStep = 0;
+
+function getBaoAudio(): AudioContext | null {
+  if (typeof window === "undefined" || !window.AudioContext) {
+    return null;
+  }
+
+  try {
+    if (!baoAudioContext) {
+      baoAudioContext = new window.AudioContext();
+    }
+
+    if (baoAudioContext.state === "suspended") {
+      void baoAudioContext.resume();
+    }
+
+    return baoAudioContext;
+  } catch {
+    return null;
+  }
+}
+
+function playBaoTone(
+  frequency: number,
+  duration = 0.18,
+  volume = 0.07,
+  waveform: OscillatorType = "sine",
+  delay = 0,
+) {
+  const context = getBaoAudio();
+  if (!context) return;
+
+  const start = context.currentTime + delay;
+  const oscillator = context.createOscillator();
+  const gain = context.createGain();
+
+  oscillator.type = waveform;
+  oscillator.frequency.setValueAtTime(frequency, start);
+
+  gain.gain.setValueAtTime(0.0001, start);
+  gain.gain.exponentialRampToValueAtTime(volume, start + 0.015);
+  gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+
+  oscillator.connect(gain);
+  gain.connect(context.destination);
+
+  oscillator.start(start);
+  oscillator.stop(start + duration + 0.025);
+}
+
+function playBaoSound(sound: BaoSound) {
+  const notes: Record<BaoSound, number[]> = {
+    start: [523, 659, 784, 1047],
+    move: [420],
+    rotate: [587, 740, 880],
+    drop: [660, 440, 330],
+    land: [330, 440, 523],
+    match: [659, 784, 988],
+    combo: [523, 659, 784, 988, 1175],
+    level: [523, 659, 784, 1047, 1319],
+    gameover: [523, 466, 392, 330],
+  };
+
+  const volume =
+    sound === "move"
+      ? 0.025
+      : sound === "land"
+        ? 0.065
+        : sound === "combo" || sound === "level"
+          ? 0.085
+          : 0.06;
+
+  notes[sound].forEach((frequency, index) => {
+    playBaoTone(
+      frequency,
+      sound === "move" ? 0.07 : 0.2,
+      volume,
+      sound === "land" || sound === "drop" ? "triangle" : "sine",
+      index * (sound === "move" ? 0.025 : 0.075),
+    );
+  });
+}
+
+function startBaoMusic() {
+  const context = getBaoAudio();
+  if (!context || baoMusicTimer !== null) return;
+
+  const melody = [
+    659, 784, 988, 784, 659, 523, 587, 659,
+    784, 988, 1175, 988, 784, 659, 587, 523,
+  ];
+
+  const bass = [262, 196, 220, 196, 262, 220, 196, 220];
+
+  baoMusicStep = 0;
+
+  const playStep = () => {
+    if (!baoAudioContext || baoAudioContext.state !== "running") {
+      return;
+    }
+
+    const step = baoMusicStep % melody.length;
+
+    playBaoTone(melody[step], 0.24, 0.018, "sine");
+
+    if (step % 2 === 0) {
+      playBaoTone(
+        bass[Math.floor(baoMusicStep / 2) % bass.length],
+        0.42,
+        0.012,
+        "triangle",
+      );
+    }
+
+    if (step === 3 || step === 11) {
+      playBaoTone(melody[step] * 2, 0.12, 0.009, "sine");
+    }
+
+    baoMusicStep++;
+  };
+
+  playStep();
+  baoMusicTimer = window.setInterval(playStep, 260);
+}
+
+function stopBaoMusic() {
+  if (baoMusicTimer !== null && typeof window !== "undefined") {
+    window.clearInterval(baoMusicTimer);
+    baoMusicTimer = null;
+  }
+}
+
+function waitForAnimation(milliseconds: number) {
+  return new Promise<void>((resolve) => {
+    window.setTimeout(resolve, milliseconds);
+  });
+}
+
 export default function SquishyDumplingMatch() {
   const [board, setBoard] = useState<Board>(emptyBoard);
   const [piece, setPiece] = useState<Piece | null>(null);
@@ -368,6 +633,11 @@ export default function SquishyDumplingMatch() {
   const [checkingLeaderboard, setCheckingLeaderboard] = useState(false);
   const [savingLeaderboardScore, setSavingLeaderboardScore] = useState(false);
   const [leaderboardMessage, setLeaderboardMessage] = useState("");
+  const [clearingCells, setClearingCells] = useState<string[]>([]);
+  const [musicEnabled, setMusicEnabled] = useState(true);
+  const [effectsEnabled, setEffectsEnabled] = useState(true);
+
+  const resolvingRef = useRef(false);
 
   const gesture = useRef<{
     pointerId: number;
@@ -382,6 +652,15 @@ export default function SquishyDumplingMatch() {
   const checkedSessionRef = useRef(-1);
   const savingScoreRef = useRef(false);
 
+  const playGameSound = useCallback(
+    (sound: BaoSound) => {
+      if (effectsEnabled) {
+        playBaoSound(sound);
+      }
+    },
+    [effectsEnabled],
+  );
+
   useEffect(() => {
     try {
       setBest(Number(localStorage.getItem("sdm-best-score") || 0));
@@ -389,6 +668,16 @@ export default function SquishyDumplingMatch() {
       setBest(0);
     }
   }, []);
+
+  useEffect(() => {
+    if (status === "playing" && musicEnabled) {
+      startBaoMusic();
+    } else {
+      stopBaoMusic();
+    }
+
+    return () => stopBaoMusic();
+  }, [status, musicEnabled]);
 
   const refreshLeaderboard = useCallback(async () => {
     try {
@@ -424,65 +713,67 @@ export default function SquishyDumplingMatch() {
     void refreshLeaderboard();
   }, [refreshLeaderboard]);
 
-  
-const submitLeaderboardScore = async () => {
-  const cleanInitials = initials.trim().toUpperCase();
+  const submitLeaderboardScore = async () => {
+    const cleanInitials = initials.trim().toUpperCase();
 
-  if (
-    qualifyingScore === null ||
-    !/^[A-Z]{3}$/.test(cleanInitials) ||
-    savingScoreRef.current
-  ) {
-    return;
-  }
-
-  if (!squishyDumplingMatchAppCheck) {
-    setLeaderboardMessage("Score verification isn't available. Please refresh.");
-    return;
-  }
-
-  savingScoreRef.current = true;
-  setSavingLeaderboardScore(true);
-  setLeaderboardMessage("");
-
-  try {
-    const appCheckToken = await getToken(
-      squishyDumplingMatchAppCheck,
-      false,
-    );
-
-    const response = await fetch("/api/sdm-scores", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Firebase-AppCheck": appCheckToken.token,
-      },
-      body: JSON.stringify({
-        initials: cleanInitials,
-        score: qualifyingScore,
-        level,
-        cleared: clearedTotal,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error("Score submission failed.");
+    if (
+      qualifyingScore === null ||
+      !/^[A-Z]{3}$/.test(cleanInitials) ||
+      savingScoreRef.current
+    ) {
+      return;
     }
 
-    setQualifyingScore(null);
-    setInitials("");
-    setLeaderboardMessage("Score saved. Nice one!");
+    if (!squishyDumplingMatchAppCheck) {
+      setLeaderboardMessage("Score verification isn't available. Please refresh.");
+      return;
+    }
 
-    await refreshLeaderboard();
-  } catch {
-    setLeaderboardMessage("Couldn't save your score. Please try again.");
-  } finally {
-    savingScoreRef.current = false;
-    setSavingLeaderboardScore(false);
-  }
-};
+    savingScoreRef.current = true;
+    setSavingLeaderboardScore(true);
+    setLeaderboardMessage("");
+
+    try {
+      const appCheckToken = await getToken(
+        squishyDumplingMatchAppCheck,
+        false,
+      );
+
+      const response = await fetch("/api/sdm-scores", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Firebase-AppCheck": appCheckToken.token,
+        },
+        body: JSON.stringify({
+          initials: cleanInitials,
+          score: qualifyingScore,
+          level,
+          cleared: clearedTotal,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Score submission failed.");
+      }
+
+      setQualifyingScore(null);
+      setInitials("");
+      setLeaderboardMessage("Score saved. Nice one!");
+
+      await refreshLeaderboard();
+    } catch {
+      setLeaderboardMessage("Couldn't save your score. Please try again.");
+    } finally {
+      savingScoreRef.current = false;
+      setSavingLeaderboardScore(false);
+    }
+  };
 
   const finishGame = useCallback(() => {
+    playGameSound("gameover");
+    stopBaoMusic();
+
     setStatus("over");
     setPiece(null);
     setHolding(false);
@@ -502,9 +793,11 @@ const submitLeaderboardScore = async () => {
 
       return current;
     });
-  }, []);
+  }, [playGameSound]);
 
   const startGame = useCallback(() => {
+    playGameSound("start");
+
     gameSessionRef.current += 1;
     setQualifyingScore(null);
     setInitials("");
@@ -521,9 +814,11 @@ const submitLeaderboardScore = async () => {
     setLevel(1);
     setLastCombo(0);
     setHolding(false);
+    setClearingCells([]);
+    resolvingRef.current = false;
     gesture.current = null;
     setStatus("playing");
-  }, []);
+  }, [playGameSound]);
 
   useEffect(() => {
     if (
@@ -575,28 +870,31 @@ const submitLeaderboardScore = async () => {
 
   const movePiece = useCallback(
     (delta: number) => {
-      setPiece((current) => {
-        if (!current || status !== "playing") return current;
+      if (!piece || status !== "playing" || resolvingRef.current) return;
 
-        const nextCol = current.col + delta;
+      const nextCol = piece.col + delta;
 
-        return canPlace(current, board, nextCol, current.row)
-          ? { ...current, col: nextCol }
-          : current;
-      });
+      if (canPlace(piece, board, nextCol, piece.row)) {
+        setPiece({ ...piece, col: nextCol });
+        playGameSound("move");
+      }
     },
-    [board, status],
+    [board, piece, status, playGameSound],
   );
 
   const rotatePiece = useCallback(() => {
-    setPiece((current) => {
-      if (!current || status !== "playing") return current;
-      return { ...current, types: rotateTypes(current.types) };
+    if (!piece || status !== "playing" || resolvingRef.current) return;
+
+    setPiece({
+      ...piece,
+      types: rotateTypes(piece.types),
     });
-  }, [status]);
+
+    playGameSound("rotate");
+  }, [piece, status, playGameSound]);
 
   const hardDrop = useCallback(() => {
-    if (!piece || status !== "playing") return;
+    if (!piece || status !== "playing" || resolvingRef.current) return;
 
     let row = piece.row;
 
@@ -604,74 +902,143 @@ const submitLeaderboardScore = async () => {
       row++;
     }
 
+    playGameSound("drop");
     setPiece({ ...piece, row });
-  }, [board, piece, status]);
+  }, [board, piece, status, playGameSound]);
 
   const lockPiece = useCallback(
-    (currentPiece: Piece, currentBoard: Board) => {
-      const locked = currentBoard.map((row) => [...row]);
+    async (currentPiece: Piece, currentBoard: Board) => {
+      if (resolvingRef.current) return;
+
+      resolvingRef.current = true;
+      setPiece(null);
+      setHolding(false);
+      playGameSound("land");
+
+      let next = currentBoard.map((row) => [...row]);
 
       currentPiece.types.forEach((type, index) => {
         const row = currentPiece.row + index;
 
         if (row >= 0 && row < ROWS) {
-          locked[row][currentPiece.col] = type;
+          next[row][currentPiece.col] = type;
         }
       });
 
-      const result = resolveBoard(locked);
+      setBoard(next);
 
-      setBoard(result.board);
-      setLastCombo(result.chains);
+      let cleared = 0;
+      let points = 0;
+      let chains = 0;
 
-      setScore((current) => {
-        const nextScore = current + result.points;
+      try {
+        while (true) {
+          const matches = findMatches(next);
 
-        setBest((previousBest) => {
-          const nextBest = Math.max(previousBest, nextScore);
+          if (matches.size === 0) break;
 
-          try {
-            localStorage.setItem("sdm-best-score", String(nextBest));
-          } catch {
-            // Best score saving is optional.
+          chains++;
+          cleared += matches.size;
+
+          const goldenCount = Array.from(matches).filter((key) => {
+            const [row, col] = key.split(",").map(Number);
+            return next[row][col] === "golden";
+          }).length;
+
+          points += matches.size * 10 * chains;
+          points += goldenCount * 50 * chains;
+
+          setClearingCells(Array.from(matches));
+
+          playGameSound(chains > 1 ? "combo" : "match");
+
+          await waitForAnimation(680);
+
+          for (const key of matches) {
+            const [row, col] = key.split(",").map(Number);
+            next[row][col] = null;
           }
 
-          return nextBest;
+          next = applyGravity(next);
+          setBoard(next);
+          setClearingCells([]);
+
+          if (findMatches(next).size > 0) {
+            await waitForAnimation(220);
+          }
+        }
+
+        setBoard(next);
+        setLastCombo(chains);
+
+        setScore((current) => {
+          const nextScore = current + points;
+
+          setBest((previousBest) => {
+            const nextBest = Math.max(previousBest, nextScore);
+
+            try {
+              localStorage.setItem(
+                "sdm-best-score",
+                String(nextBest),
+              );
+            } catch {
+              // Best score saving is optional.
+            }
+
+            return nextBest;
+          });
+
+          return nextScore;
         });
 
-        return nextScore;
-      });
+        const total = clearedTotal + cleared;
+        const nextLevel = Math.floor(total / LEVEL_GOAL) + 1;
 
-      setClearedTotal((current) => {
-        const total = current + result.cleared;
-        setLevel(Math.floor(total / LEVEL_GOAL) + 1);
-        return total;
-      });
+        if (nextLevel > level) {
+          playGameSound("level");
+        }
 
-      const followingPiece: Piece = {
-        col: 2,
-        row: 0,
-        types: nextTypes,
-      };
+        setClearedTotal(total);
+        setLevel(nextLevel);
 
-      setNextTypes(randomPieceTypes());
+        const followingPiece: Piece = {
+          col: 2,
+          row: 0,
+          types: nextTypes,
+        };
 
-      if (!canPlace(followingPiece, result.board)) {
-        finishGame();
-      } else {
-        setPiece(followingPiece);
+        setNextTypes(randomPieceTypes());
+
+        resolvingRef.current = false;
+
+        if (!canPlace(followingPiece, next)) {
+          finishGame();
+        } else {
+          setPiece(followingPiece);
+        }
+      } catch {
+        resolvingRef.current = false;
+        setClearingCells([]);
+        setBoard(next);
       }
     },
-    [finishGame, nextTypes],
+    [
+      clearedTotal,
+      finishGame,
+      level,
+      nextTypes,
+      playGameSound,
+    ],
   );
 
   const tick = useCallback(() => {
-    if (!piece || status !== "playing") return;
+    if (!piece || status !== "playing" || resolvingRef.current) return;
 
     if (canPlace(piece, board, piece.col, piece.row + 1)) {
       setPiece({ ...piece, row: piece.row + 1 });
     } else {
-      lockPiece(piece, board);
+      void lockPiece(piece, board);
     }
   }, [board, lockPiece, piece, status]);
 
@@ -862,29 +1229,53 @@ const submitLeaderboardScore = async () => {
               <span>BAO MATCH</span>
             </div>
 
-            {(status === "playing" || status === "paused") && (
-              <button
-                className="sdm-pause-button"
-                onClick={() => {
-                  if (status === "playing") {
-                    setHolding(false);
-                    setStatus("paused");
-                  } else {
-                    setStatus("playing");
+            <div className="sdm-topbar-actions">
+              <div className="sdm-audio-controls">
+                <button
+                  type="button"
+                  onClick={() => setMusicEnabled((enabled) => !enabled)}
+                  aria-pressed={musicEnabled}
+                  aria-label={
+                    musicEnabled ? "Mute background music" : "Enable background music"
                   }
-                }}
-                aria-label={status === "playing" ? "Pause game" : "Resume game"}
-              >
-                {status === "playing" ? "Ⅱ" : "▶"}
-              </button>
-            )}
+                >
+                  {musicEnabled ? "♫ Music on" : "♫ Music off"}
+                </button>
 
-            {status !== "playing" && status !== "paused" && (
-              <div className="sdm-level-badge sdm-best-badge">
-                <span>BEST</span>
-                <strong>{best.toLocaleString()}</strong>
+                <button
+                  type="button"
+                  onClick={() => setEffectsEnabled((enabled) => !enabled)}
+                  aria-pressed={effectsEnabled}
+                  aria-label={
+                    effectsEnabled ? "Mute sound effects" : "Enable sound effects"
+                  }
+                >
+                  {effectsEnabled ? "♪ Sounds on" : "♪ Sounds off"}
+                </button>
               </div>
-            )}
+
+              {(status === "playing" || status === "paused") ? (
+                <button
+                  className="sdm-pause-button"
+                  onClick={() => {
+                    if (status === "playing") {
+                      setHolding(false);
+                      setStatus("paused");
+                    } else {
+                      setStatus("playing");
+                    }
+                  }}
+                  aria-label={status === "playing" ? "Pause game" : "Resume game"}
+                >
+                  {status === "playing" ? "Ⅱ" : "▶"}
+                </button>
+              ) : (
+                <div className="sdm-level-badge sdm-best-badge">
+                  <span>BEST</span>
+                  <strong>{best.toLocaleString()}</strong>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="sdm-score-panel">
@@ -942,7 +1333,11 @@ const submitLeaderboardScore = async () => {
                 {board.map((row, rowIndex) =>
                   row.map((cell, colIndex) => (
                     <div
-                      className="sdm-cell"
+                      className={`sdm-cell${
+                        clearingCells.includes(`${rowIndex},${colIndex}`)
+                          ? " sdm-cell--clearing"
+                          : ""
+                      }`}
                       key={`${rowIndex}-${colIndex}`}
                     >
                       {cell && <DumplingTile type={cell} small />}
@@ -999,6 +1394,23 @@ const submitLeaderboardScore = async () => {
                           ? `You scored ${score.toLocaleString()} points. Fancy another round?`
                           : "Match three or more matching dumplings across, down or diagonally."}
                     </p>
+
+                                        {status === "ready" && (
+                      <div className="sdm-special-rules">
+                        <p>
+                          <span className="sdm-special-rules__gold">
+                            ★ Golden Bao
+                          </span>
+                          {" "}— earn 50 bonus points for each one matched.
+                        </p>
+                        <p>
+                          <span className="sdm-special-rules__rainbow">
+                            🌈 Rainbow Bao
+                          </span>
+                          {" "}— match one to clear every bao of that colour!
+                        </p>
+                      </div>
+                    )}
 
                     {(status === "ready" || status === "over") && (
                       <div className="sdm-leaderboard">
