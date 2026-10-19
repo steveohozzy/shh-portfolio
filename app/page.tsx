@@ -7,13 +7,16 @@ import { ContactSection } from "@/components/contact-section"
 import { Footer } from "@/components/footer"
 
 export const metadata: Metadata = {
+  title: "Steven Hoskins | Senior Frontend Developer",
+  description:
+    "Steven Hoskins is a Senior Frontend Developer specialising in React, Next.js, TypeScript, and modern web applications. Explore his portfolio and projects.",
   alternates: {
     canonical: '/',
   },
   openGraph: {
-    title: "SHH Design | Steven Hoskins | Senior Frontend Developer",
+    title: "Steven Hoskins | Senior Frontend Developer",
     description:
-      "Portfolio of Steven Hoskins – Senior Frontend Developer specializing in React, Next.js, TypeScript, and modern web applications.",
+      "Portfolio of Steven Hoskins – Senior Frontend Developer specialising in React, Next.js, TypeScript, and modern web applications.",
     url: "/",
     siteName: "SHH Design",
     type: "website",
@@ -28,9 +31,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "SHH Design | Steven Hoskins | Senior Frontend Developer",
+    title: "Steven Hoskins | Senior Frontend Developer",
     description:
-      "Portfolio of Steven Hoskins – Senior Frontend Developer specializing in React, Next.js, TypeScript, and modern web applications.",
+      "Portfolio of Steven Hoskins – Senior Frontend Developer specialising in React, Next.js, TypeScript, and modern web applications.",
     images: ["/og-image.jpeg"],
   },
 }
@@ -41,7 +44,7 @@ export default function Home() {
     "@type": "Person",
     "name": "Steven Hoskins",
     "jobTitle": "Senior Frontend Developer",
-    "url": "https://www.shhdesign.co.uk",
+    "url": "https://www.shhdesign.co.uk/",
     "sameAs": [
       "https://uk.linkedin.com/in/steven-hoskins-8072709",
       "https://github.com/steveohozzy",
