@@ -53,17 +53,17 @@ const squishyDumplingMatchApp = getApps().find(
 if (typeof window !== "undefined") {
   const appCheck = initializeAppCheck(squishyDumplingMatchApp, {
     provider: new ReCaptchaEnterpriseProvider(
-      "6LfhZfYtAAAAAAJfZTsr0x9zFUuAsT8sJ-qjq4Zz"
+      "6LfeYvYtAAAAAJ56XEyhtYDKUuS0O2Q9Y5J7Fzl_"
     ),
     isTokenAutoRefreshEnabled: true,
   });
 
   getToken(appCheck, false)
     .then(function (result) {
-      console.log("App Check token generated:", !!result.token);
+      console.log("[App Check] Token generated:", !!result.token);
     })
     .catch(function (error) {
-      console.error("App Check token error:", error);
+      console.error("[App Check] Token generation failed:", error.code, error.message);
     });
 }
 
