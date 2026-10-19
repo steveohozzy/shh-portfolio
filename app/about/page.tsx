@@ -55,7 +55,10 @@ export default function AboutPage() {
     "sameAs": [
       "https://uk.linkedin.com/in/steven-hoskins-8072709",
       "https://github.com/steveohozzy",
-      "https://codepen.io/hoskinshozzy"
+      "https://codepen.io/hoskinshozzy",
+      "https://www.facebook.com/steveo.hozzy",
+      "https://www.instagram.com/hoskinshozzy/",
+      "https://x.com/shhdesign_"
     ],
     "knowsAbout": [
       "React",
