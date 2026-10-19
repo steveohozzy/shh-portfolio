@@ -1,6 +1,17 @@
+
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  addDoc,
+  collection,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  serverTimestamp,
+} from "firebase/firestore";
+import { squishyDumplingMatchDb } from "@/lib/firebase";
 import "./squishy-dumpling-match.css";
 
 type BaoType = "classic" | "strawberry" | "matcha" | "golden" | "rainbow";
@@ -12,6 +23,14 @@ type Piece = {
   col: number;
   row: number;
   types: BaoType[];
+};
+
+type LeaderboardEntry = {
+  id: string;
+  initials: string;
+  score: number;
+  level: number;
+  cleared: number;
 };
 
 const COLS = 6;
@@ -340,6 +359,13 @@ export default function SquishyDumplingMatch() {
   const [lastCombo, setLastCombo] = useState(0);
   const [holding, setHolding] = useState(false);
 
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [initials, setInitials] = useState("");
+  const [qualifyingScore, setQualifyingScore] = useState<number | null>(null);
+  const [checkingLeaderboard, setCheckingLeaderboard] = useState(false);
+  const [savingLeaderboardScore, setSavingLeaderboardScore] = useState(false);
+  const [leaderboardMessage, setLeaderboardMessage] = useState("");
+
   const gesture = useRef<{
     pointerId: number;
     startX: number;
@@ -349,6 +375,9 @@ export default function SquishyDumplingMatch() {
   } | null>(null);
 
   const cellWidth = useRef(0);
+  const gameSessionRef = useRef(0);
+  const checkedSessionRef = useRef(-1);
+  const savingScoreRef = useRef(false);
 
   useEffect(() => {
     try {
@@ -357,6 +386,77 @@ export default function SquishyDumplingMatch() {
       setBest(0);
     }
   }, []);
+
+  const refreshLeaderboard = useCallback(async () => {
+    try {
+      const scoresQuery = query(
+        collection(squishyDumplingMatchDb, "sdm-scores"),
+        orderBy("score", "desc"),
+        limit(10),
+      );
+
+      const snapshot = await getDocs(scoresQuery);
+
+      const entries = snapshot.docs.map((scoreDoc) => {
+        const data = scoreDoc.data();
+
+        return {
+          id: scoreDoc.id,
+          initials: data.initials as string,
+          score: data.score as number,
+          level: data.level as number,
+          cleared: data.cleared as number,
+        };
+      });
+
+      setLeaderboard(entries);
+      return entries;
+    } catch {
+      setLeaderboardMessage("Couldn't load scores. Please try again.");
+      return null;
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshLeaderboard();
+  }, [refreshLeaderboard]);
+
+  const submitLeaderboardScore = async () => {
+    const cleanInitials = initials.trim().toUpperCase();
+
+    if (
+      qualifyingScore === null ||
+      !/^[A-Z]{3}$/.test(cleanInitials) ||
+      savingScoreRef.current
+    ) {
+      return;
+    }
+
+    savingScoreRef.current = true;
+    setSavingLeaderboardScore(true);
+    setLeaderboardMessage("");
+
+    try {
+      await addDoc(collection(squishyDumplingMatchDb, "sdm-scores"), {
+        initials: cleanInitials,
+        score: qualifyingScore,
+        level,
+        cleared: clearedTotal,
+        createdAt: serverTimestamp(),
+      });
+
+      setQualifyingScore(null);
+      setInitials("");
+      setLeaderboardMessage("Score saved. Nice one!");
+
+      await refreshLeaderboard();
+    } catch {
+      setLeaderboardMessage("Couldn't save your score. Please try again.");
+    } finally {
+      savingScoreRef.current = false;
+      setSavingLeaderboardScore(false);
+    }
+  };
 
   const finishGame = useCallback(() => {
     setStatus("over");
@@ -381,6 +481,12 @@ export default function SquishyDumplingMatch() {
   }, []);
 
   const startGame = useCallback(() => {
+    gameSessionRef.current += 1;
+    setQualifyingScore(null);
+    setInitials("");
+    setLeaderboardMessage("");
+    setCheckingLeaderboard(false);
+
     const freshBoard = emptyBoard();
 
     setBoard(freshBoard);
@@ -394,6 +500,54 @@ export default function SquishyDumplingMatch() {
     gesture.current = null;
     setStatus("playing");
   }, []);
+
+  useEffect(() => {
+    if (
+      status !== "over" ||
+      gameSessionRef.current === 0 ||
+      checkedSessionRef.current === gameSessionRef.current
+    ) {
+      return;
+    }
+
+    checkedSessionRef.current = gameSessionRef.current;
+    setCheckingLeaderboard(true);
+    setQualifyingScore(null);
+    setLeaderboardMessage("");
+
+    let cancelled = false;
+
+    async function checkScore() {
+      const entries = await refreshLeaderboard();
+
+      if (cancelled) return;
+
+      setCheckingLeaderboard(false);
+
+      if (!entries) return;
+
+      const qualifies =
+        score > 0 &&
+        (entries.length < 10 ||
+          score > entries[entries.length - 1].score);
+
+      if (qualifies) {
+        setQualifyingScore(score);
+        setInitials("");
+        setLeaderboardMessage(
+          "You made the leaderboard! Add your initials.",
+        );
+      } else {
+        setLeaderboardMessage("Keep playing to reach the top 10!");
+      }
+    }
+
+    void checkScore();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [status, score, refreshLeaderboard]);
 
   const movePiece = useCallback(
     (delta: number) => {
@@ -821,6 +975,108 @@ export default function SquishyDumplingMatch() {
                           ? `You scored ${score.toLocaleString()} points. Fancy another round?`
                           : "Match three or more matching dumplings across, down or diagonally."}
                     </p>
+
+                    {(status === "ready" || status === "over") && (
+                      <div className="sdm-leaderboard">
+                        <div className="sdm-leaderboard-heading">
+                          <span aria-hidden="true">🏆</span>
+                          <div>
+                            <h3>BAO CHAMPIONS</h3>
+                            <p>Top 10 squish scores</p>
+                          </div>
+                        </div>
+
+                        {checkingLeaderboard && (
+                          <p className="sdm-leaderboard-message">
+                            Checking your score…
+                          </p>
+                        )}
+
+                        {qualifyingScore !== null && (
+                          <form
+                            className="sdm-initials-form"
+                            onSubmit={(event) => {
+                              event.preventDefault();
+                              void submitLeaderboardScore();
+                            }}
+                          >
+                            <label htmlFor="sdm-initials">
+                              You scored {qualifyingScore.toLocaleString()}!
+                            </label>
+
+                            <div className="sdm-initials-row">
+                              <input
+                                id="sdm-initials"
+                                type="text"
+                                value={initials}
+                                onChange={(event) =>
+                                  setInitials(
+                                    event.target.value
+                                      .toUpperCase()
+                                      .replace(/[^A-Z]/g, "")
+                                      .slice(0, 3),
+                                  )
+                                }
+                                placeholder="ABC"
+                                maxLength={3}
+                                minLength={3}
+                                pattern="[A-Z]{3}"
+                                autoComplete="off"
+                                aria-label="Three-letter initials"
+                                required
+                              />
+
+                              <button
+                                type="submit"
+                                disabled={
+                                  savingLeaderboardScore ||
+                                  initials.length !== 3
+                                }
+                              >
+                                {savingLeaderboardScore
+                                  ? "Saving…"
+                                  : "Save score"}
+                              </button>
+                            </div>
+                          </form>
+                        )}
+
+                        {leaderboardMessage && (
+                          <p
+                            className="sdm-leaderboard-message"
+                            aria-live="polite"
+                          >
+                            {leaderboardMessage}
+                          </p>
+                        )}
+
+                        <ol className="sdm-leaderboard-list">
+                          {leaderboard.map((entry, index) => (
+                            <li key={entry.id}>
+                              <span className="sdm-leaderboard-rank">
+                                {String(index + 1).padStart(2, "0")}
+                              </span>
+                              <strong className="sdm-leaderboard-initials">
+                                {entry.initials}
+                              </strong>
+                              <span className="sdm-leaderboard-level">
+                                LV {entry.level}
+                              </span>
+                              <strong className="sdm-leaderboard-score">
+                                {entry.score.toLocaleString()}
+                              </strong>
+                            </li>
+                          ))}
+
+                          {leaderboard.length === 0 &&
+                            !checkingLeaderboard && (
+                              <li className="sdm-leaderboard-empty">
+                                No champions yet. Be the first!
+                              </li>
+                            )}
+                        </ol>
+                      </div>
+                    )}
 
                     <button
                       className="sdm-primary-button"
