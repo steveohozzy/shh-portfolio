@@ -17,22 +17,22 @@ const getYearsExperience = (startYear: number, startMonth: number): string => {
 const experience = getYearsExperience(2006, 5);
 
 export const metadata: Metadata = {
-  title: "About Steven Hoskins | Senior Frontend Developer | SHH Design",
-  description: `Learn more about Steven Hoskins – Senior Frontend Developer with ${experience} years of experience crafting performant, accessible, and high-impact web applications.`,
+  title: "Steven Hoskins | About | Senior Frontend Developer",
+  description: `Learn about Steven Hoskins, a Senior Frontend Developer with ${experience} years of experience building performant, accessible web applications using React, Next.js, and TypeScript.`,
   alternates: {
     canonical: "/about",
   },
   openGraph: {
-    title: "About Steven Hoskins | Senior Frontend Developer",
-    description: `Frontend Developer with ${experience} years of experience specializing in React, Next.js, and modern UI engineering.`,
+    title: "Steven Hoskins | About | Senior Frontend Developer",
+    description: `Learn about Steven Hoskins, a Senior Frontend Developer with ${experience} years of experience specialising in React, Next.js, and modern UI engineering.`,
     url: "/about",
     siteName: "SHH Design",
     type: "profile",
   },
   twitter: {
     card: "summary_large_image",
-    title: "About Steven Hoskins | Senior Frontend Developer",
-    description: `Frontend Developer with ${experience} years of experience specializing in React, Next.js, and modern UI engineering.`,
+    title: "Steven Hoskins | About | Senior Frontend Developer",
+    description: `Learn about Steven Hoskins, a Senior Frontend Developer with ${experience} years of experience specialising in React, Next.js, and modern UI engineering.`,
   },
   robots: {
     index: true,
@@ -41,11 +41,46 @@ export const metadata: Metadata = {
 };
 
 export default function AboutPage() {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "@id": "https://www.shhdesign.co.uk/#person",
+    "name": "Steven Hoskins",
+    "url": "https://www.shhdesign.co.uk/about",
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https://www.shhdesign.co.uk/about",
+    },
+    "jobTitle": "Senior Frontend Developer",
+    "sameAs": [
+      "https://uk.linkedin.com/in/steven-hoskins-8072709",
+      "https://github.com/steveohozzy",
+      "https://codepen.io/hoskinshozzy"
+    ],
+    "knowsAbout": [
+      "React",
+      "TypeScript",
+      "Next.js",
+      "SASS",
+      "Node.js",
+      "Frontend Development",
+      "UI/UX Design",
+      "Web Performance",
+      "Accessibility"
+    ]
+  };
+
   return (
-    <main className="min-h-screen bg-background">
-      <Header />
-      <AboutPageContent />
-      <Footer />
-    </main>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <main className="min-h-screen bg-background">
+        <Header />
+        <AboutPageContent />
+        <Footer />
+      </main>
+    </>
   )
 }

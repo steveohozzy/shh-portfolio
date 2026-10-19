@@ -42,6 +42,7 @@ export default function Home() {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Person",
+    "@id": "https://www.shhdesign.co.uk/#person",
     "name": "Steven Hoskins",
     "jobTitle": "Senior Frontend Developer",
     "url": "https://www.shhdesign.co.uk/",
