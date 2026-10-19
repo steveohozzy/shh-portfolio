@@ -1,10 +1,11 @@
+
 import { getApp, getApps, initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import {
-  getToken,
   initializeAppCheck,
   ReCaptchaEnterpriseProvider,
+  type AppCheck,
 } from "firebase/app-check";
 
 const firebaseConfig = {
@@ -50,22 +51,15 @@ const squishyDumplingMatchApp = getApps().find(
   (existingApp) => existingApp.name === "squishy-dumpling-match"
 ) ?? initializeApp(squishyDumplingMatchConfig, "squishy-dumpling-match");
 
-if (typeof window !== "undefined") {
-  const appCheck = initializeAppCheck(squishyDumplingMatchApp, {
-    provider: new ReCaptchaEnterpriseProvider(
-      "6LfeYvYtAAAAAJ56XEyhtYDKUuS0O2Q9Y5J7Fzl_"
-    ),
-    isTokenAutoRefreshEnabled: true,
-  });
-
-  getToken(appCheck, false)
-    .then(function (result) {
-      console.log("[App Check] Token generated:", !!result.token);
-    })
-    .catch(function (error) {
-      console.error("[App Check] Token generation failed:", error.code, error.message);
-    });
-}
+export const squishyDumplingMatchAppCheck: AppCheck | null =
+  typeof window !== "undefined"
+    ? initializeAppCheck(squishyDumplingMatchApp, {
+        provider: new ReCaptchaEnterpriseProvider(
+          "6LfeYvYtAAAAAJ56XEyhtYDKUuS0O2Q9Y5J7Fzl_"
+        ),
+        isTokenAutoRefreshEnabled: true,
+      })
+    : null;
 
 export const squishyDumplingMatchDb = getFirestore(squishyDumplingMatchApp);
 

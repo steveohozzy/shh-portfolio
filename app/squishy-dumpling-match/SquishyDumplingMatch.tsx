@@ -3,15 +3,18 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  addDoc,
   collection,
   getDocs,
   limit,
   orderBy,
   query,
-  serverTimestamp,
 } from "firebase/firestore";
-import { squishyDumplingMatchDb } from "@/lib/firebase";
+
+import { getToken } from "firebase/app-check";
+import {
+  squishyDumplingMatchAppCheck,
+  squishyDumplingMatchDb,
+} from "@/lib/firebase";
 import "./squishy-dumpling-match.css";
 
 type BaoType = "classic" | "strawberry" | "matcha" | "golden" | "rainbow";
@@ -421,42 +424,63 @@ export default function SquishyDumplingMatch() {
     void refreshLeaderboard();
   }, [refreshLeaderboard]);
 
-  const submitLeaderboardScore = async () => {
-    const cleanInitials = initials.trim().toUpperCase();
+  
+const submitLeaderboardScore = async () => {
+  const cleanInitials = initials.trim().toUpperCase();
 
-    if (
-      qualifyingScore === null ||
-      !/^[A-Z]{3}$/.test(cleanInitials) ||
-      savingScoreRef.current
-    ) {
-      return;
-    }
+  if (
+    qualifyingScore === null ||
+    !/^[A-Z]{3}$/.test(cleanInitials) ||
+    savingScoreRef.current
+  ) {
+    return;
+  }
 
-    savingScoreRef.current = true;
-    setSavingLeaderboardScore(true);
-    setLeaderboardMessage("");
+  if (!squishyDumplingMatchAppCheck) {
+    setLeaderboardMessage("Score verification isn't available. Please refresh.");
+    return;
+  }
 
-    try {
-      await addDoc(collection(squishyDumplingMatchDb, "sdm-scores"), {
+  savingScoreRef.current = true;
+  setSavingLeaderboardScore(true);
+  setLeaderboardMessage("");
+
+  try {
+    const appCheckToken = await getToken(
+      squishyDumplingMatchAppCheck,
+      false,
+    );
+
+    const response = await fetch("/api/sdm-scores", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Firebase-AppCheck": appCheckToken.token,
+      },
+      body: JSON.stringify({
         initials: cleanInitials,
         score: qualifyingScore,
         level,
         cleared: clearedTotal,
-        createdAt: serverTimestamp(),
-      });
+      }),
+    });
 
-      setQualifyingScore(null);
-      setInitials("");
-      setLeaderboardMessage("Score saved. Nice one!");
-
-      await refreshLeaderboard();
-    } catch {
-      setLeaderboardMessage("Couldn't save your score. Please try again.");
-    } finally {
-      savingScoreRef.current = false;
-      setSavingLeaderboardScore(false);
+    if (!response.ok) {
+      throw new Error("Score submission failed.");
     }
-  };
+
+    setQualifyingScore(null);
+    setInitials("");
+    setLeaderboardMessage("Score saved. Nice one!");
+
+    await refreshLeaderboard();
+  } catch {
+    setLeaderboardMessage("Couldn't save your score. Please try again.");
+  } finally {
+    savingScoreRef.current = false;
+    setSavingLeaderboardScore(false);
+  }
+};
 
   const finishGame = useCallback(() => {
     setStatus("over");
