@@ -1396,7 +1396,7 @@ export default function SquishyDumplingLevels() {
                     ? selectedCell
                       ? "Target selected. Use your power!"
                       : "Select a tile to choose where to unleash it."
-                    : "Clear 8 or more dumplings in a turn to earn a charge."}
+                    : "Clear 12 or more dumplings in a turn to earn a charge."}
                 </span>
               </div>
 

@@ -1,4 +1,3 @@
-
 import type { Metadata } from "next";
 import Link from "next/link";
 import DumplingTile from "./DumplingTile";
@@ -6,9 +5,9 @@ import "./squishy-dumpling-match.css";
 import "./welcome.css";
 
 export const metadata: Metadata = {
-  title: "Squishy Dumpling Match – Free Online Game",
+  title: "Squishy Dumpling Games – Free Online Match Games",
   description:
-    "Meet your favourite squishy dumplings, play Endless Squish and get ready to explore a world of cute matching challenges.",
+    "Play free squishy dumpling games online! Match cute bao characters, chase high scores in Endless Squish and explore Dumpling World in a fun matching adventure.",
 };
 
 export default function SquishyDumplingMatchWelcome() {
@@ -35,8 +34,9 @@ export default function SquishyDumplingMatchWelcome() {
           </h1>
 
           <p className="sdm-welcome__intro">
-            Meet your bao-tiful new besties. Match, stack and squish your way
-            through a little world full of dumpling magic.
+            Play free squishy dumpling games online! Match adorable bao
+            characters, chase your high score in Endless Squish or explore
+            Dumpling World in a colourful match-3 adventure.
           </p>
         </header>
 
