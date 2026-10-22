@@ -66,3 +66,5 @@ export const squishyDumplingMatchDb = getFirestore(squishyDumplingMatchApp);
 export const mysteryDumplingsDb = getFirestore(mysteryDumplingsApp);
 
 export const mysteryDumplingsAuth = getAuth(mysteryDumplingsApp);
+
+export const squishyDumplingMatchAuth = getAuth(squishyDumplingMatchApp);
