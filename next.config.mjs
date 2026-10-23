@@ -36,12 +36,6 @@ const nextConfig = {
         destination: '/',
         permanent: true,
       },
-      // Dead pages found in Search Console
-      {
-        source: '/about',
-        destination: '/about',
-        permanent: true,
-      },
       // Old files/pages
       {
         source: '/wp-content/uploads/2016/07/May-the-film-be-with-you.pdf',
