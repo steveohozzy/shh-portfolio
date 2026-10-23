@@ -390,9 +390,7 @@ export default function SquishyDumplingHospital() {
         );
 
         setArrivingId(patient.id);
-        setMessage(
-          `${getBaoName(patient.type)} has arrived! ${getInjury(patient.injury).description}`,
-        );
+        setMessage(`${getBaoName(patient.type)} has arrived and needs a bed!`);
 
         schedule(() => {
           setArrivingId((currentId) =>
@@ -933,20 +931,28 @@ export default function SquishyDumplingHospital() {
                 </div>
 
                 <div
-                  className={`sdh-doctor ${doctorMoving ? "is-moving" : ""}`}
-                  style={{
-                    left: `${doctorPosition.x}%`,
-                    top: `${doctorPosition.y}%`,
-                    transform: `translate(-50%, -78%) scale(${0.78 + doctorPosition.y / 300})`,
-                  }}
-                  aria-label="Doctor dumpling"
-                >
-                  <span className="sdh-doctor-shadow" />
-                  <span className="sdh-doctor-hat">🩺</span>
-                  <DumplingTile type="classic" small />
-                  <span className="sdh-doctor-feet"><i /><i /></span>
-                  {doctorMoving && <span className="sdh-running-dust">✦</span>}
-                </div>
+  className={`sdh-doctor ${doctorMoving ? "is-moving" : ""}`}
+  style={{
+    left: `${doctorPosition.x}%`,
+    top: `${doctorPosition.y}%`,
+    transform: `translate(-50%, -78%) scale(${0.78 + doctorPosition.y / 300})`,
+  }}
+  aria-label="Nurse dumpling"
+>
+  <span className="sdh-doctor-shadow" />
+
+
+  <div className="sdh-doctor-body">
+    <DumplingTile type="classic" small />
+
+    <span className="sdh-doctor-hat" aria-hidden="true">
+      <i>✚</i>
+    </span>
+
+  </div>
+
+  {doctorMoving && <span className="sdh-running-dust">✦</span>}
+</div>
 
                 {discharged.length > 0 && (
                   <div className="sdh-discharge-pop">💖 All better!</div>
