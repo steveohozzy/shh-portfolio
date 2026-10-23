@@ -33,43 +33,6 @@ const nextConfig = {
         destination: '/',
         permanent: true,
       },
-      // Collapse sub-work paths safely
-      {
-        source: '/work/:path+',
-        destination: '/work',
-        permanent: true,
-      },
-      // Target only the folder roots (avoids trapping index.html in a loop)
-      {
-        source: '/bloodborne',
-        destination: '/bloodborne/index.html',
-        permanent: true,
-      },
-      {
-        source: '/bloodborne/',
-        destination: '/bloodborne/index.html',
-        permanent: true,
-      },
-      {
-        source: '/rock-paper-scissors',
-        destination: '/rock-paper-scissors/index.html',
-        permanent: true,
-      },
-      {
-        source: '/rock-paper-scissors/',
-        destination: '/rock-paper-scissors/index.html',
-        permanent: true,
-      },
-      {
-        source: '/responsive-presentation',
-        destination: '/responsive-presentation/index.html',
-        permanent: true,
-      },
-      {
-        source: '/responsive-presentation/',
-        destination: '/responsive-presentation/index.html',
-        permanent: true,
-      },
       // Old files/pages
       {
         source: '/wp-content/uploads/2016/07/May-the-film-be-with-you.pdf',
