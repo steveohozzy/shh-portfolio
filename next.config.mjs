@@ -10,7 +10,7 @@ const nextConfig = {
     unoptimized: true,
   },
 
-  // Enforce consistent clean URLs globally to stop Google trailing-slash redirect errors
+  // Enforce consistent clean URLs globally (strips trailing slashes automatically)
   trailingSlash: false,
 
   async redirects() {
@@ -36,26 +36,10 @@ const nextConfig = {
         destination: '/',
         permanent: true,
       },
-      // Dead pages found in your Search Console list
+      // Dead pages found in Search Console
       {
         source: '/about',
         destination: '/',
-        permanent: true,
-      },
-      {
-        source: '/about/',
-        destination: '/',
-        permanent: true,
-      },
-      // Explicit catches for your minigame/folder roots to handle trailing slashes cleanly
-      {
-        source: '/online-squishy-dumpling',
-        destination: '/online-squishy-dumpling/',
-        permanent: true,
-      },
-      {
-        source: '/work',
-        destination: '/work/',
         permanent: true,
       },
       // Old files/pages
