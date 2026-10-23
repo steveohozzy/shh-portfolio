@@ -77,6 +77,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 0.6,
     },
+
+    {
+      url: `${baseUrl}/squishy-dumpling-hospital/`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.9,
+    },
     {
       url: `${baseUrl}/rock-paper-scissors/index.html`,
       lastModified: new Date(),
