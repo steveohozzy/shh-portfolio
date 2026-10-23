@@ -10,6 +10,9 @@ const nextConfig = {
     unoptimized: true,
   },
 
+  // Enforce consistent clean URLs globally to stop Google trailing-slash redirect errors
+  trailingSlash: false,
+
   async redirects() {
     return [
       // Clean catch-alls for old WordPress paths
@@ -31,6 +34,28 @@ const nextConfig = {
       {
         source: '/the-use-of-basic-shapes-and-colour-in-design-the-influence-of-the-bauhaus/:path*',
         destination: '/',
+        permanent: true,
+      },
+      // Dead pages found in your Search Console list
+      {
+        source: '/about',
+        destination: '/',
+        permanent: true,
+      },
+      {
+        source: '/about/',
+        destination: '/',
+        permanent: true,
+      },
+      // Explicit catches for your minigame/folder roots to handle trailing slashes cleanly
+      {
+        source: '/online-squishy-dumpling',
+        destination: '/online-squishy-dumpling/',
+        permanent: true,
+      },
+      {
+        source: '/work',
+        destination: '/work/',
         permanent: true,
       },
       // Old files/pages
