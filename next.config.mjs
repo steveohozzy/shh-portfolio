@@ -39,7 +39,7 @@ const nextConfig = {
       // Dead pages found in Search Console
       {
         source: '/about',
-        destination: '/',
+        destination: '/about',
         permanent: true,
       },
       // Old files/pages
