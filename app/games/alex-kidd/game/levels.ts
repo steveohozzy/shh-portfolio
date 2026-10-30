@@ -187,11 +187,6 @@ function makeOriginalStage(stageNo: number, spec: StageSpec): G {
     if (entity === "B") hasBoss = true;
   });
 
-  if (stageNo === 2) {
-    // Open the first oversized rock face so the opening route is traversable.
-    fill(g, 4, 9, 5, 9, ".");
-  }
-
   if (!hasExit && !hasBoss) put(g, g[0].length - 3, g.length - 3, "F");
   return g;
 }
@@ -227,7 +222,7 @@ function makeStage(s: StageSpec): G {
       if (len > 3 && type !== 2) put(g, Math.min(s.width - 2, x + Math.floor(len / 2)), y - 1, type === 1 ? "Q" : "$");
     });
     for (let x = 15; x < s.width - 10; x += 23) {
-      const y = floor - 1 - ((Math.floor(x / 23) + s.seed) % 3);
+      const y = s.name.startsWith("2 ") ? floor - 1 : floor - 1 - ((Math.floor(x / 23) + s.seed) % 3);
       put(g, x, y, (Math.floor(x / 23) + s.seed) % 4 === 0 ? "v" : "w");
       if (x % 2) put(g, x + 4, y - 2, "$");
     }
@@ -279,5 +274,5 @@ const STAGES: StageSpec[] = [
 
 export const LEVELS: LevelDef[] = [
   { name: "1  MT. ETERNAL", theme: "hills", water: false, vertical: true, waterStartY: 108 * 16, sky: "#5c94fc", grid: mtEternal() },
-  ...STAGES.map((s, i) => ({ name: s.name, theme: s.theme, water: !!s.water, vertical: !!s.vertical, startFacing: s.startFacing, sky: s.sky, bossName: s.bossName, grid: s.grid || makeOriginalStage(i + 2, s) }))
+  ...STAGES.map((s, i) => ({ name: s.name, theme: s.theme, water: !!s.water, vertical: !!s.vertical, startFacing: s.startFacing, sky: s.sky, bossName: s.bossName, grid: s.grid || (i === 0 ? makeStage(s) : makeOriginalStage(i + 2, s)) }))
 ];
