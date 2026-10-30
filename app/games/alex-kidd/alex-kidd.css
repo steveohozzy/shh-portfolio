@@ -103,3 +103,88 @@
   .ak-control-punch, .ak-control-jump { min-width: 58px; min-height: 48px; font-size: 6px; }
   .ak-instructions { font-size: 6px; margin-top: 22px; }
 }
+
+
+/* Keep the game feeling like a full-screen touch experience. */
+.ak-page, .ak-page * {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+.ak-screen-frame { position: relative; }
+.ak-game-screen, .ak-game-screen canvas { touch-action: none; }
+.ak-control, .ak-joystick {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: none;
+  user-select: none;
+}
+.ak-joystick {
+  display: none;
+  width: 116px;
+  height: 116px;
+  flex: 0 0 116px;
+  border: 2px solid #e4a52c;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffffff22 0 35%, #17192399 70%);
+  box-shadow: inset 0 0 0 8px #0003, 0 4px 0 #82410c;
+  position: relative;
+  align-items: center;
+  justify-content: center;
+}
+.ak-joystick-knob {
+  width: 48px;
+  height: 48px;
+  border: 2px solid #f8d878;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #f8b83d, #b85d0c);
+  box-shadow: 0 3px 0 #713507, inset 0 2px 5px #fff6;
+}
+@media (max-width: 700px), (pointer: coarse) {
+  .ak-page { min-height: 100dvh; padding: 14px 8px 24px; overflow-x: hidden; }
+  .ak-back { margin-bottom: 14px; font-size: 8px; }
+  .ak-heading { margin-bottom: 12px; }
+  .ak-heading p, .ak-heading span { font-size: 6px; }
+  .ak-heading h1 { font-size: clamp(20px, 6vw, 30px); }
+  .ak-screen-frame { padding: 3px; border-width: 2px; overflow: hidden; }
+  .ak-controls {
+    position: absolute;
+    z-index: 5;
+    left: 0;
+    right: 0;
+    bottom: 8px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0 10px;
+    box-sizing: border-box;
+    pointer-events: none;
+  }
+  .ak-controls > * { pointer-events: auto; }
+  .ak-joystick { display: flex; }
+  .ak-control-start {
+    position: absolute;
+    right: 12px;
+    top: -42px;
+    min-width: 66px;
+    min-height: 32px;
+    font-size: 6px;
+  }
+  .ak-actions { gap: 10px; }
+  .ak-control-punch, .ak-control-jump {
+    min-width: 66px;
+    min-height: 66px;
+    border-radius: 50%;
+    font-size: 7px;
+    padding: 5px;
+  }
+  .ak-instructions { font-size: 6px; margin-top: 12px; }
+}
+@media (max-width: 390px) {
+  .ak-joystick { width: 94px; height: 94px; flex-basis: 94px; }
+  .ak-joystick-knob { width: 40px; height: 40px; }
+  .ak-control-punch, .ak-control-jump { min-width: 58px; min-height: 58px; font-size: 6px; }
+}
