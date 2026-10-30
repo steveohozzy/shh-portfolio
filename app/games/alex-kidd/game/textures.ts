@@ -33,6 +33,8 @@ const BODY = {
   run2: ["....tttttt......", "...tttttttt.....", "...sttttttts....", "....ttyyyytt....", "....tttttttt....", ".....ss..ss.....", ".....bbbbbb.....", "....bbb..bbb...."],
   jump: ["..s.tttttt.s....", "..sttttttttts...", "....tttttttt....", "....ttyyyytt....", "....tttttttt....", "...ss....ss.....", "..bbb.....bbb...", "...........bb..."],
   punch: ["....tttttt......", "...ttttttttsss..", "...tttttttsssss.", "...ttyyyytt.sss.", "....tttttttt....", "....ss....ss....", "...bbb....bbb...", "..bbbb....bbbb.."],
+  swim1: ["....tttttt......", "...ttttttttts...", "..sttttttttts...", "....ttyyyytt....", "...tttttttt......", "..ss........ss..", ".bbb........bbb.", "................"],
+  swim2: ["....tttttt......", "...ttttttttts...", "..sttttttttts...", "....ttyyyytt....", "...tttttttt......", "....ss......ss..", "...bbbb....bbbb.", "................"],
 };
 
 const HANDS = {
@@ -78,6 +80,8 @@ export function makeTextures(s: Phaser.Scene) {
   gen(s, "bossrock", ["..EEEE..", ".EeeeeE.", "EeennenE", "EeeeeeeE", "EeeeeeeE", "EeeeeneE", ".EeeeeE.", "..EEEE.."], 1, 8, 8);
   gen(s, "debris", ["bbbb", "boob", "bobb", "bbbb"], 1, 4, 4);
   gen(s, "bubble", [".nn.", "n..n", "n..n", ".nn."], 1, 4, 4);
+  gen(s, "gem", [".......k........", "......kpk.......", ".....kpypk......", "....kpypypk.....", "....kpypypk.....", ".....kpypk......", "......kkk.......", ".......k........"]);
+  gen(s, "treasure", ["....kkkkkkkk....", "...kbbbbbbbbk...", "...kbyyyyyybk...", "...kbbbbbbbbk...", "...kkkkkyykkkk...", "...kbbbbbbbbk...", "...kbbbbbbbbk...", "....kkkkkkkk...."]);
 
   const star = ["...y....", "...y....", "yyyyyyy.", ".yyyyy..", "..yyy...", ".yy.yy..", "y.....y."];
   const q = ["..www...", ".w...w..", ".....w..", "....w...", "...w....", "...w....", "........", "...w...."];
@@ -140,5 +144,5 @@ export function makeTextures(s: Phaser.Scene) {
 
   const a = s.anims;
   if (!a.exists("run")) a.create({ key: "run", frames: [{ key: "hero_run1" }, { key: "hero_run2" }], frameRate: 10, repeat: -1 });
-  if (!a.exists("swim")) a.create({ key: "swim", frames: [{ key: "hero_jump" }, { key: "hero_run2" }], frameRate: 4, repeat: -1 });
+  if (!a.exists("swim")) a.create({ key: "swim", frames: [{ key: "hero_swim1" }, { key: "hero_swim2" }], frameRate: 5, repeat: -1 });
 }
