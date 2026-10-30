@@ -34,7 +34,9 @@ export class Controls {
     return this.cur[n];
   }
   pressed(n: Name) {
-    return this.cur[n] && !this.prev[n];
+    const queued = n === "jump" || n === "punch" || n === "start" ? vpad.pressed[n] : false;
+    if (queued) vpad.pressed[n] = false;
+    return queued || (this.cur[n] && !this.prev[n]);
   }
   anyConfirm() {
     return this.pressed("jump") || this.pressed("punch") || this.pressed("start");
