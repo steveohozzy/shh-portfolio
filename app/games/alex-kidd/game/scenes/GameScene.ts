@@ -81,7 +81,7 @@ export class GameScene extends Phaser.Scene {
 
     this.player = this.physics.add.sprite(start.x, start.y, "hero_idle");
     const pb = this.player.body as Body;
-    pb.setSize(L.water ? 18 : 10, L.water ? 8 : 14).setOffset(L.water ? 3 : 3, L.water ? 4 : 2);
+    pb.setSize(10, 14).setOffset(3, 2);
     this.player.setCollideWorldBounds(true).setDepth(10);
     pb.setDragX(L.water ? 220 : 650);
     if (L.water) pb.setAllowGravity(false);
@@ -106,7 +106,7 @@ export class GameScene extends Phaser.Scene {
     const cam = this.cameras.main;
     cam.setBounds(0, 0, W, worldH);
     cam.startFollow(this.player, true, 0.2, 0.2);
-    cam.setDeadzone(24, L.vertical ? 72 : 192);
+    cam.setDeadzone(24, L.vertical ? 32 : 192);
 
     this.add.rectangle(128, 6, 256, 12, 0x000000, 0.55).setScrollFactor(0).setDepth(50);
     this.hud = this.add.text(4, 2, "", { fontFamily: FONT, fontSize: "8px", color: "#ffffff" }).setScrollFactor(0).setDepth(51);
@@ -382,13 +382,13 @@ export class GameScene extends Phaser.Scene {
       (this.L.waterStartX === undefined || p.x >= this.L.waterStartX);
     if (reachedWater && !this.waterEntered) {
       this.waterEntered = true;
-      if (this.L.vertical) this.time.delayedCall(650, () => this.cameras.main.setDeadzone(128, 24));
+      if (this.L.vertical) this.time.delayedCall(650, () => this.cameras.main.setDeadzone(48, 24));
     }
 
     const inWater = this.L.water || this.waterEntered;
     if (inWater && b.allowGravity) {
       b.setAllowGravity(false);
-      b.setSize(18, 8).setOffset(3, 4);
+      b.setSize(10, 14).setOffset(3, 2);
       b.setVelocityY(0);
       b.setDragX(220);
       this.bg.setTexture("bg_lake").setAlpha(0);
@@ -425,7 +425,7 @@ export class GameScene extends Phaser.Scene {
     if (this.punchT > 0) this.punchT -= dt;
 
     if (this.punchT > 0) { p.anims.stop(); p.setTexture("hero_punch"); }
-    else if (inWater) p.anims.play("swim", true);
+    else if (inWater) p.anims.play("run", true);
     else if (!b.blocked.down) { p.anims.stop(); p.setTexture("hero_jump"); }
     else if (Math.abs(b.velocity.x) > 8) p.anims.play("run", true);
     else { p.anims.stop(); p.setTexture("hero_idle"); }
