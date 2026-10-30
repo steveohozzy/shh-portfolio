@@ -453,7 +453,12 @@ export class GameScene extends Phaser.Scene {
       let acc = dir * 520;
       if (dir && Math.sign(b.velocity.x) === -dir) acc *= 1.8;
       b.setAccelerationX(acc);
-      if (b.onFloor() || b.blocked.down || b.touching.down) this.coyoteTime = 0.12;
+      const supported = b.onFloor() || b.blocked.down || b.touching.down ||
+        [...this.solids.getChildren()].some((solid) => {
+          const body = (solid as Phaser.Physics.Arcade.Image).body as Phaser.Physics.Arcade.StaticBody;
+          return body && Math.abs(b.bottom - body.top) <= 3 && b.right > body.left + 1 && b.left < body.right - 1;
+        });
+      if (supported) this.coyoteTime = 0.2;
       else this.coyoteTime = Math.max(0, this.coyoteTime - dt);
       if (!frozen && c.pressed("jump") && this.coyoteTime > 0) {
         b.setVelocityY(-280);
