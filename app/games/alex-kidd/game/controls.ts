@@ -1,5 +1,5 @@
 // @ts-nocheck
-import Phaser from "phaser";
+import * as Phaser from "phaser";
 import { vpad } from "./input";
 
 type Name = "left" | "right" | "up" | "down" | "jump" | "punch" | "start";
