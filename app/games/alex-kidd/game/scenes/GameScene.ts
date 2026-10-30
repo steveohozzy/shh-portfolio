@@ -382,7 +382,7 @@ export class GameScene extends Phaser.Scene {
       (this.L.waterStartX === undefined || p.x >= this.L.waterStartX);
     if (reachedWater && !this.waterEntered) {
       this.waterEntered = true;
-      if (this.L.vertical) this.cameras.main.setDeadzone(128, 24);
+      if (this.L.vertical) this.time.delayedCall(650, () => this.cameras.main.setDeadzone(128, 24));
     }
 
     const inWater = this.L.water || this.waterEntered;
