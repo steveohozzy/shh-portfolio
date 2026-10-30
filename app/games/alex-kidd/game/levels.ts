@@ -129,7 +129,7 @@ const STAGES: StageSpec[] = [
     platforms: [[18,7,5],[49,14,6],[83,5,5],[117,16,6],[151,7,5],[185,14,6],[220,6,5]], blocks: [[36,6,0],[101,12,0],[168,6,0],[234,12,0]] },
   { name: "10  BINGOO LOWLAND", width: 240, height: 12, theme: "hills", seed: 9, sky: "#e8b850", boss: true, bossName: "Parplin the Pursuer",
     platforms: [[12,7,5],[34,5,5],[58,8,6],[83,4,5],[108,7,6],[133,5,5],[158,8,6],[184,4,5],[209,7,6]], pits: [[23,27],[47,51],[73,77],[98,102],[123,127],[148,152],[174,178],[199,203],[224,228]], blocks: [[15,6,1],[62,7,0],[111,6,2],[161,7,1],[212,6,0]] },
-  { name: "11  RADAXIAN CASTLE", width: 80, height: 48, theme: "castle", seed: 10, sky: "#200820", boss: true, bossName: "Gooseka the Slippery",
+  { name: "11  RADAXIAN CASTLE", width: 80, height: 48, theme: "castle", seed: 10, vertical: true, sky: "#200820", boss: true, bossName: "Gooseka the Slippery",
     platforms: [[8,39,8],[22,34,7],[38,29,8],[54,24,7],[10,19,8],[27,14,8],[45,9,8],[61,5,7]], blocks: [[12,38,2],[26,33,1],[42,28,2],[58,23,1],[14,18,0],[31,13,2],[49,8,1]] },
   { name: "12  RADAXIAN CITY", width: 48, height: 12, theme: "castle", seed: 11, sky: "#301838", boss: true, bossName: "Chokkinna the Sly",
     platforms: [[7,7,5],[19,5,5],[32,7,6]], pits: [[14,17],[27,30]], blocks: [[9,6,1],[22,4,0],[35,6,2]] },
@@ -139,13 +139,13 @@ const STAGES: StageSpec[] = [
     platforms: [[8,7,5],[20,5,5]], pits: [[15,18]], blocks: [[10,6,1],[22,4,0]] },
   { name: "15  NIBANA LOWLANDS", width: 176, height: 12, theme: "hills", seed: 14, sky: "#788848", boss: true, bossName: "Parplin the Pursuer",
     platforms: [[10,7,6],[31,4,5],[53,6,6],[76,3,5],[99,7,6],[122,4,5],[145,6,6]], pits: [[22,26],[44,48],[67,71],[90,94],[113,117],[136,140],[159,163]], blocks: [[14,6,1],[57,5,0],[103,6,2],[149,5,1]] },
-  { name: "16  JANKEN'S CASTLE", width: 112, height: 72, theme: "castle", seed: 15, sky: "#200820", boss: true, bossName: "Janken the Great",
+  { name: "16  JANKEN'S CASTLE", width: 112, height: 72, theme: "castle", seed: 15, vertical: true, sky: "#200820", boss: true, bossName: "Janken the Great",
     platforms: [[8,63,8],[24,57,7],[42,51,8],[61,45,7],[80,39,8],[96,33,7],[12,27,8],[31,21,7],[50,15,8],[70,9,7],[91,4,8]], blocks: [[12,62,2],[28,56,1],[46,50,2],[65,44,1],[84,38,2],[100,32,1],[16,26,2],[35,20,1],[54,14,2],[74,8,1]] },
-  { name: "17  CRAGG LAKE", width: 32, height: 36, theme: "lake", water: true, seed: 16, startY: 5, sky: "#102b70",
+  { name: "17  CRAGG LAKE", width: 32, height: 36, theme: "lake", water: true, vertical: true, seed: 16, startY: 5, sky: "#102b70",
     platforms: [[8,8,5],[20,16,5],[9,25,5]], blocks: [[10,7,0],[22,15,0]] }
 ];
 
 export const LEVELS: LevelDef[] = [
   { name: "1  MT. ETERNAL", theme: "hills", water: false, vertical: true, waterStartY: 91 * 16, sky: "#5c94fc", grid: mtEternal() },
-  ...STAGES.map((s) => ({ name: s.name, theme: s.theme, water: !!s.water, sky: s.sky, bossName: s.bossName, grid: makeStage(s) }))
+  ...STAGES.map((s) => ({ name: s.name, theme: s.theme, water: !!s.water, vertical: !!s.vertical, sky: s.sky, bossName: s.bossName, grid: makeStage(s) }))
 ];
