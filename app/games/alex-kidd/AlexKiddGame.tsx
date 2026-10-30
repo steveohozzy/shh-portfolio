@@ -66,22 +66,55 @@ function GameButton({ item }: { item: (typeof controls)[number] }) {
 
 export default function AlexKiddGame() {
   const host = useRef<HTMLDivElement>(null);
+  const gameRef = useRef<any>(null);
+  const [muted, setMuted] = useState(false);
+  const [paused, setPaused] = useState(false);
+
+  const togglePause = () => {
+    const game = gameRef.current;
+    if (!game) return;
+    const isPaused = game.scene.isPaused("Game");
+    const isActive = game.scene.isActive("Game");
+    if (!isPaused && !isActive) return;
+    if (isPaused) game.scene.resume("Game");
+    else game.scene.pause("Game");
+    setPaused(!isPaused);
+  };
 
   useEffect(() => {
-    let game: { destroy: (removeCanvas: boolean) => void } | undefined;
+    const savedMute = window.localStorage.getItem("alex-kidd-muted") === "true";
+    setMuted(savedMute);
+    sfx.setMuted(savedMute);
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.code === "Escape" || event.code === "KeyP") && !event.repeat) {
+        event.preventDefault();
+        togglePause();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [paused]);
+
+  useEffect(() => {
     let cancelled = false;
 
     const start = async () => {
       try { await document.fonts.load('8px "Press Start 2P"'); } catch {}
       const { createGame } = await import("./game/createGame");
-      if (!cancelled && host.current) {\n        game = createGame(host.current);\n        gameRef.current = game;\n      }
+      if (!cancelled && host.current) {
+        const game = createGame(host.current);
+        gameRef.current = game;
+      }
     };
 
     void start();
     return () => {
       cancelled = true;
       Object.keys(vpad).forEach((key) => { vpad[key as PadKey] = false; });
-      game?.destroy(true);\n      gameRef.current = null;
+      gameRef.current?.destroy(true);
+      gameRef.current = null;
     };
   }, []);
 
@@ -95,7 +128,31 @@ export default function AlexKiddGame() {
           <span>ISLAND OF WONDERS</span>
         </header>
         <div className="ak-screen-frame">
+          <div className="ak-game-tools">
+            <button
+              type="button"
+              className="ak-game-tool"
+              aria-pressed={!muted}
+              onClick={() => {
+                const nextMuted = !muted;
+                setMuted(nextMuted);
+                sfx.setMuted(nextMuted);
+                window.localStorage.setItem("alex-kidd-muted", String(nextMuted));
+              }}
+            >
+              {muted ? "SOUND OFF" : "SOUND ON"}
+            </button>
+            <button type="button" className="ak-game-tool" onClick={togglePause}>
+              {paused ? "RESUME" : "PAUSE"}
+            </button>
+          </div>
           <div ref={host} className="ak-game-screen" />
+          {paused && (
+            <div className="ak-pause-overlay">
+              <span>PAUSED</span>
+              <button type="button" className="ak-game-tool" onClick={togglePause}>RESUME GAME</button>
+            </div>
+          )}
           <section className="ak-controls" aria-label="Game controls">
             <div className="ak-dpad">
               {controls.slice(0, 4).map((item) => <GameButton key={item.key} item={item} />)}
