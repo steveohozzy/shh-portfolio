@@ -33,8 +33,46 @@ const BODY = {
   run2: ["....tttttt......", "...tttttttt.....", "...sttttttts....", "....ttyyyytt....", "....tttttttt....", ".....ss..ss.....", ".....bbbbbb.....", "....bbb..bbb...."],
   jump: ["..s.tttttt.s....", "..sttttttttts...", "....tttttttt....", "....ttyyyytt....", "....tttttttt....", "...ss....ss.....", "..bbb.....bbb...", "...........bb..."],
   punch: ["....tttttt......", "...ttttttttsss..", "...tttttttsssss.", "...ttyyyytt.sss.", "....tttttttt....", "....ss....ss....", "...bbb....bbb...", "..bbbb....bbbb.."],
-  swim1: ["....tttttt......", "...ttttttttts...", "..sttttttttts...", "....ttyyyytt....", "...tttttttt......", "..ss........ss..", ".bbb........bbb.", "................"],
-  swim2: ["....tttttt......", "...ttttttttts...", "..sttttttttts...", "....ttyyyytt....", "...tttttttt......", "....ss......ss..", "...bbbb....bbbb.", "................"],
+
+};
+
+const SWIM = {
+  swim1: [
+    "....hhhhh...............",
+    "...hhhhhhhh.............",
+    "..hhhhhhhhhh............",
+    "..hhhsssssh.............",
+    ".shhssskssk.............",
+    ".sshsssssss....ttttt....",
+    "..sssssssss..tttttttt...",
+    "....ssssssstttttttttts..",
+    "......sssssttttttttttss.",
+    ".......bbbttttttttttt...",
+    "......bbbb..tttttttt....",
+    ".....bbb......ss..ss....",
+    "....bbb.......bb..bbb...",
+    "................bbb.....",
+    "........................",
+    "........................"
+  ],
+  swim2: [
+    "....hhhhh...............",
+    "...hhhhhhhh.............",
+    "..hhhhhhhhhh............",
+    "..hhhsssssh.............",
+    ".shhssskssk.............",
+    ".sshsssssss...tttttt....",
+    "..sssssssss.ttttttttt...",
+    "....ssssssstttttttttts..",
+    "......sssssttttttttttss.",
+    ".......bbbttttttttttt...",
+    "......bbbb..tttttttt....",
+    ".....bbb.....ss....ss...",
+    "....bbb......bbb..bbb...",
+    ".................bbb....",
+    "........................",
+    "........................"
+  ]
 };
 
 const HANDS = {
@@ -64,6 +102,8 @@ function block(s: Phaser.Scene, key: string, base: string, light: string, dark: 
 
 export function makeTextures(s: Phaser.Scene) {
   (Object.keys(BODY) as (keyof typeof BODY)[]).forEach((k) => gen(s, `hero_${k}`, [...HEAD, ...BODY[k]]));
+  gen(s, "hero_swim1", SWIM.swim1, 1, 24, 16);
+  gen(s, "hero_swim2", SWIM.swim2, 1, 24, 16);
   (Object.keys(HANDS) as (keyof typeof HANDS)[]).forEach((k) => gen(s, k, HANDS[k]));
 
   gen(s, "scorp", ["..........rr....", "...........rr...", "..........rrr...", ".........rrr....", "....rrrrrrr.....", "..rrrrrrrrrr....", ".rrwkrrrrrrrr...", ".rrrrrrrrrrrr...", "rr.rrrrrrrrr.rr.", "r..r.r..r.r...r."]);
@@ -114,6 +154,14 @@ export function makeTextures(s: Phaser.Scene) {
     c.fillStyle = "#8868a0"; c.fillRect(0, 0, 7, 1); c.fillRect(8, 0, 8, 1); c.fillRect(0, 8, 3, 1); c.fillRect(4, 8, 8, 1);
   });
 
+  canvas(s, "water_surface", 256, 8, (c) => {
+    c.fillStyle = "#2878d8"; c.fillRect(0, 0, 256, 8);
+    c.fillStyle = "#a8e8ff";
+    for (let x = 0; x < 256; x += 32) { c.fillRect(x + 2, 1, 20, 2); c.fillRect(x + 13, 4, 13, 1); }
+    c.fillStyle = "#d8f8ff";
+    for (let x = 0; x < 256; x += 64) c.fillRect(x + 8, 0, 12, 1);
+  });
+
   // backgrounds (256x192, tiled horizontally for parallax)
   canvas(s, "bg_hills", 256, 192, (c) => {
     c.fillStyle = "#5c94fc"; c.fillRect(0, 0, 256, 192);
@@ -144,5 +192,5 @@ export function makeTextures(s: Phaser.Scene) {
 
   const a = s.anims;
   if (!a.exists("run")) a.create({ key: "run", frames: [{ key: "hero_run1" }, { key: "hero_run2" }], frameRate: 10, repeat: -1 });
-  if (!a.exists("swim")) a.create({ key: "swim", frames: [{ key: "hero_swim1" }, { key: "hero_swim2" }], frameRate: 5, repeat: -1 });
+  if (!a.exists("swim")) a.create({ key: "swim", frames: [{ key: "hero_swim1" }, { key: "hero_swim2" }], frameRate: 7, repeat: -1 });
 }
