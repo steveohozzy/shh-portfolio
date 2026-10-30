@@ -8,6 +8,7 @@ export interface LevelDef {
   name: string;
   theme: Theme;
   water: boolean;
+  waterStartX?: number;
   sky: string;
   grid: string[][];
 }
@@ -102,7 +103,11 @@ function mountainDescent(): G {
   put(g, 118, 9, "w");
   put(g, 124, 6, "g");
   fill(g, 130, 132, 9, 9, "R");
-  put(g, 138, 9, "w");
+  put(g, 112, 9, "w");
+  put(g, 118, 7, "p");
+  put(g, 124, 6, "g");
+  put(g, 130, 7, "p");
+  put(g, 138, 6, "o");
   put(g, 146, 9, "F");
   return g;
 }
@@ -194,7 +199,7 @@ function gloomCastle(): G {
 
 export const LEVELS: LevelDef[] = [
   { name: "1  SUNNY HILLS", theme: "hills", water: false, sky: "#5c94fc", grid: level1() },
-  { name: "2  MOUNTAIN DESCENT", theme: "hills", water: false, sky: "#5c94fc", grid: mountainDescent() },
+  { name: "2  MOUNTAIN DESCENT", theme: "hills", water: false, waterStartX: 112 * 16, sky: "#5c94fc", grid: mountainDescent() },
   { name: "3  BLUE LAGOON", theme: "lake", water: true, sky: "#1840b8", grid: blueLagoon() },
   { name: "4  CORAL CAVERNS", theme: "lake", water: true, sky: "#102b70", grid: coralCaverns() },
   { name: "5  GLOOM CASTLE", theme: "castle", water: false, sky: "#200820", grid: gloomCastle() },
