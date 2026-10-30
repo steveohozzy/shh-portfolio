@@ -10,6 +10,7 @@ export interface LevelDef {
   water: boolean;
   waterStartX?: number;
   waterStartY?: number;
+  waterEndY?: number;
   vertical?: boolean;
   sky: string;
   bossName?: string;
@@ -25,39 +26,44 @@ const fill = (g: G, x0: number, x1: number, y0: number, y1: number, c: string) =
 };
 
 function mtEternal(): G {
-  const g = grid(48, 120);
-  fill(g, 0, 0, 0, 88, "R");
-  fill(g, 47, 47, 0, 88, "R");
-  put(g, 7, 2, "P");
+  const g = grid(32, 32);
 
-  // A descending zig-zag of broad ledges: every drop has another reachable shelf.
-  const ledges = [
-    [3, 16, 7], [25, 44, 13], [4, 23, 19], [25, 44, 25],
-    [3, 20, 31], [23, 44, 37], [4, 23, 43], [25, 44, 49],
-    [3, 21, 55], [24, 44, 61], [4, 23, 67], [25, 44, 73],
-    [3, 20, 79], [22, 44, 85]
-  ];
-  ledges.forEach(([x0, x1, y], i) => {
-    fill(g, x0, x1, y, y + 1, i % 2 ? "R" : "S");
-    if (i % 2 === 0) put(g, Math.min(x1 - 2, x0 + 7), y - 1, "Q");
-    else put(g, Math.max(x0 + 2, x1 - 7), y - 1, "S");
-    put(g, i % 2 ? x0 + 3 : x1 - 3, y - 2, "$");
-    if (i % 3 === 1) put(g, i % 2 ? x0 + 8 : x1 - 8, y - 3, "v");
-    if (i % 3 === 2) put(g, i % 2 ? x0 + 5 : x1 - 5, y - 1, "w");
-  });
-  [[18,12],[28,30],[16,42],[31,54],[17,66],[30,78]].forEach(([x,y]) => put(g,x,y,"$"));
-  put(g, 13, 34, "g");
-  put(g, 34, 58, "o");
+  // The original Mt. Eternal route starts in a narrow vertical mountain shaft.
+  fill(g, 0, 0, 0, 13, "R");
+  fill(g, 10, 10, 0, 13, "R");
+  put(g, 4, 2, "P");
 
-  // The mountain opens into the horizontal underwater route.
-  fill(g, 1, 46, 91, 119, ".");
-  fill(g, 1, 46, 119, 119, "R");
-  fill(g, 0, 0, 89, 119, "R");
-  fill(g, 47, 47, 89, 119, "R");
-  [[5,98],[13,105],[21,96],[29,108],[37,99],[43,111]].forEach(([x,y]) => put(g,x,y,"p"));
-  [[9,112],[18,101],[27,114],[35,104]].forEach(([x,y]) => put(g,x,y,"$"));
-  put(g, 24, 102, "o");
-  put(g, 43, 108, "F");
+  fill(g, 2, 7, 5, 5, "S");
+  put(g, 8, 4, "v");
+  put(g, 5, 4, "$");
+  fill(g, 4, 9, 9, 9, "R");
+  put(g, 3, 8, "w");
+  put(g, 7, 8, "Q");
+  fill(g, 1, 6, 12, 12, "S");
+  put(g, 8, 11, "v");
+  put(g, 2, 11, "$");
+
+  // The shaft opens into the wide underwater crossing.
+  [[3,16],[8,18],[14,15],[21,18],[27,16]].forEach(([x,y]) => put(g,x,y,"p"));
+  [[5,17],[12,19],[18,16],[24,19]].forEach(([x,y]) => put(g,x,y,"$"));
+  fill(g, 13, 15, 18, 18, "R");
+  fill(g, 22, 23, 15, 15, "R");
+  put(g, 18, 17, "g");
+
+  // The lower valley is a separate land section with breakable blocks and enemies.
+  fill(g, 0, 31, 30, 31, "#");
+  fill(g, 0, 2, 20, 29, "#");
+  fill(g, 6, 8, 27, 27, "S");
+  fill(g, 10, 12, 24, 24, "R");
+  fill(g, 14, 16, 27, 27, "S");
+  fill(g, 19, 21, 23, 23, "R");
+  fill(g, 24, 26, 27, 27, "S");
+  put(g, 5, 26, "w");
+  put(g, 11, 22, "v");
+  put(g, 17, 26, "w");
+  put(g, 22, 22, "$");
+  put(g, 26, 25, "Q");
+  put(g, 29, 28, "F");
   return g;
 }
 
@@ -151,6 +157,6 @@ const STAGES: StageSpec[] = [
 ];
 
 export const LEVELS: LevelDef[] = [
-  { name: "1  MT. ETERNAL", theme: "hills", water: false, vertical: true, waterStartY: 91 * 16, sky: "#5c94fc", grid: mtEternal() },
+  { name: "1  MT. ETERNAL", theme: "hills", water: false, vertical: true, waterStartY: 14 * 16, waterEndY: 20 * 16, sky: "#5c94fc", grid: mtEternal() },
   ...STAGES.map((s) => ({ name: s.name, theme: s.theme, water: !!s.water, vertical: !!s.vertical, sky: s.sky, bossName: s.bossName, grid: makeStage(s) }))
 ];
