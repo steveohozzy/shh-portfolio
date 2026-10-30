@@ -42,6 +42,7 @@ export class GameScene extends Phaser.Scene {
   create() {
     this.L = LEVELS[this.levelIdx];
     const L = this.L;
+    this.facing = L.startFacing || 1;
     const W = L.grid[0].length * T;
     const worldH = L.grid.length * T;
     this.physics.resume();
