@@ -384,13 +384,25 @@ export class GameScene extends Phaser.Scene {
 
     const reachedWater = this.L.waterStartY !== undefined &&
       p.y >= this.L.waterStartY &&
+      (this.L.waterEndY === undefined || p.y < this.L.waterEndY) &&
       (this.L.waterStartX === undefined || p.x >= this.L.waterStartX);
     if (reachedWater && !this.waterEntered) {
       this.waterEntered = true;
       if (this.L.vertical) this.time.delayedCall(650, () => this.cameras.main.setDeadzone(48, 24));
     }
 
-    const inWater = this.L.water || this.waterEntered;
+    let inWater = this.L.water || this.waterEntered;
+    if (inWater && this.L.waterEndY !== undefined && p.y >= this.L.waterEndY) {
+      this.waterEntered = false;
+      inWater = false;
+      b.setAllowGravity(true);
+      b.setDragX(650);
+      b.setAccelerationX(0);
+      b.setVelocityY(0);
+      this.bg.setTexture("bg_hills").setAlpha(0);
+      this.cameras.main.setBackgroundColor("#5c94fc");
+      this.tweens.add({ targets: this.bg, alpha: 1, duration: 650, ease: "Sine.easeInOut" });
+    }
     if (inWater && b.allowGravity) {
       b.setAllowGravity(false);
       b.setSize(10, 14).setOffset(3, 2);
