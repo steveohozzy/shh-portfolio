@@ -47,7 +47,7 @@ export class GameScene extends Phaser.Scene {
     this.physics.resume();
     this.cameras.main.setBackgroundColor(L.sky);
     this.bg = this.add.tileSprite(128, 96, 256, 192, `bg_${L.theme}`).setScrollFactor(0);
-    if (L.vertical) this.waterSurface = this.add.tileSprite(1200, 72 * T, 2400, 8, "water_surface").setDepth(4);
+    if (L.vertical) this.waterSurface = this.add.tileSprite((L.grid[0].length * T) / 2, 91 * T, L.grid[0].length * T, 8, "water_surface").setDepth(4);
     this.physics.world.setBounds(0, 0, W, worldH + 64);
     this.physics.world.setBoundsCollision(true, true, true, false);
 
