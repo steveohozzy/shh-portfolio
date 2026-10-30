@@ -370,7 +370,7 @@ export class GameScene extends Phaser.Scene {
     this.updatePlayer(time, dt);
     this.updateEnemies(dt);
     this.updateMisc(time, dt);
-    if (this.boss && !this.jankenDone && this.player.x > this.arenaX) this.startJanken();
+    if (this.boss && !this.jankenDone && this.player.x > this.arenaX && (!this.L.vertical || Math.abs(this.player.y - this.boss.y) < 6 * T)) this.startJanken();
     this.hud.setText(`LIFE ${Math.max(0, state.lives)}  $${state.money}${state.bracelet ? "  PWR" : ""}`);
   }
 
