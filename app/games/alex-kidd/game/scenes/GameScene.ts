@@ -24,6 +24,7 @@ export class GameScene extends Phaser.Scene {
   ghosts!: Phaser.Physics.Arcade.Group;
   solidSet = new Set<string>();
   bg!: Phaser.GameObjects.TileSprite;
+  waterSurface?: Phaser.GameObjects.TileSprite;
   hud!: Phaser.GameObjects.Text;
   facing = 1; punchT = 0; dead = false; cleared = false; frozenUntil = 0; bubbleT = 0; waterEntered = false;
   boss?: Spr; bossHp = 6; bossFight = false; bossTimer = 1; bossMove = 0; bossInv = 0; arenaX = 0;
@@ -46,6 +47,7 @@ export class GameScene extends Phaser.Scene {
     this.physics.resume();
     this.cameras.main.setBackgroundColor(L.sky);
     this.bg = this.add.tileSprite(128, 96, 256, 192, `bg_${L.theme}`).setScrollFactor(0);
+    if (L.vertical) this.waterSurface = this.add.tileSprite(1200, 72 * T, 2400, 8, "water_surface").setDepth(4);
     this.physics.world.setBounds(0, 0, W, worldH + 64);
     this.physics.world.setBoundsCollision(true, true, true, false);
 
@@ -388,8 +390,9 @@ export class GameScene extends Phaser.Scene {
       b.setAllowGravity(false);
       b.setVelocityY(0);
       b.setDragX(220);
-      this.bg.setTexture("bg_lake");
+      this.bg.setTexture("bg_lake").setAlpha(0);
       this.cameras.main.setBackgroundColor("#1840b8");
+      this.tweens.add({ targets: this.bg, alpha: 1, duration: 650, ease: "Sine.easeInOut" });
     }
     if (inWater) {
       b.setMaxVelocity(state.boots ? 90 : 75, 130);
@@ -426,8 +429,9 @@ export class GameScene extends Phaser.Scene {
     else if (Math.abs(b.velocity.x) > 8) p.anims.play("run", true);
     else { p.anims.stop(); p.setTexture("hero_idle"); }
     if (frozen) p.setTint(0x8888ff); else p.clearTint();
-    p.setAngle(inWater ? (this.facing > 0 ? 90 : -90) : 0);
-    if (inWater) p.setFlipX(false);
+    p.setAngle(0);
+    p.setFlipX(this.facing < 0);
+    if (inWater) p.setDepth(10);
     if (p.y > this.L.grid.length * T + 20) this.die();
   }
 
