@@ -187,7 +187,12 @@ function makeOriginalStage(stageNo: number, spec: StageSpec): G {
     if (entity === "B") hasBoss = true;
   });
 
-  if (stageNo === 2) {\n    // Open the first oversized rock face so the opening route is traversable.\n    fill(g, 4, 9, 5, 9, ".");\n  }\n\n  if (!hasExit && !hasBoss) put(g, g[0].length - 3, g.length - 3, "F");
+  if (stageNo === 2) {
+    // Open the first oversized rock face so the opening route is traversable.
+    fill(g, 4, 9, 5, 9, ".");
+  }
+
+  if (!hasExit && !hasBoss) put(g, g[0].length - 3, g.length - 3, "F");
   return g;
 }
 
