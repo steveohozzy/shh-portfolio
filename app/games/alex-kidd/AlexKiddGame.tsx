@@ -15,25 +15,32 @@ const controls: { key: PadKey; label: string; className?: string }[] = [
 
 function Joystick() {
   const pad = useRef<HTMLDivElement>(null);
+  const knob = useRef<HTMLSpanElement>(null);
   const move = (event: React.PointerEvent<HTMLDivElement>) => {
     const rect = pad.current?.getBoundingClientRect();
     if (!rect) return;
-    const x = (event.clientX - rect.left) / rect.width * 2 - 1;
-    const y = (event.clientY - rect.top) / rect.height * 2 - 1;
+    let x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    let y = ((event.clientY - rect.top) / rect.height) * 2 - 1;
+    const distance = Math.hypot(x, y);
+    if (distance > 1) { x /= distance; y /= distance; }
+    if (knob.current) knob.current.style.transform = `translate(${x * 27}px, ${y * 27}px)`;
     const dead = 0.24;
     vpad.left = x < -dead;
     vpad.right = x > dead;
     vpad.up = y < -dead;
     vpad.down = y > dead;
   };
-  const release = () => { vpad.left = vpad.right = vpad.up = vpad.down = false; };
+  const release = () => {
+    vpad.left = vpad.right = vpad.up = vpad.down = false;
+    if (knob.current) knob.current.style.transform = "translate(0, 0)";
+  };
   return (
     <div ref={pad} className="ak-joystick" role="group" aria-label="Movement joystick"
       onPointerDown={(event) => { event.preventDefault(); event.currentTarget.setPointerCapture(event.pointerId); move(event); }}
       onPointerMove={(event) => { if (event.currentTarget.hasPointerCapture(event.pointerId)) move(event); }}
       onPointerUp={release} onPointerCancel={release} onLostPointerCapture={release}
       onContextMenu={(event) => event.preventDefault()}>
-      <span className="ak-joystick-knob" />
+      <span ref={knob} className="ak-joystick-knob" />
     </div>
   );
 }
