@@ -1,5 +1,5 @@
 // @ts-nocheck
-import Phaser from "phaser";
+import * as Phaser from "phaser";
 import { Controls, FONT } from "../controls";
 import { makeTextures } from "../textures";
 import { state, resetGame, PRICES } from "../state";
