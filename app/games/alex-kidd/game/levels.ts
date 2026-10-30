@@ -93,6 +93,37 @@ function mtEternal(): G {
   return g;
 }
 
+
+function originalIslandOfNurari(): G {
+  const encoded = [
+    "1100820b0c060081030b0081030600820b0c0d0081140500817a0f00827b7a0600817a0500821000027b0600887b001010007a1000027b04000210887b001010007b1000027c021002000210877c001014007c14107e107d00",
+    "83000b0c0b00820b0c0500820b0c0f00021083000b0c0400841400001003000210030081100a008201030800810305008214100700827a0303008210000210060083147b1403008110040081100400877a7b01000100140900837b7c10030081100900027c097e047f037e097d0480037d00",
+    "0d00820b0c120082100002100300820b0c0800837a03100a00847a00007b021006008a147a00007b00007b141003008b100300107b00107b00007b0210030090100300007b00147b00107c100100100002100200897b00007c00147c10140700877c00007c00007c02100700847c00007c057e047f077e057d0480077d00",
+    "1b00820b0c0600850b0c000010290082107a060007140200817b060007100200827b14040002100500841000007c040003108100030385001400007c03000310811405008114107e107d00",
+    "0d00820b0c0600820b0c1300820b0c0400820b0c0b00817a0b008a818200007b00007a007a06008a838400007b00007b7a7b05008885868788007b7a00037b05008b898a8b8c007c7b007c7b7c050088898d8e8c007c7b00037c050088898d8e8c007c7c00087e048f047e107d00"
+  ];
+  const g = grid(80, 12);
+  encoded.forEach((hex, screen) => {
+    const data = decodeLevelScreen(hex);
+    for (let y = 0; y < 12; y++) {
+      for (let x = 0; x < 16; x++) {
+        const id = data[y * 16 + x] || 0;
+        const tile = id === 0 || id === 0x0a || id === 0x0b || id === 0x0c || id === 0x20 || id === 0x21
+          ? "."
+          : id >= 0x50 && id <= 0x57 ? "#" : "R";
+        put(g, screen * 16 + x, y, tile);
+      }
+    }
+  });
+
+  // Clear the entrance so Alex can never spawn inside the first screen's blocks.
+  fill(g, 1, 3, 8, 9, ".");
+  put(g, 2, 9, "P");
+  put(g, 73, 8, "w");
+  put(g, 76, 7, "F");
+  return g;
+}
+
 type StageSpec = {
   width: number; height: number; theme: Theme; water?: boolean; boss?: boolean;
   startY?: number; seed: number; name: string; sky: string; bossName?: string;
@@ -152,7 +183,7 @@ const STAGES: StageSpec[] = [
     pits: [[43,47],[91,96],[145,151],[202,208],[250,255]], blocks: [[18,6,1],[61,7,2],[112,3,1],[169,4,2],[224,5,1]] },
   { name: "3  LAKE FATHOM", width: 96, height: 24, theme: "lake", water: true, seed: 2, startY: 9, sky: "#1840b8",
     platforms: [[12,6,4],[30,13,5],[51,5,5],[72,15,4]], blocks: [[20,4,0],[60,12,0]] },
-  { name: "4  ISLAND OF ST. NURARI", width: 80, height: 12, theme: "hills", seed: 3, sky: "#5c94fc",
+  { name: "4  ISLAND OF ST. NURARI", width: 80, height: 12, theme: "hills", seed: 3, sky: "#5c94fc", grid: originalIslandOfNurari(),
     platforms: [[9,7,5],[20,5,4],[34,8,6],[49,4,5],[64,7,6]], pits: [[15,18],[29,32],[44,47],[59,62]], blocks: [[11,6,1],[37,7,0],[53,3,1]] },
   { name: "5  LAKE FATHOM PART 2", width: 192, height: 24, theme: "lake", water: true, seed: 4, startY: 10, sky: "#1840b8",
     platforms: [[15,7,5],[43,15,5],[74,5,6],[105,16,5],[139,8,6],[168,13,5]], blocks: [[32,6,0],[91,12,0],[153,7,0]] },
@@ -184,5 +215,5 @@ const STAGES: StageSpec[] = [
 
 export const LEVELS: LevelDef[] = [
   { name: "1  MT. ETERNAL", theme: "hills", water: false, vertical: true, waterStartY: 108 * 16, sky: "#5c94fc", grid: mtEternal() },
-  ...STAGES.map((s) => ({ name: s.name, theme: s.theme, water: !!s.water, vertical: !!s.vertical, sky: s.sky, bossName: s.bossName, grid: makeStage(s) }))
+  ...STAGES.map((s) => ({ name: s.name, theme: s.theme, water: !!s.water, vertical: !!s.vertical, sky: s.sky, bossName: s.bossName, grid: s.grid || makeStage(s) }))
 ];
