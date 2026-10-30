@@ -26,7 +26,7 @@ export class GameScene extends Phaser.Scene {
   bg!: Phaser.GameObjects.TileSprite;
   waterSurface?: Phaser.GameObjects.TileSprite;
   hud!: Phaser.GameObjects.Text;
-  facing = 1; punchT = 0; dead = false; cleared = false; frozenUntil = 0; bubbleT = 0; waterEntered = false;
+  facing = 1; punchT = 0; dead = false; cleared = false; frozenUntil = 0; bubbleT = 0; waterEntered = false; waterExitBlocked = false;
   boss?: Spr; bossHp = 6; bossFight = false; bossTimer = 1; bossMove = 0; bossInv = 0; arenaX = 0;
   jankenActive = false; jankenDone = false;
   jk = { sel: 0, you: 0, them: 0, phase: "choose" as "choose" | "reveal", ui: [] as Phaser.GameObjects.GameObject[], cursor: null as Phaser.GameObjects.Text | null, bossHand: null as Phaser.GameObjects.Image | null, info: null as Phaser.GameObjects.Text | null, score: null as Phaser.GameObjects.Text | null };
@@ -34,7 +34,7 @@ export class GameScene extends Phaser.Scene {
   init(d: { level: number }) {
     this.levelIdx = d.level ?? 0;
     this.solidSet = new Set();
-    this.facing = 1; this.punchT = 0; this.dead = false; this.cleared = false; this.frozenUntil = 0; this.waterEntered = false;
+    this.facing = 1; this.punchT = 0; this.dead = false; this.cleared = false; this.frozenUntil = 0; this.waterEntered = false; this.waterExitBlocked = false;
     this.boss = undefined; this.bossHp = 6; this.bossFight = false; this.bossTimer = 1; this.bossMove = 0; this.bossInv = 0;
     this.jankenActive = false; this.jankenDone = false;
   }
@@ -393,6 +393,15 @@ export class GameScene extends Phaser.Scene {
       (this.L.waterStartX === undefined || p.x >= this.L.waterStartX);
     if (reachedWater && !this.waterEntered) {
       this.waterEntered = true;
+      if (this.L.vertical && !this.waterExitBlocked) {
+        this.waterExitBlocked = true;
+        const ceiling = this.solids.create(
+          (this.L.grid[0].length * T) / 2,
+          this.L.waterStartY! - 12,
+          "rock"
+        ) as Phaser.Physics.Arcade.Image;
+        ceiling.setDisplaySize(this.L.grid[0].length * T, 8).refreshBody().setVisible(false);
+      }
       if (this.L.vertical) this.time.delayedCall(650, () => this.cameras.main.setDeadzone(48, 24));
     }
 
