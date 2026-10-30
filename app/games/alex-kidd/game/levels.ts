@@ -8,7 +8,7 @@ export interface LevelDef {
   name: string;
   theme: Theme;
   water: boolean;
-  waterStartX?: number;
+  waterStartX?: number;\n  waterStartY?: number;
   sky: string;
   grid: string[][];
 }
@@ -23,106 +23,113 @@ const fill = (g: G, x0: number, x1: number, y0: number, y1: number, c: string) =
 
 function level1(): G {
   const g = grid(150);
-  fill(g, 0, 30, 10, 11, "#");
-  fill(g, 33, 60, 10, 11, "#");
-  fill(g, 64, 100, 10, 11, "#");
-  fill(g, 103, 149, 10, 11, "#");
-  put(g, 2, 9, "P");
-  fill(g, 10, 11, 8, 9, "S");
-  put(g, 14, 9, "w");
-  fill(g, 16, 19, 6, 6, "S");
-  put(g, 21, 6, "Q");
-  fill(g, 26, 27, 9, 9, "R");
-  put(g, 27, 8, "R");
-  put(g, 31, 6, "$");
-  put(g, 32, 6, "$");
-  fill(g, 38, 40, 9, 9, "S");
-  put(g, 39, 8, "K");
-  put(g, 40, 8, "S");
-  put(g, 44, 9, "w");
-  put(g, 50, 5, "v");
-  fill(g, 54, 57, 6, 6, "R");
-  fill(g, 54, 57, 5, 5, "$");
-  fill(g, 58, 59, 9, 9, "S");
-  put(g, 62, 6, "$");
-  fill(g, 66, 70, 7, 7, "R");
-  fill(g, 66, 70, 6, 6, "$");
-  put(g, 72, 9, "w");
-  put(g, 76, 9, "w");
-  put(g, 78, 4, "v");
-  put(g, 82, 9, "R");
-  fill(g, 83, 83, 8, 9, "R");
-  fill(g, 84, 86, 7, 9, "R");
-  put(g, 85, 6, "$");
-  put(g, 90, 9, "w");
-  fill(g, 93, 95, 6, 6, "S");
-  put(g, 94, 6, "Q");
-  put(g, 98, 4, "v");
-  fill(g, 106, 108, 8, 9, "S");
-  put(g, 107, 7, "K");
-  put(g, 112, 8, "w");
-  put(g, 118, 8, "w");
-  put(g, 122, 5, "v");
-  fill(g, 126, 128, 6, 6, "S");
-  put(g, 130, 9, "w");
-  fill(g, 134, 135, 9, 9, "R");
-  put(g, 140, 4, "v");
-  put(g, 146, 9, "F");
+  const groundAt = (x: number) => {
+    if (x < 18) return 6;
+    if (x < 36) return 7;
+    if (x < 54) return 8;
+    if (x < 72) return 9;
+    if (x < 90) return 8;
+    if (x < 108) return 9;
+    if (x < 126) return 10;
+    return 10;
+  };
+
+  for (let x = 0; x < 150; x++) fill(g, x, x, groundAt(x), 11, "#");
+
+  const onGround = (x: number, c = "w") => put(g, x, groundAt(x) - 1, c);
+  const blockRow = (x: number, offset = 3) => groundAt(x) - offset;
+
+  put(g, 2, groundAt(2) - 2, "P");
+  fill(g, 10, 11, blockRow(10), blockRow(10), "S");
+  onGround(14);
+  fill(g, 16, 19, blockRow(16), blockRow(16), "S");
+  put(g, 21, blockRow(21), "Q");
+  fill(g, 26, 27, groundAt(26) - 1, groundAt(26) - 1, "R");
+  put(g, 27, groundAt(27) - 2, "R");
+  put(g, 31, blockRow(31), "$");
+  put(g, 32, blockRow(32), "$");
+  fill(g, 38, 40, blockRow(38), blockRow(38), "S");
+  put(g, 39, groundAt(39) - 2, "K");
+  put(g, 40, groundAt(40) - 2, "S");
+  onGround(44);
+  put(g, 50, groundAt(50) - 4, "v");
+  fill(g, 54, 57, blockRow(54), blockRow(54), "R");
+  fill(g, 54, 57, blockRow(54) - 1, blockRow(54) - 1, "$");
+  fill(g, 58, 59, blockRow(58), blockRow(58), "S");
+  put(g, 62, blockRow(62), "$");
+  fill(g, 66, 70, blockRow(66), blockRow(66), "R");
+  fill(g, 66, 70, blockRow(66) - 1, blockRow(66) - 1, "$");
+  onGround(72);
+  onGround(76);
+  put(g, 78, groundAt(78) - 4, "v");
+  put(g, 82, groundAt(82) - 1, "R");
+  fill(g, 83, 83, groundAt(83) - 2, groundAt(83) - 1, "R");
+  fill(g, 84, 86, groundAt(84) - 3, groundAt(84) - 1, "R");
+  put(g, 85, groundAt(85) - 4, "$");
+  onGround(90);
+  fill(g, 93, 95, blockRow(93), blockRow(93), "S");
+  put(g, 94, blockRow(94), "Q");
+  put(g, 98, groundAt(98) - 4, "v");
+  fill(g, 106, 108, blockRow(106), blockRow(106), "S");
+  put(g, 107, groundAt(107) - 2, "K");
+  onGround(112);
+  onGround(118);
+  put(g, 122, groundAt(122) - 4, "v");
+  fill(g, 126, 128, blockRow(126), blockRow(126), "S");
+  onGround(130);
+  fill(g, 134, 135, groundAt(134) - 1, groundAt(134) - 1, "R");
+  put(g, 140, groundAt(140) - 4, "v");
+  put(g, 146, groundAt(146) - 1, "F");
   return g;
 }
 
-
 function mountainDescent(): G {
   const g = grid(150);
-
-  // One continuous mountain path: the ground steps down gradually,
-  // then opens into the lagoon at the far end.
   const groundAt = (x: number) => {
-    if (x < 14) return 6;
-    if (x < 28) return 7;
-    if (x < 42) return 8;
-    if (x < 56) return 9;
-    if (x < 70) return 10;
-    if (x < 112) return 10;
+    if (x < 12) return 4;
+    if (x < 24) return 5;
+    if (x < 38) return 6;
+    if (x < 52) return 7;
+    if (x < 68) return 8;
+    if (x < 88) return 9;
+    if (x < 108) return 9;
     return 11;
   };
 
-  for (let x = 0; x < 150; x++) {
-    fill(g, x, x, groundAt(x), 11, "#");
-  }
+  for (let x = 0; x < 150; x++) fill(g, x, x, groundAt(x), 11, "#");
+  put(g, 2, groundAt(2) - 2, "P");
 
-  put(g, 2, 4, "P");
+  const onGround = (x: number, c = "w") => put(g, x, groundAt(x) - 1, c);
+  const blockRow = (x: number, offset = 3) => groundAt(x) - offset;
 
-  // Mountain collectibles and breakable blocks sit just above the route.
-  fill(g, 9, 10, 4, 4, "S");
-  put(g, 17, 5, "w");
-  fill(g, 23, 25, 4, 4, "R");
-  put(g, 30, 5, "$");
-  put(g, 37, 4, "v");
-  fill(g, 44, 46, 6, 6, "S");
-  put(g, 45, 5, "Q");
-  put(g, 52, 8, "w");
-  fill(g, 59, 61, 7, 7, "R");
-  put(g, 60, 5, "o");
-  put(g, 67, 6, "v");
-  fill(g, 74, 76, 7, 7, "S");
-  put(g, 82, 9, "w");
-  put(g, 88, 6, "g");
-  fill(g, 94, 96, 7, 7, "R");
-  put(g, 101, 6, "$");
-  put(g, 108, 9, "w");
+  fill(g, 9, 10, blockRow(9), blockRow(9), "S");
+  onGround(17);
+  fill(g, 23, 25, groundAt(23) - 1, groundAt(23) - 1, "R");
+  put(g, 30, blockRow(30), "$");
+  put(g, 37, groundAt(37) - 4, "v");
+  fill(g, 44, 46, blockRow(44), blockRow(44), "S");
+  put(g, 45, groundAt(45) - 4, "Q");
+  onGround(52);
+  fill(g, 59, 61, groundAt(59) - 1, groundAt(59) - 1, "R");
+  put(g, 60, blockRow(60), "o");
+  put(g, 67, groundAt(67) - 4, "v");
+  fill(g, 74, 76, blockRow(74), blockRow(74), "S");
+  onGround(82);
+  put(g, 88, blockRow(88), "g");
+  fill(g, 94, 96, groundAt(94) - 1, groundAt(94) - 1, "R");
+  put(g, 101, blockRow(101), "$");
+  onGround(108);
 
-  // Visible shoreline and underwater route.
-  fill(g, 112, 114, 9, 9, "R");
-  put(g, 118, 8, "p");
-  put(g, 124, 7, "g");
+  // The path slopes down to a clear shoreline before the player swims.
+  fill(g, 110, 111, 8, 9, "R");
+  put(g, 116, 8, "p");
+  put(g, 122, 7, "g");
   put(g, 130, 8, "p");
   put(g, 138, 6, "o");
   put(g, 144, 8, "p");
   put(g, 146, 9, "F");
   return g;
 }
-
 function blueLagoon(): G {
   const g = grid(160);
   fill(g, 0, 159, 11, 11, "#");
@@ -210,7 +217,7 @@ function gloomCastle(): G {
 
 export const LEVELS: LevelDef[] = [
   { name: "1  SUNNY HILLS", theme: "hills", water: false, sky: "#5c94fc", grid: level1() },
-  { name: "2  MOUNTAIN DESCENT", theme: "hills", water: false, waterStartX: 112 * 16, sky: "#5c94fc", grid: mountainDescent() },
+  { name: "2  MOUNTAIN DESCENT", theme: "hills", water: false, waterStartX: 112 * 16, waterStartY: 9 * 16, sky: "#5c94fc", grid: mountainDescent() },
   { name: "3  BLUE LAGOON", theme: "lake", water: true, sky: "#1840b8", grid: blueLagoon() },
   { name: "4  CORAL CAVERNS", theme: "lake", water: true, sky: "#102b70", grid: coralCaverns() },
   { name: "5  GLOOM CASTLE", theme: "castle", water: false, sky: "#200820", grid: gloomCastle() },
