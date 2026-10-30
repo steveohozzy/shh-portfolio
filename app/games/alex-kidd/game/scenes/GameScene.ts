@@ -299,7 +299,7 @@ export class GameScene extends Phaser.Scene {
     t(128, 34, "FIRST TO 2 WINS");
     this.jk.score = t(128, 150, "");
     this.jk.info = t(128, 166, "CHOOSE YOUR HAND", "#98f898");
-    t(128, 52, "BOSS", "#f878f8");
+    t(128, 52, this.L.bossName || "BOSS", "#f878f8");
     this.jk.bossHand = fix(this.add.image(128, 76, "hand0").setScale(2).setVisible(false));
     [0, 1, 2].forEach((i) => {
       const img = fix(this.add.image(64 + i * 64, 116, `hand${i}`).setScale(2).setInteractive());
