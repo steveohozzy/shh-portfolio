@@ -13,6 +13,31 @@ const controls: { key: PadKey; label: string; className?: string }[] = [
   { key: "jump", label: "JUMP", className: "jump" },
 ];
 
+function Joystick() {
+  const pad = useRef<HTMLDivElement>(null);
+  const move = (event: React.PointerEvent<HTMLDivElement>) => {
+    const rect = pad.current?.getBoundingClientRect();
+    if (!rect) return;
+    const x = (event.clientX - rect.left) / rect.width * 2 - 1;
+    const y = (event.clientY - rect.top) / rect.height * 2 - 1;
+    const dead = 0.24;
+    vpad.left = x < -dead;
+    vpad.right = x > dead;
+    vpad.up = y < -dead;
+    vpad.down = y > dead;
+  };
+  const release = () => { vpad.left = vpad.right = vpad.up = vpad.down = false; };
+  return (
+    <div ref={pad} className="ak-joystick" role="group" aria-label="Movement joystick"
+      onPointerDown={(event) => { event.preventDefault(); event.currentTarget.setPointerCapture(event.pointerId); move(event); }}
+      onPointerMove={(event) => { if (event.currentTarget.hasPointerCapture(event.pointerId)) move(event); }}
+      onPointerUp={release} onPointerCancel={release} onLostPointerCapture={release}
+      onContextMenu={(event) => event.preventDefault()}>
+      <span className="ak-joystick-knob" />
+    </div>
+  );
+}
+
 function GameButton({ item }: { item: (typeof controls)[number] }) {
   const set = (value: boolean) => () => { vpad[item.key] = value; };
   return (
@@ -63,17 +88,15 @@ export default function AlexKiddGame() {
         </header>
         <div className="ak-screen-frame">
           <div ref={host} className="ak-game-screen" />
+          <section className="ak-controls" aria-label="Game controls">
+            <Joystick />
+            <GameButton item={controls[4]} />
+            <div className="ak-actions">
+              <GameButton item={controls[5]} />
+              <GameButton item={controls[6]} />
+            </div>
+          </section>
         </div>
-        <section className="ak-controls" aria-label="Game controls">
-          <div className="ak-dpad">
-            {controls.slice(0, 4).map((item) => <GameButton key={item.key} item={item} />)}
-          </div>
-          <GameButton item={controls[4]} />
-          <div className="ak-actions">
-            <GameButton item={controls[5]} />
-            <GameButton item={controls[6]} />
-          </div>
-        </section>
         <p className="ak-instructions">KEYBOARD: ARROWS MOVE · Z JUMP · X PUNCH · ENTER START</p>
       </div>
     </main>
