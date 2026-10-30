@@ -243,3 +243,21 @@
   .ak-joystick-knob { width: 30px; height: 30px; }
   .ak-control-punch, .ak-control-jump { min-width: 50px; min-height: 50px; }
 }
+
+.ak-sound-toggle {
+  position: absolute;
+  z-index: 10;
+  top: 14px;
+  right: 14px;
+  border: 2px solid #e4a52c;
+  border-radius: 6px;
+  background: #21180fdd;
+  color: #ffe078;
+  padding: 9px 10px;
+  font: 7px "Press Start 2P", monospace;
+  cursor: pointer;
+}
+.ak-sound-toggle:hover { background: #82410c; color: #fff; }
+@media (max-width: 560px) {
+  .ak-sound-toggle { top: 8px; right: 8px; padding: 7px; font-size: 6px; }
+}
