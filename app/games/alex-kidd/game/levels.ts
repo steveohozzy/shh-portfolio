@@ -12,6 +12,7 @@ export interface LevelDef {
   waterStartY?: number;
   vertical?: boolean;
   sky: string;
+  bossName?: string;
   grid: string[][];
 }
 type G = string[][];
@@ -136,7 +137,7 @@ function mountainDescent(): G {
   put(g, 122, 5, "v");
   onGround(130);
   fill(g, 134, 135, 9, 9, "R");
-  put(g, 146, 9, "F");
+  put(g, 138, 9, "B");
   return g;
 }
 function blueLagoon(): G {
@@ -256,20 +257,20 @@ function gloomCastle(): G {
 
 export const LEVELS: LevelDef[] = [
   { name: "1  MT. ETERNAL", theme: "hills", water: false, vertical: true, waterStartY: 72 * 16, sky: "#5c94fc", grid: level1() },
-  { name: "2  MARBLE PLAINS", theme: "hills", water: false, sky: "#5c94fc", grid: mountainDescent() },
+  { name: "2  MARBLE PLAINS", theme: "hills", water: false, sky: "#5c94fc", bossName: "Gooseka the Slippery", grid: mountainDescent() },
   { name: "3  LAKE FATHOM", theme: "lake", water: true, sky: "#1840b8", grid: blueLagoon() },
   { name: "4  ISLAND OF ST. NURARI", theme: "hills", water: false, sky: "#5c94fc", grid: coralCaverns() },
   { name: "5  NAMUI LAKE", theme: "lake", water: true, sky: "#1840b8", grid: adventureStage(0, true) },
-  { name: "6  VILLAGE OF NAMUI", theme: "hills", water: false, sky: "#5c94fc", grid: adventureStage(1, false, true) },
-  { name: "7  MT. KAVE", theme: "hills", water: false, sky: "#5c94fc", grid: adventureStage(2, false, true) },
-  { name: "8  THE BLAKWOODS", theme: "hills", water: false, sky: "#284878", grid: adventureStage(3, false, true) },
+  { name: "6  VILLAGE OF NAMUI", theme: "hills", water: false, sky: "#5c94fc", bossName: "Ox", grid: adventureStage(1, false, true) },
+  { name: "7  MT. KAVE", theme: "hills", water: false, sky: "#5c94fc", bossName: "Chokkinna the Sly", grid: adventureStage(2, false, true) },
+  { name: "8  THE BLAKWOODS", theme: "hills", water: false, sky: "#284878", bossName: "Grizzly Bear", grid: adventureStage(3, false, true) },
   { name: "9  RIVER", theme: "lake", water: true, sky: "#1840b8", grid: adventureStage(1, true) },
-  { name: "10  BINGOO LOWLAND", theme: "hills", water: false, sky: "#5c94fc", grid: adventureStage(2, false, true) },
-  { name: "11  RADAXIAN CASTLE", theme: "castle", water: false, sky: "#200820", grid: adventureStage(3, false, true) },
+  { name: "10  BINGOO LOWLAND", theme: "hills", water: false, sky: "#5c94fc", bossName: "Parplin the Pursuer", grid: adventureStage(2, false, true) },
+  { name: "11  RADAXIAN CASTLE", theme: "castle", water: false, sky: "#200820", bossName: "Gooseka the Slippery", grid: adventureStage(3, false, true) },
   { name: "12  RADAXIAN CITY", theme: "castle", water: false, sky: "#301838", grid: adventureStage(0) },
-  { name: "13  SWAMP", theme: "lake", water: true, sky: "#285838", grid: adventureStage(2, true, true) },
+  { name: "13  SWAMP", theme: "lake", water: true, sky: "#285838", bossName: "Chokkinna the Sly", grid: adventureStage(2, true, true) },
   { name: "14  KINGDOM OF NIBANA", theme: "hills", water: false, sky: "#5c94fc", grid: adventureStage(1) },
-  { name: "15  NIBANA LOWLANDS", theme: "hills", water: false, sky: "#788848", grid: adventureStage(3, false, true) },
-  { name: "16  JANKEN'S CASTLE", theme: "castle", water: false, sky: "#200820", grid: gloomCastle() },
+  { name: "15  NIBANA LOWLANDS", theme: "hills", water: false, sky: "#788848", bossName: "Parplin the Pursuer", grid: adventureStage(3, false, true) },
+  { name: "16  JANKEN'S CASTLE", theme: "castle", water: false, sky: "#200820", bossName: "Janken the Great", grid: gloomCastle() },
   { name: "17  CRAGG LAKE", theme: "lake", water: true, sky: "#102b70", grid: adventureStage(0, true) },
 ];
