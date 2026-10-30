@@ -381,6 +381,8 @@ export class GameScene extends Phaser.Scene {
       this.cameras.main.setBackgroundColor("#1840b8");
     } else if (!inWater && this.L.waterStartX !== undefined && b.allowGravity === false) {
       b.setAllowGravity(true);
+      this.bg.setTexture(`bg_${this.L.theme}`);
+      this.cameras.main.setBackgroundColor(this.L.sky);
     }
     if (inWater) {
       b.setMaxVelocity(state.boots ? 90 : 75, 130);
