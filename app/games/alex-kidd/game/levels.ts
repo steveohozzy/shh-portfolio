@@ -1,7 +1,7 @@
 // @ts-nocheck
 // 16px Master System-style stages. # ground, R rock, S star block, Q ? block,
 // K skull block, $ money, g hidden gem, o large treasure, w walker, v bird,
-// p fish, F exit chest, P player start, B boss.
+// p fish, F exit sandwich, P player start, B boss.
 export const H = 12;
 export type Theme = "hills" | "lake" | "castle";
 export interface LevelDef {
@@ -24,253 +24,128 @@ const fill = (g: G, x0: number, x1: number, y0: number, y1: number, c: string) =
   for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) put(g, x, y, c);
 };
 
-function level1(): G {
-  const g = grid(150, 82);
-
-  // Mt. Eternal: closely spaced ledges guide Alex down the mountain.
-  fill(g, 0, 0, 0, 70, "R");
-  fill(g, 15, 15, 0, 70, "R");
+function mtEternal(): G {
+  const g = grid(48, 120);
+  fill(g, 0, 0, 0, 88, "R");
+  fill(g, 47, 47, 0, 88, "R");
   put(g, 7, 2, "P");
 
-  fill(g, 3, 10, 7, 8, "S");
-  put(g, 12, 5, "v");
-  put(g, 6, 5, "$");
-  put(g, 8, 5, "$");
-
-  fill(g, 8, 13, 12, 13, "R");
-  put(g, 5, 10, "w");
-  put(g, 10, 10, "Q");
-
-  fill(g, 2, 7, 17, 18, "S");
-  put(g, 11, 15, "v");
-  put(g, 4, 15, "$");
-  put(g, 6, 15, "$");
-
-  fill(g, 8, 13, 22, 23, "R");
-  put(g, 4, 20, "w");
-  put(g, 10, 20, "K");
-
-  fill(g, 2, 7, 27, 28, "S");
-  put(g, 11, 25, "v");
-  put(g, 4, 25, "$");
-  put(g, 6, 25, "$");
-
-  fill(g, 8, 13, 32, 33, "R");
-  put(g, 4, 30, "w");
-  put(g, 10, 30, "Q");
-
-  fill(g, 2, 7, 37, 38, "S");
-  put(g, 11, 35, "v");
-  put(g, 4, 35, "$");
-  put(g, 6, 35, "$");
-
-  fill(g, 8, 13, 42, 43, "R");
-  put(g, 4, 40, "w");
-  put(g, 10, 40, "K");
-
-  fill(g, 2, 7, 47, 48, "S");
-  put(g, 11, 45, "v");
-  put(g, 4, 45, "$");
-  put(g, 6, 45, "$");
-
-  fill(g, 8, 13, 52, 53, "R");
-  put(g, 4, 50, "w");
-  put(g, 10, 50, "Q");
-
-  fill(g, 2, 7, 57, 58, "S");
-  put(g, 11, 55, "v");
-  put(g, 4, 55, "$");
-  put(g, 6, 55, "$");
-
-  fill(g, 8, 13, 62, 63, "R");
-  put(g, 4, 60, "w");
-  put(g, 10, 60, "K");
-
-  fill(g, 2, 6, 67, 68, "S");
-  fill(g, 9, 13, 67, 68, "R");
-  put(g, 7, 65, "$");
-
-  // The final opening drops Alex through the marked water surface.
-  fill(g, 0, 149, 81, 81, "#");
-  fill(g, 0, 0, 72, 80, "R");
-  fill(g, 149, 149, 72, 80, "R");
-  fill(g, 22, 24, 76, 76, "S");
-  put(g, 28, 75, "p");
-  put(g, 38, 77, "$");
-  put(g, 47, 75, "p");
-  fill(g, 55, 57, 77, 77, "S");
-  put(g, 68, 75, "p");
-  put(g, 78, 76, "g");
-  put(g, 91, 75, "p");
-  put(g, 104, 77, "$");
-  put(g, 116, 75, "p");
-  put(g, 128, 76, "o");
-  put(g, 140, 75, "p");
-  put(g, 145, 78, "F");
-  return g;
-}
-
-function mountainDescent(): G {
-  const g = grid(150);
-  fill(g, 0, 149, 10, 11, "#");
-  put(g, 2, 9, "P");
-
-  const onGround = (x: number, c = "w") => put(g, x, 9, c);
-  fill(g, 9, 11, 7, 7, "S");
-  onGround(17);
-  fill(g, 23, 25, 9, 9, "R");
-  put(g, 30, 6, "$");
-  put(g, 37, 5, "v");
-  fill(g, 44, 46, 7, 7, "S");
-  put(g, 45, 6, "Q");
-  onGround(52);
-  fill(g, 59, 61, 9, 9, "R");
-  put(g, 60, 6, "o");
-  put(g, 67, 4, "v");
-  fill(g, 74, 76, 7, 7, "S");
-  onGround(82);
-  put(g, 88, 6, "g");
-  fill(g, 94, 96, 9, 9, "R");
-  put(g, 101, 6, "$");
-  onGround(108);
-  fill(g, 116, 118, 7, 7, "S");
-  put(g, 122, 5, "v");
-  onGround(130);
-  fill(g, 134, 135, 9, 9, "R");
-  put(g, 138, 9, "B");
-  return g;
-}
-function blueLagoon(): G {
-  const g = grid(160);
-  fill(g, 0, 159, 11, 11, "#");
-  fill(g, 0, 0, 6, 10, "R");
-  put(g, 2, 5, "P");
-  fill(g, 18, 21, 8, 8, "R");
-  fill(g, 30, 33, 3, 3, "R");
-  fill(g, 42, 44, 7, 7, "S");
-  fill(g, 55, 57, 2, 2, "R");
-  fill(g, 67, 70, 8, 8, "R");
-  fill(g, 82, 85, 4, 4, "R");
-  fill(g, 98, 101, 8, 8, "R");
-  fill(g, 112, 115, 2, 2, "R");
-  fill(g, 128, 131, 7, 7, "R");
-  fill(g, 143, 146, 3, 3, "R");
-  [[10,4],[25,6],[37,3],[50,5],[62,8],[76,4],[91,6],[107,5],[121,3],[137,6],[151,5]].forEach(([x,y]) => put(g,x,y,"$"));
-  [[16,5],[35,6],[58,5],[73,3],[88,7],[105,4],[123,5],[140,8]].forEach(([x,y]) => put(g,x,y,"p"));
-  put(g, 27, 2, "g");
-  put(g, 64, 1, "o");
-  put(g, 118, 1, "g");
-  put(g, 155, 9, "F");
-  return g;
-}
-
-function coralCaverns(): G {
-  const g = grid(150);
-  fill(g, 0, 149, 11, 11, "#");
-  fill(g, 12, 15, 2, 2, "R");
-  fill(g, 24, 28, 8, 8, "R");
-  fill(g, 38, 42, 1, 1, "R");
-  fill(g, 52, 56, 7, 7, "R");
-  fill(g, 67, 71, 3, 3, "R");
-  fill(g, 82, 86, 8, 8, "R");
-  fill(g, 98, 102, 2, 2, "R");
-  fill(g, 114, 118, 7, 7, "R");
-  fill(g, 130, 134, 3, 3, "R");
-  put(g, 2, 5, "P");
-  [[8,7],[19,4],[34,5],[47,3],[61,5],[76,6],[92,4],[108,5],[124,6],[140,5]].forEach(([x,y]) => put(g,x,y,"p"));
-  [[18,2],[45,9],[74,1],[105,9],[137,1]].forEach(([x,y]) => put(g,x,y,"g"));
-  [[30,5],[58,2],[89,6],[120,2]].forEach(([x,y]) => put(g,x,y,"o"));
-  put(g, 145, 9, "F");
-  return g;
-}
-
-function adventureStage(seed: number, water = false, boss = false): G {
-  const g = grid(150);
-  fill(g, 0, 149, 11, 11, "#");
-  put(g, 2, water ? 5 : 9, "P");
-
-  const patterns = [
-    [[12, 8, 3], [28, 5, 4], [46, 8, 3], [65, 4, 5], [84, 7, 4], [104, 3, 4], [124, 7, 4]],
-    [[10, 6, 4], [27, 3, 5], [45, 7, 3], [64, 5, 4], [82, 2, 5], [101, 7, 3], [122, 4, 5]],
-    [[14, 4, 5], [32, 8, 3], [51, 5, 4], [70, 2, 5], [89, 7, 3], [109, 4, 5], [129, 8, 3]],
-    [[11, 7, 3], [30, 4, 5], [49, 8, 3], [68, 3, 5], [87, 6, 4], [107, 2, 5], [127, 7, 3]]
+  // A descending zig-zag of broad ledges: every drop has another reachable shelf.
+  const ledges = [
+    [3, 16, 7], [25, 44, 13], [4, 23, 19], [25, 44, 25],
+    [3, 20, 31], [23, 44, 37], [4, 23, 43], [25, 44, 49],
+    [3, 21, 55], [24, 44, 61], [4, 23, 67], [25, 44, 73],
+    [3, 20, 79], [22, 44, 85]
   ];
-  const layout = patterns[seed % patterns.length];
-  layout.forEach(([x, y, width], i) => {
-    fill(g, x, x + width - 1, y, y, water ? "R" : (i % 2 ? "S" : "R"));
-    if (i % 2 === seed % 2) put(g, x + 1, y - 1, i % 3 === 0 ? "Q" : "$");
+  ledges.forEach(([x0, x1, y], i) => {
+    fill(g, x0, x1, y, y + 1, i % 2 ? "R" : "S");
+    if (i % 2 === 0) put(g, Math.min(x1 - 2, x0 + 7), y - 1, "Q");
+    else put(g, Math.max(x0 + 2, x1 - 7), y - 1, "S");
+    put(g, i % 2 ? x0 + 3 : x1 - 3, y - 2, "$");
+    if (i % 3 === 1) put(g, i % 2 ? x0 + 8 : x1 - 8, y - 3, "v");
+    if (i % 3 === 2) put(g, i % 2 ? x0 + 5 : x1 - 5, y - 1, "w");
   });
+  [[18,12],[28,30],[16,42],[31,54],[17,66],[30,78]].forEach(([x,y]) => put(g,x,y,"$"));
+  put(g, 13, 34, "g");
+  put(g, 34, 58, "o");
 
-  for (let i = 0; i < 10; i++) {
-    const x = 16 + i * 13;
-    const y = water ? 2 + ((i * 3 + seed) % 7) : 8;
-    put(g, x, y, water ? "p" : (i % 3 === 0 ? "v" : "w"));
-    if (i % 2 === 0) put(g, x + 4, Math.max(1, y - 2), "$");
+  // The mountain opens into the horizontal underwater route.
+  fill(g, 1, 46, 91, 119, ".");
+  fill(g, 1, 46, 119, 119, "R");
+  fill(g, 0, 0, 89, 119, "R");
+  fill(g, 47, 47, 89, 119, "R");
+  [[5,98],[13,105],[21,96],[29,108],[37,99],[43,111]].forEach(([x,y]) => put(g,x,y,"p"));
+  [[9,112],[18,101],[27,114],[35,104]].forEach(([x,y]) => put(g,x,y,"$"));
+  put(g, 24, 102, "o");
+  put(g, 43, 108, "F");
+  return g;
+}
+
+type StageSpec = {
+  width: number; height: number; theme: Theme; water?: boolean; boss?: boolean;
+  startY?: number; seed: number; name: string; sky: string; bossName?: string;
+  platforms: number[][];
+  pits?: number[][];
+  blocks?: number[][];
+};
+
+function makeStage(s: StageSpec): G {
+  const g = grid(s.width, s.height);
+  const floor = s.height - 2;
+  const startY = s.startY ?? (s.water ? Math.max(3, Math.floor(s.height / 2)) : floor - 1);
+  put(g, 2, startY, "P");
+
+  if (s.water) {
+    // Open swimming routes with staggered rock shelves and clear channels.
+    fill(g, 0, s.width - 1, s.height - 1, s.height - 1, "R");
+    for (let x = 0; x < s.width; x += 16) {
+      const y = 2 + ((x * 3 + s.seed * 5) % Math.max(5, s.height - 6));
+      fill(g, x + 5, Math.min(s.width - 2, x + 8), y, y, "R");
+      if (x % 32 === 0) put(g, Math.min(s.width - 2, x + 11), Math.min(s.height - 3, y + 3), "S");
+      put(g, Math.min(s.width - 2, x + 13), Math.max(1, y - 1), "p");
+      if (x % 3 === 0) put(g, Math.min(s.width - 2, x + 2), Math.max(1, y - 3), "$");
+    }
+    for (let x = 14; x < s.width - 8; x += 29) put(g, x, 2 + ((x + s.seed) % Math.max(5, s.height - 5)), "p");
+  } else {
+    fill(g, 0, s.width - 1, floor, s.height - 1, "#");
+    (s.pits || []).forEach(([x0, x1]) => fill(g, x0, x1, floor, s.height - 1, "."));
+    // Short, climbable ledges are deliberately varied by stage.
+    s.platforms.forEach(([x, y, len, type = 0]) => {
+      fill(g, x, Math.min(s.width - 2, x + len - 1), y, y, type === 1 ? "R" : "S");
+      if (len > 3 && type !== 2) put(g, Math.min(s.width - 2, x + Math.floor(len / 2)), y - 1, type === 1 ? "Q" : "$");
+    });
+    for (let x = 15; x < s.width - 10; x += 23) {
+      const y = floor - 1 - ((Math.floor(x / 23) + s.seed) % 3);
+      put(g, x, y, (Math.floor(x / 23) + s.seed) % 4 === 0 ? "v" : "w");
+      if (x % 2) put(g, x + 4, y - 2, "$");
+    }
+    (s.blocks || []).forEach(([x, y, type]) => put(g, x, y, type === 1 ? "Q" : type === 2 ? "K" : "S"));
   }
-  put(g, 36, 2, "g");
-  put(g, 78, 1, "o");
-  put(g, 116, 2, "g");
-  if (boss) put(g, 138, 9, "B");
-  else put(g, 145, 9, "F");
+
+  // Every stage has its own endpoint and boss arena marker.
+  const endX = s.width - 5;
+  if (s.boss) put(g, endX - 5, floor - 1, "B");
+  else put(g, endX, s.water ? Math.max(2, startY) : floor - 1, "F");
   return g;
 }
 
-function gloomCastle(): G {
-  const g = grid(136);
-  fill(g, 0, 135, 0, 0, "R");
-  fill(g, 0, 24, 10, 11, "#");
-  fill(g, 27, 50, 10, 11, "#");
-  fill(g, 54, 80, 10, 11, "#");
-  fill(g, 83, 135, 10, 11, "#");
-  fill(g, 135, 135, 1, 9, "R");
-  put(g, 2, 9, "P");
-  put(g, 8, 9, "K");
-  put(g, 9, 9, "S");
-  put(g, 9, 8, "S");
-  put(g, 14, 9, "w");
-  fill(g, 18, 21, 6, 6, "S");
-  put(g, 19, 5, "$");
-  put(g, 22, 4, "v");
-  put(g, 25, 6, "$");
-  fill(g, 30, 32, 9, 9, "S");
-  put(g, 31, 8, "K");
-  put(g, 36, 9, "w");
-  put(g, 40, 9, "w");
-  fill(g, 44, 46, 6, 6, "R");
-  fill(g, 44, 46, 5, 5, "$");
-  put(g, 48, 4, "v");
-  put(g, 57, 9, "R");
-  fill(g, 58, 58, 8, 9, "R");
-  put(g, 62, 9, "w");
-  put(g, 66, 3, "v");
-  fill(g, 70, 72, 9, 9, "K");
-  put(g, 76, 9, "w");
-  fill(g, 86, 88, 6, 6, "S");
-  put(g, 87, 6, "Q");
-  put(g, 92, 9, "w");
-  put(g, 96, 4, "v");
-  put(g, 100, 9, "w");
-  fill(g, 104, 105, 9, 9, "R");
-  put(g, 126, 9, "B");
-  return g;
-}
+const STAGES: StageSpec[] = [
+  { name: "2  MARBLE PLAINS", width: 288, height: 12, theme: "hills", seed: 1, sky: "#5c94fc", boss: true, bossName: "Gooseka the Slippery",
+    platforms: [[12,7,5],[32,5,4],[55,8,6],[79,6,5],[104,4,5],[131,7,6],[158,5,4],[184,8,6],[211,6,5],[239,4,6],[263,7,5]],
+    pits: [[43,47],[91,96],[145,151],[202,208],[250,255]], blocks: [[18,6,1],[61,7,2],[112,3,1],[169,4,2],[224,5,1]] },
+  { name: "3  LAKE FATHOM", width: 96, height: 24, theme: "lake", water: true, seed: 2, startY: 9, sky: "#1840b8",
+    platforms: [[12,6,4],[30,13,5],[51,5,5],[72,15,4]], blocks: [[20,4,0],[60,12,0]] },
+  { name: "4  ISLAND OF ST. NURARI", width: 80, height: 12, theme: "hills", seed: 3, sky: "#5c94fc",
+    platforms: [[9,7,5],[20,5,4],[34,8,6],[49,4,5],[64,7,6]], pits: [[15,18],[29,32],[44,47],[59,62]], blocks: [[11,6,1],[37,7,0],[53,3,1]] },
+  { name: "5  NAMUI LAKE", width: 192, height: 24, theme: "lake", water: true, seed: 4, startY: 10, sky: "#1840b8",
+    platforms: [[15,7,5],[43,15,5],[74,5,6],[105,16,5],[139,8,6],[168,13,5]], blocks: [[32,6,0],[91,12,0],[153,7,0]] },
+  { name: "6  VILLAGE OF NAMUI", width: 144, height: 12, theme: "hills", seed: 5, sky: "#5c94fc", boss: true, bossName: "Ox",
+    platforms: [[8,7,5],[23,5,6],[42,8,4],[60,6,6],[80,4,5],[99,7,6],[120,5,5]], pits: [[16,19],[35,38],[54,57],[73,76],[92,95],[112,115]], blocks: [[25,4,1],[63,5,0],[103,6,2]] },
+  { name: "7  MT. KAVE", width: 144, height: 12, theme: "hills", seed: 6, sky: "#7888d8", boss: true, bossName: "Chokkinna the Sly",
+    platforms: [[10,4,5],[27,7,4],[43,3,6],[62,6,5],[81,4,5],[99,7,5],[119,3,6]], pits: [[19,22],[36,39],[55,58],[74,77],[92,95],[111,114]], blocks: [[13,3,1],[46,2,0],[84,3,2],[123,2,1]] },
+  { name: "8  THE BLAKWOODS", width: 192, height: 12, theme: "hills", seed: 7, sky: "#284878", boss: true, bossName: "Grizzly Bear",
+    platforms: [[11,7,6],[32,4,5],[54,6,5],[77,3,6],[101,7,5],[124,4,6],[148,6,5],[170,3,6]], pits: [[22,26],[45,49],[68,72],[92,96],[115,119],[139,143],[162,166]], blocks: [[14,6,1],[57,5,0],[104,6,2],[151,5,1]] },
+  { name: "9  RIVER", width: 256, height: 24, theme: "lake", water: true, seed: 8, startY: 10, sky: "#1840b8",
+    platforms: [[18,7,5],[49,14,6],[83,5,5],[117,16,6],[151,7,5],[185,14,6],[220,6,5]], blocks: [[36,6,0],[101,12,0],[168,6,0],[234,12,0]] },
+  { name: "10  BINGOO LOWLAND", width: 240, height: 12, theme: "hills", seed: 9, sky: "#e8b850", boss: true, bossName: "Parplin the Pursuer",
+    platforms: [[12,7,5],[34,5,5],[58,8,6],[83,4,5],[108,7,6],[133,5,5],[158,8,6],[184,4,5],[209,7,6]], pits: [[23,27],[47,51],[73,77],[98,102],[123,127],[148,152],[174,178],[199,203],[224,228]], blocks: [[15,6,1],[62,7,0],[111,6,2],[161,7,1],[212,6,0]] },
+  { name: "11  RADAXIAN CASTLE", width: 80, height: 48, theme: "castle", seed: 10, sky: "#200820", boss: true, bossName: "Gooseka the Slippery",
+    platforms: [[8,39,8],[22,34,7],[38,29,8],[54,24,7],[10,19,8],[27,14,8],[45,9,8],[61,5,7]], blocks: [[12,38,2],[26,33,1],[42,28,2],[58,23,1],[14,18,0],[31,13,2],[49,8,1]] },
+  { name: "12  RADAXIAN CITY", width: 48, height: 12, theme: "castle", seed: 11, sky: "#301838", boss: true, bossName: "Chokkinna the Sly",
+    platforms: [[7,7,5],[19,5,5],[32,7,6]], pits: [[14,17],[27,30]], blocks: [[9,6,1],[22,4,0],[35,6,2]] },
+  { name: "13  SWAMP", width: 128, height: 12, theme: "lake", water: true, seed: 12, startY: 5, sky: "#285838", boss: true, bossName: "Chokkinna the Sly",
+    platforms: [[12,7,5],[32,4,5],[53,8,5],[75,5,6],[98,7,5]], blocks: [[18,6,0],[61,7,0],[105,6,0]] },
+  { name: "14  KINGDOM OF NIBANA", width: 32, height: 12, theme: "hills", seed: 13, sky: "#5c94fc",
+    platforms: [[8,7,5],[20,5,5]], pits: [[15,18]], blocks: [[10,6,1],[22,4,0]] },
+  { name: "15  NIBANA LOWLANDS", width: 176, height: 12, theme: "hills", seed: 14, sky: "#788848", boss: true, bossName: "Parplin the Pursuer",
+    platforms: [[10,7,6],[31,4,5],[53,6,6],[76,3,5],[99,7,6],[122,4,5],[145,6,6]], pits: [[22,26],[44,48],[67,71],[90,94],[113,117],[136,140],[159,163]], blocks: [[14,6,1],[57,5,0],[103,6,2],[149,5,1]] },
+  { name: "16  JANKEN'S CASTLE", width: 112, height: 72, theme: "castle", seed: 15, sky: "#200820", boss: true, bossName: "Janken the Great",
+    platforms: [[8,63,8],[24,57,7],[42,51,8],[61,45,7],[80,39,8],[96,33,7],[12,27,8],[31,21,7],[50,15,8],[70,9,7],[91,4,8]], blocks: [[12,62,2],[28,56,1],[46,50,2],[65,44,1],[84,38,2],[100,32,1],[16,26,2],[35,20,1],[54,14,2],[74,8,1]] },
+  { name: "17  CRAGG LAKE", width: 32, height: 36, theme: "lake", water: true, seed: 16, startY: 5, sky: "#102b70",
+    platforms: [[8,8,5],[20,16,5],[9,25,5]], blocks: [[10,7,0],[22,15,0]] }
+];
 
 export const LEVELS: LevelDef[] = [
-  { name: "1  MT. ETERNAL", theme: "hills", water: false, vertical: true, waterStartY: 72 * 16, sky: "#5c94fc", grid: level1() },
-  { name: "2  MARBLE PLAINS", theme: "hills", water: false, sky: "#5c94fc", bossName: "Gooseka the Slippery", grid: mountainDescent() },
-  { name: "3  LAKE FATHOM", theme: "lake", water: true, sky: "#1840b8", grid: blueLagoon() },
-  { name: "4  ISLAND OF ST. NURARI", theme: "hills", water: false, sky: "#5c94fc", grid: coralCaverns() },
-  { name: "5  NAMUI LAKE", theme: "lake", water: true, sky: "#1840b8", grid: adventureStage(0, true) },
-  { name: "6  VILLAGE OF NAMUI", theme: "hills", water: false, sky: "#5c94fc", bossName: "Ox", grid: adventureStage(1, false, true) },
-  { name: "7  MT. KAVE", theme: "hills", water: false, sky: "#5c94fc", bossName: "Chokkinna the Sly", grid: adventureStage(2, false, true) },
-  { name: "8  THE BLAKWOODS", theme: "hills", water: false, sky: "#284878", bossName: "Grizzly Bear", grid: adventureStage(3, false, true) },
-  { name: "9  RIVER", theme: "lake", water: true, sky: "#1840b8", grid: adventureStage(1, true) },
-  { name: "10  BINGOO LOWLAND", theme: "hills", water: false, sky: "#5c94fc", bossName: "Parplin the Pursuer", grid: adventureStage(2, false, true) },
-  { name: "11  RADAXIAN CASTLE", theme: "castle", water: false, sky: "#200820", bossName: "Gooseka the Slippery", grid: adventureStage(3, false, true) },
-  { name: "12  RADAXIAN CITY", theme: "castle", water: false, sky: "#301838", grid: adventureStage(0) },
-  { name: "13  SWAMP", theme: "lake", water: true, sky: "#285838", bossName: "Chokkinna the Sly", grid: adventureStage(2, true, true) },
-  { name: "14  KINGDOM OF NIBANA", theme: "hills", water: false, sky: "#5c94fc", grid: adventureStage(1) },
-  { name: "15  NIBANA LOWLANDS", theme: "hills", water: false, sky: "#788848", bossName: "Parplin the Pursuer", grid: adventureStage(3, false, true) },
-  { name: "16  JANKEN'S CASTLE", theme: "castle", water: false, sky: "#200820", bossName: "Janken the Great", grid: gloomCastle() },
-  { name: "17  CRAGG LAKE", theme: "lake", water: true, sky: "#102b70", grid: adventureStage(0, true) },
+  { name: "1  MT. ETERNAL", theme: "hills", water: false, vertical: true, waterStartY: 91 * 16, sky: "#5c94fc", grid: mtEternal() },
+  ...STAGES.map((s) => ({ name: s.name, theme: s.theme, water: !!s.water, sky: s.sky, bossName: s.bossName, grid: makeStage(s) }))
 ];
