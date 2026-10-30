@@ -348,3 +348,31 @@
   .ak-actions { gap: 5px; }
   .ak-control-punch, .ak-control-jump { width: 54px; min-width: 54px; height: 62px; min-height: 62px; font-size: 6px; }
 }
+
+
+/* Landscape mobile: use the available height and keep touch controls at the sides. */
+@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+  .ak-page { min-height: 100dvh; height: 100dvh; padding: 0; overflow: hidden; align-items: stretch; }
+  .ak-shell { width: 100%; height: 100dvh; max-width: none; }
+  .ak-back, .ak-heading, .ak-instructions { display: none; }
+  .ak-screen-frame { width: 100%; height: 100dvh; padding: 0; border: 0; border-radius: 0; box-shadow: none; overflow: hidden; background: #000; }
+  .ak-game-screen { width: 100%; height: 100dvh; aspect-ratio: auto; }
+  .ak-game-screen canvas { width: 100% !important; height: 100% !important; }
+  .ak-game-tools { top: 6px; right: 6px; }
+  .ak-game-tool { padding: 6px; font-size: 5px; }
+  .ak-controls { position: absolute; inset: 0; z-index: 8; display: flex; align-items: center; justify-content: space-between; flex-wrap: nowrap; gap: 0; margin: 0; padding: 0 14px; pointer-events: none; }
+  .ak-controls > * { pointer-events: auto; }
+  .ak-joystick { display: flex; width: 82px; height: 82px; flex: 0 0 82px; }
+  .ak-joystick-knob { width: 36px; height: 36px; }
+  .ak-control-start { position: absolute; left: 50%; right: auto; top: 8px; transform: translateX(-50%); min-width: 58px; min-height: 30px; font-size: 5px; }
+  .ak-actions { display: flex; gap: 10px; }
+  .ak-control-punch, .ak-control-jump { width: 60px; min-width: 60px; height: 60px; min-height: 60px; font-size: 6px; }
+  .ak-pause-overlay { top: 0; left: 0; right: 0; height: 100dvh; aspect-ratio: auto; }
+}
+@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) and (max-width: 700px) {
+  .ak-controls { padding: 0 8px; }
+  .ak-joystick { width: 68px; height: 68px; flex-basis: 68px; }
+  .ak-joystick-knob { width: 32px; height: 32px; }
+  .ak-actions { gap: 6px; }
+  .ak-control-punch, .ak-control-jump { width: 52px; min-width: 52px; height: 52px; min-height: 52px; padding: 3px; font-size: 5px; }
+}
