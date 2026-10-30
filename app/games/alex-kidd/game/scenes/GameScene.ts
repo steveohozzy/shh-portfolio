@@ -420,7 +420,7 @@ export class GameScene extends Phaser.Scene {
     }
     if (inWater && b.allowGravity) {
       b.setAllowGravity(false);
-      b.setSize(10, 14).setOffset(3, 2);
+      b.setSize(8, 14).setOffset(4, 2);
       b.setVelocityY(0);
       b.setDragX(220);
       this.bg.setTexture("bg_lake").setAlpha(0);
@@ -429,7 +429,9 @@ export class GameScene extends Phaser.Scene {
     }
     if (inWater) {
       b.setMaxVelocity(state.boots ? 90 : 75, 130);
-      b.setAccelerationX(dir * 280);
+      const pushingIntoWall = (b.blocked.left && dir < 0) || (b.blocked.right && dir > 0);
+      b.setAccelerationX(pushingIntoWall ? 0 : dir * 280);
+      if (pushingIntoWall) b.setVelocityX(0);
       let vy = b.velocity.y;
       if (!frozen) {
         if (c.pressed("jump") && !c.held("up")) { vy = -110; sfx.swim(); }
@@ -451,7 +453,7 @@ export class GameScene extends Phaser.Scene {
       let acc = dir * 520;
       if (dir && Math.sign(b.velocity.x) === -dir) acc *= 1.8;
       b.setAccelerationX(acc);
-      if (b.onFloor()) this.coyoteTime = 0.12;
+      if (b.onFloor() || b.blocked.down || b.touching.down) this.coyoteTime = 0.12;
       else this.coyoteTime = Math.max(0, this.coyoteTime - dt);
       if (!frozen && c.pressed("jump") && this.coyoteTime > 0) {
         b.setVelocityY(-280);
