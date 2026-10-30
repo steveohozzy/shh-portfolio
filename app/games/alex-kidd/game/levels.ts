@@ -142,7 +142,7 @@ const STAGES: StageSpec[] = [
     platforms: [[12,7,5],[34,5,5],[58,8,6],[83,4,5],[108,7,6],[133,5,5],[158,8,6],[184,4,5],[209,7,6]], pits: [[23,27],[47,51],[73,77],[98,102],[123,127],[148,152],[174,178],[199,203],[224,228]], blocks: [[15,6,1],[62,7,0],[111,6,2],[161,7,1],[212,6,0]] },
   { name: "11  RADAXIAN CASTLE", width: 80, height: 48, theme: "castle", seed: 10, vertical: true, sky: "#200820", boss: true, bossName: "Gooseka the Slippery",
     platforms: [[8,39,8],[22,34,7],[38,29,8],[54,24,7],[10,19,8],[27,14,8],[45,9,8],[61,5,7]], blocks: [[12,38,2],[26,33,1],[42,28,2],[58,23,1],[14,18,0],[31,13,2],[49,8,1]] },
-  { name: "12  RADAXIAN CITY", width: 48, height: 12, theme: "castle", seed: 11, sky: "#301838", boss: true, bossName: "Chokkinna the Sly",
+  { name: "12  RADAXIAN CITY", width: 48, height: 12, theme: "castle", seed: 11, sky: "#301838",
     platforms: [[7,7,5],[19,5,5],[32,7,6]], pits: [[14,17],[27,30]], blocks: [[9,6,1],[22,4,0],[35,6,2]] },
   { name: "13  SWAMP", width: 128, height: 12, theme: "lake", water: true, seed: 12, startY: 5, sky: "#285838", boss: true, bossName: "Chokkinna the Sly",
     platforms: [[12,7,5],[32,4,5],[53,8,5],[75,5,6],[98,7,5]], blocks: [[18,6,0],[61,7,0],[105,6,0]] },
