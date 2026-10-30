@@ -1,7 +1,7 @@
 // @ts-nocheck
-// Level layouts built on a 16px tile grid, 12 rows tall (Master System 256x192 screen).
-// Legend: # ground  R rock  S star block  Q ? block  K skull block  $ money bag
-//         w walker  v bird  p fish  F goal chest  P player start  B boss
+// 16px Master System-style stages. # ground, R rock, S star block, Q ? block,
+// K skull block, $ money, g hidden gem, o large treasure, w walker, v bird,
+// p fish, F exit chest, P player start, B boss.
 export const H = 12;
 export type Theme = "hills" | "lake" | "castle";
 export interface LevelDef {
@@ -11,7 +11,6 @@ export interface LevelDef {
   sky: string;
   grid: string[][];
 }
-
 type G = string[][];
 const grid = (w: number): G => Array.from({ length: H }, () => Array<string>(w).fill("."));
 const put = (g: G, x: number, y: number, c: string) => {
@@ -71,28 +70,89 @@ function level1(): G {
   return g;
 }
 
-function level2(): G {
-  const g = grid(160);
-  fill(g, 0, 159, 11, 11, "#");
-  put(g, 2, 2, "P");
-  const pillars = [[12, 3], [20, 5], [30, 2], [38, 6], [50, 4], [62, 3], [70, 5], [84, 4], [96, 6], [108, 3], [120, 5], [132, 4], [144, 3]];
-  pillars.forEach(([x, h]) => fill(g, x, x + 1, 11 - h, 10, "R"));
-  const hangs = [[24, 3], [44, 4], [58, 3], [78, 4], [90, 3], [114, 4], [138, 3]];
-  hangs.forEach(([x, h]) => fill(g, x, x + 1, 0, h - 1, "R"));
-  fill(g, 16, 17, 8, 9, "S");
-  fill(g, 34, 35, 4, 4, "S");
-  put(g, 46, 8, "Q");
-  fill(g, 66, 67, 7, 8, "S");
-  put(g, 88, 9, "K");
-  fill(g, 100, 102, 5, 5, "S");
-  fill(g, 126, 127, 8, 9, "S");
-  [[8, 5], [26, 6], [41, 3], [55, 7], [74, 4], [93, 6], [111, 8], [124, 3], [141, 7], [150, 5]].forEach(([x, y]) => put(g, x, y, "$"));
-  [[9, 7], [18, 3], [27, 8], [36, 8], [42, 6], [54, 4], [60, 8], [74, 6], [80, 7], [92, 4], [104, 8], [112, 5], [118, 3], [128, 6], [136, 8], [150, 3]].forEach(([x, y]) => put(g, x, y, "p"));
-  put(g, 155, 10, "F");
+
+function mountainDescent(): G {
+  const g = grid(150);
+  const floor = [5,5,5,5,6,6,6,7,7,7,8,8,8,9,9,9,10,10,10];
+  for (let x = 0; x < 150; x++) {
+    const segment = Math.min(floor.length - 1, Math.floor(x / 8));
+    const y = floor[segment];
+    fill(g, x, x, y, 11, "#");
+  }
+  put(g, 2, 3, "P");
+  fill(g, 8, 9, 3, 3, "S");
+  put(g, 13, 4, "w");
+  fill(g, 18, 20, 3, 3, "R");
+  put(g, 22, 2, "$");
+  put(g, 28, 5, "v");
+  fill(g, 34, 36, 4, 4, "S");
+  put(g, 35, 3, "Q");
+  put(g, 42, 6, "w");
+  fill(g, 48, 50, 5, 5, "R");
+  put(g, 49, 3, "o");
+  put(g, 57, 7, "v");
+  fill(g, 63, 65, 6, 6, "S");
+  put(g, 70, 7, "w");
+  put(g, 76, 4, "g");
+  fill(g, 82, 84, 7, 7, "R");
+  put(g, 90, 8, "w");
+  put(g, 96, 5, "$");
+  fill(g, 102, 104, 8, 8, "S");
+  put(g, 110, 8, "v");
+  put(g, 118, 9, "w");
+  put(g, 124, 6, "g");
+  fill(g, 130, 132, 9, 9, "R");
+  put(g, 138, 9, "w");
+  put(g, 146, 9, "F");
   return g;
 }
 
-function level3(): G {
+function blueLagoon(): G {
+  const g = grid(160);
+  fill(g, 0, 159, 11, 11, "#");
+  fill(g, 0, 0, 6, 10, "R");
+  put(g, 2, 5, "P");
+  fill(g, 18, 21, 8, 8, "R");
+  fill(g, 30, 33, 3, 3, "R");
+  fill(g, 42, 44, 7, 7, "S");
+  fill(g, 55, 57, 2, 2, "R");
+  fill(g, 67, 70, 8, 8, "R");
+  fill(g, 82, 85, 4, 4, "R");
+  fill(g, 98, 101, 8, 8, "R");
+  fill(g, 112, 115, 2, 2, "R");
+  fill(g, 128, 131, 7, 7, "R");
+  fill(g, 143, 146, 3, 3, "R");
+  [[10,4],[25,6],[37,3],[50,5],[62,8],[76,4],[91,6],[107,5],[121,3],[137,6],[151,5]].forEach(([x,y]) => put(g,x,y,"$"));
+  [[16,5],[35,6],[58,5],[73,3],[88,7],[105,4],[123,5],[140,8]].forEach(([x,y]) => put(g,x,y,"p"));
+  put(g, 27, 2, "g");
+  put(g, 64, 1, "o");
+  put(g, 118, 1, "g");
+  put(g, 155, 9, "F");
+  return g;
+}
+
+function coralCaverns(): G {
+  const g = grid(150);
+  fill(g, 0, 149, 11, 11, "#");
+  fill(g, 0, 5, 0, 10, "R");
+  fill(g, 12, 15, 2, 2, "R");
+  fill(g, 24, 28, 8, 8, "R");
+  fill(g, 38, 42, 1, 1, "R");
+  fill(g, 52, 56, 7, 7, "R");
+  fill(g, 67, 71, 3, 3, "R");
+  fill(g, 82, 86, 8, 8, "R");
+  fill(g, 98, 102, 2, 2, "R");
+  fill(g, 114, 118, 7, 7, "R");
+  fill(g, 130, 134, 3, 3, "R");
+  put(g, 2, 5, "P");
+  [[8,7],[19,4],[34,5],[47,3],[61,5],[76,6],[92,4],[108,5],[124,6],[140,5]].forEach(([x,y]) => put(g,x,y,"p"));
+  [[18,2],[45,9],[74,1],[105,9],[137,1]].forEach(([x,y]) => put(g,x,y,"g"));
+  [[30,5],[58,2],[89,6],[120,2]].forEach(([x,y]) => put(g,x,y,"o"));
+  put(g, 145, 9, "F");
+  return g;
+}
+
+function gloomCastle(): G {
   const g = grid(136);
   fill(g, 0, 135, 0, 0, "R");
   fill(g, 0, 24, 10, 11, "#");
@@ -134,6 +194,8 @@ function level3(): G {
 
 export const LEVELS: LevelDef[] = [
   { name: "1  SUNNY HILLS", theme: "hills", water: false, sky: "#5c94fc", grid: level1() },
-  { name: "2  BLUE LAGOON", theme: "lake", water: true, sky: "#1840b8", grid: level2() },
-  { name: "3  GLOOM CASTLE", theme: "castle", water: false, sky: "#200820", grid: level3() },
+  { name: "2  MOUNTAIN DESCENT", theme: "hills", water: false, sky: "#5c94fc", grid: mountainDescent() },
+  { name: "3  BLUE LAGOON", theme: "lake", water: true, sky: "#1840b8", grid: blueLagoon() },
+  { name: "4  CORAL CAVERNS", theme: "lake", water: true, sky: "#102b70", grid: coralCaverns() },
+  { name: "5  GLOOM CASTLE", theme: "castle", water: false, sky: "#200820", grid: gloomCastle() },
 ];
