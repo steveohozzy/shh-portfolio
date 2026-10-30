@@ -26,7 +26,7 @@ export class GameScene extends Phaser.Scene {
   bg!: Phaser.GameObjects.TileSprite;
   waterSurface?: Phaser.GameObjects.TileSprite;
   hud!: Phaser.GameObjects.Text;
-  facing = 1; punchT = 0; dead = false; cleared = false; frozenUntil = 0; bubbleT = 0; waterEntered = false; waterExitBlocked = false;
+  facing = 1; coyoteTime = 0; punchT = 0; dead = false; cleared = false; frozenUntil = 0; bubbleT = 0; waterEntered = false; waterExitBlocked = false;
   boss?: Spr; bossHp = 6; bossFight = false; bossTimer = 1; bossMove = 0; bossInv = 0; arenaX = 0;
   jankenActive = false; jankenDone = false;
   jk = { sel: 0, you: 0, them: 0, phase: "choose" as "choose" | "reveal", ui: [] as Phaser.GameObjects.GameObject[], cursor: null as Phaser.GameObjects.Text | null, bossHand: null as Phaser.GameObjects.Image | null, info: null as Phaser.GameObjects.Text | null, score: null as Phaser.GameObjects.Text | null };
@@ -34,7 +34,7 @@ export class GameScene extends Phaser.Scene {
   init(d: { level: number }) {
     this.levelIdx = d.level ?? 0;
     this.solidSet = new Set();
-    this.facing = 1; this.punchT = 0; this.dead = false; this.cleared = false; this.frozenUntil = 0; this.waterEntered = false; this.waterExitBlocked = false;
+    this.facing = 1; this.coyoteTime = 0; this.punchT = 0; this.dead = false; this.cleared = false; this.frozenUntil = 0; this.waterEntered = false; this.waterExitBlocked = false;
     this.boss = undefined; this.bossHp = 6; this.bossFight = false; this.bossTimer = 1; this.bossMove = 0; this.bossInv = 0;
     this.jankenActive = false; this.jankenDone = false;
   }
@@ -82,7 +82,7 @@ export class GameScene extends Phaser.Scene {
 
     this.player = this.physics.add.sprite(start.x, start.y, "hero_idle");
     const pb = this.player.body as Body;
-    pb.setSize(10, 14).setOffset(3, 2);
+    pb.setSize(8, 14).setOffset(4, 2);
     this.player.setCollideWorldBounds(true).setDepth(10);
     pb.setDragX(L.water ? 220 : 650);
     if (L.water) pb.setAllowGravity(false);
@@ -450,7 +450,13 @@ export class GameScene extends Phaser.Scene {
       let acc = dir * 520;
       if (dir && Math.sign(b.velocity.x) === -dir) acc *= 1.8;
       b.setAccelerationX(acc);
-      if (!frozen && c.pressed("jump") && b.blocked.down) { b.setVelocityY(-280); sfx.jump(); }
+      if (b.onFloor()) this.coyoteTime = 0.12;
+      else this.coyoteTime = Math.max(0, this.coyoteTime - dt);
+      if (!frozen && c.pressed("jump") && this.coyoteTime > 0) {
+        b.setVelocityY(-280);
+        this.coyoteTime = 0;
+        sfx.jump();
+      }
       if (!c.held("jump") && b.velocity.y < -110) b.setVelocityY(-110);
       if (!b.blocked.down && (b.blocked.left || b.blocked.right) && b.velocity.y < 0) {
         b.setVelocityY(Math.max(b.velocity.y, -90));
