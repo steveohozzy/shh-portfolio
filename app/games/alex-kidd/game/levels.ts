@@ -8,7 +8,8 @@ export interface LevelDef {
   name: string;
   theme: Theme;
   water: boolean;
-  waterStartX?: number;\n  waterStartY?: number;
+  waterStartX?: number;
+  waterStartY?: number;
   sky: string;
   grid: string[][];
 }
