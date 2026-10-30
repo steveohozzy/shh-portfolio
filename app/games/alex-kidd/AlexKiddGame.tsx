@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { vpad, type PadKey } from "./game/input";
+import { sfx } from "./game/sfx";
 
 const controls: { key: PadKey; label: string; className?: string }[] = [
   { key: "up", label: "▲", className: "up" },
