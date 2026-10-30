@@ -24,8 +24,8 @@ function Joystick() {
     let y = ((event.clientY - rect.top) / rect.height) * 2 - 1;
     const distance = Math.hypot(x, y);
     if (distance > 1) { x /= distance; y /= distance; }
-    if (knob.current) knob.current.style.transform = `translate(${x * 27}px, ${y * 27}px)`;
-    const dead = 0.24;
+    if (knob.current) knob.current.style.transform = `translate(${x * 39}px, ${y * 39}px)`;
+    const dead = 0.3;
     vpad.left = x < -dead;
     vpad.right = x > dead;
     vpad.up = y < -dead;
@@ -52,7 +52,12 @@ function GameButton({ item }: { item: (typeof controls)[number] }) {
     <button
       type="button"
       className={`ak-control ak-control-${item.className ?? ""}`}
-      onPointerDown={(event) => { event.preventDefault(); event.currentTarget.setPointerCapture(event.pointerId); set(true)(); }}
+      onPointerDown={(event) => {
+        event.preventDefault();
+        event.currentTarget.setPointerCapture(event.pointerId);
+        set(true)();
+        if (item.key === "jump" || item.key === "punch" || item.key === "start") vpad.pressed[item.key] = true;
+      }}
       onPointerUp={set(false)}
       onPointerCancel={set(false)}
       onLostPointerCapture={set(false)}
