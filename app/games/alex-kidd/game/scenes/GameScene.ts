@@ -461,9 +461,6 @@ export class GameScene extends Phaser.Scene {
         sfx.jump();
       }
       if (!c.held("jump") && b.velocity.y < -110) b.setVelocityY(-110);
-      if (!b.blocked.down && (b.blocked.left || b.blocked.right) && b.velocity.y < 0) {
-        b.setVelocityY(Math.max(b.velocity.y, -90));
-      }
     }
     if (!frozen && c.pressed("punch") && this.punchT <= 0) this.doPunch();
     if (this.punchT > 0) this.punchT -= dt;
