@@ -27,9 +27,8 @@ function level1(): G {
     if (x < 18) return 6;
     if (x < 36) return 7;
     if (x < 54) return 8;
-    if (x < 72) return 9;
-    if (x < 90) return 8;
-    if (x < 108) return 9;
+    if (x < 90) return 9;
+    if (x < 108) return 10;
     if (x < 126) return 10;
     return 10;
   };
@@ -93,6 +92,7 @@ function mountainDescent(): G {
     if (x < 68) return 8;
     if (x < 88) return 9;
     if (x < 108) return 9;
+    if (x < 112) return 10;
     return 11;
   };
 
