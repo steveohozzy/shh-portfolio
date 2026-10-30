@@ -238,8 +238,8 @@ function makeStage(s: StageSpec): G {
 
 const STAGES: StageSpec[] = [
   { name: "2  MT. ETERNAL PART 2", width: 288, height: 12, theme: "hills", seed: 1, columns: 18, startY: 9, sky: "#5c94fc", boss: true, bossName: "Gooseka the Slippery",
-    platforms: [[12,7,5],[32,5,4],[55,8,6],[79,6,5],[104,4,5],[131,7,6],[158,5,4],[184,8,6],[211,6,5],[239,4,6],[263,7,5]],
-    pits: [], blocks: [[18,6,1],[61,7,2],[112,3,1],[169,4,2],[224,5,1]] },
+    platforms: [[12,8,5],[32,7,4],[55,8,6],[79,7,5],[104,6,5],[131,8,6],[158,7,4],[184,8,6],[211,7,5],[239,6,6],[263,8,5]],
+    pits: [], blocks: [[18,7,1],[61,8,2],[112,6,1],[169,7,2],[224,8,1]] },
   { name: "3  LAKE FATHOM", width: 96, height: 24, theme: "lake", water: true, seed: 2, columns: 6, startY: 5, sky: "#1840b8",
     platforms: [[12,6,4],[30,13,5],[51,5,5],[72,15,4]], blocks: [[20,4,0],[60,12,0]] },
   { name: "4  ISLAND OF ST. NURARI", width: 80, height: 12, theme: "hills", seed: 3, columns: 5, startY: 9, sky: "#5c94fc",
