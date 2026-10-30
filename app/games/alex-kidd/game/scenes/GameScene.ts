@@ -90,19 +90,26 @@ export class GameScene extends Phaser.Scene {
     pb.setDragX(L.water ? 220 : 650);
     if (L.water) pb.setAllowGravity(false);
 
-    this.physics.add.collider(this.player, [this.solids, this.terrain]);
-    this.physics.add.collider(this.enemies, [this.solids, this.terrain], undefined, (e) => (e as Spr).getData("type") === "w", this);
+    this.physics.add.collider(this.player, this.solids);
+    this.physics.add.collider(this.player, this.terrain);
+    const walkingScorpion = (e) => (e as Spr).getData("type") === "w";
+    this.physics.add.collider(this.enemies, this.solids, undefined, walkingScorpion, this);
+    this.physics.add.collider(this.enemies, this.terrain, undefined, walkingScorpion, this);
     this.physics.add.overlap(this.player, this.enemies, () => this.die());
     this.physics.add.overlap(this.player, this.ghosts, () => this.die());
     this.physics.add.overlap(this.player, this.hazards, () => this.die());
     this.physics.add.overlap(this.player, this.pickups, (_p, it) => this.collect(it as Spr));
     this.physics.add.overlap(this.shots, this.enemies, (s, e) => { this.killEnemy(e as Spr); (s as Spr).destroy(); });
-    this.physics.add.overlap(this.shots, [this.solids, this.terrain], (s, o) => {
+    const hitSolidWithShot = (s, o) => {
       const blk = o as Phaser.Physics.Arcade.Image;
       if (blk.getData("kind")) this.breakBlock(blk);
       (s as Spr).destroy();
-    });
-    this.physics.add.collider(this.hazards, [this.solids, this.terrain], (h) => (h as Spr).destroy());
+    };
+    this.physics.add.overlap(this.shots, this.solids, hitSolidWithShot, undefined, this);
+    this.physics.add.overlap(this.shots, this.terrain, hitSolidWithShot, undefined, this);
+    const destroyHazard = (h) => (h as Spr).destroy();
+    this.physics.add.collider(this.hazards, this.solids, destroyHazard, undefined, this);
+    this.physics.add.collider(this.hazards, this.terrain, destroyHazard, undefined, this);
 
     if (goal) this.makeGoal((goal as { x: number }).x, (goal as { y: number }).y);
     if (bossAt) this.spawnBoss((bossAt as { x: number }).x, (bossAt as { y: number }).y);
@@ -211,7 +218,8 @@ export class GameScene extends Phaser.Scene {
       fontFamily: FONT, fontSize: "8px", color: "#f878f8", stroke: "#000", strokeThickness: 3
     }).setOrigin(0.5).setDepth(11);
     this.tweens.add({ targets: name, y: y - 34, duration: 550, yoyo: true, repeat: -1 });
-    this.physics.add.collider(b, [this.solids, this.terrain]);
+    this.physics.add.collider(b, this.solids);
+    this.physics.add.collider(b, this.terrain);
     this.physics.add.overlap(this.player, b, () => this.die());
     this.physics.add.overlap(this.shots, b, (_b, s) => { (s as Spr).destroy(); if (this.bossFight) this.hitBoss(); });
   }
