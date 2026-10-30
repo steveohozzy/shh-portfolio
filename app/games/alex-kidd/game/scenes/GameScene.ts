@@ -427,6 +427,7 @@ export class GameScene extends Phaser.Scene {
     else { p.anims.stop(); p.setTexture("hero_idle"); }
     if (frozen) p.setTint(0x8888ff); else p.clearTint();
     p.setAngle(inWater ? (this.facing > 0 ? 90 : -90) : 0);
+    if (inWater) p.setFlipX(false);
     if (p.y > this.L.grid.length * T + 20) this.die();
   }
 
