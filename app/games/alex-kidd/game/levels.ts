@@ -85,6 +85,11 @@ function makeStage(s: StageSpec): G {
       put(g, Math.min(s.width - 2, x + 13), Math.max(1, y - 1), "p");
       if (x % 3 === 0) put(g, Math.min(s.width - 2, x + 2), Math.max(1, y - 3), "$");
     }
+    s.platforms.forEach(([x, y, len]) => {
+      fill(g, x, Math.min(s.width - 2, x + len - 1), y, y, "R");
+      if (len > 3) put(g, Math.min(s.width - 2, x + Math.floor(len / 2)), Math.max(1, y - 2), "$");
+    });
+    (s.blocks || []).forEach(([x, y]) => put(g, x, y, "R"));
     for (let x = 14; x < s.width - 8; x += 29) put(g, x, 2 + ((x + s.seed) % Math.max(5, s.height - 5)), "p");
   } else {
     fill(g, 0, s.width - 1, floor, s.height - 1, "#");
