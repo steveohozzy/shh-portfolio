@@ -89,6 +89,9 @@ export default function AlexKiddGame() {
         <div className="ak-screen-frame">
           <div ref={host} className="ak-game-screen" />
           <section className="ak-controls" aria-label="Game controls">
+            <div className="ak-dpad">
+              {controls.slice(0, 4).map((item) => <GameButton key={item.key} item={item} />)}
+            </div>
             <Joystick />
             <GameButton item={controls[4]} />
             <div className="ak-actions">
