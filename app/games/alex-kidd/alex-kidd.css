@@ -188,3 +188,7 @@
   .ak-joystick-knob { width: 40px; height: 40px; }
   .ak-control-punch, .ak-control-jump { min-width: 58px; min-height: 58px; font-size: 6px; }
 }
+
+@media (max-width: 700px), (pointer: coarse) {
+  .ak-dpad { display: none; }
+}
