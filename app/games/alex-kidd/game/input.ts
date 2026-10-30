@@ -8,5 +8,6 @@ export const vpad = {
   jump: false,
   punch: false,
   start: false,
+  pressed: { jump: false, punch: false, start: false },
 };
 export type PadKey = keyof typeof vpad;
