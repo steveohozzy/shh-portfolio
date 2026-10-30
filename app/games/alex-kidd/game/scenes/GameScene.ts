@@ -26,7 +26,7 @@ export class GameScene extends Phaser.Scene {
   bg!: Phaser.GameObjects.TileSprite;
   waterSurface?: Phaser.GameObjects.TileSprite;
   hud!: Phaser.GameObjects.Text;
-  facing = 1; coyoteTime = 0; punchT = 0; dead = false; cleared = false; frozenUntil = 0; bubbleT = 0; waterEntered = false; waterExitBlocked = false;
+  facing = 1; coyoteTime = 0; punchT = 0; previousPlayerVelocityY = 0; dead = false; cleared = false; frozenUntil = 0; bubbleT = 0; waterEntered = false; waterExitBlocked = false;
   boss?: Spr; bossHp = 6; bossFight = false; bossTimer = 1; bossMove = 0; bossInv = 0; arenaX = 0;
   jankenActive = false; jankenDone = false;
   jk = { sel: 0, you: 0, them: 0, phase: "choose" as "choose" | "reveal", ui: [] as Phaser.GameObjects.GameObject[], cursor: null as Phaser.GameObjects.Text | null, bossHand: null as Phaser.GameObjects.Image | null, info: null as Phaser.GameObjects.Text | null, score: null as Phaser.GameObjects.Text | null };
@@ -87,7 +87,7 @@ export class GameScene extends Phaser.Scene {
     pb.setDragX(L.water ? 220 : 650);
     if (L.water) pb.setAllowGravity(false);
 
-    this.physics.add.collider(this.player, this.solids);
+    this.physics.add.collider(this.player, this.solids, () => this.resolvePlayerWallCollision());
     this.physics.add.collider(this.enemies, this.solids, undefined, (e) => (e as Spr).getData("type") === "w", this);
     this.physics.add.overlap(this.player, this.enemies, () => this.die());
     this.physics.add.overlap(this.player, this.ghosts, () => this.die());
@@ -117,6 +117,24 @@ export class GameScene extends Phaser.Scene {
     this.ctl = new Controls(this);
     sfx.music(L.theme);
     this.events.once("shutdown", () => sfx.music(null));
+  }
+
+  preUpdate() {
+    if (this.player?.body) {
+      this.previousPlayerVelocityY = (this.player.body as Body).velocity.y;
+    }
+  }
+
+  resolvePlayerWallCollision() {
+    const body = this.player.body as Body;
+    if (
+      (body.blocked.left || body.blocked.right) &&
+      !body.blocked.up &&
+      !body.blocked.down &&
+      this.previousPlayerVelocityY !== 0
+    ) {
+      body.setVelocityY(this.previousPlayerVelocityY);
+    }
   }
 
   addSolid(tx: number, ty: number, tex: string, kind?: string) {
