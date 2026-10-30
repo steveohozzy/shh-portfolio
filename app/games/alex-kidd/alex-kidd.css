@@ -376,3 +376,20 @@
   .ak-actions { gap: 6px; }
   .ak-control-punch, .ak-control-jump { width: 52px; min-width: 52px; height: 52px; min-height: 52px; padding: 3px; font-size: 5px; }
 }
+
+
+/* Keep the original 4:3 game proportions on landscape phones. */
+@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+  .ak-screen-frame { display: flex; align-items: stretch; justify-content: center; }
+  .ak-game-screen {
+    width: min(100vw, calc(100dvh * 4 / 3));
+    height: 100dvh;
+    flex: 0 0 auto;
+    aspect-ratio: 4 / 3;
+    margin: 0 auto;
+  }
+  .ak-game-screen canvas {
+    width: 100% !important;
+    height: 100% !important;
+  }
+}
