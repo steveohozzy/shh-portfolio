@@ -1,5 +1,5 @@
 // @ts-nocheck
-import Phaser from "phaser";
+import * as Phaser from "phaser";
 
 // Master System–style limited palette
 export const PAL: Record<string, string> = {
