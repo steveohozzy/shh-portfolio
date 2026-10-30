@@ -423,8 +423,8 @@ export class GameScene extends Phaser.Scene {
       let vy = b.velocity.y;
       if (!frozen) {
         if (c.pressed("jump") && !c.held("up")) { vy = -110; sfx.swim(); }
-        if (c.held("up")) vy -= 300 * dt;
-        if (c.held("down")) vy += 300 * dt;
+        if (c.held("up")) vy -= 190 * dt;
+        if (c.held("down")) vy += 190 * dt;
       }
       vy += 70 * dt;
       b.setVelocityY(Phaser.Math.Clamp(vy, -110, 90));
