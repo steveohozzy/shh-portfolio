@@ -74,40 +74,51 @@ function level1(): G {
 
 function mountainDescent(): G {
   const g = grid(150);
-  const floor = [5,5,5,5,6,6,6,7,7,7,8,8,8,9,9,9,10,10,10];
+
+  // One continuous mountain path: the ground steps down gradually,
+  // then opens into the lagoon at the far end.
+  const groundAt = (x: number) => {
+    if (x < 14) return 6;
+    if (x < 28) return 7;
+    if (x < 42) return 8;
+    if (x < 56) return 9;
+    if (x < 70) return 10;
+    if (x < 112) return 10;
+    return 11;
+  };
+
   for (let x = 0; x < 150; x++) {
-    const segment = Math.min(floor.length - 1, Math.floor(x / 8));
-    const y = floor[segment];
-    fill(g, x, x, y, 11, "#");
+    fill(g, x, x, groundAt(x), 11, "#");
   }
-  put(g, 2, 3, "P");
-  fill(g, 8, 9, 3, 3, "S");
-  put(g, 13, 4, "w");
-  fill(g, 18, 20, 3, 3, "R");
-  put(g, 22, 2, "$");
-  put(g, 28, 5, "v");
-  fill(g, 34, 36, 4, 4, "S");
-  put(g, 35, 3, "Q");
-  put(g, 42, 6, "w");
-  fill(g, 48, 50, 5, 5, "R");
-  put(g, 49, 3, "o");
-  put(g, 57, 7, "v");
-  fill(g, 63, 65, 6, 6, "S");
-  put(g, 70, 7, "w");
-  put(g, 76, 4, "g");
-  fill(g, 82, 84, 7, 7, "R");
-  put(g, 90, 8, "w");
-  put(g, 96, 5, "$");
-  fill(g, 102, 104, 8, 8, "S");
-  put(g, 110, 8, "v");
-  put(g, 118, 9, "w");
-  put(g, 124, 6, "g");
-  fill(g, 130, 132, 9, 9, "R");
-  put(g, 112, 9, "w");
-  put(g, 118, 7, "p");
-  put(g, 124, 6, "g");
-  put(g, 130, 7, "p");
+
+  put(g, 2, 4, "P");
+
+  // Mountain collectibles and breakable blocks sit just above the route.
+  fill(g, 9, 10, 4, 4, "S");
+  put(g, 17, 5, "w");
+  fill(g, 23, 25, 4, 4, "R");
+  put(g, 30, 5, "$");
+  put(g, 37, 4, "v");
+  fill(g, 44, 46, 6, 6, "S");
+  put(g, 45, 5, "Q");
+  put(g, 52, 8, "w");
+  fill(g, 59, 61, 7, 7, "R");
+  put(g, 60, 5, "o");
+  put(g, 67, 6, "v");
+  fill(g, 74, 76, 7, 7, "S");
+  put(g, 82, 9, "w");
+  put(g, 88, 6, "g");
+  fill(g, 94, 96, 7, 7, "R");
+  put(g, 101, 6, "$");
+  put(g, 108, 9, "w");
+
+  // Visible shoreline and underwater route.
+  fill(g, 112, 114, 9, 9, "R");
+  put(g, 118, 8, "p");
+  put(g, 124, 7, "g");
+  put(g, 130, 8, "p");
   put(g, 138, 6, "o");
+  put(g, 144, 8, "p");
   put(g, 146, 9, "F");
   return g;
 }
