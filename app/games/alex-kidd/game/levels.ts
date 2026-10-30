@@ -86,6 +86,10 @@ function mtEternal(): G {
     }
   }
 
+  // The ROM's final vertical screen and underwater extension share a solid
+  // top border. Open it so Alex can fall straight into the swimming section.
+  fill(g, 1, 46, 108, 108, ".");
+
   put(g, 7, 10, "P");
   (ORIGINAL_ENTITIES[1] || []).forEach(([screen, x, y, entity]) => {
     const screenX = screen <= 9 ? 0 : screen - 9;
