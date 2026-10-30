@@ -42,10 +42,11 @@ export class GameScene extends Phaser.Scene {
     this.L = LEVELS[this.levelIdx];
     const L = this.L;
     const W = L.grid[0].length * T;
+    const worldH = L.grid.length * T;
     this.physics.resume();
     this.cameras.main.setBackgroundColor(L.sky);
     this.bg = this.add.tileSprite(128, 96, 256, 192, `bg_${L.theme}`).setScrollFactor(0);
-    this.physics.world.setBounds(0, 0, W, H * T + 64);
+    this.physics.world.setBounds(0, 0, W, worldH + 64);
     this.physics.world.setBoundsCollision(true, true, true, false);
 
     this.solids = this.physics.add.staticGroup();
@@ -101,9 +102,9 @@ export class GameScene extends Phaser.Scene {
     if (bossAt) this.spawnBoss((bossAt as { x: number }).x, (bossAt as { y: number }).y);
 
     const cam = this.cameras.main;
-    cam.setBounds(0, 0, W, H * T);
+    cam.setBounds(0, 0, W, worldH);
     cam.startFollow(this.player, true, 0.2, 0.2);
-    cam.setDeadzone(24, 192);
+    cam.setDeadzone(24, L.vertical ? 72 : 192);
 
     this.add.rectangle(128, 6, 256, 12, 0x000000, 0.55).setScrollFactor(0).setDepth(50);
     this.hud = this.add.text(4, 2, "", { fontFamily: FONT, fontSize: "8px", color: "#ffffff" }).setScrollFactor(0).setDepth(51);
@@ -285,8 +286,9 @@ export class GameScene extends Phaser.Scene {
     this.player.anims.stop();
     this.player.setTexture("hero_idle");
     const W = this.L.grid[0].length * T;
-    this.physics.world.setBounds(this.arenaX - 8, 0, W - this.arenaX + 8, H * T + 64);
-    this.cameras.main.setBounds(this.arenaX - 8, 0, W - this.arenaX + 8, H * T);
+    const worldH = this.L.grid.length * T;
+    this.physics.world.setBounds(this.arenaX - 8, 0, W - this.arenaX + 8, worldH + 64);
+    this.cameras.main.setBounds(this.arenaX - 8, 0, W - this.arenaX + 8, worldH);
     const ui: Phaser.GameObjects.GameObject[] = [];
     const fix = <O extends Phaser.GameObjects.GameObject & { setScrollFactor: (n: number) => O; setDepth: (n: number) => O }>(o: O) => { o.setScrollFactor(0).setDepth(80); ui.push(o); return o; };
     const t = (x: number, y: number, s: string, c = "#ffffff") => fix(this.add.text(x, y, s, { fontFamily: FONT, fontSize: "8px", color: c, stroke: "#000", strokeThickness: 2, align: "center" }).setOrigin(0.5));
@@ -355,6 +357,7 @@ export class GameScene extends Phaser.Scene {
     const dt = Math.min(delta, 50) / 1000;
     this.ctl.update();
     this.bg.tilePositionX = this.cameras.main.scrollX * 0.35;
+    this.bg.tilePositionY = this.cameras.main.scrollY * 0.25;
     if (this.jankenActive) { this.updateJanken(); return; }
     if (this.dead || this.cleared) return;
     this.updatePlayer(time, dt);
@@ -372,16 +375,19 @@ export class GameScene extends Phaser.Scene {
     if (dir) this.facing = dir;
     p.setFlipX(this.facing < 0);
 
-    if (
-      this.L.waterStartX !== undefined &&
-      p.x >= this.L.waterStartX &&
-      p.y >= (this.L.waterStartY ?? 0)
-    ) this.waterEntered = true;
+    const reachedWater = this.L.waterStartY !== undefined &&
+      p.y >= this.L.waterStartY &&
+      (this.L.waterStartX === undefined || p.x >= this.L.waterStartX);
+    if (reachedWater && !this.waterEntered) {
+      this.waterEntered = true;
+      if (this.L.vertical) this.cameras.main.setDeadzone(128, 24);
+    }
 
     const inWater = this.L.water || this.waterEntered;
     if (inWater && b.allowGravity) {
       b.setAllowGravity(false);
       b.setVelocityY(0);
+      b.setDragX(220);
       this.bg.setTexture("bg_lake");
       this.cameras.main.setBackgroundColor("#1840b8");
     }
@@ -420,7 +426,8 @@ export class GameScene extends Phaser.Scene {
     else if (Math.abs(b.velocity.x) > 8) p.anims.play("run", true);
     else { p.anims.stop(); p.setTexture("hero_idle"); }
     if (frozen) p.setTint(0x8888ff); else p.clearTint();
-    if (p.y > H * T + 20) this.die();
+    p.setAngle(inWater ? (this.facing > 0 ? 90 : -90) : 0);
+    if (p.y > this.L.grid.length * T + 20) this.die();
   }
 
   updateEnemies(dt: number) {
@@ -428,7 +435,9 @@ export class GameScene extends Phaser.Scene {
     for (const e of [...this.enemies.getChildren()] as Spr[]) {
       if (!e.active) continue;
       const b = e.body as Body;
-      const near = e.x > cam.scrollX - 24 && e.x < cam.scrollX + 256 + 24;
+      const near = this.L.vertical
+        ? e.y > cam.scrollY - 24 && e.y < cam.scrollY + 192 + 24
+        : e.x > cam.scrollX - 24 && e.x < cam.scrollX + 256 + 24;
       if (near) e.setData("woke", true);
       if (!e.getData("woke")) { b.setVelocity(0, b.velocity.y); continue; }
       const type = e.getData("type");
@@ -444,7 +453,7 @@ export class GameScene extends Phaser.Scene {
         }
         b.setVelocityX(dir * 30);
         e.setFlipX(dir > 0);
-        if (e.y > H * T + 32) e.destroy();
+        if (e.y > this.L.grid.length * T + 32) e.destroy();
       } else if (type === "v") {
         b.setVelocity(-42, Math.cos(t * 3) * 40);
         e.setFlipX(false);
@@ -470,7 +479,7 @@ export class GameScene extends Phaser.Scene {
       if (age > 9000) g.destroy();
     }
     for (const s of [...this.shots.getChildren()] as Spr[]) if (time - (s.getData("born") as number) > 650) s.destroy();
-    for (const h of [...this.hazards.getChildren()] as Spr[]) if (h.y > H * T + 32) h.destroy();
+    for (const h of [...this.hazards.getChildren()] as Spr[]) if (h.y > this.L.grid.length * T + 32) h.destroy();
 
     const b = this.boss;
     if (b && this.bossFight) {
