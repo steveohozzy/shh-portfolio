@@ -1,4 +1,4 @@
-import Phaser from "phaser";
+import * as Phaser from "phaser";
 import { BootScene, TitleScene, ShopScene, EndScene } from "./scenes/menus";
 import { GameScene } from "./scenes/GameScene";
 
