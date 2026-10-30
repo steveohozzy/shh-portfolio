@@ -445,12 +445,16 @@ export class GameScene extends Phaser.Scene {
       }
     } else {
       const speed = state.boots ? 118 : 92;
+      b.setAllowGravity(true);
       b.setMaxVelocity(speed, 420);
       let acc = dir * 520;
       if (dir && Math.sign(b.velocity.x) === -dir) acc *= 1.8;
       b.setAccelerationX(acc);
       if (!frozen && c.pressed("jump") && b.blocked.down) { b.setVelocityY(-280); sfx.jump(); }
       if (!c.held("jump") && b.velocity.y < -110) b.setVelocityY(-110);
+      if (!b.blocked.down && (b.blocked.left || b.blocked.right) && b.velocity.y < 0) {
+        b.setVelocityY(Math.max(b.velocity.y, -90));
+      }
     }
     if (!frozen && c.pressed("punch") && this.punchT <= 0) this.doPunch();
     if (this.punchT > 0) this.punchT -= dt;
