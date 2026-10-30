@@ -117,7 +117,8 @@ export default function AlexKiddGame() {
     void start();
     return () => {
       cancelled = true;
-      Object.keys(vpad).forEach((key) => { vpad[key as PadKey] = false; });
+      (["left", "right", "up", "down", "jump", "punch", "start"] as PadKey[]).forEach((key) => { vpad[key] = false; });
+      vpad.pressed.jump = vpad.pressed.punch = vpad.pressed.start = false;
       gameRef.current?.destroy(true);
       gameRef.current = null;
     };
