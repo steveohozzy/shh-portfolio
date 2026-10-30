@@ -26,36 +26,61 @@ const fill = (g: G, x0: number, x1: number, y0: number, y1: number, c: string) =
 function level1(): G {
   const g = grid(150, 82);
 
-  // Mt. Eternal: descend through a narrow vertical mountain shaft.
+  // Mt. Eternal: a deliberate sequence of ledges down the mountain.
   fill(g, 0, 0, 0, 70, "R");
   fill(g, 15, 15, 0, 70, "R");
   put(g, 7, 2, "P");
 
-  fill(g, 4, 8, 10, 10, "S");
-  put(g, 11, 13, "v");
-  fill(g, 9, 13, 17, 17, "R");
-  put(g, 5, 20, "$");
-  put(g, 6, 20, "$");
-  fill(g, 2, 6, 25, 25, "S");
-  put(g, 10, 28, "v");
-  put(g, 4, 30, "Q");
+  fill(g, 3, 10, 8, 9, "S");
+  put(g, 12, 6, "v");
+  put(g, 6, 6, "$");
+  put(g, 8, 6, "$");
 
-  fill(g, 8, 13, 34, 34, "S");
-  put(g, 3, 38, "v");
-  fill(g, 3, 7, 42, 42, "R");
-  fill(g, 10, 13, 49, 49, "S");
-  put(g, 11, 48, "K");
-  put(g, 5, 53, "$");
-  put(g, 6, 53, "$");
+  fill(g, 8, 13, 14, 15, "R");
+  put(g, 5, 12, "w");
+  put(g, 10, 11, "Q");
 
-  fill(g, 2, 6, 57, 57, "S");
-  put(g, 10, 61, "v");
-  fill(g, 8, 13, 65, 65, "R");
-  put(g, 4, 68, "Q");
-  fill(g, 3, 6, 71, 71, "R");
-  fill(g, 9, 12, 71, 71, "R");
+  fill(g, 2, 7, 20, 21, "S");
+  put(g, 11, 18, "v");
+  put(g, 4, 18, "$");
+  put(g, 6, 18, "$");
 
-  // The mountain opens into the underwater section at the bottom.
+  fill(g, 8, 13, 26, 27, "R");
+  put(g, 4, 24, "w");
+  put(g, 10, 23, "K");
+
+  fill(g, 2, 7, 32, 33, "S");
+  put(g, 11, 30, "v");
+  put(g, 4, 30, "$");
+  put(g, 6, 30, "$");
+
+  fill(g, 8, 13, 38, 39, "R");
+  put(g, 4, 36, "w");
+  put(g, 10, 35, "Q");
+
+  fill(g, 2, 7, 44, 45, "S");
+  put(g, 11, 42, "v");
+  put(g, 4, 42, "$");
+  put(g, 6, 42, "$");
+
+  fill(g, 8, 13, 50, 51, "R");
+  put(g, 4, 48, "w");
+  put(g, 10, 47, "K");
+
+  fill(g, 2, 7, 56, 57, "S");
+  put(g, 11, 54, "v");
+  put(g, 4, 54, "$");
+  put(g, 6, 54, "$");
+
+  fill(g, 8, 13, 62, 63, "R");
+  put(g, 4, 60, "w");
+  put(g, 10, 59, "Q");
+
+  fill(g, 2, 6, 68, 69, "S");
+  fill(g, 9, 13, 68, 69, "R");
+  put(g, 7, 66, "$");
+
+  // Open drop into the underwater section; the surface is marked at row 72.
   fill(g, 0, 149, 81, 81, "#");
   fill(g, 0, 0, 72, 80, "R");
   fill(g, 149, 149, 72, 80, "R");
