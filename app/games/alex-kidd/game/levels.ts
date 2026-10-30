@@ -221,7 +221,7 @@ function makeStage(s: StageSpec): G {
       fill(g, x, Math.min(s.width - 2, x + len - 1), y, y, type === 1 ? "R" : "S");
       if (len > 3 && type !== 2) put(g, Math.min(s.width - 2, x + Math.floor(len / 2)), y - 1, type === 1 ? "Q" : "$");
     });
-    for (let x = 15; x < s.width - 10; x += 23) {
+    for (let x = 15; x < s.width - 10; x += (s.name.startsWith("2 ") ? 17 : 23)) {
       const y = s.name.startsWith("2 ") ? floor - 1 : floor - 1 - ((Math.floor(x / 23) + s.seed) % 3);
       put(g, x, y, (Math.floor(x / 23) + s.seed) % 4 === 0 ? "v" : "w");
       if (x % 2) put(g, x + 4, y - 2, "$");
