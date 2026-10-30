@@ -410,6 +410,7 @@ export class GameScene extends Phaser.Scene {
       this.waterEntered = false;
       inWater = false;
       b.setAllowGravity(true);
+      b.setSize(8, 14).setOffset(4, 2);
       b.setDragX(650);
       b.setAccelerationX(0);
       b.setVelocityY(0);
