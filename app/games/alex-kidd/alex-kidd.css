@@ -1,0 +1,105 @@
+@import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap");
+
+.ak-page {
+  min-height: 100vh;
+  padding: 36px 20px 64px;
+  background: #10121c;
+  color: #fff;
+  display: flex;
+  justify-content: center;
+}
+.ak-shell { width: min(100%, 960px); }
+.ak-back {
+  display: inline-block;
+  color: #9ca3af;
+  font: 10px "Press Start 2P", monospace;
+  text-decoration: none;
+  margin-bottom: 30px;
+}
+.ak-back:hover { color: #f8d820; }
+.ak-heading { text-align: center; margin: 0 0 26px; font-family: "Press Start 2P", monospace; }
+.ak-heading p { color: #69d5ff; font-size: 9px; margin: 0 0 16px; }
+.ak-heading h1 { color: #f8d820; font-size: clamp(22px, 5vw, 38px); margin: 0 0 12px; text-shadow: 4px 4px #783000; }
+.ak-heading span { font-size: 9px; color: #fff; }
+.ak-screen-frame {
+  padding: 8px;
+  border: 4px solid #5a4632;
+  border-radius: 10px;
+  background: #21180f;
+  box-shadow: 0 12px 0 #090a10, 0 22px 50px #0008;
+}
+.ak-game-screen {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: #000;
+  touch-action: none;
+}
+.ak-game-screen canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  image-rendering: pixelated;
+  touch-action: none;
+}
+.ak-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin: 30px auto 0;
+  max-width: 760px;
+  touch-action: none;
+  user-select: none;
+}
+.ak-dpad {
+  display: grid;
+  grid-template-columns: repeat(3, 48px);
+  grid-template-rows: repeat(2, 48px);
+  gap: 5px;
+}
+.ak-control {
+  border: 2px solid #e4a52c;
+  border-radius: 9px;
+  background: linear-gradient(180deg, #f8b83d, #d87812);
+  color: #241407;
+  min-width: 48px;
+  min-height: 48px;
+  padding: 8px;
+  font: 9px "Press Start 2P", monospace;
+  box-shadow: 0 4px 0 #82410c;
+  cursor: pointer;
+  touch-action: none;
+}
+.ak-control:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #82410c;
+  background: #ffe078;
+}
+.ak-control-up { grid-column: 2; grid-row: 1; }
+.ak-control-left { grid-column: 1; grid-row: 2; }
+.ak-control-down { grid-column: 2; grid-row: 2; }
+.ak-control-right { grid-column: 3; grid-row: 2; }
+.ak-control-start { min-width: 90px; min-height: 42px; font-size: 8px; }
+.ak-actions { display: flex; gap: 10px; }
+.ak-control-punch, .ak-control-jump { min-width: 76px; min-height: 58px; font-size: 8px; border-radius: 50px; }
+.ak-control-jump { background: linear-gradient(180deg, #f8d85a, #e8a51b); }
+.ak-instructions {
+  margin: 28px 0 0;
+  color: #a1a1aa;
+  text-align: center;
+  font: 8px/2 "Press Start 2P", monospace;
+}
+@media (max-width: 560px) {
+  .ak-page { padding: 24px 12px 40px; }
+  .ak-heading { margin-bottom: 18px; }
+  .ak-heading p, .ak-heading span { font-size: 7px; }
+  .ak-screen-frame { padding: 4px; border-width: 3px; }
+  .ak-controls { gap: 8px; margin-top: 24px; }
+  .ak-dpad { grid-template-columns: repeat(3, 40px); grid-template-rows: repeat(2, 40px); gap: 4px; }
+  .ak-control { min-width: 40px; min-height: 40px; padding: 5px; font-size: 8px; }
+  .ak-control-start { min-width: 62px; min-height: 38px; font-size: 6px; }
+  .ak-actions { gap: 7px; }
+  .ak-control-punch, .ak-control-jump { min-width: 58px; min-height: 48px; font-size: 6px; }
+  .ak-instructions { font-size: 6px; margin-top: 22px; }
+}
