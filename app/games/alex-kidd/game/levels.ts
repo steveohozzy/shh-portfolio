@@ -166,7 +166,6 @@ function blueLagoon(): G {
 function coralCaverns(): G {
   const g = grid(150);
   fill(g, 0, 149, 11, 11, "#");
-  fill(g, 0, 5, 0, 10, "R");
   fill(g, 12, 15, 2, 2, "R");
   fill(g, 24, 28, 8, 8, "R");
   fill(g, 38, 42, 1, 1, "R");
@@ -181,6 +180,37 @@ function coralCaverns(): G {
   [[18,2],[45,9],[74,1],[105,9],[137,1]].forEach(([x,y]) => put(g,x,y,"g"));
   [[30,5],[58,2],[89,6],[120,2]].forEach(([x,y]) => put(g,x,y,"o"));
   put(g, 145, 9, "F");
+  return g;
+}
+
+function adventureStage(seed: number, water = false, boss = false): G {
+  const g = grid(150);
+  fill(g, 0, 149, 11, 11, "#");
+  put(g, 2, water ? 5 : 9, "P");
+
+  const patterns = [
+    [[12, 8, 3], [28, 5, 4], [46, 8, 3], [65, 4, 5], [84, 7, 4], [104, 3, 4], [124, 7, 4]],
+    [[10, 6, 4], [27, 3, 5], [45, 7, 3], [64, 5, 4], [82, 2, 5], [101, 7, 3], [122, 4, 5]],
+    [[14, 4, 5], [32, 8, 3], [51, 5, 4], [70, 2, 5], [89, 7, 3], [109, 4, 5], [129, 8, 3]],
+    [[11, 7, 3], [30, 4, 5], [49, 8, 3], [68, 3, 5], [87, 6, 4], [107, 2, 5], [127, 7, 3]]
+  ];
+  const layout = patterns[seed % patterns.length];
+  layout.forEach(([x, y, width], i) => {
+    fill(g, x, x + width - 1, y, y, water ? "R" : (i % 2 ? "S" : "R"));
+    if (i % 2 === seed % 2) put(g, x + 1, y - 1, i % 3 === 0 ? "Q" : "$");
+  });
+
+  for (let i = 0; i < 10; i++) {
+    const x = 16 + i * 13;
+    const y = water ? 2 + ((i * 3 + seed) % 7) : 8;
+    put(g, x, y, water ? "p" : (i % 3 === 0 ? "v" : "w"));
+    if (i % 2 === 0) put(g, x + 4, Math.max(1, y - 2), "$");
+  }
+  put(g, 36, 2, "g");
+  put(g, 78, 1, "o");
+  put(g, 116, 2, "g");
+  if (boss) put(g, 138, 9, "B");
+  else put(g, 145, 9, "F");
   return g;
 }
 
@@ -226,8 +256,20 @@ function gloomCastle(): G {
 
 export const LEVELS: LevelDef[] = [
   { name: "1  MT. ETERNAL", theme: "hills", water: false, vertical: true, waterStartY: 72 * 16, sky: "#5c94fc", grid: level1() },
-  { name: "2  MOUNTAIN TRAIL", theme: "hills", water: false, sky: "#5c94fc", grid: mountainDescent() },
-  { name: "3  BLUE LAGOON", theme: "lake", water: true, sky: "#1840b8", grid: blueLagoon() },
-  { name: "4  CORAL CAVERNS", theme: "lake", water: true, sky: "#102b70", grid: coralCaverns() },
-  { name: "5  GLOOM CASTLE", theme: "castle", water: false, sky: "#200820", grid: gloomCastle() },
+  { name: "2  MARBLE PLAINS", theme: "hills", water: false, sky: "#5c94fc", grid: mountainDescent() },
+  { name: "3  LAKE FATHOM", theme: "lake", water: true, sky: "#1840b8", grid: blueLagoon() },
+  { name: "4  ISLAND OF ST. NURARI", theme: "hills", water: false, sky: "#5c94fc", grid: coralCaverns() },
+  { name: "5  NAMUI LAKE", theme: "lake", water: true, sky: "#1840b8", grid: adventureStage(0, true) },
+  { name: "6  VILLAGE OF NAMUI", theme: "hills", water: false, sky: "#5c94fc", grid: adventureStage(1, false, true) },
+  { name: "7  MT. KAVE", theme: "hills", water: false, sky: "#5c94fc", grid: adventureStage(2, false, true) },
+  { name: "8  THE BLAKWOODS", theme: "hills", water: false, sky: "#284878", grid: adventureStage(3, false, true) },
+  { name: "9  RIVER", theme: "lake", water: true, sky: "#1840b8", grid: adventureStage(1, true) },
+  { name: "10  BINGOO LOWLAND", theme: "hills", water: false, sky: "#5c94fc", grid: adventureStage(2, false, true) },
+  { name: "11  RADAXIAN CASTLE", theme: "castle", water: false, sky: "#200820", grid: adventureStage(3, false, true) },
+  { name: "12  RADAXIAN CITY", theme: "castle", water: false, sky: "#301838", grid: adventureStage(0) },
+  { name: "13  SWAMP", theme: "lake", water: true, sky: "#285838", grid: adventureStage(2, true, true) },
+  { name: "14  KINGDOM OF NIBANA", theme: "hills", water: false, sky: "#5c94fc", grid: adventureStage(1) },
+  { name: "15  NIBANA LOWLANDS", theme: "hills", water: false, sky: "#788848", grid: adventureStage(3, false, true) },
+  { name: "16  JANKEN'S CASTLE", theme: "castle", water: false, sky: "#200820", grid: gloomCastle() },
+  { name: "17  CRAGG LAKE", theme: "lake", water: true, sky: "#102b70", grid: adventureStage(0, true) },
 ];
