@@ -74,14 +74,14 @@ export default function AlexKiddGame() {
     const start = async () => {
       try { await document.fonts.load('8px "Press Start 2P"'); } catch {}
       const { createGame } = await import("./game/createGame");
-      if (!cancelled && host.current) game = createGame(host.current);
+      if (!cancelled && host.current) {\n        game = createGame(host.current);\n        gameRef.current = game;\n      }
     };
 
     void start();
     return () => {
       cancelled = true;
       Object.keys(vpad).forEach((key) => { vpad[key as PadKey] = false; });
-      game?.destroy(true);
+      game?.destroy(true);\n      gameRef.current = null;
     };
   }, []);
 
@@ -108,7 +108,7 @@ export default function AlexKiddGame() {
             </div>
           </section>
         </div>
-        <p className="ak-instructions">KEYBOARD: ARROWS MOVE · Z JUMP · X PUNCH · ENTER START</p>
+        <p className="ak-instructions">KEYBOARD: ARROWS MOVE · Z JUMP · X PUNCH · ENTER START · P / ESC PAUSE</p>
       </div>
     </main>
   );
