@@ -25,7 +25,7 @@ export class GameScene extends Phaser.Scene {
   solidSet = new Set<string>();
   bg!: Phaser.GameObjects.TileSprite;
   hud!: Phaser.GameObjects.Text;
-  facing = 1; punchT = 0; dead = false; cleared = false; frozenUntil = 0; bubbleT = 0;
+  facing = 1; punchT = 0; dead = false; cleared = false; frozenUntil = 0; bubbleT = 0; waterEntered = false;
   boss?: Spr; bossHp = 6; bossFight = false; bossTimer = 1; bossMove = 0; bossInv = 0; arenaX = 0;
   jankenActive = false; jankenDone = false;
   jk = { sel: 0, you: 0, them: 0, phase: "choose" as "choose" | "reveal", ui: [] as Phaser.GameObjects.GameObject[], cursor: null as Phaser.GameObjects.Text | null, bossHand: null as Phaser.GameObjects.Image | null, info: null as Phaser.GameObjects.Text | null, score: null as Phaser.GameObjects.Text | null };
@@ -33,7 +33,7 @@ export class GameScene extends Phaser.Scene {
   init(d: { level: number }) {
     this.levelIdx = d.level ?? 0;
     this.solidSet = new Set();
-    this.facing = 1; this.punchT = 0; this.dead = false; this.cleared = false; this.frozenUntil = 0;
+    this.facing = 1; this.punchT = 0; this.dead = false; this.cleared = false; this.frozenUntil = 0; this.waterEntered = false;
     this.boss = undefined; this.bossHp = 6; this.bossFight = false; this.bossTimer = 1; this.bossMove = 0; this.bossInv = 0;
     this.jankenActive = false; this.jankenDone = false;
   }
@@ -372,17 +372,18 @@ export class GameScene extends Phaser.Scene {
     if (dir) this.facing = dir;
     p.setFlipX(this.facing < 0);
 
-    const inWater = this.L.water || (this.L.waterStartX !== undefined && p.x >= this.L.waterStartX);
-    if (inWater && !b.allowGravity) { /* already swimming */ }
-    else if (inWater) {
+    if (
+      this.L.waterStartX !== undefined &&
+      p.x >= this.L.waterStartX &&
+      p.y >= (this.L.waterStartY ?? 0)
+    ) this.waterEntered = true;
+
+    const inWater = this.L.water || this.waterEntered;
+    if (inWater && b.allowGravity) {
       b.setAllowGravity(false);
       b.setVelocityY(0);
       this.bg.setTexture("bg_lake");
       this.cameras.main.setBackgroundColor("#1840b8");
-    } else if (!inWater && this.L.waterStartX !== undefined && b.allowGravity === false) {
-      b.setAllowGravity(true);
-      this.bg.setTexture(`bg_${this.L.theme}`);
-      this.cameras.main.setBackgroundColor(this.L.sky);
     }
     if (inWater) {
       b.setMaxVelocity(state.boots ? 90 : 75, 130);
