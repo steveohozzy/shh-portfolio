@@ -276,8 +276,13 @@ export class GameScene extends Phaser.Scene {
     state.money += 50;
     this.add.text(128, 80, "STAGE CLEAR!\n\nBONUS $50", { fontFamily: FONT, fontSize: "8px", color: "#f8d820", stroke: "#000", strokeThickness: 3, align: "center" }).setOrigin(0.5).setScrollFactor(0).setDepth(60);
     this.time.delayedCall(2600, () => {
-      if (this.levelIdx < LEVELS.length - 1) this.scene.start("Shop", { next: this.levelIdx + 1 });
-      else this.scene.start("End", { win: true });
+      if (this.levelIdx >= LEVELS.length - 1) {
+        this.scene.start("End", { win: true });
+        return;
+      }
+      const shopAfter = [0, 3, 8, 13];
+      if (shopAfter.indexOf(this.levelIdx) !== -1) this.scene.start("Shop", { next: this.levelIdx + 1 });
+      else this.scene.start("Game", { level: this.levelIdx + 1 });
     });
   }
 
@@ -359,7 +364,7 @@ export class GameScene extends Phaser.Scene {
     const dt = Math.min(delta, 50) / 1000;
     this.ctl.update();
     this.bg.tilePositionX = this.cameras.main.scrollX * 0.35;
-    this.bg.tilePositionY = this.cameras.main.scrollY * 0.25;
+    this.bg.tilePositionY = this.L.vertical ? 0 : this.cameras.main.scrollY * 0.25;
     if (this.jankenActive) { this.updateJanken(); return; }
     if (this.dead || this.cleared) return;
     this.updatePlayer(time, dt);
