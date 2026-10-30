@@ -81,7 +81,7 @@ export class GameScene extends Phaser.Scene {
 
     this.player = this.physics.add.sprite(start.x, start.y, "hero_idle");
     const pb = this.player.body as Body;
-    pb.setSize(10, 14).setOffset(3, 2);
+    pb.setSize(L.water ? 18 : 10, L.water ? 8 : 14).setOffset(L.water ? 3 : 3, L.water ? 4 : 2);
     this.player.setCollideWorldBounds(true).setDepth(10);
     pb.setDragX(L.water ? 220 : 650);
     if (L.water) pb.setAllowGravity(false);
@@ -388,6 +388,7 @@ export class GameScene extends Phaser.Scene {
     const inWater = this.L.water || this.waterEntered;
     if (inWater && b.allowGravity) {
       b.setAllowGravity(false);
+      b.setSize(18, 8).setOffset(3, 4);
       b.setVelocityY(0);
       b.setDragX(220);
       this.bg.setTexture("bg_lake").setAlpha(0);
