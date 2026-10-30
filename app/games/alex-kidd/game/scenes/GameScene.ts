@@ -1,5 +1,5 @@
 // @ts-nocheck
-import Phaser from "phaser";
+import * as Phaser from "phaser";
 import { LEVELS, H, type LevelDef } from "../levels";
 import { state } from "../state";
 import { Controls, FONT } from "../controls";
