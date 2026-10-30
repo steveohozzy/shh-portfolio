@@ -68,6 +68,8 @@ export class GameScene extends Phaser.Scene {
       else if (c === "Q") this.addSolid(tx, ty, "blk_q", "question");
       else if (c === "K") this.addSolid(tx, ty, "blk_skull", "skull");
       else if (c === "$") this.spawnPickup(x, y, "money", false);
+      else if (c === "g") this.spawnPickup(x, y, "gem", false);
+      else if (c === "o") this.spawnPickup(x, y, "treasure", false);
       else if (c === "w" || c === "v" || c === "p") this.spawnEnemy(c, x, y);
       else if (c === "F") goal = { x, y };
       else if (c === "P") start = { x, y };
@@ -163,6 +165,8 @@ export class GameScene extends Phaser.Scene {
     const t = it.getData("type");
     if (t === "money") { state.money += 10; sfx.coin(); }
     else if (t === "moneybig") { state.money += 20; sfx.coin(); }
+    else if (t === "gem") { state.money += 50; sfx.power(); }
+    else if (t === "treasure") { state.money += 100; sfx.power(); }
     else if (t === "bracelet") { state.bracelet = true; sfx.power(); }
     else if (t === "life") { state.lives++; sfx.power(); }
     it.destroy();
@@ -368,7 +372,17 @@ export class GameScene extends Phaser.Scene {
     if (dir) this.facing = dir;
     p.setFlipX(this.facing < 0);
 
-    if (this.L.water) {
+    const inWater = this.L.water || (this.L.waterStartX !== undefined && p.x >= this.L.waterStartX);
+    if (inWater && !b.allowGravity) { /* already swimming */ }
+    else if (inWater) {
+      b.setAllowGravity(false);
+      b.setVelocityY(0);
+      this.bg.setTexture("bg_lake");
+      this.cameras.main.setBackgroundColor("#1840b8");
+    } else if (!inWater && this.L.waterStartX !== undefined && b.allowGravity === false) {
+      b.setAllowGravity(true);
+    }
+    if (inWater) {
       b.setMaxVelocity(state.boots ? 90 : 75, 130);
       b.setAccelerationX(dir * 280);
       let vy = b.velocity.y;
@@ -398,7 +412,7 @@ export class GameScene extends Phaser.Scene {
     if (this.punchT > 0) this.punchT -= dt;
 
     if (this.punchT > 0) { p.anims.stop(); p.setTexture("hero_punch"); }
-    else if (this.L.water) p.anims.play("swim", true);
+    else if (inWater) p.anims.play("swim", true);
     else if (!b.blocked.down) { p.anims.stop(); p.setTexture("hero_jump"); }
     else if (Math.abs(b.velocity.x) > 8) p.anims.play("run", true);
     else { p.anims.stop(); p.setTexture("hero_idle"); }
