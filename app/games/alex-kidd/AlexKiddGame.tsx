@@ -55,7 +55,7 @@ export default function AlexKiddGame() {
   return (
     <main className="ak-page">
       <div className="ak-shell">
-        <a className="ak-back" href="/games">← BACK TO GAMES</a>
+        <a className="ak-back" href="/">← SHH DESIGN</a>
         <header className="ak-heading">
           <p>8-BIT PLATFORM ADVENTURE</p>
           <h1>PUNCH KID</h1>
