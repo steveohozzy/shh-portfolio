@@ -168,6 +168,7 @@ function makeOriginalStage(stageNo: number, spec: StageSpec): G {
   const startY = spec.startY === undefined ? (spec.water ? 5 : g.length - 3) : spec.startY;
   fill(g, Math.max(0, startX - 1), Math.min(g[0].length - 1, startX + 1), Math.max(0, startY - 1), startY, ".");
   put(g, startX, startY, "P");
+  if (stageNo === 11) fill(g, startX - 1, startX + 1, startY + 1, startY + 1, "#");
 
   let hasExit = false;
   let hasBoss = false;
