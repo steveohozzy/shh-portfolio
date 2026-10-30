@@ -159,7 +159,11 @@ export class GameScene extends Phaser.Scene {
     (b.body as Body).setSize(24, 28).setOffset(4, 4);
     b.setCollideWorldBounds(true).setDragX(160);
     this.boss = b;
-    this.arenaX = x - 10 * T;
+    this.arenaX = x - 5 * T;
+    const name = this.add.text(x, y - 30, this.L.bossName || "BOSS", {
+      fontFamily: FONT, fontSize: "8px", color: "#f878f8", stroke: "#000", strokeThickness: 3
+    }).setOrigin(0.5).setDepth(11);
+    this.tweens.add({ targets: name, y: y - 34, duration: 550, yoyo: true, repeat: -1 });
     this.physics.add.collider(b, this.solids);
     this.physics.add.overlap(this.player, b, () => this.die());
     this.physics.add.overlap(this.shots, b, (_b, s) => { (s as Spr).destroy(); if (this.bossFight) this.hitBoss(); });
