@@ -52,7 +52,8 @@ function level1(): G {
   put(g, 10, 61, "v");
   fill(g, 8, 13, 65, 65, "R");
   put(g, 4, 68, "Q");
-  fill(g, 3, 12, 71, 71, "R");
+  fill(g, 3, 6, 71, 71, "R");
+  fill(g, 9, 12, 71, 71, "R");
 
   // The mountain opens into the underwater section at the bottom.
   fill(g, 0, 149, 81, 81, "#");
