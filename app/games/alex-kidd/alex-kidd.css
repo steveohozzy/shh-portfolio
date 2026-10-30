@@ -192,3 +192,54 @@
 @media (max-width: 700px), (pointer: coarse) {
   .ak-dpad { display: none; }
 }
+
+
+/* Touch controls stay below the playfield so they never cover the action. */
+@media (max-width: 700px), (pointer: coarse) {
+  .ak-page { padding: 12px 8px 24px; }
+  .ak-heading { margin-bottom: 10px; }
+  .ak-screen-frame { overflow: visible; }
+  .ak-controls {
+    position: static;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    width: 100%;
+    margin: 14px auto 0;
+    padding: 0 4px;
+    pointer-events: auto;
+  }
+  .ak-joystick {
+    display: flex;
+    width: 76px;
+    height: 76px;
+    flex: 0 0 76px;
+  }
+  .ak-joystick-knob {
+    width: 34px;
+    height: 34px;
+    transition: transform 60ms linear;
+    will-change: transform;
+  }
+  .ak-control-start {
+    position: static;
+    min-width: 62px;
+    min-height: 36px;
+    font-size: 6px;
+  }
+  .ak-actions { gap: 8px; }
+  .ak-control-punch, .ak-control-jump {
+    min-width: 54px;
+    min-height: 54px;
+    font-size: 6px;
+  }
+  .ak-instructions { margin-top: 12px; }
+}
+@media (max-width: 390px) {
+  .ak-controls { gap: 8px; }
+  .ak-joystick { width: 68px; height: 68px; flex-basis: 68px; }
+  .ak-joystick-knob { width: 30px; height: 30px; }
+  .ak-control-punch, .ak-control-jump { min-width: 50px; min-height: 50px; }
+}
