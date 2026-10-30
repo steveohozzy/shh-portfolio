@@ -26,61 +26,70 @@ const fill = (g: G, x0: number, x1: number, y0: number, y1: number, c: string) =
 function level1(): G {
   const g = grid(150, 82);
 
-  // Mt. Eternal: a deliberate sequence of ledges down the mountain.
+  // Mt. Eternal: closely spaced ledges guide Alex down the mountain.
   fill(g, 0, 0, 0, 70, "R");
   fill(g, 15, 15, 0, 70, "R");
   put(g, 7, 2, "P");
 
-  fill(g, 3, 10, 8, 9, "S");
-  put(g, 12, 6, "v");
-  put(g, 6, 6, "$");
-  put(g, 8, 6, "$");
+  fill(g, 3, 10, 7, 8, "S");
+  put(g, 12, 5, "v");
+  put(g, 6, 5, "$");
+  put(g, 8, 5, "$");
 
-  fill(g, 8, 13, 14, 15, "R");
-  put(g, 5, 12, "w");
-  put(g, 10, 11, "Q");
+  fill(g, 8, 13, 12, 13, "R");
+  put(g, 5, 10, "w");
+  put(g, 10, 10, "Q");
 
-  fill(g, 2, 7, 20, 21, "S");
-  put(g, 11, 18, "v");
-  put(g, 4, 18, "$");
-  put(g, 6, 18, "$");
+  fill(g, 2, 7, 17, 18, "S");
+  put(g, 11, 15, "v");
+  put(g, 4, 15, "$");
+  put(g, 6, 15, "$");
 
-  fill(g, 8, 13, 26, 27, "R");
-  put(g, 4, 24, "w");
-  put(g, 10, 23, "K");
+  fill(g, 8, 13, 22, 23, "R");
+  put(g, 4, 20, "w");
+  put(g, 10, 20, "K");
 
-  fill(g, 2, 7, 32, 33, "S");
-  put(g, 11, 30, "v");
-  put(g, 4, 30, "$");
-  put(g, 6, 30, "$");
+  fill(g, 2, 7, 27, 28, "S");
+  put(g, 11, 25, "v");
+  put(g, 4, 25, "$");
+  put(g, 6, 25, "$");
 
-  fill(g, 8, 13, 38, 39, "R");
-  put(g, 4, 36, "w");
-  put(g, 10, 35, "Q");
+  fill(g, 8, 13, 32, 33, "R");
+  put(g, 4, 30, "w");
+  put(g, 10, 30, "Q");
 
-  fill(g, 2, 7, 44, 45, "S");
-  put(g, 11, 42, "v");
-  put(g, 4, 42, "$");
-  put(g, 6, 42, "$");
+  fill(g, 2, 7, 37, 38, "S");
+  put(g, 11, 35, "v");
+  put(g, 4, 35, "$");
+  put(g, 6, 35, "$");
 
-  fill(g, 8, 13, 50, 51, "R");
-  put(g, 4, 48, "w");
-  put(g, 10, 47, "K");
+  fill(g, 8, 13, 42, 43, "R");
+  put(g, 4, 40, "w");
+  put(g, 10, 40, "K");
 
-  fill(g, 2, 7, 56, 57, "S");
-  put(g, 11, 54, "v");
-  put(g, 4, 54, "$");
-  put(g, 6, 54, "$");
+  fill(g, 2, 7, 47, 48, "S");
+  put(g, 11, 45, "v");
+  put(g, 4, 45, "$");
+  put(g, 6, 45, "$");
+
+  fill(g, 8, 13, 52, 53, "R");
+  put(g, 4, 50, "w");
+  put(g, 10, 50, "Q");
+
+  fill(g, 2, 7, 57, 58, "S");
+  put(g, 11, 55, "v");
+  put(g, 4, 55, "$");
+  put(g, 6, 55, "$");
 
   fill(g, 8, 13, 62, 63, "R");
   put(g, 4, 60, "w");
-  put(g, 10, 59, "Q");
+  put(g, 10, 60, "K");
 
-  fill(g, 2, 6, 68, 69, "S");
-  fill(g, 9, 13, 68, 69, "R");
-  put(g, 7, 66, "$");
+  fill(g, 2, 6, 67, 68, "S");
+  fill(g, 9, 13, 67, 68, "R");
+  put(g, 7, 65, "$");
 
-  // Open drop into the underwater section; the surface is marked at row 72.
+  // The final opening drops Alex through the marked water surface.
   fill(g, 0, 149, 81, 81, "#");
   fill(g, 0, 0, 72, 80, "R");
   fill(g, 149, 149, 72, 80, "R");
