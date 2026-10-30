@@ -261,3 +261,43 @@
 @media (max-width: 560px) {
   .ak-sound-toggle { top: 8px; right: 8px; padding: 7px; font-size: 6px; }
 }
+
+.ak-game-tools {
+  position: absolute;
+  z-index: 12;
+  top: 14px;
+  right: 14px;
+  display: flex;
+  gap: 8px;
+}
+.ak-game-tool {
+  border: 2px solid #e4a52c;
+  border-radius: 6px;
+  background: #21180fdd;
+  color: #ffe078;
+  padding: 9px 10px;
+  font: 7px "Press Start 2P", monospace;
+  cursor: pointer;
+}
+.ak-game-tool:hover { background: #82410c; color: #fff; }
+.ak-pause-overlay {
+  position: absolute;
+  z-index: 11;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  aspect-ratio: 4 / 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background: #080b18c9;
+  color: #f8d820;
+  font: 16px "Press Start 2P", monospace;
+}
+@media (max-width: 700px), (pointer: coarse) {
+  .ak-game-tools { top: 8px; right: 8px; gap: 5px; }
+  .ak-game-tool { padding: 7px; font-size: 6px; }
+  .ak-pause-overlay { top: 3px; left: 3px; right: 3px; }
+}
