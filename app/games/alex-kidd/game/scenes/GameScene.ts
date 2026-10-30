@@ -17,6 +17,7 @@ export class GameScene extends Phaser.Scene {
   ctl!: Controls;
   player!: Spr;
   solids!: Phaser.Physics.Arcade.StaticGroup;
+  terrain!: Phaser.Physics.Arcade.StaticGroup;
   enemies!: Phaser.Physics.Arcade.Group;
   pickups!: Phaser.Physics.Arcade.Group;
   shots!: Phaser.Physics.Arcade.Group;
@@ -26,7 +27,7 @@ export class GameScene extends Phaser.Scene {
   bg!: Phaser.GameObjects.TileSprite;
   waterSurface?: Phaser.GameObjects.TileSprite;
   hud!: Phaser.GameObjects.Text;
-  facing = 1; coyoteTime = 0; punchT = 0; previousPlayerVelocityY = 0; dead = false; cleared = false; frozenUntil = 0; bubbleT = 0; waterEntered = false; waterExitBlocked = false;
+  facing = 1; coyoteTime = 0; punchT = 0; dead = false; cleared = false; frozenUntil = 0; bubbleT = 0; waterEntered = false; waterExitBlocked = false;
   boss?: Spr; bossHp = 6; bossFight = false; bossTimer = 1; bossMove = 0; bossInv = 0; arenaX = 0;
   jankenActive = false; jankenDone = false;
   jk = { sel: 0, you: 0, them: 0, phase: "choose" as "choose" | "reveal", ui: [] as Phaser.GameObjects.GameObject[], cursor: null as Phaser.GameObjects.Text | null, bossHand: null as Phaser.GameObjects.Image | null, info: null as Phaser.GameObjects.Text | null, score: null as Phaser.GameObjects.Text | null };
@@ -53,6 +54,7 @@ export class GameScene extends Phaser.Scene {
     this.physics.world.setBoundsCollision(true, true, true, false);
 
     this.solids = this.physics.add.staticGroup();
+    this.terrain = this.physics.add.staticGroup();
     this.enemies = this.physics.add.group();
     this.pickups = this.physics.add.group({ allowGravity: false });
     this.shots = this.physics.add.group({ allowGravity: false });
@@ -66,8 +68,8 @@ export class GameScene extends Phaser.Scene {
       const x = tx * T + 8, y = ty * T + 8;
       if (c === "#") {
         const top = ty === 0 || L.grid[ty - 1][tx] !== "#";
-        this.addSolid(tx, ty, `${L.theme}_${top || L.theme !== "hills" ? "top" : "fill"}`);
-      } else if (c === "R") this.addSolid(tx, ty, "rock");
+        this.addTerrainTile(tx, ty, `${L.theme}_${top || L.theme !== "hills" ? "top" : "fill"}`);
+      } else if (c === "R") this.addTerrainTile(tx, ty, "rock");
       else if (c === "S") this.addSolid(tx, ty, "blk_star", "star");
       else if (c === "Q") this.addSolid(tx, ty, "blk_q", "question");
       else if (c === "K") this.addSolid(tx, ty, "blk_skull", "skull");
@@ -79,6 +81,7 @@ export class GameScene extends Phaser.Scene {
       else if (c === "P") start = { x, y };
       else if (c === "B") bossAt = { x, y };
     }));
+    this.buildTerrainColliders();
 
     this.player = this.physics.add.sprite(start.x, start.y, "hero_idle");
     const pb = this.player.body as Body;
@@ -87,19 +90,19 @@ export class GameScene extends Phaser.Scene {
     pb.setDragX(L.water ? 220 : 650);
     if (L.water) pb.setAllowGravity(false);
 
-    this.physics.add.collider(this.player, this.solids, () => this.resolvePlayerWallCollision());
-    this.physics.add.collider(this.enemies, this.solids, undefined, (e) => (e as Spr).getData("type") === "w", this);
+    this.physics.add.collider(this.player, [this.solids, this.terrain]);
+    this.physics.add.collider(this.enemies, [this.solids, this.terrain], undefined, (e) => (e as Spr).getData("type") === "w", this);
     this.physics.add.overlap(this.player, this.enemies, () => this.die());
     this.physics.add.overlap(this.player, this.ghosts, () => this.die());
     this.physics.add.overlap(this.player, this.hazards, () => this.die());
     this.physics.add.overlap(this.player, this.pickups, (_p, it) => this.collect(it as Spr));
     this.physics.add.overlap(this.shots, this.enemies, (s, e) => { this.killEnemy(e as Spr); (s as Spr).destroy(); });
-    this.physics.add.overlap(this.shots, this.solids, (s, o) => {
+    this.physics.add.overlap(this.shots, [this.solids, this.terrain], (s, o) => {
       const blk = o as Phaser.Physics.Arcade.Image;
       if (blk.getData("kind")) this.breakBlock(blk);
       (s as Spr).destroy();
     });
-    this.physics.add.collider(this.hazards, this.solids, (h) => (h as Spr).destroy());
+    this.physics.add.collider(this.hazards, [this.solids, this.terrain], (h) => (h as Spr).destroy());
 
     if (goal) this.makeGoal((goal as { x: number }).x, (goal as { y: number }).y);
     if (bossAt) this.spawnBoss((bossAt as { x: number }).x, (bossAt as { y: number }).y);
@@ -119,21 +122,47 @@ export class GameScene extends Phaser.Scene {
     this.events.once("shutdown", () => sfx.music(null));
   }
 
-  preUpdate() {
-    if (this.player?.body) {
-      this.previousPlayerVelocityY = (this.player.body as Body).velocity.y;
-    }
+  addTerrainTile(tx: number, ty: number, tex: string) {
+    this.add.image(tx * T + 8, ty * T + 8, tex);
+    this.solidSet.add(key(tx, ty));
   }
 
-  resolvePlayerWallCollision() {
-    const body = this.player.body as Body;
-    if (
-      (body.blocked.left || body.blocked.right) &&
-      !body.blocked.up &&
-      !body.blocked.down &&
-      this.previousPlayerVelocityY !== 0
-    ) {
-      body.setVelocityY(this.previousPlayerVelocityY);
+  buildTerrainColliders() {
+    const rows = this.L.grid;
+    const used = new Set<string>();
+    for (let y = 0; y < rows.length; y++) {
+      for (let x = 0; x < rows[y].length; x++) {
+        const id = key(x, y);
+        if (used.has(id) || (rows[y][x] !== "#" && rows[y][x] !== "R")) continue;
+        let width = 0;
+        while (x + width < rows[y].length) {
+          const cell = key(x + width, y);
+          if (used.has(cell) || (rows[y][x + width] !== "#" && rows[y][x + width] !== "R")) break;
+          width++;
+        }
+        let height = 1;
+        while (y + height < rows.length) {
+          let complete = true;
+          for (let dx = 0; dx < width; dx++) {
+            const cell = key(x + dx, y + height);
+            if (used.has(cell) || (rows[y + height][x + dx] !== "#" && rows[y + height][x + dx] !== "R")) {
+              complete = false;
+              break;
+            }
+          }
+          if (!complete) break;
+          height++;
+        }
+        for (let dy = 0; dy < height; dy++) {
+          for (let dx = 0; dx < width; dx++) used.add(key(x + dx, y + dy));
+        }
+        const collider = this.terrain.create(
+          x * T + (width * T) / 2,
+          y * T + (height * T) / 2,
+          "rock"
+        ) as Phaser.Physics.Arcade.Image;
+        collider.setDisplaySize(width * T, height * T).refreshBody().setVisible(false);
+      }
     }
   }
 
@@ -182,7 +211,7 @@ export class GameScene extends Phaser.Scene {
       fontFamily: FONT, fontSize: "8px", color: "#f878f8", stroke: "#000", strokeThickness: 3
     }).setOrigin(0.5).setDepth(11);
     this.tweens.add({ targets: name, y: y - 34, duration: 550, yoyo: true, repeat: -1 });
-    this.physics.add.collider(b, this.solids);
+    this.physics.add.collider(b, [this.solids, this.terrain]);
     this.physics.add.overlap(this.player, b, () => this.die());
     this.physics.add.overlap(this.shots, b, (_b, s) => { (s as Spr).destroy(); if (this.bossFight) this.hitBoss(); });
   }
@@ -472,7 +501,7 @@ export class GameScene extends Phaser.Scene {
       if (dir && Math.sign(b.velocity.x) === -dir) acc *= 1.8;
       b.setAccelerationX(acc);
       const supported = b.onFloor() || b.blocked.down || b.touching.down ||
-        [...this.solids.getChildren()].some((solid) => {
+        [...this.solids.getChildren(), ...this.terrain.getChildren()].some((solid) => {
           const body = (solid as Phaser.Physics.Arcade.Image).body as Phaser.Physics.Arcade.StaticBody;
           return body && Math.abs(b.bottom - body.top) <= 3 && b.right > body.left + 1 && b.left < body.right - 1;
         });
