@@ -90,7 +90,10 @@ function mtEternal(): G {
   (ORIGINAL_ENTITIES[1] || []).forEach(([screen, x, y, entity]) => {
     const screenX = screen <= 9 ? 0 : screen - 9;
     const screenY = screen <= 9 ? screen : 9;
-    put(g, screenX * 16 + Math.floor(x / 16), screenY * 12 + Math.floor(y / 16), entity);
+    const tx = screenX * 16 + Math.floor(x / 16);
+    const ty = screenY * 12 + Math.floor(y / 16);
+    if (entity === "F" || entity === "B") fill(g, Math.max(0, tx - 1), Math.min(g[0].length - 1, tx + 1), Math.max(0, ty - 1), Math.min(g.length - 1, ty + 1), ".");
+    put(g, tx, ty, entity);
   });
   return g;
 }
@@ -131,7 +134,7 @@ const ORIGINAL_ENTITIES: Record<number, Array<[number, number, number, string]>>
 
 type StageSpec = {
   width: number; height: number; theme: Theme; water?: boolean; boss?: boolean;
-  startY?: number; seed: number; name: string; sky: string; bossName?: string;
+  columns?: number; startX?: number; startY?: number; startFacing?: number; seed: number; name: string; sky: string; bossName?: string;
   platforms: number[][];
   pits?: number[][];
   blocks?: number[][];
@@ -171,7 +174,10 @@ function makeOriginalStage(stageNo: number, spec: StageSpec): G {
   (ORIGINAL_ENTITIES[stageNo] || []).forEach(([screen, x, y, entity]) => {
     const screenX = screen % columns;
     const screenY = Math.floor(screen / columns);
-    put(g, screenX * 16 + Math.floor(x / 16), screenY * 12 + Math.floor(y / 16), entity);
+    const tx = screenX * 16 + Math.floor(x / 16);
+    const ty = screenY * 12 + Math.floor(y / 16);
+    if (entity === "F" || entity === "B") fill(g, Math.max(0, tx - 1), Math.min(g[0].length - 1, tx + 1), Math.max(0, ty - 1), Math.min(g.length - 1, ty + 1), ".");
+    put(g, tx, ty, entity);
     if (entity === "F") hasExit = true;
     if (entity === "B") hasBoss = true;
   });
