@@ -107,7 +107,8 @@ export class GameScene extends Phaser.Scene {
     this.player = this.physics.add.sprite(start.x, start.y, "hero_idle");
     const pb = this.player.body as Body;
     pb.setSize(6, 12).setOffset(5, 4);
-    if (state.peticopter && !L.water) pb.setSize(16, 10).setOffset(4, 4);
+    if (this.levelIdx === 8 && L.water) pb.setSize(24, 8).setOffset(4, 6);
+    else if (state.peticopter && !L.water) pb.setSize(16, 10).setOffset(4, 4);
     else if (state.motorcycle && !L.water) pb.setSize(24, 10).setOffset(4, 5);
     this.player.setCollideWorldBounds(true).setDepth(10);
     this.createStoryNpcs();
