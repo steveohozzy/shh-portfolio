@@ -23,7 +23,7 @@ const SKILLS: {id:Skill; label:string; icon:string; tip:string}[] = [
 const EMPTY_SKILLS:Record<Skill,number>={climber:4,floater:4,bomber:4,blocker:4,builder:12,basher:8,miner:6,digger:6}
 const GROUPS=["Mellow","Mischievous","Tricky","Bao-nkers"]
 const GROUP_COLOURS=["#9ed9ae","#f2c16e","#b9a4e8","#ed9bbd"]
-const W=960, H=420, BAO_W=12, BAO_H=18, GROUND=385
+const W=960, H=420, BAO_W=22, BAO_H=30, GROUND=385
 
 function makeLevel(id:number):Level {
  const group=Math.floor(id/30), n=id%30, width=3000+(n%5)*240+group*120
@@ -150,7 +150,7 @@ export default function SquishyLemmings(){
     g.spawnClock+=step*(g.rate/100)
     if(g.spawned<l.total&&g.spawnClock>=.11){
      g.spawnClock=0
-     g.baos.push({id:g.nextId++,x:l.hatch,y:GROUND-45,dir:1,vy:0,fall:0,action:0,saved:false,dead:false,bomber:0,build:0,frame:0})
+     g.baos.push({id:g.nextId++,x:l.hatch,y:GROUND-52,dir:1,vy:0,fall:0,action:0,saved:false,dead:false,bomber:0,build:0,frame:0})
      g.spawned++
     }
     g.baos.forEach(b=>{
@@ -221,7 +221,28 @@ export default function SquishyLemmings(){
    // hatch and exit
    ctx.fillStyle="#e69abc";ctx.fillRect(l.hatch-20,GROUND-66,40,18);ctx.fillStyle="#fff";ctx.fillRect(l.hatch-14,GROUND-62,28,8);ctx.fillStyle="#8b6389";ctx.font="bold 11px sans-serif";ctx.fillText("IN",l.hatch-7,GROUND-70)
    ctx.fillStyle="#fff4fa";ctx.fillRect(l.exit,GROUND-68,42,68);ctx.strokeStyle="#b97ca5";ctx.lineWidth=5;ctx.strokeRect(l.exit,GROUND-68,42,68);ctx.fillStyle="#e9a8cb";ctx.font="bold 12px sans-serif";ctx.fillText("HOME",l.exit+3,GROUND-77);ctx.font="20px sans-serif";ctx.fillText("♡",l.exit+11,GROUND-25)
-   g.baos.forEach(b=>{if(b.saved||b.dead||b.x<g.camera-30||b.x>g.camera+W+30)return;const col=BAO_COLOURS[b.id%BAO_COLOURS.length];ctx.save();ctx.translate(b.x,b.y);ctx.scale(b.dir,1);ctx.fillStyle="#72555b22";ctx.beginPath();ctx.ellipse(0,10,9,3,0,0,Math.PI*2);ctx.fill();ctx.fillStyle=col;ctx.strokeStyle="#ad8a9a";ctx.lineWidth=1.4;ctx.beginPath();ctx.ellipse(0,0,7,9,0,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.strokeStyle="#ad8a9a";ctx.beginPath();ctx.moveTo(-4,-6);ctx.quadraticCurveTo(-2,-12,0,-7);ctx.quadraticCurveTo(3,-12,4,-6);ctx.stroke();ctx.fillStyle="#513b42";ctx.beginPath();ctx.arc(-2.5,-1,1,0,Math.PI*2);ctx.arc(2.5,-1,1,0,Math.PI*2);ctx.fill();ctx.fillStyle="#ef9ab1";ctx.beginPath();ctx.arc(-4,2,1.7,0,Math.PI*2);ctx.arc(4,2,1.7,0,Math.PI*2);ctx.fill();if(b.skill==="floater"){ctx.fillStyle="#f39ac0";ctx.beginPath();ctx.arc(0,-14,8,Math.PI,0);ctx.lineTo(8,-14);ctx.fill();ctx.strokeStyle="#8e7394";ctx.beginPath();ctx.moveTo(0,-14);ctx.lineTo(0,-7);ctx.stroke()}if(b.skill==="blocker"){ctx.strokeStyle="#513b42";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-10,-1);ctx.lineTo(10,-1);ctx.stroke()}if(b.bomber>0){ctx.fillStyle="#f05b70";ctx.font="bold 9px sans-serif";ctx.fillText(Math.ceil(b.bomber).toString(),-3,-14)}ctx.restore()})
+   g.baos.forEach(b=>{
+    if(b.saved||b.dead||b.x<g.camera-40||b.x>g.camera+W+40)return
+    const col=BAO_COLOURS[b.id%BAO_COLOURS.length], bob=Math.sin(b.frame*8)*1.2
+    ctx.save();ctx.translate(b.x,b.y+bob);ctx.scale(b.dir,1)
+    ctx.fillStyle="#72555b30";ctx.beginPath();ctx.ellipse(0,BAO_H/2+2,13,4,0,0,Math.PI*2);ctx.fill()
+    ctx.fillStyle="#8c6670";ctx.beginPath();ctx.ellipse(-6,BAO_H/2-1,5,3,0,0,Math.PI*2);ctx.ellipse(6,BAO_H/2-1,5,3,0,0,Math.PI*2);ctx.fill()
+    const body=ctx.createRadialGradient(-5,-9,2,0,0,19);body.addColorStop(0,"#fffdf8");body.addColorStop(.28,col);body.addColorStop(1,"#b889a0")
+    ctx.fillStyle=body;ctx.strokeStyle="#986f7c";ctx.lineWidth=1.8;ctx.beginPath();ctx.moveTo(-11,8);ctx.quadraticCurveTo(-15,-4,-8,-14);ctx.quadraticCurveTo(0,-22,8,-13);ctx.quadraticCurveTo(15,-3,11,8);ctx.quadraticCurveTo(8,16,0,16);ctx.quadraticCurveTo(-9,16,-11,8);ctx.fill();ctx.stroke()
+    ctx.strokeStyle="#fff9";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-6,-13);ctx.quadraticCurveTo(-4,-19,0,-14);ctx.quadraticCurveTo(4,-19,7,-12);ctx.stroke()
+    ctx.fillStyle="#493640";ctx.beginPath();ctx.ellipse(-4,-2,1.7,2.4,0,0,Math.PI*2);ctx.ellipse(4,-2,1.7,2.4,0,0,Math.PI*2);ctx.fill()
+    ctx.fillStyle="#f08fa9";ctx.beginPath();ctx.ellipse(-8,4,3,2,0,0,Math.PI*2);ctx.ellipse(8,4,3,2,0,0,Math.PI*2);ctx.fill()
+    ctx.strokeStyle="#754e5b";ctx.lineWidth=1.3;ctx.beginPath();ctx.arc(0,2,2.5,.15,Math.PI-.15);ctx.stroke()
+    if(b.skill==="climber"||b.skill==="builder"){ctx.fillStyle=b.skill==="builder"?"#f4bd42":"#e96b67";ctx.beginPath();ctx.arc(0,-15,10,Math.PI,0);ctx.lineTo(10,-12);ctx.lineTo(-10,-12);ctx.fill();ctx.fillStyle="#fff8";ctx.fillRect(-5,-17,5,2)}
+    if(b.skill==="floater"){ctx.fillStyle="#ef8eb7";ctx.strokeStyle="#865b91";ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(-13,-25);ctx.quadraticCurveTo(0,-43,13,-25);ctx.closePath();ctx.fill();ctx.stroke();ctx.beginPath();ctx.moveTo(0,-25);ctx.lineTo(0,-15);ctx.moveTo(-11,-25);ctx.lineTo(0,-15);ctx.lineTo(11,-25);ctx.stroke()}
+    if(b.skill==="bomber"){ctx.fillStyle="#333";ctx.beginPath();ctx.arc(0,-22,4,0,Math.PI*2);ctx.fill();ctx.fillStyle="#f4c84b";ctx.fillRect(2,-28,4,3);ctx.fillStyle="#e85b68";ctx.font="bold 10px sans-serif";ctx.fillText(Math.ceil(b.bomber||0).toString(),-3,-30)}
+    if(b.skill==="blocker"){ctx.fillStyle="#df5965";ctx.strokeStyle="#8e3547";ctx.lineWidth=1.5;ctx.fillRect(-13,-8,26,7);ctx.strokeRect(-13,-8,26,7);ctx.fillStyle="#fff";ctx.font="bold 8px sans-serif";ctx.fillText("STOP",-10,-2)}
+    if(b.skill==="basher"){ctx.fillStyle="#e7a34c";ctx.fillRect(-10,-19,20,5);ctx.strokeStyle="#80535c";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(8,-3);ctx.lineTo(17,3);ctx.stroke()}
+    if(b.skill==="miner"){ctx.strokeStyle="#6f7181";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(8,-22);ctx.lineTo(15,-30);ctx.stroke();ctx.beginPath();ctx.moveTo(10,-30);ctx.lineTo(19,-30);ctx.stroke()}
+    if(b.skill==="digger"){ctx.fillStyle="#8a694e";ctx.fillRect(9,-20,3,18);ctx.fillStyle="#aeb8c3";ctx.beginPath();ctx.moveTo(7,-3);ctx.lineTo(15,-3);ctx.lineTo(11,3);ctx.closePath();ctx.fill()}
+    if(b.bomber>0&&b.skill!=="bomber"){ctx.fillStyle="#e85b68";ctx.font="bold 10px sans-serif";ctx.fillText(Math.ceil(b.bomber).toString(),-3,-25)}
+    ctx.restore()
+   })
    ctx.restore()
    // mini-map and viewport marker
    const miniY=H-19,miniW=260,miniX= W-miniW-12
@@ -247,9 +268,9 @@ export default function SquishyLemmings(){
    <div className="sdlem-message">{hud.complete?"🎉 Level complete!":hud.failed?"💗 Not quite — have another go.":hud.paused?"⏸ Parade paused.":hud.running?"Tap a dumpling in the level to assign the selected skill.":"Press release to start the parade. Select a skill first or during play."}</div>
    {(hud.complete||hud.failed)&&<div className="sdlem-result"><b>{hud.complete?"Beautifully done, Bao Boss!":"The parade has finished."}</b><span>{hud.saved} rescued out of {level.total}. {hud.complete?"The next stage is unlocked.":"Try changing the release rate or skill timing."}</span><button onClick={()=>hud.complete&&levelId<119?reset(levelId+1):reset(levelId)}>{hud.complete&&levelId<119?"Next level →":"Try again"}</button></div>}
   </div>
-  <div className="sdlem-controls"><div className="sdlem-section-heading"><div><span className="sdlem-kicker">SKILL PANEL</span><h2>Choose a job</h2></div><span className="sdlem-tool-hint">Select a skill, then click a walking dumpling.</span></div>
+  <div className="sdlem-controls"><div className="sdlem-section-heading"><div><span className="sdlem-kicker">SKILL PANEL</span><h2>Choose a job</h2></div><span className="sdlem-tool-hint">1. Choose a job · 2. Click a walking dumpling · 3. Watch its outfit change</span></div>
    <div className="sdlem-skills">{SKILLS.map(s=><button key={s.id} disabled={level.skills[s.id]===0||hud.complete||hud.failed} className={"sdlem-skill"+(selected===s.id?" is-selected":"")} onClick={()=>assign(s.id)}><span className="sdlem-skill-icon">{s.icon}</span><span className="sdlem-skill-copy"><b>{s.label}</b><small>{s.tip}</small></span><span className="sdlem-skill-count">{gameRef.current?.skills[s.id]??level.skills[s.id]}</span></button>)}</div>
-   <div className="sdlem-bottom-row"><div className="sdlem-selected-hint"><b>{SKILLS.find(s=>s.id===selected)?.label} selected</b><small>Remaining assignments shown on each skill.</small></div><div className="sdlem-play-actions"><button className="sdlem-small-btn" onClick={()=>setRate(-5)} disabled={!hud.running}>− Release</button><b className="sdlem-rate">{gameRef.current?.rate??level.rate}</b><button className="sdlem-small-btn" onClick={()=>setRate(5)} disabled={!hud.running}>+ Release</button><button className="sdlem-small-btn" onClick={nuke} disabled={!hud.running}>☠ Nuke</button><label className="sdlem-speed">Speed <select value={speed} onChange={e=>changeSpeed(Number(e.target.value))}><option value={1}>1×</option><option value={2}>2×</option><option value={4}>4×</option></select></label><button className="sdlem-release" onClick={start}>{hud.running?"▶ Continue":"▶ Release Bao Parade"}</button></div></div>
+   <div className="sdlem-bottom-row"><div className="sdlem-selected-hint"><b>Active tool: {SKILLS.find(s=>s.id===selected)?.icon} {SKILLS.find(s=>s.id===selected)?.label}</b><small>Click an unassigned walking dumpling. Its equipment changes immediately.</small></div><div className="sdlem-play-actions"><button className="sdlem-small-btn" onClick={()=>setRate(-5)} disabled={!hud.running}>− Release</button><b className="sdlem-rate">{gameRef.current?.rate??level.rate}</b><button className="sdlem-small-btn" onClick={()=>setRate(5)} disabled={!hud.running}>+ Release</button><button className="sdlem-small-btn" onClick={nuke} disabled={!hud.running}>☠ Nuke</button><label className="sdlem-speed">Speed <select value={speed} onChange={e=>changeSpeed(Number(e.target.value))}><option value={1}>1×</option><option value={2}>2×</option><option value={4}>4×</option></select></label><button className="sdlem-release" onClick={start}>{hud.running?"▶ Continue":"▶ Release Bao Parade"}</button></div></div>
   </div>
   <div className="sdlem-level-select"><div><span className="sdlem-kicker">120 ORIGINAL STAGES</span><h2>Choose your world</h2><p>Four difficulty groups, 30 levels each. Complete a level to unlock the next.</p></div><div className="sdlem-level-picker"><label>Difficulty <select value={Math.floor(levelId/30)} onChange={e=>selectLevel(Number(e.target.value)*30)}>{GROUPS.map((g,i)=><option key={g} value={i}>{g}</option>)}</select></label><label>Level <select value={levelId%30} onChange={e=>selectLevel(Math.floor(levelId/30)*30+Number(e.target.value))}>{Array.from({length:30},(_,i)=><option key={i} value={i}>{String(i+1).padStart(2,"0")} · {LEVELS[Math.floor(levelId/30)*30+i].name}</option>)}</select></label><span className="sdlem-campaign-count">{Object.keys(best).length} / 120 cleared</span></div></div>
   <div className="sdlem-howto"><span className="sdlem-howto-icon">💡</span><div><b>Classic Lemmings rules</b><p>Dumplings walk on their own, turn at walls and fall if you leave a gap. Assign skills to change the landscape or their behaviour. Blockers stop the parade and turn other walkers back; builders lay 12 steps; bashers tunnel sideways; miners cut diagonally; diggers tunnel down; climbers scale walls; floaters survive long falls; bombers clear a small crater. Pause to plan, adjust the release rate and use the mini-map/scrollbar to explore the whole level.</p></div></div>
