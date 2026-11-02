@@ -36,6 +36,7 @@ export class GameScene extends Phaser.Scene {
   puzzleLastTile: Phaser.Physics.Arcade.Image | null = null;
   puzzleHint?: Phaser.GameObjects.Text;
   doorOpened = false;
+  storyMessageOpen = false;
   storyNpcs: Array<{ sprite: Phaser.GameObjects.Image; dialogue: string }> = [];
   jk = { sel: 0, you: 0, them: 0, phase: "choose" as "choose" | "reveal", ui: [] as Phaser.GameObjects.GameObject[], cursor: null as Phaser.GameObjects.Text | null, bossHand: null as Phaser.GameObjects.Image | null, info: null as Phaser.GameObjects.Text | null, score: null as Phaser.GameObjects.Text | null };
 
@@ -45,6 +46,7 @@ export class GameScene extends Phaser.Scene {
     this.puzzleStep = 0;
     this.puzzleLastTile = null;
     this.doorOpened = false;
+    this.storyMessageOpen = false;
     this.storyNpcs = [];
     this.solidSet = new Set();
     this.facing = 1; this.coyoteTime = 0; this.punchT = 0; this.dead = false; this.cleared = false; this.frozenUntil = 0; this.waterEntered = false; this.waterExitBlocked = false;
@@ -227,6 +229,7 @@ export class GameScene extends Phaser.Scene {
   makeGoal(x: number, y: number) {
     const g = this.physics.add.staticImage(x, y, "chest");
     this.physics.add.overlap(this.player, g, () => {
+      if (this.storyMessageOpen) return;
       if (this.levelIdx === 16 && this.room === "dive") {
         if (this.doorOpened) return;
         this.doorOpened = true;
@@ -261,6 +264,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   tryTalkToNpc() {
+    if (this.storyMessageOpen) return true;
     for (const npc of this.storyNpcs) {
       if (!npc.sprite.active || Phaser.Math.Distance.Between(this.player.x, this.player.y, npc.sprite.x, npc.sprite.y) > 30) continue;
       if (this.levelIdx === 13) {
@@ -313,12 +317,15 @@ export class GameScene extends Phaser.Scene {
   }
 
   showStoryMessage(message: string) {
+    if (this.storyMessageOpen) return;
+    this.storyMessageOpen = true;
     const panel = this.add.rectangle(128, 150, 238, 62, 0x080820, 0.94).setScrollFactor(0).setDepth(90).setStrokeStyle(1, 0xf8d820);
     const text = this.add.text(128, 145, message + "\n\nPRESS X", { fontFamily: FONT, fontSize: "6px", color: "#ffffff", align: "center", lineSpacing: 4 }).setOrigin(0.5).setScrollFactor(0).setDepth(91);
     this.physics.pause();
     const close = () => {
       panel.destroy();
       text.destroy();
+      this.storyMessageOpen = false;
       this.physics.resume();
     };
     this.input.keyboard?.once("keydown-X", close);
