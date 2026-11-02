@@ -157,6 +157,7 @@ export default function SquishyLemmings(){
      if(b.saved||b.dead)return
      b.frame+=step
      if(b.bomber>0){b.bomber-=step;if(b.bomber<=0){g.terrain=g.terrain.filter(t=>!(b.x>t.x-28&&b.x<t.x+t.w+28&&b.y>t.y-28&&b.y<t.y+t.h+28));b.dead=true;g.dead++;return}}
+     if(bomberSkillHazard(b,l.hazards)){b.dead=true;g.dead++;return}
      const foot=b.y+BAO_H/2
      const support=floorAt(g.terrain,b.x+b.dir*3,foot)
      const supported=!!support
@@ -193,7 +194,6 @@ export default function SquishyLemmings(){
       b.fall+=b.vy*step
       if(b.y>H+20){b.dead=true;g.dead++;return}
      }
-     if(bomberSkillHazard(b,l.hazards)){b.dead=true;g.dead++;return}
      if(b.y>GROUND+60){b.dead=true;g.dead++;return}
      if(!wall&&supported)b.x+=b.dir*(b.skill==="builder"?1.4:31)*step
      if(b.x>=l.exit-18&&b.x<=l.exit+45&&b.y>GROUND-80){b.saved=true;g.saved++}
