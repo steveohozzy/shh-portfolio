@@ -733,7 +733,9 @@ export class GameScene extends Phaser.Scene {
     if (inWater && this.levelIdx === 8) {
       b.setMaxVelocity(135, 0);
       b.setVelocityY(0);
-      b.setAccelerationX(c.held("right") ? 320 : c.held("left") ? -180 : 0);
+      if (c.held("right")) { b.setAccelerationX(320); b.setDragX(120); }
+      else if (c.held("left")) { b.setAccelerationX(0); b.setDragX(650); }
+      else { b.setAccelerationX(0); b.setDragX(220); }
       if (b.blocked.left || b.blocked.right) b.setVelocityX(0);
     } else if (inWater) {
       b.setMaxVelocity(state.boots ? 90 : 75, 130);
