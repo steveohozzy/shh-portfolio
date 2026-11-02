@@ -143,7 +143,7 @@ export default function SquishyLemmings(){
  const start=()=>{const g=gameRef.current;if(!g)return;if(g.complete||g.failed)reset(levelId);const next=gameRef.current;if(next){next.running=true;next.paused=false}}
  const pause=()=>{const g=gameRef.current;if(g){g.paused=!g.paused;setHud(h=>({...h,paused:g.paused}))}}
  const assign=(skill:Skill)=>{const g=gameRef.current;if(!g)return;g.selected=skill;setSelected(skill)}
- const setRate=(delta:number)=>{const g=gameRef.current;if(g)g.rate=clamp(g.rate+delta,level.rate,99)}
+ const setRate=(delta:number)=>{const g=gameRef.current;if(g)g.rate=clamp(g.rate+delta,1,99)}
  const changeSpeed=(v:number)=>{setSpeed(v);const g=gameRef.current;if(g)g.speed=v}
  const nuke=()=>{const g=gameRef.current;if(!g||!g.running)return;g.baos.forEach(b=>{if(!b.saved&&!b.dead&&b.skill!=="blocker"){b.skill="bomber";b.bomber=5}})}
  const selectLevel=(id:number)=>reset(id)
@@ -207,9 +207,10 @@ export default function SquishyLemmings(){
    if(g.running&&!g.paused&&!g.complete&&!g.failed){
     const step=dt*g.speed
     g.clock=Math.max(0,g.clock-step)
-    g.spawnClock+=step*(g.rate/100)
-    if(g.spawned<l.total&&g.spawnClock>=.11){
-     g.spawnClock=0
+    // Classic release-rate scale: the setting is dumplings per minute, not a frame multiplier.
+    g.spawnClock+=step*(g.rate/60)
+    if(g.spawned<l.total&&g.spawnClock>=1){
+     g.spawnClock-=1
      g.baos.push({id:g.nextId++,variant:g.nextId%8,x:l.hatch+26,y:GROUND-52,dir:1,vy:0,fall:0,action:0,saved:false,dead:false,bomber:0,build:0,frame:0})
      g.spawned++
     }
