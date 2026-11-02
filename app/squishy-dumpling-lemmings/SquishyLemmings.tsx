@@ -239,10 +239,12 @@ export default function SquishyLemmings(){
       b.skill=undefined;
      }
      if(b.skill==="basher"){
-      // A basher keeps punching in its current direction until its whole body
-      // has cleared the obstacle. Do not let the ordinary wall-turn logic
-      // reverse it as soon as the front of the tunnel is open.
+      // Steel is indestructible: a basher stops and turns instead of walking
+      // through an obstacle it cannot carve.
       const cutX=b.x+b.dir*(BAO_W/2+8), cutY=b.y-5;
+      const steelBlocked=g.terrain.some(t=>t.steel&&cutX>=t.x&&cutX<=t.x+t.w&&cutY+14>=t.y&&cutY<=t.y+t.h);
+      if(steelBlocked){b.skill=undefined;b.dir=(-b.dir) as 1|-1;return}
+      // Keep punching in the chosen direction until the whole body clears.
       const bashBlocked=solidAt(g.terrain,cutX,cutY)||solidAt(g.terrain,cutX,cutY+14);
       const bodyStillInWall=g.terrain.some(t=>
        !t.steel&&b.y+12>t.y&&b.y-18<t.y+t.h&&
@@ -262,6 +264,8 @@ export default function SquishyLemmings(){
      }
      if(b.skill==="miner"){
       const cutX=b.x+b.dir*13, cutY=foot+9;
+      const steelBlocked=g.terrain.some(t=>t.steel&&cutX>=t.x&&cutX<=t.x+t.w&&cutY>=t.y&&cutY<=t.y+t.h);
+      if(steelBlocked){b.skill=undefined;return}
       if(solidAt(g.terrain,cutX,cutY)){
        carveTerrain(g.terrain,Math.min(cutX,cutX- b.dir*22),cutY-8,30,23);
        b.x+=b.dir*2.1;b.y+=2.1;b.vy=0;return;
@@ -269,7 +273,7 @@ export default function SquishyLemmings(){
       b.skill=undefined;
      }
      if(b.skill==="builder"&&supported){
-      if(b.build<12){const bx=b.x+b.dir*7,by=b.y+BAO_H/2-3;b.x+=b.dir*7;b.y-=1.5;b.build++;g.terrain.push({x:bx,y:by,w:9,h:5,bridge:true});return}
+      if(b.build<12){const bx=b.x+b.dir*8,by=b.y+BAO_H/2-8;b.x+=b.dir*8;b.y-=8;b.build++;g.terrain.push({x:bx,y:by,w:19,h:9,bridge:true});return}
       b.skill=undefined;b.build=0
      }
      if(wall&&b.skill!=="basher"){
@@ -367,7 +371,7 @@ export default function SquishyLemmings(){
    {(hud.complete||hud.failed)&&<div className="sdlem-result"><b>{hud.complete?"Beautifully done, Bao Boss!":"The parade has finished."}</b><span>{hud.saved} rescued out of {level.total}. {hud.complete?"The next stage is unlocked.":"Try changing the release rate or skill timing."}</span><button onClick={()=>hud.complete&&levelId<119?reset(levelId+1):reset(levelId)}>{hud.complete&&levelId<119?"Next level →":"Try again"}</button></div>}
   </div>
   <div className="sdlem-controls"><div className="sdlem-section-heading"><div><span className="sdlem-kicker">SKILL PANEL</span><h2>Choose a job</h2></div><span className="sdlem-tool-hint">1. Pick a job · 2. Tap a dumpling · 3. Tap again to undo</span></div>
-   <div className="sdlem-skills">{SKILLS.map(s=><button key={s.id} disabled={level.skills[s.id]===0||hud.complete||hud.failed} className={"sdlem-skill"+(selected===s.id?" is-selected":"")} onClick={()=>assign(s.id)}><span className="sdlem-skill-icon">{s.icon}</span><span className="sdlem-skill-copy"><b>{s.label}</b><small>{s.tip}</small></span><span className="sdlem-skill-count">{gameRef.current?.skills[s.id]??level.skills[s.id]}</span></button>)}</div>
+   <div className="sdlem-skills">{SKILLS.map(s=><button key={s.id} disabled={(gameRef.current?.skills[s.id]??level.skills[s.id])===0||hud.complete||hud.failed} className={"sdlem-skill"+(selected===s.id?" is-selected":"")} onClick={()=>assign(s.id)}><span className="sdlem-skill-icon">{s.icon}</span><span className="sdlem-skill-copy"><b>{s.label}</b><small>{s.tip}</small></span><span className="sdlem-skill-count">{gameRef.current?.skills[s.id]??level.skills[s.id]}</span></button>)}</div>
    <div className="sdlem-bottom-row"><div className="sdlem-selected-hint"><b>Active tool: {SKILLS.find(s=>s.id===selected)?.icon} {SKILLS.find(s=>s.id===selected)?.label}</b><small>Click a worker to apply the selected job; click that worker again to remove the job.</small></div><div className="sdlem-play-actions"><button className="sdlem-small-btn" onClick={()=>setRate(-5)} disabled={!hud.running}>− Release</button><b className="sdlem-rate">{gameRef.current?.rate??level.rate}</b><button className="sdlem-small-btn" onClick={()=>setRate(5)} disabled={!hud.running}>+ Release</button><button className="sdlem-small-btn" onClick={nuke} disabled={!hud.running}>☠ Nuke</button><label className="sdlem-speed">Speed <select value={speed} onChange={e=>changeSpeed(Number(e.target.value))}><option value={1}>1×</option><option value={2}>2×</option><option value={4}>4×</option></select></label><button className="sdlem-release" onClick={start}>{hud.running?"▶ Continue":"▶ Release Bao Parade"}</button></div></div>
   </div>
   <div className="sdlem-level-select"><div><span className="sdlem-kicker">120 ORIGINAL STAGES</span><h2>Choose your world</h2><p>Four difficulty groups, 30 levels each. Complete a level to unlock the next.</p></div><div className="sdlem-level-picker"><label>Difficulty <select value={Math.floor(levelId/30)} onChange={e=>selectLevel(Number(e.target.value)*30)}>{GROUPS.map((g,i)=><option key={g} value={i} disabled={i*30>unlockedThrough}>{g}</option>)}</select></label><label>Level <select value={levelId%30} onChange={e=>selectLevel(Math.floor(levelId/30)*30+Number(e.target.value))}>{Array.from({length:30},(_,i)=><option key={i} value={i} disabled={Math.floor(levelId/30)*30+i>unlockedThrough}>{String(i+1).padStart(2,"0")} · {LEVELS[Math.floor(levelId/30)*30+i].name}</option>)}</select></label><span className="sdlem-campaign-count">{Object.keys(best).length} / 120 cleared</span></div></div>
