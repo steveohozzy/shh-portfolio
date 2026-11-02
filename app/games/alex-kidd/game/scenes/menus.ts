@@ -18,8 +18,8 @@ export class TitleScene extends Phaser.Scene {
   constructor() { super("Title"); }
   create() {
     this.add.image(128, 96, "bg_hills");
-    txt(this, 128, 40, "PUNCH KID", 16, "#f8d820");
-    txt(this, 128, 62, "ISLAND OF WONDERS", 8, "#ffffff");
+    txt(this, 128, 40, "ALEX KIDD", 16, "#f8d820");
+    txt(this, 128, 62, "IN MIRACLE WORLD", 8, "#ffffff");
     const hero = this.add.image(128, 112, "hero_punch").setScale(2);
     this.tweens.add({ targets: hero, y: 106, duration: 500, yoyo: true, repeat: -1 });
     const start = txt(this, 128, 150, "PRESS START", 8);
@@ -94,7 +94,7 @@ export class EndScene extends Phaser.Scene {
     this.ready = false;
     if (d.win) {
       this.add.image(128, 96, "bg_hills");
-      txt(this, 128, 50, "YOU SAVED THE ISLAND!", 8, "#f8d820");
+      txt(this, 128, 50, state.goldCrown ? "THE GOLD CROWN IS RESTORED!" : "YOU SAVED THE ISLAND!", 8, "#f8d820");
       txt(this, 128, 70, `TREASURE $${state.money}`, 8);
       this.add.image(128, 112, "hero_jump").setScale(2);
       sfx.clear();
