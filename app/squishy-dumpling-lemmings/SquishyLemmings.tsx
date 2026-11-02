@@ -320,11 +320,27 @@ export default function SquishyLemmings(){
    ctx.clearRect(0,0,W,H)
    const sky=ctx.createLinearGradient(0,0,0,H);sky.addColorStop(0,"#dff4ff");sky.addColorStop(1,"#fff1f6");ctx.fillStyle=sky;ctx.fillRect(0,0,W,H)
    ctx.save();ctx.translate(-g.camera,0)
-   // distant hills
+   // Soft layered hills, floating clouds and distant bamboo silhouettes.
    ctx.fillStyle="#c5e8d0";for(let i=0;i<l.width/260+2;i++){ctx.beginPath();ctx.arc(i*260+100,GROUND+20,105,Math.PI,Math.PI*2);ctx.fill()}
+   for(let i=0;i<l.width/430+2;i++){
+    const cx=i*430+155,cy=72+(i%3)*25;
+    ctx.fillStyle="#ffffffb8";ctx.beginPath();ctx.arc(cx,cy,22,0,Math.PI*2);ctx.arc(cx+22,cy-8,28,0,Math.PI*2);ctx.arc(cx+50,cy,20,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle="#a6d7b4";ctx.fillRect(i*430+300,GROUND-128,7,110);ctx.fillRect(i*430+316,GROUND-145,6,127);
+    for(let leaf=0;leaf<5;leaf++){ctx.beginPath();ctx.ellipse(i*430+294+(leaf%2)*25,GROUND-116-leaf*19,13,4,-.55,0,Math.PI*2);ctx.fill()}
+   }
    // Hazard drawing is layered over the terrain below.
    // terrain: individual rounded grass/stone ledges
-   g.terrain.forEach(t=>{ctx.fillStyle=t.steel?"#8e9aa7":t.bridge?"#c99a70":"#82c994";ctx.strokeStyle=t.steel?"#566575":t.bridge?"#986e56":"#4f9e70";ctx.lineWidth=2;ctx.fillRect(t.x,t.y,t.w,t.h);ctx.strokeRect(t.x,t.y,t.w,t.h);ctx.fillStyle=t.steel?"#c4cbd1":t.bridge?"#e8c39a":"#c8f0c8";ctx.fillRect(t.x,t.y,t.w,4)})
+   g.terrain.forEach(t=>{
+    const grad=ctx.createLinearGradient(0,t.y,0,t.y+t.h);
+    if(t.steel){grad.addColorStop(0,"#c8d5df");grad.addColorStop(.22,"#8398aa");grad.addColorStop(1,"#586a7b")}
+    else if(t.bridge){grad.addColorStop(0,"#e9c59c");grad.addColorStop(1,"#a87553")}
+    else{grad.addColorStop(0,"#9cdb9c");grad.addColorStop(.13,"#69b982");grad.addColorStop(.14,"#c99c79");grad.addColorStop(1,"#936b61")}
+    ctx.fillStyle=grad;ctx.strokeStyle=t.steel?"#526577":t.bridge?"#936749":"#628e66";ctx.lineWidth=2;
+    ctx.fillRect(t.x,t.y,t.w,t.h);ctx.strokeRect(t.x,t.y,t.w,t.h);
+    if(t.steel){ctx.fillStyle="#e8f0f5";ctx.fillRect(t.x+3,t.y+3,Math.max(0,t.w-6),2);ctx.fillStyle="#536778";for(let px=t.x+7;px<t.x+t.w-4;px+=18){ctx.beginPath();ctx.arc(px,t.y+t.h/2,2,0,Math.PI*2);ctx.fill()}}
+    else if(t.bridge){ctx.strokeStyle="#966747";ctx.lineWidth=1;for(let px=t.x+8;px<t.x+t.w;px+=12){ctx.beginPath();ctx.moveTo(px,t.y+1);ctx.lineTo(px,t.y+t.h-1);ctx.stroke()}}
+    else{ctx.fillStyle="#d5f3bb";ctx.fillRect(t.x,t.y,t.w,3);ctx.fillStyle="#5c9e70";for(let px=t.x+7;px<t.x+t.w-3;px+=21){ctx.beginPath();ctx.ellipse(px,t.y+8,3,1.5,-.35,0,Math.PI*2);ctx.fill()}}
+   })
    l.hazards.forEach(h=>{ctx.fillStyle=h.kind==="water"?"#55b9df":h.kind==="fire"?"#f49b64":"#e68b8b";ctx.fillRect(h.x,h.y,h.w,h.h);ctx.fillStyle="#fff9";ctx.fillRect(h.x,h.y,h.w,4);if(h.kind==="fire"){ctx.font="20px sans-serif";ctx.fillText("♨",h.x+8,h.y+25)}if(h.kind==="trap"){ctx.fillStyle="#773f54";ctx.fillRect(h.x+8,h.y+12,h.w-16,8)}})
    // hatch and exit
    // Decorative bamboo-steamer hatch with a raised lid and warm glow.
