@@ -301,9 +301,10 @@ export class GameScene extends Phaser.Scene {
         this.tweens.add({ targets: f, scale: 4, alpha: 0, delay: i * 80, duration: 400, onComplete: () => f.destroy() });
       }
       const bx = b.x;
+      const by = b.y;
       b.destroy();
       this.boss = undefined;
-      this.time.delayedCall(700, () => this.makeGoal(bx, this.L.vertical ? Math.max(2 * T + 8, b.y) : 9 * T + 8));
+      this.time.delayedCall(700, () => this.makeGoal(bx, this.L.vertical ? Math.max(2 * T + 8, by) : 9 * T + 8));
     }
   }
 
