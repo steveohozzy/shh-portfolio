@@ -222,7 +222,67 @@ export class GameScene extends Phaser.Scene {
 
   makeGoal(x: number, y: number) {
     const g = this.physics.add.staticImage(x, y, "chest");
-    this.physics.add.overlap(this.player, g, () => this.clearLevel());
+    this.physics.add.overlap(this.player, g, () => {
+      if (this.levelIdx === 16 && this.room === "dive") {
+        if (this.doorOpened) return;
+        this.doorOpened = true;
+        if (!state.sunStone || !state.moonlightStone || !state.hirottaStone) {
+          this.doorOpened = false;
+          this.showStoryMessage("THE STONE DOOR WILL NOT OPEN.\nFIND BOTH MEDALLIONS\nAND THE HIROTTA STONE.");
+          return;
+        }
+        this.physics.pause();
+        this.time.delayedCall(450, () => this.scene.restart({ level: 16, room: "puzzle" }));
+        return;
+      }
+      this.clearLevel();
+    });
+  }
+
+  addPuzzleSymbol(tx: number, ty: number, symbol: string) {
+    const labels = { a: "SUN", b: "WAVES", c: "MOON", d: "STAR", e: "FISH" };
+    const tile = this.puzzleTiles.create(tx * T + 8, ty * T + 8, "rock") as Phaser.Physics.Arcade.Image;
+    tile.setTint(symbol === "a" ? 0xf8d820 : symbol === "b" ? 0x48b8f8 : symbol === "c" ? 0xc0c8f8 : symbol === "d" ? 0xf878f8 : 0x40c8a8);
+    tile.setData("symbol", symbol).setData("stepLock", false);
+    this.add.text(tile.x, tile.y, labels[symbol], { fontFamily: FONT, fontSize: "4px", color: "#101020", align: "center" }).setOrigin(0.5).setDepth(8);
+  }
+
+  stepCraggPuzzle(tile: Phaser.Physics.Arcade.Image) {
+    if (this.room !== "puzzle" || this.puzzleStep >= 10 || tile.getData("stepLock")) return;
+    const body = this.player.body as Body;
+    const tileBody = tile.body as Phaser.Physics.Arcade.StaticBody;
+    if (!body || body.velocity.y < 0 || body.bottom < tileBody.top - 2 || body.bottom > tileBody.top + 7) return;
+    tile.setData("stepLock", true);
+    this.puzzleLastTile = tile;
+    const order = ["a", "b", "c", "d", "a", "c", "b", "e", "d", "e"];
+    if (tile.getData("symbol") !== order[this.puzzleStep]) {
+      this.puzzleStep = 0;
+      this.puzzleHint?.setText("WRONG! THE GHOST IS AWAKE!");
+      this.spawnGhost(tile.x, tile.y - 18);
+      sfx.bad();
+      return;
+    }
+    this.puzzleStep++;
+    this.puzzleHint?.setText("HIROTTA STONE  " + this.puzzleStep + "/10");
+    sfx.coin();
+    if (this.puzzleStep === 10) {
+      this.puzzleHint?.setText("THE GOLD CROWN HAS APPEARED!");
+      this.spawnPickup(23 * T + 8, 6 * T + 8, "crown", false);
+      sfx.clear();
+    }
+  }
+
+  showStoryMessage(message: string) {
+    const panel = this.add.rectangle(128, 150, 238, 62, 0x080820, 0.94).setScrollFactor(0).setDepth(90).setStrokeStyle(1, 0xf8d820);
+    const text = this.add.text(128, 145, message + "\n\nPRESS X", { fontFamily: FONT, fontSize: "6px", color: "#ffffff", align: "center", lineSpacing: 4 }).setOrigin(0.5).setScrollFactor(0).setDepth(91);
+    this.physics.pause();
+    const close = () => {
+      panel.destroy();
+      text.destroy();
+      this.physics.resume();
+    };
+    this.input.keyboard?.once("keydown-X", close);
+    this.input.once("pointerdown", close);
   }
 
   spawnBoss(x: number, y: number) {
