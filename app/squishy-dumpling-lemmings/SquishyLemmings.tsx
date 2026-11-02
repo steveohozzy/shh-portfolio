@@ -23,7 +23,7 @@ const SKILLS: {id:Skill; label:string; icon:string; tip:string}[] = [
 const EMPTY_SKILLS:Record<Skill,number>={climber:4,floater:4,bomber:4,blocker:4,builder:12,basher:8,miner:6,digger:6}
 const GROUPS=["Mellow","Mischievous","Tricky","Bao-nkers"]
 const GROUP_COLOURS=["#9ed9ae","#f2c16e","#b9a4e8","#ed9bbd"]
-const W=960, H=420, BAO_W=22, BAO_H=30, GROUND=385
+const W=960, H=420, BAO_W=28, BAO_H=38, GROUND=385
 
 function makeLevel(id:number):Level {
  const group=Math.floor(id/30), n=id%30, width=3000+(n%5)*240+group*120
