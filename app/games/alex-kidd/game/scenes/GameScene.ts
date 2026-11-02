@@ -414,7 +414,10 @@ export class GameScene extends Phaser.Scene {
     this.punchT = 0.2;
     sfx.punch();
     const p = this.player;
-    const r = new Phaser.Geom.Rectangle(this.facing > 0 ? p.x + 3 : p.x - 15, p.y - 5, 12, 9);
+    const overhead = this.ctl.held("jump");
+    const r = overhead
+      ? new Phaser.Geom.Rectangle(p.x - 8, p.y - 17, 16, 9)
+      : new Phaser.Geom.Rectangle(this.facing > 0 ? p.x + 3 : p.x - 15, p.y - 5, 12, 9);
     for (const o of [...this.solids.getChildren()] as Phaser.Physics.Arcade.Image[]) {
       if (o.getData("kind") && Phaser.Geom.Rectangle.Overlaps(r, o.getBounds())) { this.breakBlock(o); break; }
     }
