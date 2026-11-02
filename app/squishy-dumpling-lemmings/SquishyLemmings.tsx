@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 type Skill = "umbrella" | "builder" | "climber" | "digger" | "blocker"
 type BaoKind = "classic" | "strawberry" | "matcha" | "blueberry" | "lavender" | "peach" | "golden" | "rainbow"
-type Bao = { id: number; x: number; y: number; dir: 1 | -1; kind: BaoKind; skill?: Skill; fall: number; saved: boolean; walking: boolean }
+type Bao = { id: number; x: number; y: number; dir: 1 | -1; kind: BaoKind; skill?: Skill; fall: number; saved: boolean; lost?: boolean; walking: boolean }
 type Level = { name: string; subtitle: string; spawn: number; target: number; exitX: number; exitY: number; platforms: { x: number; y: number; w: number; h: number; kind?: string }[]; hazards: { x: number; y: number; w: number; h: number; kind: string }[] }
 
 const LEVELS: Level[] = [
@@ -75,7 +75,7 @@ export default function SquishyLemmings() {
   const [levelBest, setLevelBest] = useState<Record<number,number>>({})
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const level = LEVELS[levelIndex]
-  const activeCount = baos.filter(b=>!b.saved).length
+  const activeCount = baos.filter(b=>!b.saved && !b.lost).length
   const percent = Math.min(100, Math.round((saved / level.target) * 100))
 
   const resetLevel = useCallback((index=levelIndex) => {
@@ -163,7 +163,7 @@ export default function SquishyLemmings() {
         })
         const newlySaved = next.filter(b=>b.saved && !old.find(o=>o.id===b.id)?.saved).length
         if (newlySaved) setSaved(s=>s+newlySaved)
-        const newlyLost = next.filter(b=>!b.saved && b.y>=92 && !level.platforms.some(p=>b.x>=p.x && b.x<=p.x+p.w && Math.abs(b.y-p.y)<5)).length
+        const newlyLost = next.filter(b=>b.lost && !old.find(o=>o.id===b.id)?.lost).length
         if (newlyLost) setLost(s=>s+newlyLost)
         return next
       })
@@ -232,7 +232,7 @@ export default function SquishyLemmings() {
             <g transform={"translate("+(level.exitX*10-10)+" "+(level.exitY*4.2-65)+")"}><path d="M10 66 V8 H66 V66" fill="#fff8fc" stroke="#c18cc6" strokeWidth="5" strokeLinecap="round"/><path d="M19 66 V17 H57 V66" fill="#d8f5e7"/><path d="M20 17 H56" stroke="#c18cc6" strokeWidth="4"/><text x="38" y="43" textAnchor="middle" fontSize="20">♡</text><text x="38" y="-2" textAnchor="middle" fontSize="14" fill="#9d6eb0" fontWeight="bold">HOME</text></g>
             <g transform="translate(27 280)"><rect x="0" y="0" width="36" height="66" rx="8" fill="#f3c7d9" stroke="#cf9bb8" strokeWidth="3"/><rect x="7" y="7" width="22" height="12" rx="4" fill="#fff2f7"/><text x="18" y="42" fontSize="16" textAnchor="middle">♡</text><text x="18" y="58" fontSize="8" textAnchor="middle" fill="#8d6380">BAO</text></g>
           </svg>
-          {baos.filter(b=>!b.saved && b.y<94).map(b=><button key={b.id} className={"sdlem-bao"+(b.skill?" has-skill":"")+(b.id===baos.length-1?" is-new":"")} style={{left:b.x+"%",top:b.y+"%",transform:"translate(-50%,-50%) scaleX("+b.dir+")"}} onClick={()=>assignSkill(b.id)} aria-label={"Assign "+selectedSkill+" to dumpling "+(b.id+1)} title={"Bao #"+(b.id+1)+(b.skill?" · "+b.skill:" · tap to assign "+selectedSkill)}><DumplingSprite kind={b.kind} skill={b.skill} tiny/>{b.skill && <span className="sdlem-skill-dot">{SKILLS.find(s=>s.id===b.skill)?.icon}</span>}</button>)}
+          {baos.filter(b=>!b.saved && !b.lost && b.y<94).map(b=><button key={b.id} className={"sdlem-bao"+(b.skill?" has-skill":"")+(b.id===baos.length-1?" is-new":"")} style={{left:b.x+"%",top:b.y+"%",transform:"translate(-50%,-50%) scaleX("+b.dir+")"}} onClick={()=>assignSkill(b.id)} aria-label={"Assign "+selectedSkill+" to dumpling "+(b.id+1)} title={"Bao #"+(b.id+1)+(b.skill?" · "+b.skill:" · tap to assign "+selectedSkill)}><DumplingSprite kind={b.kind} skill={b.skill} tiny/>{b.skill && <span className="sdlem-skill-dot">{SKILLS.find(s=>s.id===b.skill)?.icon}</span>}</button>)}
           {paused && <div className="sdlem-overlay"><div><span>⏸</span><strong>Parade paused</strong><p>Take your time, little bao boss.</p><button onClick={()=>setPaused(false)}>Back to the parade</button></div></div>}
           {!running && !completed && <div className="sdlem-start-overlay"><div className="sdlem-start-card"><span className="sdlem-big-bao">૮ ˶ᵔ ᵕ ᵔ˶ ა</span><h3>Ready, set, bao!</h3><p>Give your dumplings skills to get them safely to the HOME door.</p><button onClick={release}>▶ Release Bao Parade</button></div></div>}
           {completed && <div className="sdlem-overlay"><div className="sdlem-result-card"><span>{saved>=level.target?"🎉":"💗"}</span><strong>{saved>=level.target?"Level complete!":"Parade finished!"}</strong><p>{saved} of {level.target} required baos made it home.</p>{saved>=level.target && levelIndex<LEVELS.length-1 ? <button onClick={()=>chooseLevel(levelIndex+1)}>Next world →</button>:<button onClick={()=>resetLevel()}>↻ Try again</button>}{saved>=level.target && levelIndex===LEVELS.length-1 && <p className="sdlem-winner">You are the ultimate Bao Boss!</p>}</div></div>}
