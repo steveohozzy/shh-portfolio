@@ -36,6 +36,7 @@ export class GameScene extends Phaser.Scene {
   puzzleLastTile: Phaser.Physics.Arcade.Image | null = null;
   puzzleHint?: Phaser.GameObjects.Text;
   doorOpened = false;
+  storyNpcs: Array<{ sprite: Phaser.GameObjects.Image; dialogue: string }> = [];
   jk = { sel: 0, you: 0, them: 0, phase: "choose" as "choose" | "reveal", ui: [] as Phaser.GameObjects.GameObject[], cursor: null as Phaser.GameObjects.Text | null, bossHand: null as Phaser.GameObjects.Image | null, info: null as Phaser.GameObjects.Text | null, score: null as Phaser.GameObjects.Text | null };
 
   init(d: { level: number; room?: "dive" | "puzzle" }) {
@@ -44,6 +45,7 @@ export class GameScene extends Phaser.Scene {
     this.puzzleStep = 0;
     this.puzzleLastTile = null;
     this.doorOpened = false;
+    this.storyNpcs = [];
     this.solidSet = new Set();
     this.facing = 1; this.coyoteTime = 0; this.punchT = 0; this.dead = false; this.cleared = false; this.frozenUntil = 0; this.waterEntered = false; this.waterExitBlocked = false;
     this.boss = undefined; this.bossHp = 6; this.bossFight = false; this.bossTimer = 1; this.bossMove = 0; this.bossInv = 0;
@@ -101,6 +103,7 @@ export class GameScene extends Phaser.Scene {
     const pb = this.player.body as Body;
     pb.setSize(6, 12).setOffset(5, 4);
     this.player.setCollideWorldBounds(true).setDepth(10);
+    this.createStoryNpcs();
     pb.setDragX(L.water ? 220 : 650);
     if (L.water) pb.setAllowGravity(false);
 
@@ -239,6 +242,33 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
+  createStoryNpcs() {
+    const addNpc = (x: number, y: number, tint: number, dialogue: string) => {
+      const sprite = this.add.image(x, y, "story_npc").setTint(tint).setDepth(9);
+      this.storyNpcs.push({ sprite, dialogue });
+    };
+    if (this.levelIdx === 3) addNpc(4 * 256 + 152, 136, 0x78d8a0,
+      "SAINT NURARI: YOU ARE PRINCE ALEX OF RADAXIAN. JANKEN HAS TAKEN YOUR KINGDOM. FIND THE WAY TO SAVE YOUR PEOPLE.");
+    if (this.levelIdx === 5) addNpc(8 * 256 + 208, 136, 0xd8c8a0,
+      "VILLAGE ELDER: YOUR ELDER BROTHER IS PRISONER IN RADAXIAN CASTLE. YOU ARE THE ONLY ONE WHO CAN RESCUE HIM.");
+    if (this.levelIdx === 10) addNpc(19 * 256 + 112, 128, 0x88b8f8,
+      "EGLE: THE MOONLIGHT STONE IS IN NIBANA. FIND THE LETTER HIDDEN IN THIS CASTLE AND TAKE IT TO THE KINGDOM.");
+    if (this.levelIdx === 13) addNpc(1 * 256 + 144, 128, 0xf8d878,
+      "KING HIGH STONE: THE MOONLIGHT STONE HAS BEEN STOLEN. TAKE THIS HIROTTA STONE SLAB. THE CROWN IS IN LAKE DEEP.");
+    if (this.levelIdx === 11) addNpc(1 * 256 + 128, 128, 0xf8a8c8,
+      "PRINCESS LORA: YOUR MOTHER IS SAFE. SAVE RADAXIAN AND ITS PEOPLE WITH THE CROWN.");
+  }
+
+  tryTalkToNpc() {
+    for (const npc of this.storyNpcs) {
+      if (!npc.sprite.active || Phaser.Math.Distance.Between(this.player.x, this.player.y, npc.sprite.x, npc.sprite.y) > 30) continue;
+      this.showStoryMessage(npc.dialogue);
+      sfx.select();
+      return true;
+    }
+    return false;
+  }
+
   addPuzzleSymbol(tx: number, ty: number, symbol: string) {
     const labels = { a: "SUN", b: "WAVES", c: "MOON", d: "STAR", e: "FISH" };
     const tile = this.puzzleTiles.create(tx * T + 8, ty * T + 8, "rock") as Phaser.Physics.Arcade.Image;
@@ -354,6 +384,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   doPunch() {
+    if (this.tryTalkToNpc()) return;
     this.punchT = 0.2;
     sfx.punch();
     const p = this.player;
