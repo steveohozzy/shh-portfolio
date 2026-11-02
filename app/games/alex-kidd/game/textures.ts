@@ -180,6 +180,7 @@ export function makeTextures(s: Phaser.Scene) {
   gen(s, "bubble", [".nn.", "n..n", "n..n", ".nn."], 1, 4, 4);
   gen(s, "gem", [".......k........", "......kpk.......", ".....kpypk......", "....kpypypk.....", "....kpypypk.....", ".....kpypk......", "......kkk.......", ".......k........"]);
   gen(s, "treasure", ["....kkkkkkkk....", "...kbbbbbbbbk...", "...kbyyyyyybk...", "...kbbbbbbbbk...", "...kkkkkyykkkk...", "...kbbbbbbbbk...", "...kbbbbbbbbk...", "....kkkkkkkk...."]);
+  gen(s, "letter", ["....kkkkkkkk....", "...kwwwwwwwwk...", "..kwwwwwwwwwwk..", ".kwwwwwwwwwwwwk.", ".kwwwwwwwwwwwwk.", ".kwwkwwwwwwwwk..", ".kwwwkwwwwwwwk..", ".kwwwwkwwwwwwk..", ".kwwwwwkwwwwwk..", ".kwwwwwwwwwwwwk.", "..kkkkkkkkkkkk..", "................"]);
   gen(s, "crown", ["....yyyyyyyy....", "...ywwyyyywwy...", "..ywwwwyywwwwy..", ".yyyyyyyyyyyyyy.", "....kkk..kkk....", "....kkkkkkkk....", "....kkkkkkkk....", ".....kkkkkk....."]);
 
   const star = ["...y....", "...y....", "yyyyyyy.", ".yyyyy..", "..yyy...", ".yy.yy..", "y.....y."];
