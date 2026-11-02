@@ -567,8 +567,8 @@ export class GameScene extends Phaser.Scene {
 
   clearLevel() {
     if (this.cleared || this.dead) return;
-    if (this.levelIdx === 14) state.moonlightStone = true;
-    if (this.levelIdx === 15) state.sunStone = true;
+    if (this.levelIdx === 14 && this.jankenDone) state.moonlightStone = true;
+    if (this.levelIdx === 15 && this.jankenDone) state.sunStone = true;
     this.cleared = true;
     sfx.music(null);
     sfx.clear();
