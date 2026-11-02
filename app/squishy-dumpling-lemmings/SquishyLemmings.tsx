@@ -99,6 +99,7 @@ export default function SquishyLemmings(){
  const [best,setBest]=useState<Record<number,number>>({})
  const level=LEVELS[levelId]
  levelRef.current=level
+ if(!gameRef.current){gameRef.current={baos:[],terrain:level.terrain.map(t=>({...t})),spawned:0,saved:0,dead:0,clock:level.seconds,spawnClock:0,camera:0,running:false,paused:false,complete:false,failed:false,rate:level.rate,speed:1,selected:"floater",skills:cloneSkills(level.skills),nextId:0}}
 
  const reset=useCallback((id=levelId)=>{
   const l=LEVELS[id]
