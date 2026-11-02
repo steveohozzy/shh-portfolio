@@ -184,24 +184,6 @@ function makeOriginalStage(stageNo: number, spec: StageSpec): G {
 
   if (stageNo === 11) put(g, 40, 33, "L");
 
-  // Stage 16: the original screen records are stored in traversal order, so
-  // stitching them as a row-major map creates disconnected walls. Preserve
-  // the decoded castle tiles while opening a route from spawn to the upper area.
-  if (stageNo === 16) {
-    fill(g, 1, 110, 22, 22, ".");
-    fill(g, 1, 110, 23, 23, "#");
-    fill(g, 18, 22, 17, 22, ".");
-    fill(g, 18, 22, 18, 18, ".");
-    fill(g, 25, 29, 16, 18, ".");
-    fill(g, 32, 36, 13, 16, ".");
-    fill(g, 39, 43, 10, 13, ".");
-    fill(g, 46, 50, 7, 10, ".");
-    fill(g, 53, 57, 4, 7, ".");
-    fill(g, 60, 64, 2, 4, ".");
-    fill(g, 16, 22, 17, 21, ".");
-    put(g, 18, 20, "P");
-  }
-
   const entities = ORIGINAL_ENTITIES[stageNo] || [];
   const visibleEntities = stageNo === 17 ? entities.filter(([screen]) => screen === 1) : entities;
   visibleEntities.forEach(([screen, x, y, entity]) => {
