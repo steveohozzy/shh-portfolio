@@ -25,6 +25,7 @@ export class GameScene extends Phaser.Scene {
   hazards!: Phaser.Physics.Arcade.Group;
   ghosts!: Phaser.Physics.Arcade.Group;
   solidSet = new Set<string>();
+  terrainArt = new Map<string, Phaser.GameObjects.Image>();
   bg!: Phaser.GameObjects.TileSprite;
   waterSurface?: Phaser.GameObjects.TileSprite;
   hud!: Phaser.GameObjects.Text;
@@ -55,6 +56,7 @@ export class GameScene extends Phaser.Scene {
     this.pauseUi = [];
     this.storyNpcs = [];
     this.solidSet = new Set();
+    this.terrainArt = new Map();
     this.facing = 1; this.coyoteTime = 0; this.punchT = 0; this.dead = false; this.cleared = false; this.frozenUntil = 0; this.waterEntered = false; this.waterExitBlocked = false;
     this.boss = undefined; this.bossHp = 6; this.bossFight = false; this.bossTimer = 1; this.bossMove = 0; this.bossInv = 0;
     this.jankenActive = false; this.jankenDone = false;
@@ -236,7 +238,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   addTerrainTile(tx: number, ty: number, tex: string) {
-    this.add.image(tx * T + 8, ty * T + 8, tex);
+    const image = this.add.image(tx * T + 8, ty * T + 8, tex);
+    this.terrainArt.set(key(tx, ty), image);
     this.solidSet.add(key(tx, ty));
   }
 
@@ -290,7 +293,10 @@ export class GameScene extends Phaser.Scene {
     if (!state.motorcycle || this.L.water || !rock.active) return;
     const x = rock.x;
     const y = rock.y;
-    this.solidSet.delete(key(rock.getData("tx"), rock.getData("ty")));
+    const tileKey = key(rock.getData("tx"), rock.getData("ty"));
+    this.solidSet.delete(tileKey);
+    this.terrainArt.get(tileKey)?.destroy();
+    this.terrainArt.delete(tileKey);
     rock.destroy();
     sfx.brk();
     for (let i = 0; i < 4; i++) {
