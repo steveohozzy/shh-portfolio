@@ -559,10 +559,16 @@ export class GameScene extends Phaser.Scene {
     this.jankenDone = true;
     this.physics.resume();
     if (win) {
-      this.bossFight = true;
-      sfx.music("castle");
-      const f = this.add.text(128, 80, "NOW FIGHT!", { fontFamily: FONT, fontSize: "8px", color: "#d82800", stroke: "#000", strokeThickness: 3 }).setOrigin(0.5).setScrollFactor(0).setDepth(60);
-      this.tweens.add({ targets: f, alpha: 0, delay: 1000, duration: 400, onComplete: () => f.destroy() });
+      this.bossFight = false;
+      sfx.clear();
+      const defeated = this.boss;
+      const x = defeated ? defeated.x : this.player.x + this.facing * 48;
+      const y = defeated ? defeated.y : this.player.y;
+      if (defeated) defeated.destroy();
+      this.boss = undefined;
+      const banner = this.add.text(128, 80, "YOU WIN!", { fontFamily: FONT, fontSize: "8px", color: "#f8d820", stroke: "#000", strokeThickness: 3 }).setOrigin(0.5).setScrollFactor(0).setDepth(60);
+      this.tweens.add({ targets: banner, alpha: 0, delay: 900, duration: 400, onComplete: () => banner.destroy() });
+      this.time.delayedCall(450, () => this.makeGoal(x, y));
     } else this.die();
   }
 
