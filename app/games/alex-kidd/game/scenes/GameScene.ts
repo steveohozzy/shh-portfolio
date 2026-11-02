@@ -228,7 +228,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   makeGoal(x: number, y: number) {
-    const g = this.physics.add.staticImage(x, y, "chest");
+    const g = this.physics.add.staticImage(x, y, this.levelIdx === 16 && this.room === "dive" ? "stone_door" : "chest");
     this.physics.add.overlap(this.player, g, () => {
       if (this.storyMessageOpen) return;
       if (this.levelIdx === 16 && this.room === "dive") {
