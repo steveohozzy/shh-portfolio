@@ -163,7 +163,7 @@ export default function SquishyLemmings(){
      const frontX=b.x+b.dir*(BAO_W/2+2)
      const wall=solidAt(g.terrain,frontX,b.y-4)||solidAt(g.terrain,frontX,b.y+4)
      const blocker=g.baos.find(o=>o!==b&&!o.dead&&!o.saved&&o.skill==="blocker"&&o.action===1&&Math.abs(o.x-b.x)<18&&Math.abs(o.y-b.y)<24)
-     if(b.skill==="blocker"&&supported){b.action=1;return}
+     if(b.skill==="blocker"&&supported){b.y=support!.y-BAO_H/2;b.vy=0;b.fall=0;b.action=1;return}
      if(blocker){b.dir=(b.x<blocker.x?-1:1);b.x+=b.dir*1.2;return}
      if(b.skill==="digger"&&supported&&support){const idx=g.terrain.indexOf(support);if(!support.steel){support.y+=3;support.h=Math.max(0,support.h-3);b.y+=3;if(support.h<=0)g.terrain.splice(idx,1)}else b.skill=undefined;return}
      if(b.skill==="basher"){
