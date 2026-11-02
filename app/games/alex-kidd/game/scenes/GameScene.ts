@@ -348,6 +348,8 @@ export class GameScene extends Phaser.Scene {
         } else {
           this.showStoryMessage("KING HIGH STONE: FIND THE AUTOGRAPHED LETTER IN RADAXIAN CASTLE AND BRING IT TO NIBANA.");
         }
+      } else if (this.levelIdx === 10 && state.letterToNibana) {
+        this.showStoryMessage("EGLE: YOU FOUND THE LETTER! TAKE IT TO THE KINGDOM OF NIBANA.");
       } else {
         this.showStoryMessage(npc.dialogue);
       }
