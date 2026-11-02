@@ -210,7 +210,7 @@ export default function SquishyLemmings(){
       if(b.skill==="climber"){b.y-=2;b.x+=b.dir*.5;if(!solidAt(g.terrain,b.x+b.dir*7,b.y-BAO_H/2)){b.y-=5;b.skill=undefined}return}
       b.dir=(b.dir*-1) as 1|-1
      }
-     if(supported&&support){if(b.fall>112&&b.skill!=="floater"){b.dead=true;g.dead++;return}b.y=support.y-BAO_H/2;b.vy=0;b.fall=0}
+     if(supported&&support){if(b.fall>112&&b.skill!=="floater"){b.dead=true;b.splat=1;g.dead++;return}b.y=support.y-BAO_H/2;b.vy=0;b.fall=0}
      else{
       b.vy+=b.skill==="floater"?180:620
       b.y+=b.vy*step
