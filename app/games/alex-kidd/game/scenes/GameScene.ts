@@ -312,7 +312,7 @@ export class GameScene extends Phaser.Scene {
     sfx.coin();
     if (this.puzzleStep === 10) {
       this.puzzleHint?.setText("THE GOLD CROWN HAS APPEARED!");
-      this.spawnPickup(23 * T + 8, 6 * T + 8, "crown", false);
+      this.spawnPickup(23 * T + 8, 7 * T + 8, "crown", false);
       sfx.clear();
     }
   }
