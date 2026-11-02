@@ -107,6 +107,8 @@ export class GameScene extends Phaser.Scene {
     this.player = this.physics.add.sprite(start.x, start.y, "hero_idle");
     const pb = this.player.body as Body;
     pb.setSize(6, 12).setOffset(5, 4);
+    if (state.peticopter && !L.water) pb.setSize(16, 10).setOffset(4, 4);
+    else if (state.motorcycle && !L.water) pb.setSize(24, 10).setOffset(4, 5);
     this.player.setCollideWorldBounds(true).setDepth(10);
     this.createStoryNpcs();
     pb.setDragX(L.water ? 220 : 650);
@@ -425,7 +427,7 @@ export class GameScene extends Phaser.Scene {
       if (Phaser.Geom.Rectangle.Overlaps(r, e.getBounds())) this.killEnemy(e);
     }
     if (this.boss && this.bossFight && Phaser.Geom.Rectangle.Overlaps(r, this.boss.getBounds())) this.hitBoss();
-    if (state.bracelet || state.capsuleA) {
+    if (state.bracelet || state.capsuleA || (state.peticopter && !this.L.water) || this.levelIdx === 8) {
       const s = this.shots.create(p.x + this.facing * 12, p.y - 1, "shot") as Spr;
       s.setVelocityX(this.facing * 220).setData("born", this.time.now);
       if (state.capsuleA) state.capsuleA = false;
@@ -692,7 +694,10 @@ export class GameScene extends Phaser.Scene {
     if (this.punchT > 0) this.punchT -= dt;
 
     if (this.punchT > 0) { p.anims.stop(); p.setTexture("hero_punch"); }
-    else if (inWater) p.anims.play("run", true);
+    else if (inWater && this.levelIdx === 8) { p.anims.stop(); p.setTexture("boat"); }
+    else if (inWater) p.anims.play("swim", true);
+    else if (state.peticopter) { p.anims.stop(); p.setTexture("peticopter"); }
+    else if (state.motorcycle) { p.anims.stop(); p.setTexture("motorcycle"); }
     else if (!b.blocked.down) { p.anims.stop(); p.setTexture("hero_jump"); }
     else if (Math.abs(b.velocity.x) > 8) p.anims.play("run", true);
     else { p.anims.stop(); p.setTexture("hero_idle"); }
