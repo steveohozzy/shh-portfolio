@@ -194,8 +194,29 @@ function makeOriginalStage(stageNo: number, spec: StageSpec): G {
 function makeStage(s: StageSpec): G {
   const g = grid(s.width, s.height);
   const floor = s.height - 2;
+  const startX = s.startX ?? 2;
   const startY = s.startY ?? (s.water ? Math.max(3, Math.floor(s.height / 2)) : floor - 1);
-  put(g, 2, startY, "P");
+  put(g, startX, startY, "P");
+
+  if (s.vertical && !s.water) {
+    // Castle stages climb from the bottom to the boss at the top. Keep each
+    // ledge within jump range and offset it enough to leave a route upward.
+    fill(g, 0, s.width - 1, floor, s.height - 1, "#");
+    const span = Math.max(1, s.width - 14);
+    let step = 0;
+    for (let y = floor - 2; y >= 3; y -= 2, step++) {
+      const travel = (step * 4) % (span * 2);
+      const offset = travel <= span ? travel : span * 2 - travel;
+      const x = Math.min(s.width - 5, 3 + offset);
+      fill(g, x, Math.min(s.width - 2, x + 2), y, y, "R");
+      if (step % 3 === 1 && y > 4) put(g, x + 1, y - 1, "$");
+    }
+    const bossX = Math.floor(s.width / 2);
+    fill(g, Math.max(0, bossX - 2), Math.min(s.width - 1, bossX + 2), 0, 4, ".");
+    if (s.boss) put(g, bossX, 2, "B");
+    else put(g, bossX, 2, "F");
+    return g;
+  }
 
   if (s.water) {
     // Open swimming routes with staggered rock shelves and clear channels.
@@ -209,17 +230,21 @@ function makeStage(s: StageSpec): G {
     }
     s.platforms.forEach(([x, y, len]) => {
       fill(g, x, Math.min(s.width - 2, x + len - 1), y, y, "R");
-      if (len > 3) put(g, Math.min(s.width - 2, x + Math.floor(len / 2)), Math.max(1, y - 2), "$");
+      if (len > 3 && y > 2) put(g, Math.min(s.width - 2, x + Math.floor(len / 2)), Math.max(1, y - 2), "$");
     });
     (s.blocks || []).forEach(([x, y]) => put(g, x, y, "R"));
-    for (let x = 14; x < s.width - 8; x += 29) put(g, x, 2 + ((x + s.seed) % Math.max(5, s.height - 5)), "p");
+    for (let x = 14; x < s.width - 8; x += 29) {
+      put(g, x, 2 + ((x + s.seed) % Math.max(5, s.height - 5)), "p");
+    }
+    const endX = s.startFacing === -1 ? 3 : s.width - 5;
+    const endY = s.vertical ? startY : Math.max(2, startY);
+    put(g, endX, endY, "F");
   } else {
     fill(g, 0, s.width - 1, floor, s.height - 1, "#");
     (s.pits || []).forEach(([x0, x1]) => fill(g, x0, x1, floor, s.height - 1, "."));
-    // Short, climbable ledges are deliberately varied by stage.
     s.platforms.forEach(([x, y, len, type = 0]) => {
       fill(g, x, Math.min(s.width - 2, x + len - 1), y, y, type === 1 ? "R" : "S");
-      if (len > 3 && type !== 2) put(g, Math.min(s.width - 2, x + Math.floor(len / 2)), y - 1, type === 1 ? "Q" : "$");
+      if (len > 3 && type !== 2 && y > 1) put(g, Math.min(s.width - 2, x + Math.floor(len / 2)), y - 1, type === 1 ? "Q" : "$");
     });
     for (let x = 15; x < s.width - 10; x += (s.name.startsWith("2 ") ? 17 : 23)) {
       const y = s.name.startsWith("2 ") ? floor - 1 : floor - 1 - ((Math.floor(x / 23) + s.seed) % 3);
@@ -227,12 +252,15 @@ function makeStage(s: StageSpec): G {
       if (x % 2) put(g, x + 4, y - 2, "$");
     }
     (s.blocks || []).forEach(([x, y, type]) => put(g, x, y, type === 1 ? "Q" : type === 2 ? "K" : "S"));
+    const endX = s.startFacing === -1 ? 3 : s.width - 5;
+    if (s.boss) {
+      const bossX = Math.min(s.width - 7, Math.max(5, endX - 5));
+      fill(g, bossX - 2, bossX + 2, Math.max(1, floor - 3), floor - 1, ".");
+      put(g, bossX, floor - 1, "B");
+    } else {
+      put(g, endX, floor - 1, "F");
+    }
   }
-
-  // Every stage has its own endpoint and boss arena marker.
-  const endX = s.width - 5;
-  if (s.boss) put(g, endX - 5, floor - 1, "B");
-  else put(g, endX, s.water ? Math.max(2, startY) : floor - 1, "F");
   return g;
 }
 
@@ -256,7 +284,7 @@ const STAGES: StageSpec[] = [
     platforms: [[18,7,5],[49,14,6],[83,5,5],[117,16,6],[151,7,5],[185,14,6],[220,6,5]], blocks: [[36,6,0],[101,12,0],[168,6,0],[234,12,0]] },
   { name: "10  BINGOO LOWLAND", width: 240, height: 12, theme: "hills", seed: 9, columns: 15, startY: 9, sky: "#e8b850", boss: true, bossName: "Parplin the Pursuer",
     platforms: [[12,7,5],[34,5,5],[58,8,6],[83,4,5],[108,7,6],[133,5,5],[158,8,6],[184,4,5],[209,7,6]], pits: [[23,27],[47,51],[73,77],[98,102],[123,127],[148,152],[174,178],[199,203],[224,228]], blocks: [[15,6,1],[62,7,0],[111,6,2],[161,7,1],[212,6,0]] },
-  { name: "11  RADAXIAN CASTLE", width: 80, height: 48, theme: "castle", seed: 10, columns: 5, startX: 2, startY: 21, vertical: true, sky: "#200820", boss: true, bossName: "Gooseka the Slippery",
+  { name: "11  RADAXIAN CASTLE", width: 80, height: 48, theme: "castle", seed: 10, columns: 5, startX: 2, startY: 45, vertical: true, sky: "#200820", boss: true, bossName: "Gooseka the Slippery",
     platforms: [[8,39,8],[22,34,7],[38,29,8],[54,24,7],[10,19,8],[27,14,8],[45,9,8],[61,5,7]], blocks: [[12,38,2],[26,33,1],[42,28,2],[58,23,1],[14,18,0],[31,13,2],[49,8,1]] },
   { name: "12  RADAXIAN CITY", width: 48, height: 12, theme: "castle", seed: 11, columns: 3, startY: 9, sky: "#301838", boss: true, bossName: "Chokkinna the Sly",
     platforms: [[7,7,5],[19,5,5],[32,7,6]], pits: [[14,17],[27,30]], blocks: [[9,6,1],[22,4,0],[35,6,2]] },
@@ -266,7 +294,7 @@ const STAGES: StageSpec[] = [
     platforms: [[8,7,5],[20,5,5]], pits: [[15,18]], blocks: [[10,6,1],[22,4,0]] },
   { name: "15  KINGDOM OF NIBANA PART 2", width: 176, height: 12, theme: "hills", seed: 14, columns: 11, startY: 9, sky: "#788848", boss: true, bossName: "Parplin the Pursuer",
     platforms: [[10,7,6],[31,4,5],[53,6,6],[76,3,5],[99,7,6],[122,4,5],[145,6,6]], pits: [[22,26],[44,48],[67,71],[90,94],[113,117],[136,140],[159,163]], blocks: [[14,6,1],[57,5,0],[103,6,2],[149,5,1]] },
-  { name: "16  JANKEN'S CASTLE", width: 112, height: 72, theme: "castle", seed: 15, columns: 7, startX: 2, startY: 9, vertical: true, sky: "#200820", boss: true, bossName: "Janken the Great",
+  { name: "16  JANKEN'S CASTLE", width: 112, height: 72, theme: "castle", seed: 15, columns: 7, startX: 2, startY: 69, vertical: true, sky: "#200820", boss: true, bossName: "Janken the Great",
     platforms: [[8,63,8],[24,57,7],[42,51,8],[61,45,7],[80,39,8],[96,33,7],[12,27,8],[31,21,7],[50,15,8],[70,9,7],[91,4,8]], blocks: [[12,62,2],[28,56,1],[46,50,2],[65,44,1],[84,38,2],[100,32,1],[16,26,2],[35,20,1],[54,14,2],[74,8,1]] },
   { name: "17  CRAGG LAKE", width: 32, height: 24, theme: "lake", water: true, vertical: true, seed: 16, columns: 2, startX: 18, startY: 17, sky: "#102b70",
     platforms: [[8,8,5],[20,16,5],[9,25,5]], blocks: [[10,7,0],[22,15,0]] }
@@ -274,5 +302,5 @@ const STAGES: StageSpec[] = [
 
 export const LEVELS: LevelDef[] = [
   { name: "1  MT. ETERNAL", theme: "hills", water: false, vertical: true, waterStartY: 108 * 16, sky: "#5c94fc", grid: mtEternal() },
-  ...STAGES.map((s, i) => ({ name: s.name, theme: s.theme, water: !!s.water, vertical: !!s.vertical, startFacing: s.startFacing, sky: s.sky, bossName: s.bossName, grid: s.grid || (i === 0 || (i === 1 && s.water) ? makeStage(s) : makeOriginalStage(i + 2, s)) }))
+  ...STAGES.map((s, i) => ({ name: s.name, theme: s.theme, water: !!s.water, vertical: !!s.vertical, startFacing: s.startFacing, sky: s.sky, bossName: s.bossName, grid: s.grid || makeStage(s) }))
 ];
