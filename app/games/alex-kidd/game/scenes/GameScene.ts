@@ -18,6 +18,7 @@ export class GameScene extends Phaser.Scene {
   player!: Spr;
   solids!: Phaser.Physics.Arcade.StaticGroup;
   terrain!: Phaser.Physics.Arcade.StaticGroup;
+  rocks!: Phaser.Physics.Arcade.StaticGroup;
   enemies!: Phaser.Physics.Arcade.Group;
   pickups!: Phaser.Physics.Arcade.Group;
   shots!: Phaser.Physics.Arcade.Group;
@@ -74,6 +75,7 @@ export class GameScene extends Phaser.Scene {
 
     this.solids = this.physics.add.staticGroup();
     this.terrain = this.physics.add.staticGroup();
+    this.rocks = this.physics.add.staticGroup();
     this.enemies = this.physics.add.group();
     this.pickups = this.physics.add.group({ allowGravity: false });
     this.shots = this.physics.add.group({ allowGravity: false });
@@ -120,10 +122,12 @@ export class GameScene extends Phaser.Scene {
 
     this.physics.add.collider(this.player, this.solids);
     this.physics.add.collider(this.player, this.terrain);
+    this.physics.add.collider(this.player, this.rocks, (_p, rock) => this.hitRock(rock as Phaser.Physics.Arcade.Image));
     this.physics.add.collider(this.player, this.puzzleTiles, (_p, tile) => this.stepCraggPuzzle(tile as Phaser.Physics.Arcade.Image));
     const walkingScorpion = (e) => (e as Spr).getData("type") === "w";
     this.physics.add.collider(this.enemies, this.solids, undefined, walkingScorpion, this);
     this.physics.add.collider(this.enemies, this.terrain, undefined, walkingScorpion, this);
+    this.physics.add.collider(this.enemies, this.rocks, undefined, walkingScorpion, this);
     this.physics.add.overlap(this.player, this.enemies, () => this.die());
     this.physics.add.overlap(this.player, this.ghosts, () => this.die());
     this.physics.add.overlap(this.player, this.hazards, () => this.die());
@@ -137,9 +141,11 @@ export class GameScene extends Phaser.Scene {
     };
     this.physics.add.overlap(this.shots, this.solids, hitSolidWithShot, undefined, this);
     this.physics.add.overlap(this.shots, this.terrain, hitSolidWithShot, undefined, this);
+    this.physics.add.overlap(this.shots, this.rocks, (_s, rock) => (rock as Spr).destroy());
     const destroyHazard = (h) => (h as Spr).destroy();
     this.physics.add.collider(this.hazards, this.solids, destroyHazard, undefined, this);
     this.physics.add.collider(this.hazards, this.terrain, destroyHazard, undefined, this);
+    this.physics.add.collider(this.hazards, this.rocks, destroyHazard, undefined, this);
 
     if (goal) this.makeGoal((goal as { x: number }).x, (goal as { y: number }).y);
     if (bossAt) this.spawnBoss((bossAt as { x: number }).x, (bossAt as { y: number }).y);
@@ -240,11 +246,18 @@ export class GameScene extends Phaser.Scene {
     for (let y = 0; y < rows.length; y++) {
       for (let x = 0; x < rows[y].length; x++) {
         const id = key(x, y);
-        if (used.has(id) || (rows[y][x] !== "#" && rows[y][x] !== "R")) continue;
+        if (used.has(id)) continue;
+        if (rows[y][x] === "R") {
+          const rock = this.rocks.create(x * T + 8, y * T + 8, "rock") as Phaser.Physics.Arcade.Image;
+          rock.setData("tx", x).setData("ty", y).setVisible(false);
+          used.add(id);
+          continue;
+        }
+        if (rows[y][x] !== "#") continue;
         let width = 0;
         while (x + width < rows[y].length) {
           const cell = key(x + width, y);
-          if (used.has(cell) || (rows[y][x + width] !== "#" && rows[y][x + width] !== "R")) break;
+          if (used.has(cell) || rows[y][x + width] !== "#") break;
           width++;
         }
         let height = 1;
@@ -252,7 +265,7 @@ export class GameScene extends Phaser.Scene {
           let complete = true;
           for (let dx = 0; dx < width; dx++) {
             const cell = key(x + dx, y + height);
-            if (used.has(cell) || (rows[y + height][x + dx] !== "#" && rows[y + height][x + dx] !== "R")) {
+            if (used.has(cell) || rows[y + height][x + dx] !== "#") {
               complete = false;
               break;
             }
@@ -270,6 +283,20 @@ export class GameScene extends Phaser.Scene {
         ) as Phaser.Physics.Arcade.Image;
         collider.setDisplaySize(width * T, height * T).refreshBody().setVisible(false);
       }
+    }
+  }
+
+  hitRock(rock: Phaser.Physics.Arcade.Image) {
+    if (!state.motorcycle || this.L.water || !rock.active) return;
+    const x = rock.x;
+    const y = rock.y;
+    this.solidSet.delete(key(rock.getData("tx"), rock.getData("ty")));
+    rock.destroy();
+    sfx.brk();
+    for (let i = 0; i < 4; i++) {
+      const debris = this.physics.add.image(x + (i % 2 ? 4 : -4), y + (i < 2 ? -4 : 4), "debris");
+      debris.setVelocity((i % 2 ? 1 : -1) * (45 + Math.random() * 45), -120 - Math.random() * 60);
+      this.time.delayedCall(650, () => debris.destroy());
     }
   }
 
