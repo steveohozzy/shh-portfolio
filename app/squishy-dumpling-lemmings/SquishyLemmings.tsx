@@ -80,7 +80,7 @@ export default function SquishyLemmings(){
    const wall=g.terrain.some(t=>b.dir===1?b.x+BAO_W/2>=t.x&&b.x+BAO_W/2<=t.x+9&&b.y+BAO_H/2>t.y+4&&b.y-BAO_H/2<t.y+t.h:b.x-BAO_W/2<=t.x+t.w&&b.x-BAO_W/2>=t.x+t.w-9&&b.y+BAO_H/2>t.y+4&&b.y-BAO_H/2<t.y+t.h)
    const nextBao=g.baos.some(o=>o.id!==b.id&&!o.saved&&!o.lost&&Math.abs(o.y-b.y)<BAO_H*.7&&Math.abs(o.x-b.x)<BAO_W*.8&&Math.sign(o.x-b.x)===b.dir)
    if(b.skill==="blocker"){b.vx=0;b.vy=0;return}
-   if(b.skill==="basher"&&supported){const target=g.terrain.find(t=>b.dir===1?b.x+BAO_W/2>=t.x-2&&b.x+BAO_W/2<=t.x+16&&b.y>=t.y-10&&b.y<=t.y+t.h:b.x-BAO_W/2<=t.x+t.w+2&&b.x-BAO_W/2>=t.x+t.w-16&&b.y>=t.y-10&&b.y<=t.y+t.h);if(target){target.x+=b.dir*3;target.w-=3;if(target.w<8)g.terrain=g.terrain.filter(t=>t.id!==target.id);b.x+=b.dir*3;b.y-=1;return}else b.skill=undefined}
+   if(b.skill==="basher"&&supported){const target=g.terrain.find(t=>b.dir===1?b.x+BAO_W/2>=t.x-2&&b.x+BAO_W/2<=t.x+16&&b.y>=t.y-BAO_H&&b.y<=t.y+t.h:b.x-BAO_W/2<=t.x+t.w+2&&b.x-BAO_W/2>=t.x+t.w-16&&b.y>=t.y-10&&b.y<=t.y+t.h);if(target){target.x+=b.dir*3;target.w-=3;if(target.w<8)g.terrain=g.terrain.filter(t=>t.id!==target.id);b.x+=b.dir*3;b.y-=1;return}else b.skill=undefined}
    if(b.skill==="digger"&&supported){const t=nearby!;t.h-=5;t.y+=5;b.y+=5;if(t.h<=5)g.terrain=g.terrain.filter(q=>q.id!==t.id);return}
    if(b.skill==="miner"&&supported&&b.action%5===0){const t=nearby!;t.x+=b.dir*5;t.y+=3;t.w-=5;t.h-=3;b.x+=b.dir*5;b.y+=3;if(t.w<12||t.h<8)g.terrain=g.terrain.filter(q=>q.id!==t.id);b.action++;return}
    if(b.skill==="builder"&&supported&&b.action%9===0&&b.buildCount<12){g.terrain.push({id:Date.now()+b.id+b.buildCount,x:b.x+b.dir*7,y:b.y-5,w:23,h:8,kind:"step"});b.x+=b.dir*8;b.y-=5;b.buildCount++;b.action++;return}
