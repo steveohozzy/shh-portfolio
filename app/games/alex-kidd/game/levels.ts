@@ -211,8 +211,11 @@ function makeStage(s: StageSpec): G {
       fill(g, x, Math.min(s.width - 2, x + 2), y, y, "R");
       if (step % 3 === 1 && y > 4) put(g, x + 1, y - 1, "$");
     }
-    const bossX = Math.floor(s.width / 2);
-    fill(g, Math.max(0, bossX - 2), Math.min(s.width - 1, bossX + 2), 0, 4, ".");
+    const lastStep = Math.floor((floor - 5) / 2);
+    const finalTravel = (lastStep * 4) % (span * 2);
+    const finalOffset = finalTravel <= span ? finalTravel : span * 2 - finalTravel;
+    const bossX = Math.min(s.width - 3, 4 + finalOffset);
+    fill(g, Math.max(0, bossX - 2), Math.min(s.width - 1, bossX + 2), 1, 3, ".");
     if (s.boss) put(g, bossX, 2, "B");
     else put(g, bossX, 2, "F");
     return g;
