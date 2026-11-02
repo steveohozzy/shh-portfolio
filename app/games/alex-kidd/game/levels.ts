@@ -197,6 +197,7 @@ function makeOriginalStage(stageNo: number, spec: StageSpec): G {
   if (stageNo === 17) {
     // The entrance is the open doorway in the lower centre of the original
     // Cragg Lake screen; the Hirotta Stone chamber is handled as a separate room.
+    put(g, 8, 7, "f");
     put(g, 8, 10, "F");
   } else {
     const hasExit = entities.some(([, , , entity]) => entity === "F");
