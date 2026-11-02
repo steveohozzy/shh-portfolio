@@ -528,7 +528,7 @@ export class GameScene extends Phaser.Scene {
     this.time.delayedCall(2000, () => {
       state.lives--;
       state.bracelet = false;
-      if (state.lives < 0) this.scene.start("End", { win: false });
+      if (state.lives <= 0) this.scene.start("End", { win: false });
       else this.scene.restart({ level: this.levelIdx });
     });
   }
