@@ -274,5 +274,5 @@ const STAGES: StageSpec[] = [
 
 export const LEVELS: LevelDef[] = [
   { name: "1  MT. ETERNAL", theme: "hills", water: false, vertical: true, waterStartY: 108 * 16, sky: "#5c94fc", grid: mtEternal() },
-  ...STAGES.map((s, i) => ({ name: s.name, theme: s.theme, water: !!s.water, vertical: !!s.vertical, startFacing: s.startFacing, sky: s.sky, bossName: s.bossName, grid: s.grid || (i === 0 ? makeStage(s) : makeOriginalStage(i + 2, s)) }))
+  ...STAGES.map((s, i) => ({ name: s.name, theme: s.theme, water: !!s.water, vertical: !!s.vertical, startFacing: s.startFacing, sky: s.sky, bossName: s.bossName, grid: s.grid || (i === 0 || (i === 1 && s.water) ? makeStage(s) : makeOriginalStage(i + 2, s)) }))
 ];
