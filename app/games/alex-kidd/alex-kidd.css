@@ -393,3 +393,18 @@
     height: 100% !important;
   }
 }
+
+
+.ak-level-select {
+  max-width: 190px;
+  min-width: 120px;
+  appearance: auto;
+}
+.ak-level-select option {
+  background: #21180f;
+  color: #ffe078;
+}
+@media (max-width: 700px), (pointer: coarse) {
+  .ak-game-tools { left: 8px; right: 8px; justify-content: flex-end; }
+  .ak-level-select { max-width: 128px; min-width: 94px; width: 128px; padding: 7px 4px; }
+}
