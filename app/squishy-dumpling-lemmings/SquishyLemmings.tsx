@@ -134,7 +134,7 @@ export default function SquishyLemmings(){
    ctx.restore()
   })
   ctx.restore()
- },[game,level])
+ },[game,level,camera])
  useEffect(()=>{draw();const resize=()=>draw();window.addEventListener("resize",resize);return()=>window.removeEventListener("resize",resize)},[draw])
  const clickWorld=(e:React.MouseEvent<HTMLCanvasElement>)=>{const r=e.currentTarget.getBoundingClientRect();const x=(e.clientX-r.left)/r.width*W+cameraRef.current;const y=(e.clientY-r.top)/r.height*H;const hit=game.baos.filter(b=>!b.saved&&!b.lost&&Math.abs(b.x-x)<22&&Math.abs(b.y-y)<23).sort((a,b)=>Math.abs(a.x-x)+Math.abs(a.y-y)-Math.abs(b.x-x)-Math.abs(b.y-y))[0];if(hit)assign(hit.id)}
  const scroll=(direction:number)=>{const next=clamp(cameraRef.current+direction*W*.72,0,level.width-W);cameraRef.current=next;setCamera(next)}
