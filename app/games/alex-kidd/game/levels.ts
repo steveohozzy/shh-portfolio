@@ -207,6 +207,15 @@ function makeOriginalStage(stageNo: number, spec: StageSpec): G {
       if (step % 4 === 1 && y > 5) put(g, Math.min(105, x + 9), y - 1, "$");
     }
 
+    // Carry the upper route across to Janken's original arena. Alex can
+    // step off the top ledge onto this lower bridge, then drop into the
+    // clear boss chamber at the far right.
+    fill(g, 43, 106, 2, 3, ".");
+    fill(g, 40, 106, 4, 4, "#");
+    fill(g, 100, 110, 5, 22, ".");
+    fill(g, 96, 111, 23, 23, "#");
+    fill(g, 96, 111, 21, 22, ".");
+
     // The entrance is a safe landing platform, not a sealed starting pocket.
     fill(g, 14, 36, 18, 20, ".");
     fill(g, 12, 34, 21, 21, "#");
