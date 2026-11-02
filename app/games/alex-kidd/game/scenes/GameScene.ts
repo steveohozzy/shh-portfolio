@@ -327,7 +327,7 @@ export class GameScene extends Phaser.Scene {
     };
     if (this.levelIdx === 3) addNpc(4 * 256 + 152, 136, 0x78d8a0,
       "SAINT NURARI: YOU ARE PRINCE ALEX OF RADAXIAN. JANKEN HAS TAKEN YOUR KINGDOM. FIND THE WAY TO SAVE YOUR PEOPLE.");
-    if (this.levelIdx === 5) addNpc(8 * 256 + 208, 136, 0xd8c8a0,
+    if (this.levelIdx === 5) addNpc(8 * 256 + 160, 136, 0xd8c8a0,
       "VILLAGE ELDER: YOUR ELDER BROTHER IS PRISONER IN RADAXIAN CASTLE. YOU ARE THE ONLY ONE WHO CAN RESCUE HIM.");
     if (this.levelIdx === 10) addNpc(2 * 256 + 112, 2 * 192 + 128, 0x88b8f8,
       "EGLE: THE MOONLIGHT STONE IS IN NIBANA. FIND THE LETTER HIDDEN IN THIS CASTLE AND TAKE IT TO THE KINGDOM.");
