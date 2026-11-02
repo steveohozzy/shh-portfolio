@@ -121,13 +121,12 @@ export class EndScene extends Phaser.Scene {
     this.prompt = txt(this, 128, 178, "PRESS START", 6);
     sfx.music(null);
     this.ctl = new Controls(this);
-    this.time.delayedCall(1000, () => {
-      this.ready = true;
-      this.input.once("pointerdown", () => {
-        if (d.win && this.page < this.pages.length - 1) this.nextPage();
-        else this.scene.start("Title");
-      });
+    this.input.on("pointerdown", () => {
+      if (!this.ready) return;
+      if (d.win && this.page < this.pages.length - 1) this.nextPage();
+      else this.scene.start("Title");
     });
+    this.time.delayedCall(1000, () => { this.ready = true; });
   }
   nextPage() {
     this.page++;
