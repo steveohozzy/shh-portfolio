@@ -30,17 +30,12 @@ export class GameScene extends Phaser.Scene {
   facing = 1; coyoteTime = 0; punchT = 0; dead = false; cleared = false; frozenUntil = 0; bubbleT = 0; waterEntered = false; waterExitBlocked = false;
   boss?: Spr; bossHp = 6; bossFight = false; bossTimer = 1; bossMove = 0; bossInv = 0; arenaX = 0;
   jankenActive = false; jankenDone = false;
-  room: "dive" | "puzzle" = "dive";
   puzzleTiles!: Phaser.Physics.Arcade.StaticGroup;
   puzzleSpikes!: Phaser.Physics.Arcade.StaticGroup;
   puzzleStep = 0;
   puzzleLastTile: Phaser.Physics.Arcade.Image | null = null;
   puzzleHint?: Phaser.GameObjects.Text;
   hirottaStone?: Phaser.GameObjects.Image;
-  doorOpened = false;
-  doorBlockedMessage = false;
-  doorX = 0;
-  doorY = 0;
   storyMessageOpen = false;
   shieldUntil = 0;
   spikesSpawned = false;
@@ -50,15 +45,10 @@ export class GameScene extends Phaser.Scene {
   storyNpcs: Array<{ sprite: Phaser.GameObjects.Image; dialogue: string }> = [];
   jk = { sel: 0, you: 0, them: 0, phase: "choose" as "choose" | "reveal", ui: [] as Phaser.GameObjects.GameObject[], cursor: null as Phaser.GameObjects.Text | null, bossHand: null as Phaser.GameObjects.Image | null, info: null as Phaser.GameObjects.Text | null, score: null as Phaser.GameObjects.Text | null };
 
-  init(d: { level: number; room?: "dive" | "puzzle" }) {
+  init(d: { level: number }) {
     this.levelIdx = d.level ?? 0;
-    this.room = d.room || "dive";
     this.puzzleStep = 0;
     this.puzzleLastTile = null;
-    this.doorOpened = false;
-    this.doorBlockedMessage = false;
-    this.doorX = 0;
-    this.doorY = 0;
     this.storyMessageOpen = false;
     this.shieldUntil = 0;
     this.spikesSpawned = false;
@@ -835,7 +825,6 @@ export class GameScene extends Phaser.Scene {
 
   updateMisc(time: number, dt: number) {
     const p = this.player;
-    if (this.doorBlockedMessage && Phaser.Math.Distance.Between(p.x, p.y, this.doorX, this.doorY) > 30) this.doorBlockedMessage = false;
     for (const g of [...this.ghosts.getChildren()] as Spr[]) {
       const age = time - (g.getData("born") as number);
       const a = Phaser.Math.Angle.Between(g.x, g.y, p.x, p.y);
