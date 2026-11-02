@@ -39,6 +39,7 @@ export class GameScene extends Phaser.Scene {
   doorOpened = false;
   storyMessageOpen = false;
   shieldUntil = 0;
+  spikesSpawned = false;
   paused = false;
   pauseUi: Phaser.GameObjects.GameObject[] = [];
   soundLabel?: Phaser.GameObjects.Text;
@@ -53,6 +54,7 @@ export class GameScene extends Phaser.Scene {
     this.doorOpened = false;
     this.storyMessageOpen = false;
     this.shieldUntil = 0;
+    this.spikesSpawned = false;
     this.paused = false;
     this.pauseUi = [];
     this.storyNpcs = [];
@@ -255,6 +257,15 @@ export class GameScene extends Phaser.Scene {
     this.solidSet.add(key(tx, ty));
   }
 
+  spawnSpike(x: number, y: number) {
+    const spike = this.hazards.create(x, y, "spike") as Spr;
+    const body = spike.body as Body;
+    body.setAllowGravity(false);
+    body.setImmovable(true);
+    body.setSize(12, 8).setOffset(2, 4);
+    spike.setDepth(7);
+  }
+
   spawnPickup(x: number, y: number, type: string, pop = true) {
     const it = this.pickups.create(x, y, type) as Spr;
     it.setData("type", type);
@@ -372,6 +383,10 @@ export class GameScene extends Phaser.Scene {
     sfx.coin();
     if (this.puzzleStep === 10) {
       this.puzzleHint?.setText("THE GOLD CROWN HAS APPEARED!");
+      if (!this.spikesSpawned) {
+        this.spikesSpawned = true;
+        [22, 23, 24].forEach((x) => this.spawnSpike(x * T + 8, 10 * T + 8));
+      }
       this.spawnPickup(23 * T + 8, 7 * T + 8, "crown", false);
       sfx.clear();
     }
