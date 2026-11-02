@@ -114,8 +114,7 @@ export class GameScene extends Phaser.Scene {
 
     this.physics.add.collider(this.player, this.solids);
     this.physics.add.collider(this.player, this.terrain);
-    this.physics.add.collider(this.player, this.puzzleTiles);
-    this.physics.add.overlap(this.player, this.puzzleTiles, (_p, tile) => this.stepCraggPuzzle(tile as Phaser.Physics.Arcade.Image));
+    this.physics.add.collider(this.player, this.puzzleTiles, (_p, tile) => this.stepCraggPuzzle(tile as Phaser.Physics.Arcade.Image));
     const walkingScorpion = (e) => (e as Spr).getData("type") === "w";
     this.physics.add.collider(this.enemies, this.solids, undefined, walkingScorpion, this);
     this.physics.add.collider(this.enemies, this.terrain, undefined, walkingScorpion, this);
@@ -325,6 +324,7 @@ export class GameScene extends Phaser.Scene {
     const text = this.add.text(128, 145, message + "\n\nPRESS X", { fontFamily: FONT, fontSize: "6px", color: "#ffffff", align: "center", lineSpacing: 4 }).setOrigin(0.5).setScrollFactor(0).setDepth(91);
     this.physics.pause();
     const close = () => {
+      if (!this.storyMessageOpen) return;
       panel.destroy();
       text.destroy();
       this.storyMessageOpen = false;
@@ -743,11 +743,10 @@ export class GameScene extends Phaser.Scene {
       if (age > 9000) g.destroy();
     }
     for (const s of [...this.shots.getChildren()] as Spr[]) if (time - (s.getData("born") as number) > 650) s.destroy();
-    if (this.room === "puzzle") {
-      for (const tile of [...this.puzzleTiles.getChildren()] as Phaser.Physics.Arcade.Image[]) {
-        if (this.puzzleLastTile === tile && !Phaser.Geom.Intersects.RectangleToRectangle(this.player.getBounds(), tile.getBounds())) this.puzzleLastTile = null;
-        if (this.puzzleLastTile !== tile) tile.setData("stepLock", false);
-      }
+    if (this.room === "puzzle" && this.puzzleLastTile &&
+      Phaser.Math.Distance.Between(this.player.x, this.player.y, this.puzzleLastTile.x, this.puzzleLastTile.y) > 20) {
+      this.puzzleLastTile.setData("stepLock", false);
+      this.puzzleLastTile = null;
     }
     for (const h of [...this.hazards.getChildren()] as Spr[]) if (h.y > this.L.grid.length * T + 32) h.destroy();
 
