@@ -93,6 +93,7 @@ export class GameScene extends Phaser.Scene {
       else if (c === "o") this.spawnPickup(x, y, "treasure", false);
       else if (c === "w" || c === "v" || c === "p") this.spawnEnemy(c, x, y);
       else if ("abcde".indexOf(c) !== -1 && this.room === "puzzle") this.addPuzzleSymbol(tx, ty, c);
+      else if (c === "L") this.spawnPickup(x, y, "letter", false);
       else if (c === "F") goal = { x, y };
       else if (c === "P") start = { x, y };
       else if (c === "B") bossAt = { x, y };
@@ -262,7 +263,16 @@ export class GameScene extends Phaser.Scene {
   tryTalkToNpc() {
     for (const npc of this.storyNpcs) {
       if (!npc.sprite.active || Phaser.Math.Distance.Between(this.player.x, this.player.y, npc.sprite.x, npc.sprite.y) > 30) continue;
-      this.showStoryMessage(npc.dialogue);
+      if (this.levelIdx === 13) {
+        if (state.letterToNibana) {
+          state.hirottaStone = true;
+          this.showStoryMessage("KING HIGH STONE: YOU HAVE BROUGHT THE LETTER. THE MOONLIGHT STONE WAS STOLEN. TAKE THE HIROTTA STONE SLAB. THE CROWN IS IN LAKE DEEP.");
+        } else {
+          this.showStoryMessage("KING HIGH STONE: FIND THE AUTOGRAPHED LETTER IN RADAXIAN CASTLE AND BRING IT TO NIBANA.");
+        }
+      } else {
+        this.showStoryMessage(npc.dialogue);
+      }
       sfx.select();
       return true;
     }
@@ -339,6 +349,7 @@ export class GameScene extends Phaser.Scene {
     else if (t === "treasure") { state.money += 100; sfx.power(); }
     else if (t === "bracelet") { state.bracelet = true; sfx.power(); }
     else if (t === "life") { state.lives++; sfx.power(); }
+    else if (t === "letter") { state.letterToNibana = true; sfx.power(); }
     else if (t === "crown") {
       state.goldCrown = true;
       it.destroy();
@@ -445,8 +456,6 @@ export class GameScene extends Phaser.Scene {
 
   clearLevel() {
     if (this.cleared || this.dead) return;
-    if (this.levelIdx === 10) state.letterToNibana = true;
-    if (this.levelIdx === 13) state.hirottaStone = true;
     if (this.levelIdx === 14) state.moonlightStone = true;
     if (this.levelIdx === 15) state.sunStone = true;
     this.cleared = true;
