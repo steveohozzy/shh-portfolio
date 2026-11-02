@@ -188,17 +188,30 @@ function makeOriginalStage(stageNo: number, spec: StageSpec): G {
   // traversal order, so retain the decoded screens and connect the original
   // spawn chamber to the alternating ascent route.
   if (stageNo === 16) {
+    // Keep the castle's lower rooms open. The previous full-width floor
+    // turned the stage into a single corridor and sealed off the lower map.
+    // Replace it with a climbable sequence of short, alternating ledges.
     fill(g, 1, 110, 22, 22, ".");
-    fill(g, 1, 110, 23, 23, "#");
-    fill(g, 18, 22, 17, 22, ".");
-    fill(g, 18, 22, 18, 18, ".");
-    fill(g, 25, 29, 16, 18, ".");
-    fill(g, 32, 36, 13, 16, ".");
-    fill(g, 39, 43, 10, 13, ".");
-    fill(g, 46, 50, 7, 10, ".");
-    fill(g, 53, 57, 4, 7, ".");
-    fill(g, 60, 64, 2, 4, ".");
-    fill(g, 16, 22, 17, 21, ".");
+    fill(g, 15, 22, 21, 21, "#");
+    fill(g, 15, 22, 17, 20, ".");
+    fill(g, 25, 32, 19, 19, "#");
+    fill(g, 25, 32, 15, 18, ".");
+    fill(g, 35, 42, 17, 17, "#");
+    fill(g, 35, 42, 13, 16, ".");
+    fill(g, 45, 52, 15, 15, "#");
+    fill(g, 45, 52, 11, 14, ".");
+    fill(g, 55, 62, 13, 13, "#");
+    fill(g, 55, 62, 9, 12, ".");
+    fill(g, 65, 72, 11, 11, "#");
+    fill(g, 65, 72, 7, 10, ".");
+    fill(g, 75, 82, 9, 9, "#");
+    fill(g, 75, 82, 5, 8, ".");
+    fill(g, 85, 92, 7, 7, "#");
+    fill(g, 85, 92, 3, 6, ".");
+    fill(g, 95, 102, 5, 5, "#");
+    fill(g, 95, 102, 1, 4, ".");
+    // Spawn on the lower approach, with enough headroom to jump onto ledge 1.
+    fill(g, 17, 21, 18, 20, ".");
     put(g, 18, 20, "P");
   }
 
