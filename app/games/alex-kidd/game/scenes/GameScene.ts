@@ -403,7 +403,7 @@ export class GameScene extends Phaser.Scene {
     if (this.storyMessageOpen) return;
     this.storyMessageOpen = true;
     const panel = this.add.rectangle(128, 150, 238, 62, 0x080820, 0.94).setScrollFactor(0).setDepth(90).setStrokeStyle(1, 0xf8d820);
-    const text = this.add.text(128, 145, message + "\n\nPRESS C / TAP", { fontFamily: FONT, fontSize: "6px", color: "#ffffff", align: "center", lineSpacing: 4 }).setOrigin(0.5).setScrollFactor(0).setDepth(91);
+    const text = this.add.text(128, 145, message + "\n\nPRESS C / TAP", { fontFamily: FONT, fontSize: "6px", color: "#ffffff", align: "center", lineSpacing: 4, wordWrap: { width: 218 } }).setOrigin(0.5).setScrollFactor(0).setDepth(91);
     this.physics.pause();
     const close = () => {
       if (!this.storyMessageOpen) return;
