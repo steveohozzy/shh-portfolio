@@ -326,17 +326,6 @@ const STAGES: StageSpec[] = [
   { name: "17  CRAGG LAKE", width: 32, height: 24, theme: "lake", water: true, vertical: true, seed: 16, columns: 2, startX: 17, startY: 8, sky: "#102b70", platforms: [], blocks: [] }
 ];
 
-export function makeCraggPuzzleStage(): G {
-  const g = grid(26, 12);
-  fill(g, 0, 25, 11, 11, "#");
-  fill(g, 0, 25, 10, 10, ".");
-  put(g, 1, 9, "P");
-  const symbols = ["a", "b", "c", "d", "a", "c", "b", "e", "d", "e"];
-  symbols.forEach((symbol, index) => put(g, 3 + index * 2, 11, symbol));
-  fill(g, 21, 25, 8, 8, "R");
-  return g;
-}
-
 export const LEVELS: LevelDef[] = [
   { name: "1  MT. ETERNAL", theme: "hills", water: false, vertical: true, waterStartY: 108 * 16, sky: "#5c94fc", grid: mtEternal() },
   ...STAGES.map((s, i) => ({ name: s.name, theme: s.theme, water: !!s.water, vertical: !!s.vertical, startFacing: s.startFacing, sky: s.sky, bossName: s.bossName, grid: makeOriginalStage(i + 2, s) }))
