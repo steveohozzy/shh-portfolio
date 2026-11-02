@@ -39,6 +39,9 @@ export class GameScene extends Phaser.Scene {
   doorOpened = false;
   storyMessageOpen = false;
   shieldUntil = 0;
+  paused = false;
+  pauseUi: Phaser.GameObjects.GameObject[] = [];
+  soundLabel?: Phaser.GameObjects.Text;
   storyNpcs: Array<{ sprite: Phaser.GameObjects.Image; dialogue: string }> = [];
   jk = { sel: 0, you: 0, them: 0, phase: "choose" as "choose" | "reveal", ui: [] as Phaser.GameObjects.GameObject[], cursor: null as Phaser.GameObjects.Text | null, bossHand: null as Phaser.GameObjects.Image | null, info: null as Phaser.GameObjects.Text | null, score: null as Phaser.GameObjects.Text | null };
 
@@ -50,6 +53,8 @@ export class GameScene extends Phaser.Scene {
     this.doorOpened = false;
     this.storyMessageOpen = false;
     this.shieldUntil = 0;
+    this.paused = false;
+    this.pauseUi = [];
     this.storyNpcs = [];
     this.solidSet = new Set();
     this.facing = 1; this.coyoteTime = 0; this.punchT = 0; this.dead = false; this.cleared = false; this.frozenUntil = 0; this.waterEntered = false; this.waterExitBlocked = false;
@@ -157,7 +162,46 @@ export class GameScene extends Phaser.Scene {
 
     this.ctl = new Controls(this);
     sfx.music(L.theme);
-    this.events.once("shutdown", () => sfx.music(null));
+    const pauseButton = this.add.text(224, 2, "P", { fontFamily: FONT, fontSize: "7px", color: "#f8d820" }).setScrollFactor(0).setDepth(70).setInteractive();
+    pauseButton.on("pointerdown", () => this.togglePause());
+    this.soundLabel = this.add.text(242, 2, sfx.isMuted() ? "M-" : "M+", { fontFamily: FONT, fontSize: "7px", color: "#f8d820" }).setScrollFactor(0).setDepth(70).setInteractive();
+    this.soundLabel.on("pointerdown", () => this.toggleSound());
+    this.input.keyboard?.on("keydown-P", this.togglePause, this);
+    this.input.keyboard?.on("keydown-ESC", this.togglePause, this);
+    this.input.keyboard?.on("keydown-M", this.toggleSound, this);
+    this.events.once("shutdown", () => {
+      sfx.music(null);
+      this.input.keyboard?.off("keydown-P", this.togglePause, this);
+      this.input.keyboard?.off("keydown-ESC", this.togglePause, this);
+      this.input.keyboard?.off("keydown-M", this.toggleSound, this);
+    });
+  }
+
+  togglePause() {
+    if (this.dead || this.cleared || this.jankenActive) return;
+    this.paused = !this.paused;
+    if (this.paused) {
+      this.physics.pause();
+      const panel = this.add.rectangle(128, 96, 180, 76, 0x080820, 0.94).setScrollFactor(0).setDepth(100).setStrokeStyle(1, 0xf8d820);
+      const title = this.add.text(128, 75, "PAUSED", { fontFamily: FONT, fontSize: "10px", color: "#f8d820" }).setOrigin(0.5).setScrollFactor(0).setDepth(101);
+      const resume = this.add.text(128, 112, "PRESS P TO RESUME", { fontFamily: FONT, fontSize: "6px", color: "#ffffff" }).setOrigin(0.5).setScrollFactor(0).setDepth(101).setInteractive();
+      resume.on("pointerdown", () => this.togglePause());
+      this.pauseUi = [panel, title, resume];
+      sfx.music(null);
+    } else {
+      this.pauseUi.forEach((item) => item.destroy());
+      this.pauseUi = [];
+      this.physics.resume();
+      if (!sfx.isMuted()) sfx.music(this.L.theme);
+    }
+  }
+
+  toggleSound() {
+    const muted = !sfx.isMuted();
+    sfx.setMuted(muted);
+    this.soundLabel?.setText(muted ? "M-" : "M+");
+    if (muted) sfx.music(null);
+    else if (!this.paused) sfx.music(this.L.theme);
   }
 
   addTerrainTile(tx: number, ty: number, tex: string) {
@@ -595,6 +639,7 @@ export class GameScene extends Phaser.Scene {
   update(time: number, delta: number) {
     const dt = Math.min(delta, 50) / 1000;
     this.ctl.update();
+    if (this.paused) return;
     this.bg.tilePositionX = this.cameras.main.scrollX * 0.35;
     this.bg.tilePositionY = this.L.vertical ? 0 : this.cameras.main.scrollY * 0.25;
     if (this.jankenActive) { this.updateJanken(); return; }
