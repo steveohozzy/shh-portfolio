@@ -688,7 +688,18 @@ export class GameScene extends Phaser.Scene {
       sfx.clear();
       const defeated = this.boss;
       const x = defeated ? defeated.x : this.player.x + this.facing * 48;
-      const y = defeated ? defeated.y : this.player.y;
+      let y = defeated ? defeated.y : this.player.y;
+      if (this.L.vertical) {
+        // Put the reward chest on the first solid tile beneath the boss so
+        // the player can land on the arena floor and collect it normally.
+        const tx = Phaser.Math.Clamp(Math.floor(x / T), 0, this.L.grid[0].length - 1);
+        for (let ty = Math.max(0, Math.floor(y / T)); ty < this.L.grid.length; ty++) {
+          if (this.L.grid[ty][tx] === "#") {
+            y = ty * T - 8;
+            break;
+          }
+        }
+      }
       if (defeated) defeated.destroy();
       this.boss = undefined;
       const banner = this.add.text(128, 80, "YOU WIN!", { fontFamily: FONT, fontSize: "8px", color: "#f8d820", stroke: "#000", strokeThickness: 3 }).setOrigin(0.5).setScrollFactor(0).setDepth(60);
