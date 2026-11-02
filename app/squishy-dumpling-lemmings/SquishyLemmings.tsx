@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
+import type { PointerEvent as ReactPointerEvent } from "react"
 
 type Skill = "climber" | "floater" | "bomber" | "blocker" | "builder" | "basher" | "miner" | "digger"
 type Terrain = { x:number; y:number; w:number; h:number; steel?:boolean; bridge?:boolean }
@@ -115,7 +116,7 @@ export default function SquishyLemmings(){
  const changeSpeed=(v:number)=>{setSpeed(v);const g=gameRef.current;if(g)g.speed=v}
  const selectLevel=(id:number)=>reset(id)
 
- const clickWorld=(event:React.PointerEvent<HTMLCanvasElement>)=>{
+ const clickWorld=(event:ReactPointerEvent<HTMLCanvasElement>)=>{
   const g=gameRef.current;if(!g||!g.running||g.paused)return
   const rect=event.currentTarget.getBoundingClientRect()
   const px=(event.clientX-rect.left)/rect.width*W+g.camera
@@ -195,12 +196,11 @@ export default function SquishyLemmings(){
      if(b.x<5){b.x=5;b.dir=1}
     })
     // Hazards and rescue percentage are evaluated after movement.
-    g.hazardsCheck?.()
     if(g.clock<=0||(g.spawned>=l.total&&g.baos.every(b=>b.saved||b.dead))){g.running=false;g.complete=g.saved>=Math.ceil(l.total*l.rescue/100);g.failed=!g.complete}
     if(g.saved>=Math.ceil(l.total*l.rescue/100)){g.running=false;g.complete=true;g.failed=false}
     const active=g.baos.filter(b=>!b.saved&&!b.dead).length
     if(g.complete){setBest(old=>{const next={...old,[l.id]:Math.max(old[l.id]||0,g.saved)};try{localStorage.setItem("sdlem-campaign-best",JSON.stringify(next))}catch{};return next})}
-    setHud({spawned:g.spawned,saved:g.saved,dead:g.dead,time:g.clock,rate:g.rate,active,percent:Math.floor(g.saved/l.total*100),paused:g.paused,running:g.running,complete:g.complete,failed:g.failed})
+    setCamera(g.camera);setHud({spawned:g.spawned,saved:g.saved,dead:g.dead,time:g.clock,rate:g.rate,active,percent:Math.floor(g.saved/l.total*100),paused:g.paused,running:g.running,complete:g.complete,failed:g.failed})
    }
    // Follow the parade, while allowing the user to move the camera with the scrollbar/minimap.
    const target=g.baos.find(b=>!b.saved&&!b.dead)
