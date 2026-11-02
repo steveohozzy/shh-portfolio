@@ -326,7 +326,6 @@ export function makeCraggPuzzleStage(): G {
   const symbols = ["a", "b", "c", "d", "a", "c", "b", "e", "d", "e"];
   symbols.forEach((symbol, index) => put(g, 3 + index * 2, 11, symbol));
   fill(g, 21, 25, 8, 8, "R");
-  put(g, 23, 6, "C");
   return g;
 }
 
