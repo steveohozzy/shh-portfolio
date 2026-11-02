@@ -1,6 +1,6 @@
 // @ts-nocheck
 import * as Phaser from "phaser";
-import { LEVELS, H, makeCraggPuzzleStage, type LevelDef } from "../levels";
+import { LEVELS, H, type LevelDef } from "../levels";
 import { state } from "../state";
 import { Controls, FONT } from "../controls";
 import { sfx } from "../sfx";
@@ -72,9 +72,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   create() {
-    this.L = this.room === "puzzle"
-      ? { ...LEVELS[this.levelIdx], name: "CRAGG LAKE - HIROTTA STONE", water: false, vertical: false, sky: "#102b70", grid: makeCraggPuzzleStage() }
-      : LEVELS[this.levelIdx];
+    this.L = LEVELS[this.levelIdx];
     const L = this.L;
     this.facing = L.startFacing || 1;
     const W = L.grid[0].length * T;
@@ -112,7 +110,8 @@ export class GameScene extends Phaser.Scene {
       else if (c === "g") this.spawnPickup(x, y, "gem", false);
       else if (c === "o") this.spawnPickup(x, y, "treasure", false);
       else if (c === "w" || c === "v" || c === "p" || c === "f") this.spawnEnemy(c, x, y);
-      else if ("abcde".indexOf(c) !== -1 && this.room === "puzzle") this.addPuzzleSymbol(tx, ty, c);
+      else if ("abcde".indexOf(c) !== -1 && this.levelIdx === 16) this.addPuzzleSymbol(tx, ty, c);
+      else if (c === "^") this.spawnSpike(x, y);
       else if (c === "L") this.spawnPickup(x, y, "letter", false);
       else if (c === "F") goal = { x, y };
       else if (c === "P") start = { x, y };
@@ -164,9 +163,9 @@ export class GameScene extends Phaser.Scene {
 
     this.add.rectangle(128, 6, 256, 12, 0x000000, 0.55).setScrollFactor(0).setDepth(50);
     this.hud = this.add.text(4, 2, "", { fontFamily: FONT, fontSize: "8px", color: "#ffffff" }).setScrollFactor(0).setDepth(51);
-    if (this.room === "puzzle") {
+    if (this.levelIdx === 16) {
       this.puzzleHint = this.add.text(128, 184, "FOLLOW THE HIROTTA STONE", { fontFamily: FONT, fontSize: "6px", color: "#f8d820", stroke: "#000", strokeThickness: 2 }).setOrigin(0.5).setScrollFactor(0).setDepth(55);
-      this.hirottaStone = this.add.image(2 * T + 8, 8 * T + 8, "hirotta_stone").setDepth(8);
+      this.hirottaStone = this.add.image(17 * T + 8, 20 * T + 8, "hirotta_stone").setDepth(8);
     }
     const banner = this.add.text(128, 80, `STAGE ${L.name}`, { fontFamily: FONT, fontSize: "8px", color: "#f8d820", stroke: "#000", strokeThickness: 3 }).setOrigin(0.5).setScrollFactor(0).setDepth(60);
     this.tweens.add({ targets: banner, alpha: 0, delay: 1600, duration: 500, onComplete: () => banner.destroy() });
@@ -298,24 +297,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   makeGoal(x: number, y: number) {
-    const g = this.physics.add.staticImage(x, y, this.levelIdx === 16 && this.room === "dive" ? "stone_door" : "chest");
+    const g = this.physics.add.staticImage(x, y, "chest");
     this.physics.add.overlap(this.player, g, () => {
       if (this.storyMessageOpen) return;
-      if (this.levelIdx === 16 && this.room === "dive") {
-        if (this.doorOpened || this.doorBlockedMessage) return;
-        this.doorX = x;
-        this.doorY = y;
-        this.doorOpened = true;
-        if (!state.sunStone || !state.moonlightStone || !state.hirottaStone) {
-          this.doorOpened = false;
-          this.doorBlockedMessage = true;
-          this.showStoryMessage("THE STONE DOOR WILL NOT OPEN.\nFIND BOTH MEDALLIONS\nAND THE HIROTTA STONE.");
-          return;
-        }
-        this.physics.pause();
-        this.time.delayedCall(450, () => this.scene.restart({ level: 16, room: "puzzle" }));
-        return;
-      }
       this.clearLevel();
     });
   }
@@ -360,7 +344,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   tryInspectHirottaStone() {
-    if (this.room !== "puzzle" || !this.hirottaStone ||
+    if (this.levelIdx !== 16 || !this.hirottaStone ||
       Phaser.Math.Distance.Between(this.player.x, this.player.y, this.hirottaStone.x, this.hirottaStone.y) > 34) return false;
     this.showStoryMessage("HIROTTA STONE\nREAD RIGHT TO LEFT, TOP TO BOTTOM:\nSUN - WAVES - MOON - STAR - SUN\nMOON - WAVES - FISH - STAR - FISH");
     sfx.select();
@@ -376,7 +360,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   stepCraggPuzzle(tile: Phaser.Physics.Arcade.Image) {
-    if (this.room !== "puzzle" || this.puzzleStep >= 10 || tile.getData("stepLock")) return;
+    if (this.levelIdx !== 16 || this.puzzleStep >= 10 || tile.getData("stepLock")) return;
     const body = this.player.body as Body;
     const tileBody = tile.body as Phaser.Physics.Arcade.StaticBody;
     if (!body || body.velocity.y < 0 || body.bottom < tileBody.top - 2 || body.bottom > tileBody.top + 7) return;
@@ -395,11 +379,7 @@ export class GameScene extends Phaser.Scene {
     sfx.coin();
     if (this.puzzleStep === 10) {
       this.puzzleHint?.setText("THE GOLD CROWN HAS APPEARED!");
-      if (!this.spikesSpawned) {
-        this.spikesSpawned = true;
-        [22, 23, 24].forEach((x) => this.spawnSpike(x * T + 8, 10 * T + 8));
-      }
-      this.spawnPickup(23 * T + 8, 7 * T + 8, "crown", false);
+      this.spawnPickup(24 * T + 8, 14 * T + 8, "crown", false);
       sfx.clear();
     }
   }
@@ -683,7 +663,7 @@ export class GameScene extends Phaser.Scene {
     this.updateMisc(time, dt);
     if (this.boss && !this.jankenDone && this.player.x > this.arenaX && (!this.L.vertical || Math.abs(this.player.y - this.boss.y) < 6 * T)) this.startJanken();
     const nearNpc = this.storyNpcs.some((npc) => npc.sprite.active && Phaser.Math.Distance.Between(this.player.x, this.player.y, npc.sprite.x, npc.sprite.y) <= 30);
-    const nearStone = this.room === "puzzle" && this.hirottaStone && Phaser.Math.Distance.Between(this.player.x, this.player.y, this.hirottaStone.x, this.hirottaStone.y) <= 34;
+    const nearStone = this.levelIdx === 16 && this.hirottaStone && Phaser.Math.Distance.Between(this.player.x, this.player.y, this.hirottaStone.x, this.hirottaStone.y) <= 34;
     this.hud.setText(`LIFE ${Math.max(0, state.lives)}  ${state.money}${state.bracelet ? " PWR" : ""}${state.letterToNibana ? " LET" : ""}${state.hirottaStone ? " HIR" : ""}${state.sunStone ? " SUN" : ""}${state.moonlightStone ? " MOON" : ""}${nearNpc || nearStone ? " X TALK" : ""}`);
   }
 
@@ -864,7 +844,7 @@ export class GameScene extends Phaser.Scene {
       if (age > 9000) g.destroy();
     }
     for (const s of [...this.shots.getChildren()] as Spr[]) if (time - (s.getData("born") as number) > 650) s.destroy();
-    if (this.room === "puzzle" && this.puzzleLastTile &&
+    if (this.levelIdx === 16 && this.puzzleLastTile &&
       Phaser.Math.Distance.Between(this.player.x, this.player.y, this.puzzleLastTile.x, this.puzzleLastTile.y) > 20) {
       this.puzzleLastTile.setData("stepLock", false);
       this.puzzleLastTile = null;
