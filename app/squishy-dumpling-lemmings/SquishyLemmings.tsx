@@ -26,57 +26,33 @@ const GROUP_COLOURS=["#9ed9ae","#f2c16e","#b9a4e8","#ed9bbd"]
 const W=960, H=420, BAO_W=44, BAO_H=44, GROUND=385
 
 function makeLevel(id:number):Level {
- const group=Math.floor(id/30), n=id%30, width=3000+(n%5)*240+group*120
- const terrain:Terrain[]=[]
- const hazards:Hazard[]=[]
- // A continuous base with deliberately varied gaps, ledges and walls.
- let x=0
- while(x<width){
-   const segment=210+((n*17+x/210*13+group*29)%4)*32
-   const gap=(n+Math.floor(x/210)+group)%5===2 ? 52+((n*7)%3)*20 : 0
-   const top=GROUND-(((n+Math.floor(x/210)*3+group*5)%4===0)?34:0)
-   terrain.push({x,y:top,w:segment-gap,h:H-top+100})
-   x+=segment
- }
- // Raised shelves and chunky walls create routes that require skill choices.
- for(let i=0;i<5+group;i++){
-   const px=360+i*(width-700)/(5+group)+((n*19+i*31)%70)
-   const py=GROUND-55-((i+n+group)%3)*28
-   const pw=90+((n+i*7)%3)*28
-   terrain.push({x:px,y:py,w:pw,h:18})
-   if((i+n+group)%2===0) terrain.push({x:px+pw+18,y:py-54,w:24,h:GROUND-py+54})
- }
- // Later stages add longer gaps and a few hazard pools.
- if(group>=1){
-   const gx=850+(n%6)*260
-   hazards.push({x:gx,y:GROUND-4,w:90+(n%3)*25,h:55,kind:n%4===0?"fire":"water"})
- }
- if(group>=2){
-   const gx=1450+(n%5)*260
-   hazards.push({x:gx,y:GROUND-4,w:46,h:32,kind:"trap"})
- }
- if(group===3){
-   const gx=width-900
-   hazards.push({x:gx,y:GROUND-4,w:110,h:55,kind:"water"})
-   terrain.push({x:width-620,y:GROUND-95,w:26,h:95})
- }
- // Exit platform and a small hatch ledge.
- terrain.push({x:width-330,y:GROUND-26,w:330,h:26})
- terrain.push({x:0,y:GROUND-26,w:160,h:26})
- const skills={...EMPTY_SKILLS}
- if(n%4===0) skills.bomber=0
- if(n%5===1) skills.miner=0
- if(n%6===2) skills.floater=0
- if(n%7===3) skills.climber=0
- if(group>=2){skills.builder=Math.max(2,skills.builder-4);skills.basher=Math.max(0,skills.basher-3)}
- if(group===3){skills.digger=Math.max(0,skills.digger-3);skills.blocker=Math.max(0,skills.blocker-2)}
- const names=["Bao Boulevard","The Wobble Works","Pudding Peaks","The Great Dumpling Drop","Cloud Kitchen Crossing","Sticky Rice Ridge","The Noodle Maze","Mooncake Mountain","Jellybean Junction","The Long Way Home"]
- return {
-  id,name:names[(n+group*3)%names.length],group:GROUPS[group],width,total:group===0?20:group===1?30:group===2?40:50,
-  rescue:group===0?55+Math.floor(n/10)*5:group===1?65+Math.floor(n/10)*5:group===2?75+Math.floor(n/10)*5:85,
-  seconds:Math.max(180,360-group*35-(n%6)*10),rate:20+group*8+(n%5)*4,hatch:75,exit:width-115,
-  terrain,hazards,skills
- }
+ const group=Math.floor(id/30), n=id%30, width=2400+(n%4)*180+group*120;
+ const terrain:Terrain[]=[{x:0,y:GROUND-26,w:width,h:140},{x:0,y:GROUND-26,w:150,h:26},{x:width-260,y:GROUND-26,w:260,h:26}];
+ const hazards:Hazard[]=[];
+ const wall=(x:number,top=205,w=34)=>terrain.push({x,y:top,w,h:GROUND-26-top});
+ const shelf=(x:number,y:number,w:number)=>terrain.push({x,y,w,h:15});
+ const gap=(x:number,w:number)=>{terrain.splice(terrain.findIndex(t=>t.x===0&&t.w===width),1);terrain.push({x,y:GROUND+4,w,h:150})};
+ if(n===0){wall(510,205,38);shelf(850,285,150);wall(1260,235,30);shelf(1600,300,150)}
+ else if(n===1){wall(470,175,38);wall(1030,155,38);shelf(1390,275,190)}
+ else if(n===2){gap(720,130);shelf(980,285,190);wall(1460,220,34)}
+ else if(n===3){wall(540,195,34);gap(1050,150);wall(1510,175,36)}
+ else if(n===4){shelf(440,270,250);wall(820,160,38);shelf(1190,245,210);wall(1660,190,36)}
+ else if(n===5){gap(600,170);gap(1280,190);shelf(850,270,170);shelf(1540,250,190)}
+ else if(n===6){wall(480,125,38);wall(900,125,38);wall(1320,125,38);shelf(1650,280,220)}
+ else if(n===7){shelf(420,285,220);shelf(790,235,220);shelf(1160,185,220);wall(1570,155,36)}
+ else {for(let i=0;i<3+group;i++){const x=400+i*390+(n%3)*35;if((i+n)%2===0)wall(x,185-((i+n)%3)*25,32);else shelf(x,260-((i+n)%3)*28,150)}if(n%4===2)gap(1050+(n%3)*100,110+(n%2)*45)}
+ if(group>=1&&n%3===0)hazards.push({x:width*.52,y:GROUND-4,w:105,h:55,kind:"water"});
+ if(group>=2&&n%4===1)hazards.push({x:width*.7,y:GROUND-4,w:58,h:36,kind:"trap"});
+ if(group===3&&n%5===0)hazards.push({x:width*.42,y:GROUND-4,w:95,h:52,kind:"fire"});
+ const skills:Record<Skill,number>={climber:3,floater:3,bomber:2,blocker:2,builder:8,basher:5,miner:4,digger:3};
+ if(n===0){skills.basher=5;skills.builder=0;skills.miner=0;skills.digger=0;skills.climber=0;skills.floater=0;skills.bomber=0;skills.blocker=0}
+ if(n===1){skills.basher=0;skills.climber=4;skills.floater=3;skills.builder=0;skills.miner=0;skills.digger=0;skills.blocker=0;skills.bomber=0}
+ if(n===2){skills.builder=5;skills.floater=4;skills.basher=0;skills.miner=0;skills.digger=0;skills.climber=0}
+ if(n===3){skills.basher=3;skills.builder=5;skills.miner=3;skills.digger=0}
+ if(group>=2){skills.builder=Math.max(2,skills.builder-2);skills.basher=Math.max(1,skills.basher-1)}
+ if(group===3){skills.digger=Math.max(1,skills.digger-1);skills.blocker=Math.max(1,skills.blocker-1)}
+ const names=["Bao Boulevard","The Wobble Wall","Pudding Gap","The Sticky Passage","Cloud Kitchen","Jellybean Crossing","The Noodle Maze","Mooncake Mountain","Steamed-Up Summit","The Great Bao Escape"];
+ return {id,name:names[n%names.length],group:GROUPS[group],width,total:group===0?12:group===1?18:group===2?24:30,rescue:group===0?65:group===1?72:group===2?78:84,seconds:300-group*25,rate:24+group*5,hatch:75,exit:width-115,terrain,hazards,skills}
 }
 const LEVELS=Array.from({length:120},(_,i)=>makeLevel(i))
 const BAO_COLOURS=["#fff0d9","#ffc9d8","#cce5ae","#c9d6ff","#e3d0ff","#ffd6b7","#ffcf63","#f3a6d0"]
@@ -179,10 +155,11 @@ export default function SquishyLemmings(){
      g.spawned++
     }
     g.baos.forEach(b=>{
-     if(b.saved||b.dead)return
+     if(b.saved)return
+     if(b.dead){b.frame+=step;return}
      b.frame+=step
      if(b.bomber>0){b.bomber-=step;if(b.bomber<=0){g.terrain=g.terrain.filter(t=>!(b.x>t.x-28&&b.x<t.x+t.w+28&&b.y>t.y-28&&b.y<t.y+t.h+28));b.dead=true;b.splat=1;g.dead++;return}}
-     if(bomberSkillHazard(b,l.hazards)){b.dead=true;g.dead++;return}
+     if(bomberSkillHazard(b,l.hazards)){b.dead=true;b.splat=1;g.dead++;return}
      const foot=b.y+BAO_H/2
      const support=floorAt(g.terrain,b.x+b.dir*3,foot)
      const supported=!!support
