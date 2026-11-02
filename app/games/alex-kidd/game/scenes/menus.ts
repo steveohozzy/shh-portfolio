@@ -34,9 +34,14 @@ export class TitleScene extends Phaser.Scene {
 }
 
 const ITEMS = [
-  { id: "bracelet", name: "POWER BRACELET", desc: "SHOCKWAVE" },
-  { id: "boots", name: "SPEED SHOES", desc: "RUN FASTER" },
-  { id: "life", name: "EXTRA LIFE", desc: "1 MORE TRY" },
+  { id: "teleportPowder", name: "TELEPORT POWDER", desc: "100U" },
+  { id: "bracelet", name: "POWER BRACELET", desc: "100U" },
+  { id: "life", name: "EXTRA LIFE", desc: "500U" },
+  { id: "cane", name: "CANE OF FLIGHT", desc: "120U" },
+  { id: "capsuleA", name: "CAPSULE A", desc: "100U" },
+  { id: "capsuleB", name: "CAPSULE B", desc: "120U" },
+  { id: "motorcycle", name: "SUKOPAKO MOTORCYCLE", desc: "200U" },
+  { id: "peticopter", name: "PETICOPTER", desc: "200U" },
 ] as const;
 
 export class ShopScene extends Phaser.Scene {
@@ -47,43 +52,43 @@ export class ShopScene extends Phaser.Scene {
   create() {
     this.cameras.main.setBackgroundColor("#301808");
     this.add.image(128, 96, "bg_castle").setAlpha(0.35);
-    txt(this, 128, 18, "TRADING POST", 8, "#f8d820");
-    this.money = txt(this, 128, 34, "", 8, "#ffffff");
+    txt(this, 128, 14, "SHOP", 8, "#f8d820");
+    this.money = txt(this, 128, 28, "", 7, "#ffffff");
     ITEMS.forEach((it, i) => {
-      const y = 62 + i * 26;
-      this.add.image(28, y, it.id === "boots" ? "hero_run1" : it.id).setScale(1);
-      const price = PRICES[it.id];
-      const t = this.add.text(44, y - 8, `${it.name}\n$${price}  ${it.desc}`, { fontFamily: FONT, fontSize: "8px", color: "#ffffff", lineSpacing: 4 });
-      t.setFontSize(8).setInteractive().on("pointerdown", () => { this.sel = i; this.buy(); });
-      this.rows.push(t);
+      const y = 45 + i * 14;
+      const row = this.add.text(18, y, it.name + "  " + it.desc, { fontFamily: FONT, fontSize: "6px", color: "#ffffff" });
+      row.setInteractive().on("pointerdown", () => { this.sel = i; this.buy(); });
+      this.rows.push(row);
     });
-    const leave = this.add.text(44, 62 + 3 * 26 - 4, "LEAVE SHOP  >>", { fontFamily: FONT, fontSize: "8px", color: "#98f898" }).setInteractive();
-    leave.on("pointerdown", () => { this.sel = 3; this.buy(); });
+    const leave = this.add.text(18, 160, "LEAVE SHOP  >>", { fontFamily: FONT, fontSize: "6px", color: "#98f898" }).setInteractive();
+    leave.on("pointerdown", () => { this.sel = ITEMS.length; this.buy(); });
     this.rows.push(leave);
-    this.cursor = this.add.text(8, 0, ">", { fontFamily: FONT, fontSize: "8px", color: "#f8d820" });
-    this.msg = txt(this, 128, 176, "UP/DOWN CHOOSE  JUMP TO BUY", 8, "#f8f8a0");
+    this.cursor = this.add.text(7, 0, ">", { fontFamily: FONT, fontSize: "6px", color: "#f8d820" });
+    this.msg = txt(this, 128, 181, "UP/DOWN CHOOSE  X BUY", 6, "#f8f8a0");
     this.ctl = new Controls(this);
     sfx.music("shop");
   }
   buy() {
-    if (this.sel === 3) { sfx.select(); this.scene.start("Game", { level: this.next }); return; }
+    if (this.sel === ITEMS.length) { sfx.select(); this.scene.start("Game", { level: this.next }); return; }
     const it = ITEMS[this.sel];
     const price = PRICES[it.id];
-    if ((it.id === "bracelet" && state.bracelet) || (it.id === "boots" && state.boots)) { this.msg.setText("YOU ALREADY HAVE IT!"); sfx.bad(); return; }
+    if (it.id !== "life" && state[it.id]) { this.msg.setText("YOU ALREADY HAVE IT!"); sfx.bad(); return; }
     if (state.money < price) { this.msg.setText("NOT ENOUGH MONEY!"); sfx.bad(); return; }
     state.money -= price;
-    if (it.id === "bracelet") state.bracelet = true;
-    if (it.id === "boots") state.boots = true;
     if (it.id === "life") state.lives++;
-    this.msg.setText("THANK YOU!"); sfx.power();
+    else state[it.id] = true;
+    this.msg.setText("THANK YOU!");
+    this.money.setText("MONEY " + state.money + "U   LIVES " + state.lives);
+    sfx.power();
   }
   update() {
     this.ctl.update();
-    if (this.ctl.pressed("up") || this.ctl.pressed("left")) { this.sel = (this.sel + 3) % 4; sfx.select(); }
-    if (this.ctl.pressed("down") || this.ctl.pressed("right")) { this.sel = (this.sel + 1) % 4; sfx.select(); }
+    const count = ITEMS.length + 1;
+    if (this.ctl.pressed("up") || this.ctl.pressed("left")) { this.sel = (this.sel + count - 1) % count; sfx.select(); }
+    if (this.ctl.pressed("down") || this.ctl.pressed("right")) { this.sel = (this.sel + 1) % count; sfx.select(); }
     if (this.ctl.pressed("punch") || this.ctl.pressed("start") || (this.ctl.pressed("jump") && !this.ctl.held("up"))) this.buy();
     this.cursor.setY(this.rows[this.sel].y);
-    this.money.setText(`MONEY $${state.money}   LIVES ${state.lives}`);
+    this.money.setText("MONEY " + state.money + "U   LIVES " + state.lives);
   }
 }
 
