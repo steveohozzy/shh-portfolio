@@ -7,7 +7,7 @@ type Skill = "climber" | "floater" | "bomber" | "blocker" | "builder" | "basher"
 type Terrain = { x:number; y:number; w:number; h:number; steel?:boolean; bridge?:boolean }
 type Hazard = { x:number; y:number; w:number; h:number; kind:"water"|"fire"|"trap" }
 type Level = { id:number; name:string; group:string; width:number; total:number; rescue:number; seconds:number; rate:number; hatch:number; exit:number; terrain:Terrain[]; hazards:Hazard[]; skills:Record<Skill,number> }
-type Bao = { id:number; x:number; y:number; dir:1|-1; vy:number; fall:number; skill?:Skill; action:number; saved:boolean; dead:boolean; bomber:number; build:number; frame:number; splat?:number }
+type Bao = { id:number; variant:number; x:number; y:number; dir:1|-1; vy:number; fall:number; skill?:Skill; action:number; saved:boolean; dead:boolean; bomber:number; build:number; frame:number; splat?:number }
 type Game = { baos:Bao[]; terrain:Terrain[]; spawned:number; saved:number; dead:number; clock:number; spawnClock:number; camera:number; running:boolean; paused:boolean; complete:boolean; failed:boolean; rate:number; speed:number; selected:Skill; skills:Record<Skill,number>; nextId:number }
 
 const SKILLS: {id:Skill; label:string; icon:string; tip:string}[] = [
@@ -153,6 +153,26 @@ export default function SquishyLemmings(){
   const ctx=canvas.getContext("2d");if(!ctx)return
   let alive=true
   let hudTick=0
+  const baoSprites:HTMLImageElement[]=[]
+  const baoStyles=[
+   {body:"#fff0d8",shade:"#f3d4ac",detail:"#dba98a"},
+   {body:"#ffd8e5",shade:"#f4aac3",detail:"#e98cab"},
+   {body:"#d7edb9",shade:"#a9ce85",detail:"#7ca95e"},
+   {body:"#c5e7ff",shade:"#83b9f1",detail:"#528bd0"},
+   {body:"#ead7ff",shade:"#c3a0ef",detail:"#9970ce"},
+   {body:"#ffdbc0",shade:"#ffb08e",detail:"#e78370"},
+   {body:"#fff064",shade:"#ffad08",detail:"#d97800"},
+   {body:"#ff8cdb",shade:"#9d62ff",detail:"#6735db"}
+  ]
+  baoStyles.forEach((style,index)=>{
+   const rainbow=index===7
+   const stops=rainbow?'<stop offset="0%" stop-color="#ff78bb"/><stop offset="28%" stop-color="#ffad69"/><stop offset="50%" stop-color="#fff078"/><stop offset="70%" stop-color="#71edc2"/><stop offset="100%" stop-color="#8a70ff"/>': '<stop offset="0%" stop-color="'+style.body+'"/><stop offset="100%" stop-color="'+style.shade+'"/>'
+   const stripes=rainbow?'<g clip-path="url(#clip)"><path d="M5 47 L115 78" stroke="#ff477e" stroke-width="12"/><path d="M5 61 L115 92" stroke="#ffdc48" stroke-width="11"/><path d="M5 75 L100 102" stroke="#48e3a3" stroke-width="10"/></g>':''
+   const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 112"><defs><linearGradient id="body" x1="0" y1="0" x2=".8" y2="1">'+stops+'</linearGradient><clipPath id="clip"><path d="M15 70 Q9 53 25 39 Q35 30 45 26 Q52 18 60 25 Q68 18 75 27 Q90 30 99 43 Q112 57 105 75 Q98 95 60 98 Q22 97 15 70Z"/></clipPath></defs><ellipse cx="60" cy="99" rx="34" ry="5" fill="#b98976" opacity=".13"/><path d="M15 70 Q9 53 25 39 Q35 30 45 26 Q52 18 60 25 Q68 18 75 27 Q90 30 99 43 Q112 57 105 75 Q98 95 60 98 Q22 97 15 70Z" fill="url(#body)" stroke="'+style.detail+'" stroke-width="3"/> '+stripes+'<path d="M29 43 Q39 32 47 32 M52 29 Q60 24 66 31 M74 32 Q84 34 91 45" fill="none" stroke="#fffaf0" stroke-width="4" stroke-linecap="round"/><ellipse cx="34" cy="70" rx="7" ry="4" fill="#f49ca8" opacity=".8"/><ellipse cx="86" cy="70" rx="7" ry="4" fill="#f49ca8" opacity=".8"/><ellipse cx="44" cy="62" rx="3.7" ry="5" fill="#59464a"/><ellipse cx="76" cy="62" rx="3.7" ry="5" fill="#59464a"/><path d="M54 71 Q60 78 66 71" fill="none" stroke="#59464a" stroke-width="2.8" stroke-linecap="round"/><path d="M28 53 Q31 49 35 52 M83 52 Q88 49 91 53" fill="none" stroke="#fffaf0" stroke-width="2.5" stroke-linecap="round"/></svg>'
+   const img=new Image()
+   img.onload=()=>{baoSprites[index]=img}
+   img.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg)
+  })
   const draw=()=>{
    if(!alive)return
    const g=gameRef.current,l=levelRef.current
@@ -164,7 +184,7 @@ export default function SquishyLemmings(){
     g.spawnClock+=step*(g.rate/100)
     if(g.spawned<l.total&&g.spawnClock>=.11){
      g.spawnClock=0
-     g.baos.push({id:g.nextId++,x:l.hatch,y:GROUND-52,dir:1,vy:0,fall:0,action:0,saved:false,dead:false,bomber:0,build:0,frame:0})
+     g.baos.push({id:g.nextId++,variant:g.nextId%8,x:l.hatch+26,y:GROUND-52,dir:1,vy:0,fall:0,action:0,saved:false,dead:false,bomber:0,build:0,frame:0})
      g.spawned++
     }
     g.baos.forEach(b=>{
@@ -255,8 +275,10 @@ export default function SquishyLemmings(){
    // terrain: individual rounded grass/stone ledges
    g.terrain.forEach(t=>{ctx.fillStyle=t.steel?"#8e9aa7":t.bridge?"#c99a70":"#82c994";ctx.strokeStyle=t.steel?"#566575":t.bridge?"#986e56":"#4f9e70";ctx.lineWidth=2;ctx.fillRect(t.x,t.y,t.w,t.h);ctx.strokeRect(t.x,t.y,t.w,t.h);ctx.fillStyle=t.steel?"#c4cbd1":t.bridge?"#e8c39a":"#c8f0c8";ctx.fillRect(t.x,t.y,t.w,4)})
    // hatch and exit
-   ctx.fillStyle="#e69abc";ctx.fillRect(l.hatch-20,GROUND-66,40,18);ctx.fillStyle="#fff";ctx.fillRect(l.hatch-14,GROUND-62,28,8);ctx.fillStyle="#8b6389";ctx.font="bold 11px sans-serif";ctx.fillText("IN",l.hatch-7,GROUND-70)
-   ctx.fillStyle="#fff4fa";ctx.fillRect(l.exit,GROUND-68,42,68);ctx.strokeStyle="#b97ca5";ctx.lineWidth=5;ctx.strokeRect(l.exit,GROUND-68,42,68);ctx.fillStyle="#e9a8cb";ctx.font="bold 12px sans-serif";ctx.fillText("HOME",l.exit+3,GROUND-77);ctx.font="20px sans-serif";ctx.fillText("♡",l.exit+11,GROUND-25)
+   // Decorative bamboo-steamer hatch with a raised lid and warm glow.
+   ctx.fillStyle="#9a6b78";ctx.fillRect(l.hatch-36,GROUND-48,72,24);ctx.fillStyle="#d89baf";ctx.fillRect(l.hatch-34,GROUND-52,68,7);ctx.fillStyle="#f6d6e3";ctx.fillRect(l.hatch-27,GROUND-67,54,17);ctx.strokeStyle="#a86d8b";ctx.lineWidth=3;ctx.strokeRect(l.hatch-27,GROUND-67,54,17);ctx.fillStyle="#fff";ctx.fillRect(l.hatch-20,GROUND-63,40,5);ctx.fillStyle="#8b6389";ctx.font="bold 10px sans-serif";ctx.fillText("BAO IN",l.hatch-18,GROUND-73);ctx.beginPath();ctx.ellipse(l.hatch,GROUND-70,30,8,0,Math.PI,Math.PI*2);ctx.fillStyle="#e9b5c9";ctx.fill();ctx.strokeStyle="#a86d8b";ctx.stroke();
+   // A proper little pagoda-style rescue pavilion.
+   ctx.fillStyle="#a66e91";ctx.fillRect(l.exit-12,GROUND-88,66,88);ctx.fillStyle="#fff1f8";ctx.fillRect(l.exit-5,GROUND-78,52,78);ctx.fillStyle="#d98eb5";ctx.beginPath();ctx.moveTo(l.exit-23,GROUND-86);ctx.lineTo(l.exit+21,GROUND-119);ctx.lineTo(l.exit+66,GROUND-86);ctx.closePath();ctx.fill();ctx.strokeStyle="#a66e91";ctx.lineWidth=4;ctx.stroke();ctx.fillStyle="#f6d5e5";ctx.fillRect(l.exit+10,GROUND-51,22,51);ctx.beginPath();ctx.arc(l.exit+21,GROUND-51,11,Math.PI,0);ctx.fill();ctx.fillStyle="#9c6488";ctx.font="bold 10px sans-serif";ctx.fillText("HOME",l.exit+7,GROUND-94);ctx.fillStyle="#fff";ctx.font="18px sans-serif";ctx.fillText("♡",l.exit+13,GROUND-19)
    g.baos.forEach(b=>{
     if(b.saved||b.x<g.camera-40||b.x>g.camera+W+40)return
     if(b.dead){
@@ -266,19 +288,11 @@ export default function SquishyLemmings(){
      ctx.fillStyle="#ffd5e2";ctx.beginPath();ctx.ellipse(-5,-2,5,2,0,0,Math.PI*2);ctx.ellipse(7,1,3,1.5,0,0,Math.PI*2);ctx.fill();
      ctx.fillStyle="#fff";ctx.font="bold 12px sans-serif";ctx.fillText("✦",12,-8);ctx.restore();return;
     }
-    const col=BAO_COLOURS[b.id%BAO_COLOURS.length], bob=Math.sin(b.frame*8)*1.2
+    const bob=Math.sin(b.frame*8)*1.2
     ctx.save();ctx.translate(b.x,b.y+bob);ctx.scale(b.dir*1.2,1.12)
     ctx.fillStyle="#72555b30";ctx.beginPath();ctx.ellipse(0,BAO_H/2+2,16,4,0,0,Math.PI*2);ctx.fill()
-    ctx.fillStyle="#8c6670";ctx.beginPath();ctx.ellipse(-8,BAO_H/2-1,6,3,0,0,Math.PI*2);ctx.ellipse(8,BAO_H/2-1,6,3,0,0,Math.PI*2);ctx.fill()
-    // Round, pleated steamed-bun silhouette with wide cheeks rather than an egg shape.
-    const body=ctx.createRadialGradient(-7,-10,2,0,1,24);body.addColorStop(0,"#fffdf8");body.addColorStop(.25,col);body.addColorStop(.78,col);body.addColorStop(1,"#b889a0")
-    ctx.fillStyle=body;ctx.strokeStyle="#986f7c";ctx.lineWidth=1.8;ctx.beginPath();ctx.moveTo(-15,7);ctx.bezierCurveTo(-20,1,-18,-8,-12,-13);ctx.quadraticCurveTo(-7,-19,-2,-16);ctx.quadraticCurveTo(0,-22,2,-16);ctx.quadraticCurveTo(8,-19,13,-12);ctx.bezierCurveTo(19,-5,18,5,12,11);ctx.quadraticCurveTo(7,18,0,18);ctx.quadraticCurveTo(-10,18,-15,7);ctx.fill();ctx.stroke()
-    ctx.strokeStyle="#fff9";ctx.lineWidth=1.8;ctx.lineCap="round";ctx.beginPath();ctx.moveTo(-11,-12);ctx.quadraticCurveTo(-7,-8,-5,-4);ctx.moveTo(-5,-16);ctx.quadraticCurveTo(-2,-10,0,-5);ctx.moveTo(0,-18);ctx.quadraticCurveTo(1,-10,2,-5);ctx.moveTo(6,-16);ctx.quadraticCurveTo(5,-9,5,-4);ctx.moveTo(11,-12);ctx.quadraticCurveTo(7,-8,5,-4);ctx.stroke()
-    ctx.strokeStyle="#b889a0";ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(-14,1);ctx.quadraticCurveTo(-12,8,-7,11);ctx.moveTo(14,1);ctx.quadraticCurveTo(12,8,7,11);ctx.stroke()
-    ctx.fillStyle="#493640";ctx.beginPath();ctx.ellipse(-4.5,-2,1.9,2.6,0,0,Math.PI*2);ctx.ellipse(4.5,-2,1.9,2.6,0,0,Math.PI*2);ctx.fill()
-    ctx.fillStyle="#f08fa9";ctx.beginPath();ctx.ellipse(-9,3,3.3,2.2,0,0,Math.PI*2);ctx.ellipse(9,3,3.3,2.2,0,0,Math.PI*2);ctx.fill()
-    ctx.strokeStyle="#754e5b";ctx.lineWidth=1.4;ctx.beginPath();ctx.arc(0,2,2.6,.15,Math.PI-.15);ctx.stroke()
-    ctx.strokeStyle="#b889a0";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-12,5);ctx.lineTo(-16,9);ctx.moveTo(12,5);ctx.lineTo(16,9);ctx.stroke()
+    if(baoSprites[b.variant])ctx.drawImage(baoSprites[b.variant],-24,-24,48,48);
+    else {ctx.fillStyle="#fff0d8";ctx.beginPath();ctx.ellipse(0,0,19,17,0,0,Math.PI*2);ctx.fill();ctx.fillStyle="#493640";ctx.beginPath();ctx.arc(-5,-2,2,0,Math.PI*2);ctx.arc(5,-2,2,0,Math.PI*2);ctx.fill()}
     if(b.skill==="climber"||b.skill==="builder"){ctx.fillStyle=b.skill==="builder"?"#f4bd42":"#e96b67";ctx.beginPath();ctx.arc(0,-15,10,Math.PI,0);ctx.lineTo(10,-12);ctx.lineTo(-10,-12);ctx.fill();ctx.fillStyle="#fff8";ctx.fillRect(-5,-17,5,2);ctx.fillStyle="#fff";ctx.font="bold 8px sans-serif";ctx.fillText(b.skill==="builder"?"BUILD":"UP",-9,-27)}
     if(b.skill==="floater"){ctx.fillStyle="#ef8eb7";ctx.strokeStyle="#865b91";ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(-13,-25);ctx.quadraticCurveTo(0,-43,13,-25);ctx.closePath();ctx.fill();ctx.stroke();ctx.beginPath();ctx.moveTo(0,-25);ctx.lineTo(0,-15);ctx.moveTo(-11,-25);ctx.lineTo(0,-15);ctx.lineTo(11,-25);ctx.stroke()}
     if(b.skill==="bomber"){ctx.fillStyle="#333";ctx.beginPath();ctx.arc(0,-22,4,0,Math.PI*2);ctx.fill();ctx.fillStyle="#f4c84b";ctx.fillRect(2,-28,4,3);ctx.fillStyle="#e85b68";ctx.font="bold 10px sans-serif";ctx.fillText(Math.ceil(b.bomber||0).toString(),-3,-30)}
