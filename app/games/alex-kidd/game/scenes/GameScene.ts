@@ -38,7 +38,6 @@ export class GameScene extends Phaser.Scene {
   hirottaStone?: Phaser.GameObjects.Image;
   storyMessageOpen = false;
   shieldUntil = 0;
-  spikesSpawned = false;
   paused = false;
   pauseUi: Phaser.GameObjects.GameObject[] = [];
   soundLabel?: Phaser.GameObjects.Text;
@@ -51,7 +50,6 @@ export class GameScene extends Phaser.Scene {
     this.puzzleLastTile = null;
     this.storyMessageOpen = false;
     this.shieldUntil = 0;
-    this.spikesSpawned = false;
     this.paused = false;
     this.pauseUi = [];
     this.storyNpcs = [];
