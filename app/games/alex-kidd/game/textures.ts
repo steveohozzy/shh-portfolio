@@ -118,6 +118,42 @@ export function makeTextures(s: Phaser.Scene) {
   gen(s, "stone_door", ["....kkkkkkkk....", "...krrrrrrrrk...", "..krrrwwwwrrrk..", ".krrww....wwrrk.", ".krrw......wrrk.", ".krrw......wrrk.", ".krrw......wrrk.", ".krrw......wrrk.", ".krrw......wrrk.", ".krrw......wrrk.", ".krrw......wrrk.", ".krrw......wrrk.", ".krrw......wrrk.", ".krrw......wrrk.", ".krrrrrrrrrrrrk.", "..kkkkkkkkkkkk.."]);
   gen(s, "boss", [".k............k.", ".wk..........kw.", "..wkkkkkkkkkkw..", "...kbbbbbbbbk...", "..kbbwkbbwkbbk..", "..kbbbbbbbbbbk..", "..kbbppppppbbk..", "...kbpkppkpbk...", "....kbbbbbbk....", "..kkrrrrrrrrkk..", ".kbbrryyyyrrbbk.", ".kbbrrrrrrrrbbk.", "..kkrrrrrrrrkk..", "....kbbk.kbbk...", "...kbbbk.kbbbk..", "...kkkk...kkkk.."], 2);
   gen(s, "story_npc", ["....hhhhhh......", "...hhhhhhhh.....", "...hssssssh.....", "..shsskskssh....", "..shsssssssh....", "...ssssssss.....", "....tttttt......", "...tttttttt.....", "...tttttttt.....", "...tttttttt.....", "...ss....ss.....", "..bbb....bbb....", "..bbb....bbb...."]);
+  gen(s, "motorcycle", [
+    "................................",
+    "................................",
+    ".............kkkk...............",
+    "............krrrrk..............",
+    "..........kkrrrrrrkk............",
+    ".........kbbbbbbbbbbk...........",
+    "....kkkkkbbbbbbbbbbbbkkkkk.......",
+    "...kbbbbbbbbbbbbbbbbbbbbbk.......",
+    "..kbbbbbbbbbbbbbbbbbbbbbbbk......",
+    ".kbbbbbbbbbbbbbbbbbbbbbbbbbk.....",
+    ".kkkkkkk..............kkkkkkk....",
+    "...kkk..................kkk......",
+    "................................",
+    "................................",
+    "................................",
+    "................................"
+  ], 1, 32, 16);
+  gen(s, "peticopter", [
+    "........kkkk........",
+    ".......kwwwwk.......",
+    "....kkkkkkkkkkkk....",
+    ".......ksssssk......",
+    "......ksssssssk.....",
+    "......kttttttk......",
+    ".....kttttttttk.....",
+    "......kkkkkkkk......",
+    "........k..k.........",
+    ".......k....k........",
+    "......kk....kk.......",
+    ".....................",
+    ".....................",
+    ".....................",
+    ".....................",
+    "....................."
+  ], 1, 24, 16);
   gen(s, "shot", ["..yyyy..", ".yy..yy.", "yy....yy", "y......y", "y......y", "yy....yy", ".yy..yy.", "..yyyy.."], 1, 8, 8);
   gen(s, "bossrock", ["..EEEE..", ".EeeeeE.", "EeennenE", "EeeeeeeE", "EeeeeeeE", "EeeeeneE", ".EeeeeE.", "..EEEE.."], 1, 8, 8);
   gen(s, "debris", ["bbbb", "boob", "bobb", "bbbb"], 1, 4, 4);
