@@ -37,6 +37,7 @@ export class GameScene extends Phaser.Scene {
   puzzleHint?: Phaser.GameObjects.Text;
   doorOpened = false;
   storyMessageOpen = false;
+  shieldUntil = 0;
   storyNpcs: Array<{ sprite: Phaser.GameObjects.Image; dialogue: string }> = [];
   jk = { sel: 0, you: 0, them: 0, phase: "choose" as "choose" | "reveal", ui: [] as Phaser.GameObjects.GameObject[], cursor: null as Phaser.GameObjects.Text | null, bossHand: null as Phaser.GameObjects.Image | null, info: null as Phaser.GameObjects.Text | null, score: null as Phaser.GameObjects.Text | null };
 
@@ -47,6 +48,7 @@ export class GameScene extends Phaser.Scene {
     this.puzzleLastTile = null;
     this.doorOpened = false;
     this.storyMessageOpen = false;
+    this.shieldUntil = 0;
     this.storyNpcs = [];
     this.solidSet = new Set();
     this.facing = 1; this.coyoteTime = 0; this.punchT = 0; this.dead = false; this.cleared = false; this.frozenUntil = 0; this.waterEntered = false; this.waterExitBlocked = false;
@@ -403,6 +405,12 @@ export class GameScene extends Phaser.Scene {
 
   doPunch() {
     if (this.tryTalkToNpc()) return;
+    if (state.capsuleB) {
+      state.capsuleB = false;
+      this.shieldUntil = this.time.now + 5000;
+      sfx.power();
+      return;
+    }
     this.punchT = 0.2;
     sfx.punch();
     const p = this.player;
@@ -414,9 +422,10 @@ export class GameScene extends Phaser.Scene {
       if (Phaser.Geom.Rectangle.Overlaps(r, e.getBounds())) this.killEnemy(e);
     }
     if (this.boss && this.bossFight && Phaser.Geom.Rectangle.Overlaps(r, this.boss.getBounds())) this.hitBoss();
-    if (state.bracelet) {
+    if (state.bracelet || state.capsuleA) {
       const s = this.shots.create(p.x + this.facing * 12, p.y - 1, "shot") as Spr;
       s.setVelocityX(this.facing * 220).setData("born", this.time.now);
+      if (state.capsuleA) state.capsuleA = false;
     }
   }
 
@@ -444,7 +453,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   die() {
-    if (this.dead || this.cleared) return;
+    if (this.dead || this.cleared || this.time.now < this.shieldUntil) return;
     this.dead = true;
     sfx.music(null);
     sfx.die();
@@ -640,12 +649,17 @@ export class GameScene extends Phaser.Scene {
         this.tweens.add({ targets: bub, y: bub.y - 50, alpha: 0, duration: 1400, onComplete: () => bub.destroy() });
       }
     } else {
-      const speed = state.boots ? 118 : 92;
-      b.setAllowGravity(true);
+      const speed = state.motorcycle ? 160 : state.boots ? 118 : 92;
+      b.setAllowGravity(!state.peticopter);
       b.setMaxVelocity(speed, 420);
       let acc = dir * 520;
       if (dir && Math.sign(b.velocity.x) === -dir) acc *= 1.8;
       b.setAccelerationX(acc);
+      if (state.peticopter) {
+        b.setVelocityY(c.held("up") ? -95 : c.held("down") ? 95 : 0);
+      } else if (state.cane && c.held("up") && b.velocity.y > -105) {
+        b.setVelocityY(-105);
+      }
       const supported = b.onFloor() || b.blocked.down || b.touching.down ||
         [...this.solids.getChildren(), ...this.terrain.getChildren()].some((solid) => {
           const body = (solid as Phaser.Physics.Arcade.Image).body as Phaser.Physics.Arcade.StaticBody;
@@ -660,6 +674,11 @@ export class GameScene extends Phaser.Scene {
       }
       if (!c.held("jump") && b.velocity.y < -110) b.setVelocityY(-110);
     }
+    if (!frozen && c.pressed("start") && state.teleportPowder) {
+      state.teleportPowder = false;
+      this.clearLevel();
+      return;
+    }
     if (!frozen && c.pressed("punch") && this.punchT <= 0) this.doPunch();
     if (this.punchT > 0) this.punchT -= dt;
 
@@ -668,7 +687,7 @@ export class GameScene extends Phaser.Scene {
     else if (!b.blocked.down) { p.anims.stop(); p.setTexture("hero_jump"); }
     else if (Math.abs(b.velocity.x) > 8) p.anims.play("run", true);
     else { p.anims.stop(); p.setTexture("hero_idle"); }
-    if (frozen) p.setTint(0x8888ff); else p.clearTint();
+    if (frozen) p.setTint(0x8888ff); else if (time < this.shieldUntil) p.setTint(0x98f8ff); else p.clearTint();
     p.setAngle(0);
     p.setFlipX(this.facing < 0);
     if (inWater) p.setDepth(10);
