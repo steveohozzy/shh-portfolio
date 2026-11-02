@@ -303,7 +303,7 @@ export class GameScene extends Phaser.Scene {
       const bx = b.x;
       b.destroy();
       this.boss = undefined;
-      this.time.delayedCall(700, () => this.makeGoal(bx, 9 * T + 8));
+      this.time.delayedCall(700, () => this.makeGoal(bx, this.L.vertical ? Math.max(2 * T + 8, b.y) : 9 * T + 8));
     }
   }
 
