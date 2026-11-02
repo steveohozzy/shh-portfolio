@@ -215,9 +215,9 @@ export default function SquishyLemmings(){
       b.vy+=b.skill==="floater"?180:620
       b.y+=b.vy*step
       b.fall+=b.vy*step
-      if(b.y>H+20){b.dead=true;g.dead++;return}
+      if(b.y>H+20){b.dead=true;b.splat=1;g.dead++;return}
      }
-     if(b.y>GROUND+60){b.dead=true;g.dead++;return}
+     if(b.y>GROUND+60){b.dead=true;b.splat=1;g.dead++;return}
      if(!wall&&supported)b.x+=b.dir*(b.skill==="builder"?1.4:31)*step
      if(b.x>=l.exit-18&&b.x<=l.exit+45&&b.y>GROUND-80){b.saved=true;g.saved++}
      if(b.x<5){b.x=5;b.dir=1}
