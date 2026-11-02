@@ -101,7 +101,7 @@ export class GameScene extends Phaser.Scene {
       else if (c === "$") this.spawnPickup(x, y, "money", false);
       else if (c === "g") this.spawnPickup(x, y, "gem", false);
       else if (c === "o") this.spawnPickup(x, y, "treasure", false);
-      else if (c === "w" || c === "v" || c === "p") this.spawnEnemy(c, x, y);
+      else if (c === "w" || c === "v" || c === "p" || c === "f") this.spawnEnemy(c, x, y);
       else if ("abcde".indexOf(c) !== -1 && this.room === "puzzle") this.addPuzzleSymbol(tx, ty, c);
       else if (c === "L") this.spawnPickup(x, y, "letter", false);
       else if (c === "F") goal = { x, y };
@@ -263,11 +263,12 @@ export class GameScene extends Phaser.Scene {
   }
 
   spawnEnemy(type: string, x: number, y: number) {
-    const tex = type === "w" ? "scorp" : type === "v" ? "bird" : "fish";
+    const tex = type === "w" ? "scorp" : type === "v" ? "bird" : type === "f" ? "frog" : "fish";
     const e = this.enemies.create(x, y, tex) as Spr;
-    e.setData("type", type).setData("baseX", x).setData("baseY", y).setData("t", Math.random() * 6).setData("dir", -1).setData("woke", false);
+    e.setData("type", type).setData("baseX", x).setData("baseY", y).setData("t", Math.random() * 6).setData("dir", -1).setData("woke", false).setData("hp", type === "f" ? 2 : 1);
     const b = e.body as Body;
     if (type === "w") { b.setSize(14, 10).setOffset(1, 6); }
+    else if (type === "f") { b.setAllowGravity(false); b.setSize(14, 12).setOffset(1, 2); }
     else { b.setAllowGravity(false); b.setSize(13, 8).setOffset(1, type === "v" ? 7 : 9); }
     if (type === "v" && this.L.theme === "castle") e.setTint(0xc070ff);
   }
@@ -456,6 +457,12 @@ export class GameScene extends Phaser.Scene {
 
   killEnemy(e: Spr) {
     if (!e.active) return;
+    if (e.getData("type") === "f" && e.getData("hp") > 1) {
+      e.setData("hp", e.getData("hp") - 1).setTint(0xffffff);
+      this.time.delayedCall(120, () => { if (e.active) e.clearTint(); });
+      sfx.hit();
+      return;
+    }
     sfx.kill();
     const puff = this.add.image(e.x, e.y, "shot").setScale(1.5);
     this.tweens.add({ targets: puff, scale: 3, alpha: 0, duration: 250, onComplete: () => puff.destroy() });
@@ -802,6 +809,12 @@ export class GameScene extends Phaser.Scene {
         b.setVelocity(-42, Math.cos(t * 3) * 40);
         e.setFlipX(false);
         if (e.x < cam.scrollX - 40) e.destroy();
+      } else if (type === "f") {
+        const bx = e.getData("baseX") as number;
+        if (e.x < bx - 24) dir = 1;
+        if (e.x > bx + 24) dir = -1;
+        b.setVelocity(dir * 22, Math.sin(t * 3) * 28);
+        e.setFlipX(dir > 0);
       } else {
         const bx = e.getData("baseX") as number;
         if (e.x < bx - 40) dir = 1;
