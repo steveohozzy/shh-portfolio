@@ -394,13 +394,13 @@ export class GameScene extends Phaser.Scene {
   tryInspectHirottaStone() {
     if (this.levelIdx !== 16 || !this.hirottaStone ||
       Phaser.Math.Distance.Between(this.player.x, this.player.y, this.hirottaStone.x, this.hirottaStone.y) > 34) return false;
-    this.showStoryMessage("HIROTTA STONE\nREAD RIGHT TO LEFT, TOP TO BOTTOM:\nSUN - WAVES - MOON - STAR - SUN\nMOON - WAVES - FISH - STAR - FISH");
+    this.showStoryMessage("HIROTTA STONE\nREAD RIGHT TO LEFT, TOP TO BOTTOM:\nSUN - 2 WAVES - MOON - STAR - SUN\nMOON - 2 WAVES - FISH - STAR - FISH");
     sfx.select();
     return true;
   }
 
   addPuzzleSymbol(tx: number, ty: number, symbol: string) {
-    const labels = { a: "SUN", b: "WAVES", c: "MOON", d: "STAR", e: "FISH" };
+    const labels = { a: "SUN", b: "2 WAVES", c: "MOON", d: "STAR", e: "FISH" };
     const tile = this.puzzleTiles.create(tx * T + 8, ty * T + 8, "rock") as Phaser.Physics.Arcade.Image;
     tile.setTint(symbol === "a" ? 0xf8d820 : symbol === "b" ? 0x48b8f8 : symbol === "c" ? 0xc0c8f8 : symbol === "d" ? 0xf878f8 : 0x40c8a8);
     tile.setData("symbol", symbol).setData("stepLock", false);
