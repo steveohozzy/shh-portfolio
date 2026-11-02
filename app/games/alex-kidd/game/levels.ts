@@ -59,10 +59,12 @@ function decodeLevelScreen(hex: string): number[] {
   return tiles;
 }
 
+const QUESTION_BOX_INDEXES = [1, 2, 3, 4, 5, 6, 7, 8, 2, 10, 11, 12, 13, 14, 15, 16, 17];
 const SOLID_METATILES_A = "0111111111000000110011111110000000000000000000000000000000000000011111111001110011111111100000000000000000111111111111111100001000000000000000010000000000000000000000000010000000000000000111001111000000000000000000000000001001010000000000000000000000100001";
 const SOLID_METATILES_B = "0111111111000000110011111110000000000000000000000000000000000000011111111001110011000000001011110101111110111111111111111100000011100000000000011111110000000000000000000010000000000000000111001111000000000000000000000000001001010000000000000000000000100001";
 
-function originalTile(id: number, table: "A" | "B", aboveIsSolid: boolean): string {
+function originalTile(id: number, table: "A" | "B", aboveIsSolid: boolean, stageNo: number): string {
+  if (id === QUESTION_BOX_INDEXES[stageNo - 1]) return "Q";
   const solids = table === "B" ? SOLID_METATILES_B : SOLID_METATILES_A;
   if (solids[id] !== "1") return ".";
   return aboveIsSolid ? "R" : "#";
@@ -71,7 +73,7 @@ function originalTile(id: number, table: "A" | "B", aboveIsSolid: boolean): stri
 function mtEternal(): G {
   const g = grid(48, 120);
   const screens = MT_ETERNAL_SCREENS.map(decodeLevelScreen);
-  const token = (id: number, above: number) => originalTile(id, "A", (SOLID_METATILES_A[above] || "0") === "1");
+  const token = (id: number, above: number) => originalTile(id, "A", (SOLID_METATILES_A[above] || "0") === "1", 1);
 
   // Original ROM layout: ten vertically stacked screens, then two screens
   // extending the final underwater screen to the right.
@@ -169,7 +171,7 @@ function makeOriginalStage(stageNo: number, spec: StageSpec): G {
         const i = y * 16 + x;
         const id = data[i] || 0;
         const above = y > 0 ? data[i - 16] || 0 : 0;
-        put(g, screenX * 16 + x, screenY * 12 + y, originalTile(id, table, (table === "B" ? SOLID_METATILES_B : SOLID_METATILES_A)[above] === "1"));
+        put(g, screenX * 16 + x, screenY * 12 + y, originalTile(id, table, (table === "B" ? SOLID_METATILES_B : SOLID_METATILES_A)[above] === "1", stageNo));
       }
     }
   });
