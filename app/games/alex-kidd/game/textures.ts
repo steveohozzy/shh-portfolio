@@ -116,6 +116,7 @@ export function makeTextures(s: Phaser.Scene) {
   gen(s, "life", ["..kk...kk.......", ".krrk.krrk......", "krwrrkrrrrk.....", "krrrrrrrrrk.....", ".krrrrrrrk......", "..krrrrrk.......", "...krrrk........", "....krk.........", ".....k..........", "................", "................"]);
   gen(s, "chest", ["..kkkkkkkkkkkk..", ".kbbbbbbbbbbbbk.", ".kbyybbbbbbyybk.", ".kbbbbbbbbbbbbk.", ".kkkkkkyykkkkkk.", ".kbbbbbykybbbbk.", ".kbbbbbyyybbbbk.", ".kbyybbbbbbyybk.", ".kbbbbbbbbbbbbk.", ".kkkkkkkkkkkkkk."]);
   gen(s, "boss", [".k............k.", ".wk..........kw.", "..wkkkkkkkkkkw..", "...kbbbbbbbbk...", "..kbbwkbbwkbbk..", "..kbbbbbbbbbbk..", "..kbbppppppbbk..", "...kbpkppkpbk...", "....kbbbbbbk....", "..kkrrrrrrrrkk..", ".kbbrryyyyrrbbk.", ".kbbrrrrrrrrbbk.", "..kkrrrrrrrrkk..", "....kbbk.kbbk...", "...kbbbk.kbbbk..", "...kkkk...kkkk.."], 2);
+  gen(s, "story_npc", ["....hhhhhh......", "...hhhhhhhh.....", "...hssssssh.....", "..shsskskssh....", "..shsssssssh....", "...ssssssss.....", "....tttttt......", "...tttttttt.....", "...tttttttt.....", "...tttttttt.....", "...ss....ss.....", "..bbb....bbb....", "..bbb....bbb...."]);
   gen(s, "shot", ["..yyyy..", ".yy..yy.", "yy....yy", "y......y", "y......y", "yy....yy", ".yy..yy.", "..yyyy.."], 1, 8, 8);
   gen(s, "bossrock", ["..EEEE..", ".EeeeeE.", "EeennenE", "EeeeeeeE", "EeeeeeeE", "EeeeeneE", ".EeeeeE.", "..EEEE.."], 1, 8, 8);
   gen(s, "debris", ["bbbb", "boob", "bobb", "bbbb"], 1, 4, 4);
