@@ -121,8 +121,10 @@ export default function SquishyLemmings(){
  const clickWorld=(event:ReactPointerEvent<HTMLCanvasElement>)=>{
   const g=gameRef.current;if(!g||!g.running||g.paused)return
   const rect=event.currentTarget.getBoundingClientRect()
-  const px=(event.clientX-rect.left)/rect.width*W+g.camera
+  const screenX=(event.clientX-rect.left)/rect.width*W
+  const px=screenX+g.camera
   const py=(event.clientY-rect.top)/rect.height*H
+  if(py>H-30&&screenX>W-285){g.camera=clamp(((screenX-(W-272))/260)*levelRef.current.width,0,levelRef.current.width-W);setCamera(g.camera);return}
   const bao=g.baos.filter(b=>!b.saved&&!b.dead).sort((a,b)=>Math.abs(a.x-px)+Math.abs(a.y-py)-Math.abs(b.x-px)-Math.abs(b.y-py))[0]
   if(!bao||Math.abs(bao.x-px)>24||Math.abs(bao.y-py)>28)return
   if(bao.skill==="climber"||bao.skill==="floater"||bao.skill==="blocker"||bao.skill==="bomber"||bao.skill==="builder"||bao.skill==="basher"||bao.skill==="miner"||bao.skill==="digger")return
@@ -160,8 +162,8 @@ export default function SquishyLemmings(){
      const supported=!!support
      const frontX=b.x+b.dir*(BAO_W/2+2)
      const wall=solidAt(g.terrain,frontX,b.y-4)||solidAt(g.terrain,frontX,b.y+4)
-     const blocker=g.baos.find(o=>o!==b&&!o.dead&&!o.saved&&o.skill==="blocker"&&Math.abs(o.x-b.x)<18&&Math.abs(o.y-b.y)<24)
-     if(b.skill==="blocker"){b.action=1;return}
+     const blocker=g.baos.find(o=>o!==b&&!o.dead&&!o.saved&&o.skill==="blocker"&&o.action===1&&Math.abs(o.x-b.x)<18&&Math.abs(o.y-b.y)<24)
+     if(b.skill==="blocker"&&supported){b.action=1;return}
      if(blocker){b.dir=(b.x<blocker.x?-1:1);b.x+=b.dir*1.2;return}
      if(b.skill==="digger"&&supported&&support){const idx=g.terrain.indexOf(support);if(!support.steel){support.y+=3;support.h=Math.max(0,support.h-3);b.y+=3;if(support.h<=0)g.terrain.splice(idx,1)}else b.skill=undefined;return}
      if(b.skill==="basher"){
@@ -206,7 +208,7 @@ export default function SquishyLemmings(){
    }
    // Follow the parade, while allowing the user to move the camera with the scrollbar/minimap.
    const target=g.baos.find(b=>!b.saved&&!b.dead)
-   if(target&&g.running&&!g.paused)g.camera=clamp(g.camera+(target.x-W*.58-g.camera)*Math.min(1,dt*2),0,l.width-W)
+   if(target&&g.running&&!g.paused){if(target.x>g.camera+W-90)g.camera=clamp(g.camera+(target.x-(g.camera+W-90))*.12,0,l.width-W);else if(target.x<g.camera+70)g.camera=clamp(g.camera-(g.camera+70-target.x)*.12,0,l.width-W)}
    ctx.clearRect(0,0,W,H)
    const sky=ctx.createLinearGradient(0,0,0,H);sky.addColorStop(0,"#dff4ff");sky.addColorStop(1,"#fff1f6");ctx.fillStyle=sky;ctx.fillRect(0,0,W,H)
    ctx.save();ctx.translate(-g.camera,0)
