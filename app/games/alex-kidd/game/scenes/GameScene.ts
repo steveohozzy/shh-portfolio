@@ -759,6 +759,10 @@ export class GameScene extends Phaser.Scene {
     } else {
       const speed = state.motorcycle ? 160 : state.boots ? 118 : 92;
       b.setAllowGravity(!state.peticopter);
+      if (!state.motorcycle && !state.peticopter) {
+        if (c.held("down") && dir) b.setSize(8, 7).setOffset(4, 9);
+        else b.setSize(6, 12).setOffset(5, 4);
+      }
       b.setMaxVelocity(speed, 420);
       let acc = dir * 520;
       if (dir && Math.sign(b.velocity.x) === -dir) acc *= 1.8;
