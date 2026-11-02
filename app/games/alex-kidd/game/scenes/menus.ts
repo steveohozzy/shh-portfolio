@@ -24,7 +24,8 @@ export class TitleScene extends Phaser.Scene {
     this.tweens.add({ targets: hero, y: 106, duration: 500, yoyo: true, repeat: -1 });
     const start = txt(this, 128, 150, "PRESS START", 8);
     this.time.addEvent({ delay: 450, loop: true, callback: () => start.setVisible(!start.visible) });
-    txt(this, 128, 176, "ARROWS MOVE  Z JUMP  X PUNCH", 8, "#f8f8a0");
+    txt(this, 128, 164, "ARROWS MOVE  Z JUMP  X PUNCH", 5, "#f8f8a0");
+    txt(this, 128, 178, "P PAUSE  M SOUND", 5, "#f8f8a0");
     this.ctl = new Controls(this);
     this.input.once("pointerdown", () => this.go());
     sfx.music(null);
