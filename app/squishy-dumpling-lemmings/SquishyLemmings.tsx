@@ -85,6 +85,21 @@ const floorAt=(terrain:Terrain[],x:number,y:number)=>terrain.filter(t=>x>=t.x-2&
 const solidAt=(terrain:Terrain[],x:number,y:number)=>terrain.some(t=>x>=t.x&&x<=t.x+t.w&&y>=t.y&&y<=t.y+t.h)
 const cloneSkills=(s:Record<Skill,number>)=>({...s})
 
+function carveTerrain(terrain:Terrain[], x:number, y:number, w:number, h:number){
+ const right=x+w, bottom=y+h;
+ for(let i=terrain.length-1;i>=0;i--){
+  const t=terrain[i], ix=Math.max(x,t.x), iy=Math.max(y,t.y), ir=Math.min(right,t.x+t.w), ib=Math.min(bottom,t.y+t.h);
+  if(ix>=ir||iy>=ib||t.steel)continue;
+  const pieces:Terrain[]=[];
+  if(iy>t.y)pieces.push({...t,h:iy-t.y});
+  if(ib<t.y+t.h)pieces.push({...t,y:ib,h:t.y+t.h-ib});
+  if(ix>t.x)pieces.push({...t,y:iy,w:ix-t.x,h:ib-iy});
+  if(ir<t.x+t.w)pieces.push({...t,x:ir,y:iy,w:t.x+t.w-ir,h:ib-iy});
+  terrain.splice(i,1,...pieces);
+ }
+}
+
+
 export default function SquishyLemmings(){
  const canvasRef=useRef<HTMLCanvasElement|null>(null)
  const gameRef=useRef<Game|null>(null)
@@ -176,18 +191,26 @@ export default function SquishyLemmings(){
      const blocker=g.baos.find(o=>o!==b&&!o.dead&&!o.saved&&o.skill==="blocker"&&o.action===1&&Math.abs(o.x-b.x)<18&&Math.abs(o.y-b.y)<24)
      if(b.skill==="blocker"&&supported){b.y=support!.y-BAO_H/2;b.vy=0;b.fall=0;b.action=1;return}
      if(blocker){b.dir=(b.x<blocker.x?-1:1);b.x+=b.dir*1.2;return}
-     if(b.skill==="digger"&&supported&&support){const idx=g.terrain.indexOf(support);if(!support.steel){support.y+=3;support.h=Math.max(0,support.h-3);b.y+=3;if(support.h<=0)g.terrain.splice(idx,1)}else b.skill=undefined;return}
-     if(b.skill==="basher"){
-      const targetX=frontX
-      const target=g.terrain.find(t=>targetX>=t.x-3&&targetX<=t.x+t.w+3&&b.y+4>=t.y&&b.y-4<=t.y+t.h)
-      if(target&&!target.steel){const cut=20;const cutX=b.dir===1?targetX:targetX-cut;target.x+=b.dir===1?cut:0;target.w=Math.max(0,target.w-cut);if(target.w===0)g.terrain=g.terrain.filter(t=>t!==target);b.x+=b.dir*2;return}
-      b.skill=undefined
+     if(b.skill==="digger"&&supported&&support){
+      if(!support.steel){carveTerrain(g.terrain,b.x-12,foot-2,24,30);b.y+=4;b.vy=0;return}
+      b.skill=undefined;
      }
-     if(b.skill==="miner"&&supported&&support){
-      const cutX=b.dir===1?b.x+7:b.x-7
-      const target=g.terrain.find(t=>cutX>=t.x&&cutX<=t.x+t.w&&foot>=t.y-5&&foot<=t.y+t.h)
-      if(target&&!target.steel){target.y+=3;target.h=Math.max(0,target.h-3);b.x+=b.dir*1.5;b.y+=2.2;return}
-      b.skill=undefined
+     if(b.skill==="basher"){
+      const cutX=b.x+b.dir*(BAO_W/2+8), cutY=b.y-5;
+      if(solidAt(g.terrain,cutX,cutY)||solidAt(g.terrain,cutX,cutY+14)){
+       carveTerrain(g.terrain,Math.min(cutX,cutX- b.dir*24),cutY-7,30,27);
+       b.x+=b.dir*2.8;
+       return;
+      }
+      b.skill=undefined;
+     }
+     if(b.skill==="miner"){
+      const cutX=b.x+b.dir*13, cutY=foot+9;
+      if(solidAt(g.terrain,cutX,cutY)){
+       carveTerrain(g.terrain,Math.min(cutX,cutX- b.dir*22),cutY-8,30,23);
+       b.x+=b.dir*2.1;b.y+=2.1;b.vy=0;return;
+      }
+      b.skill=undefined;
      }
      if(b.skill==="builder"&&supported){
       if(b.build<12){const bx=b.x+b.dir*7,by=b.y+BAO_H/2-3;b.x+=b.dir*7;b.y-=1.5;b.build++;g.terrain.push({x:bx,y:by,w:9,h:5,bridge:true});return}
