@@ -80,9 +80,9 @@ function makeLevel(id:number):Level {
   else if(pattern===20){ramp(420,320,8);steel(1000,245,180,18);wall(1450,175,38)}
   else {shelf(420,285,180);gap(760,150);shelf(1030,240,180);gap(1380,150);wall(1650,175,38)}
  }
- if(group>=1&&n%3===0)hazards.push({x:width*.52,y:GROUND-4,w:105,h:55,kind:"water"});
- if(group>=2&&n%4===1)hazards.push({x:width*.7,y:GROUND-4,w:58,h:36,kind:"trap"});
- if(group===3&&n%5===0)hazards.push({x:width*.42,y:GROUND-4,w:95,h:52,kind:"fire"});
+ if(group>=1&&n%3===0){const x=Math.round(width*.52);gap(x,125);hazards.push({x,y:GROUND-26,w:125,h:140,kind:"water"})}
+ if(group>=2&&n%4===1)hazards.push({x:width*.7,y:GROUND-62,w:58,h:62,kind:"trap"});
+ if(group===3&&n%5===0)hazards.push({x:width*.42,y:GROUND-62,w:95,h:62,kind:"fire"});
  const skills:Record<Skill,number>={climber:3,floater:3,bomber:2,blocker:2,builder:8,basher:5,miner:4,digger:3};
  if(n===0){skills.basher=12;skills.builder=0;skills.miner=0;skills.digger=0;skills.climber=0;skills.floater=0;skills.bomber=0;skills.blocker=0}
  if(n===1){skills.basher=0;skills.climber=18;skills.floater=3;skills.builder=0;skills.miner=0;skills.digger=0;skills.blocker=0;skills.bomber=0}
@@ -128,6 +128,12 @@ export default function SquishyLemmings(){
  const [speed,setSpeed]=useState(1)
  const [best,setBest]=useState<Record<number,number>>({})
  const level=LEVELS[levelId]
+ let unlockedThrough=0
+ for(let i=0;i<LEVELS.length;i++){
+  const required=Math.ceil(LEVELS[i].total*LEVELS[i].rescue/100)
+  if((best[i]||0)>=required)unlockedThrough=Math.min(119,i+1)
+  else break
+ }
  levelRef.current=level
  if(!gameRef.current){gameRef.current={baos:[],terrain:level.terrain.map(t=>({...t})),spawned:0,saved:0,dead:0,clock:level.seconds,spawnClock:0,camera:0,running:false,paused:false,complete:false,failed:false,rate:level.rate,speed:1,selected:"floater",skills:cloneSkills(level.skills),nextId:0}}
 
@@ -146,7 +152,7 @@ export default function SquishyLemmings(){
  const setRate=(delta:number)=>{const g=gameRef.current;if(g)g.rate=clamp(g.rate+delta,1,99)}
  const changeSpeed=(v:number)=>{setSpeed(v);const g=gameRef.current;if(g)g.speed=v}
  const nuke=()=>{const g=gameRef.current;if(!g||!g.running)return;g.baos.forEach(b=>{if(!b.saved&&!b.dead&&b.skill!=="blocker"){b.skill="bomber";b.bomber=5}})}
- const selectLevel=(id:number)=>reset(id)
+ const selectLevel=(id:number)=>{if(id<=unlockedThrough)reset(id)}
 
  const clickWorld=(event:ReactPointerEvent<HTMLCanvasElement>)=>{
   const g=gameRef.current;if(!g||!g.running||g.paused)return
@@ -218,7 +224,7 @@ export default function SquishyLemmings(){
      if(b.saved)return
      if(b.dead){b.frame+=step;return}
      b.frame+=step
-     if(b.bomber>0){b.bomber-=step;if(b.bomber<=0){g.terrain=g.terrain.filter(t=>!(b.x>t.x-28&&b.x<t.x+t.w+28&&b.y>t.y-28&&b.y<t.y+t.h+28));b.dead=true;b.splat=1;g.dead++;return}}
+     if(b.bomber>0){b.bomber-=step;if(b.bomber<=0){carveTerrain(g.terrain,b.x-38,b.y-34,76,68);b.dead=true;b.splat=1;g.dead++;return}}
      if(bomberSkillHazard(b,l.hazards)){b.dead=true;b.splat=1;g.dead++;return}
      const foot=b.y+BAO_H/2
      const support=floorAt(g.terrain,b.x+b.dir*3,foot)
@@ -283,8 +289,11 @@ export default function SquishyLemmings(){
      if(b.x<5){b.x=5;b.dir=1}
     })
     // Hazards and rescue percentage are evaluated after movement.
-    if(g.clock<=0||(g.spawned>=l.total&&g.baos.every(b=>b.saved||b.dead))){g.running=false;g.complete=g.saved>=Math.ceil(l.total*l.rescue/100);g.failed=!g.complete}
-    if(g.saved>=Math.ceil(l.total*l.rescue/100)){g.running=false;g.complete=true;g.failed=false}
+    // Keep the parade running after the rescue quota is met. Every released
+    // dumpling must finish, and the hatch must be empty, before a stage ends.
+    const paradeFinished=g.spawned>=l.total&&g.baos.length===l.total&&g.baos.every(b=>b.saved||b.dead)
+    if(paradeFinished){g.running=false;g.complete=g.saved>=Math.ceil(l.total*l.rescue/100);g.failed=!g.complete}
+    else if(g.clock<=0){g.running=false;g.complete=false;g.failed=true}
     const active=g.baos.filter(b=>!b.saved&&!b.dead).length
     if(g.complete){setBest(old=>{const next={...old,[l.id]:Math.max(old[l.id]||0,g.saved)};try{localStorage.setItem("sdlem-campaign-best",JSON.stringify(next))}catch{};return next})}
     // Always publish the terminal state immediately. If a level ends between HUD ticks,
@@ -299,10 +308,10 @@ export default function SquishyLemmings(){
    ctx.save();ctx.translate(-g.camera,0)
    // distant hills
    ctx.fillStyle="#c5e8d0";for(let i=0;i<l.width/260+2;i++){ctx.beginPath();ctx.arc(i*260+100,GROUND+20,105,Math.PI,Math.PI*2);ctx.fill()}
-   // hazard pools
-   l.hazards.forEach(h=>{ctx.fillStyle=h.kind==="water"?"#74c9e7":h.kind==="fire"?"#f49b64":"#e68b8b";ctx.fillRect(h.x,h.y,h.w,h.h);ctx.fillStyle="#fff8";ctx.fillRect(h.x,h.y,h.w,4)})
+   // Hazard drawing is layered over the terrain below.
    // terrain: individual rounded grass/stone ledges
    g.terrain.forEach(t=>{ctx.fillStyle=t.steel?"#8e9aa7":t.bridge?"#c99a70":"#82c994";ctx.strokeStyle=t.steel?"#566575":t.bridge?"#986e56":"#4f9e70";ctx.lineWidth=2;ctx.fillRect(t.x,t.y,t.w,t.h);ctx.strokeRect(t.x,t.y,t.w,t.h);ctx.fillStyle=t.steel?"#c4cbd1":t.bridge?"#e8c39a":"#c8f0c8";ctx.fillRect(t.x,t.y,t.w,4)})
+   l.hazards.forEach(h=>{ctx.fillStyle=h.kind==="water"?"#55b9df":h.kind==="fire"?"#f49b64":"#e68b8b";ctx.fillRect(h.x,h.y,h.w,h.h);ctx.fillStyle="#fff9";ctx.fillRect(h.x,h.y,h.w,4);if(h.kind==="fire"){ctx.font="20px sans-serif";ctx.fillText("♨",h.x+8,h.y+25)}if(h.kind==="trap"){ctx.fillStyle="#773f54";ctx.fillRect(h.x+8,h.y+12,h.w-16,8)}})
    // hatch and exit
    // Decorative bamboo-steamer hatch with a raised lid and warm glow.
    ctx.fillStyle="#9a6b78";ctx.fillRect(l.hatch-36,GROUND-48,72,24);ctx.fillStyle="#d89baf";ctx.fillRect(l.hatch-34,GROUND-52,68,7);ctx.fillStyle="#f6d6e3";ctx.fillRect(l.hatch-27,GROUND-67,54,17);ctx.strokeStyle="#a86d8b";ctx.lineWidth=3;ctx.strokeRect(l.hatch-27,GROUND-67,54,17);ctx.fillStyle="#fff";ctx.fillRect(l.hatch-20,GROUND-63,40,5);ctx.fillStyle="#8b6389";ctx.font="bold 10px sans-serif";ctx.fillText("BAO IN",l.hatch-18,GROUND-73);ctx.beginPath();ctx.ellipse(l.hatch,GROUND-70,30,8,0,Math.PI,Math.PI*2);ctx.fillStyle="#e9b5c9";ctx.fill();ctx.strokeStyle="#a86d8b";ctx.stroke();
@@ -361,7 +370,7 @@ export default function SquishyLemmings(){
    <div className="sdlem-skills">{SKILLS.map(s=><button key={s.id} disabled={level.skills[s.id]===0||hud.complete||hud.failed} className={"sdlem-skill"+(selected===s.id?" is-selected":"")} onClick={()=>assign(s.id)}><span className="sdlem-skill-icon">{s.icon}</span><span className="sdlem-skill-copy"><b>{s.label}</b><small>{s.tip}</small></span><span className="sdlem-skill-count">{gameRef.current?.skills[s.id]??level.skills[s.id]}</span></button>)}</div>
    <div className="sdlem-bottom-row"><div className="sdlem-selected-hint"><b>Active tool: {SKILLS.find(s=>s.id===selected)?.icon} {SKILLS.find(s=>s.id===selected)?.label}</b><small>Click a worker to apply the selected job; click that worker again to remove the job.</small></div><div className="sdlem-play-actions"><button className="sdlem-small-btn" onClick={()=>setRate(-5)} disabled={!hud.running}>− Release</button><b className="sdlem-rate">{gameRef.current?.rate??level.rate}</b><button className="sdlem-small-btn" onClick={()=>setRate(5)} disabled={!hud.running}>+ Release</button><button className="sdlem-small-btn" onClick={nuke} disabled={!hud.running}>☠ Nuke</button><label className="sdlem-speed">Speed <select value={speed} onChange={e=>changeSpeed(Number(e.target.value))}><option value={1}>1×</option><option value={2}>2×</option><option value={4}>4×</option></select></label><button className="sdlem-release" onClick={start}>{hud.running?"▶ Continue":"▶ Release Bao Parade"}</button></div></div>
   </div>
-  <div className="sdlem-level-select"><div><span className="sdlem-kicker">120 ORIGINAL STAGES</span><h2>Choose your world</h2><p>Four difficulty groups, 30 levels each. Complete a level to unlock the next.</p></div><div className="sdlem-level-picker"><label>Difficulty <select value={Math.floor(levelId/30)} onChange={e=>selectLevel(Number(e.target.value)*30)}>{GROUPS.map((g,i)=><option key={g} value={i}>{g}</option>)}</select></label><label>Level <select value={levelId%30} onChange={e=>selectLevel(Math.floor(levelId/30)*30+Number(e.target.value))}>{Array.from({length:30},(_,i)=><option key={i} value={i}>{String(i+1).padStart(2,"0")} · {LEVELS[Math.floor(levelId/30)*30+i].name}</option>)}</select></label><span className="sdlem-campaign-count">{Object.keys(best).length} / 120 cleared</span></div></div>
+  <div className="sdlem-level-select"><div><span className="sdlem-kicker">120 ORIGINAL STAGES</span><h2>Choose your world</h2><p>Four difficulty groups, 30 levels each. Complete a level to unlock the next.</p></div><div className="sdlem-level-picker"><label>Difficulty <select value={Math.floor(levelId/30)} onChange={e=>selectLevel(Number(e.target.value)*30)}>{GROUPS.map((g,i)=><option key={g} value={i} disabled={i*30>unlockedThrough}>{g}</option>)}</select></label><label>Level <select value={levelId%30} onChange={e=>selectLevel(Math.floor(levelId/30)*30+Number(e.target.value))}>{Array.from({length:30},(_,i)=><option key={i} value={i} disabled={Math.floor(levelId/30)*30+i>unlockedThrough}>{String(i+1).padStart(2,"0")} · {LEVELS[Math.floor(levelId/30)*30+i].name}</option>)}</select></label><span className="sdlem-campaign-count">{Object.keys(best).length} / 120 cleared</span></div></div>
   <div className="sdlem-howto"><span className="sdlem-howto-icon">💡</span><div><b>Classic Lemmings rules</b><p>Dumplings walk on their own, turn at walls and fall if you leave a gap. Assign skills to change the landscape or their behaviour. Blockers stop the parade and turn other walkers back; builders lay 12 steps; bashers tunnel sideways; miners cut diagonally; diggers tunnel down; climbers scale walls; floaters survive long falls; bombers clear a small crater. Pause to plan, adjust the release rate and use the mini-map/scrollbar to explore the whole level.</p></div></div>
  </div></section>
 }
