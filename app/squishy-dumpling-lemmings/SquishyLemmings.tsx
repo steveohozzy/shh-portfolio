@@ -32,8 +32,8 @@ function makeLevel(id:number):Level {
  const wall=(x:number,top=205,w=34)=>terrain.push({x,y:top,w,h:GROUND-26-top});
  const shelf=(x:number,y:number,w:number)=>terrain.push({x,y,w,h:15});
  const gap=(x:number,w:number)=>{terrain.splice(terrain.findIndex(t=>t.x===0&&t.w===width),1);terrain.push({x,y:GROUND+4,w,h:150})};
- if(n===0){wall(510,205,38);shelf(850,285,150);wall(1260,235,30);shelf(1600,300,150)}
- else if(n===1){wall(470,175,38);wall(1030,155,38);shelf(1390,275,190)}
+ if(n===0){wall(510,205,38);shelf(850,300,150)}
+ else if(n===1){wall(620,155,42);shelf(1120,280,190)}
  else if(n===2){gap(720,130);shelf(980,285,190);wall(1460,220,34)}
  else if(n===3){wall(540,195,34);gap(1050,150);wall(1510,175,36)}
  else if(n===4){shelf(440,270,250);wall(820,160,38);shelf(1190,245,210);wall(1660,190,36)}
@@ -45,8 +45,8 @@ function makeLevel(id:number):Level {
  if(group>=2&&n%4===1)hazards.push({x:width*.7,y:GROUND-4,w:58,h:36,kind:"trap"});
  if(group===3&&n%5===0)hazards.push({x:width*.42,y:GROUND-4,w:95,h:52,kind:"fire"});
  const skills:Record<Skill,number>={climber:3,floater:3,bomber:2,blocker:2,builder:8,basher:5,miner:4,digger:3};
- if(n===0){skills.basher=5;skills.builder=0;skills.miner=0;skills.digger=0;skills.climber=0;skills.floater=0;skills.bomber=0;skills.blocker=0}
- if(n===1){skills.basher=0;skills.climber=4;skills.floater=3;skills.builder=0;skills.miner=0;skills.digger=0;skills.blocker=0;skills.bomber=0}
+ if(n===0){skills.basher=12;skills.builder=0;skills.miner=0;skills.digger=0;skills.climber=0;skills.floater=0;skills.bomber=0;skills.blocker=0}
+ if(n===1){skills.basher=0;skills.climber=18;skills.floater=3;skills.builder=0;skills.miner=0;skills.digger=0;skills.blocker=0;skills.bomber=0}
  if(n===2){skills.builder=5;skills.floater=4;skills.basher=0;skills.miner=0;skills.digger=0;skills.climber=0}
  if(n===3){skills.basher=3;skills.builder=5;skills.miner=3;skills.digger=0}
  if(group>=2){skills.builder=Math.max(2,skills.builder-2);skills.basher=Math.max(1,skills.basher-1)}
@@ -246,8 +246,9 @@ export default function SquishyLemmings(){
     ctx.fillStyle="#8c6670";ctx.beginPath();ctx.ellipse(-8,BAO_H/2-1,6,3,0,0,Math.PI*2);ctx.ellipse(8,BAO_H/2-1,6,3,0,0,Math.PI*2);ctx.fill()
     // Round, pleated steamed-bun silhouette with wide cheeks rather than an egg shape.
     const body=ctx.createRadialGradient(-7,-10,2,0,1,24);body.addColorStop(0,"#fffdf8");body.addColorStop(.25,col);body.addColorStop(.78,col);body.addColorStop(1,"#b889a0")
-    ctx.fillStyle=body;ctx.strokeStyle="#986f7c";ctx.lineWidth=1.8;ctx.beginPath();ctx.moveTo(-14,8);ctx.bezierCurveTo(-19,2,-18,-7,-12,-12);ctx.quadraticCurveTo(-8,-17,-3,-16);ctx.quadraticCurveTo(0,-20,3,-16);ctx.quadraticCurveTo(9,-18,12,-11);ctx.bezierCurveTo(18,-4,17,5,12,10);ctx.quadraticCurveTo(7,17,0,17);ctx.quadraticCurveTo(-10,17,-14,8);ctx.fill();ctx.stroke()
-    ctx.strokeStyle="#fff9";ctx.lineWidth=1.8;ctx.lineCap="round";ctx.beginPath();ctx.moveTo(-9,-13);ctx.quadraticCurveTo(-6,-8,-4,-5);ctx.moveTo(0,-16);ctx.quadraticCurveTo(0,-10,0,-6);ctx.moveTo(9,-13);ctx.quadraticCurveTo(6,-8,4,-5);ctx.stroke()
+    ctx.fillStyle=body;ctx.strokeStyle="#986f7c";ctx.lineWidth=1.8;ctx.beginPath();ctx.moveTo(-15,7);ctx.bezierCurveTo(-20,1,-18,-8,-12,-13);ctx.quadraticCurveTo(-7,-19,-2,-16);ctx.quadraticCurveTo(0,-22,2,-16);ctx.quadraticCurveTo(8,-19,13,-12);ctx.bezierCurveTo(19,-5,18,5,12,11);ctx.quadraticCurveTo(7,18,0,18);ctx.quadraticCurveTo(-10,18,-15,7);ctx.fill();ctx.stroke()
+    ctx.strokeStyle="#fff9";ctx.lineWidth=1.8;ctx.lineCap="round";ctx.beginPath();ctx.moveTo(-11,-12);ctx.quadraticCurveTo(-7,-8,-5,-4);ctx.moveTo(-5,-16);ctx.quadraticCurveTo(-2,-10,0,-5);ctx.moveTo(0,-18);ctx.quadraticCurveTo(1,-10,2,-5);ctx.moveTo(6,-16);ctx.quadraticCurveTo(5,-9,5,-4);ctx.moveTo(11,-12);ctx.quadraticCurveTo(7,-8,5,-4);ctx.stroke()
+    ctx.strokeStyle="#b889a0";ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(-14,1);ctx.quadraticCurveTo(-12,8,-7,11);ctx.moveTo(14,1);ctx.quadraticCurveTo(12,8,7,11);ctx.stroke()
     ctx.fillStyle="#493640";ctx.beginPath();ctx.ellipse(-4.5,-2,1.9,2.6,0,0,Math.PI*2);ctx.ellipse(4.5,-2,1.9,2.6,0,0,Math.PI*2);ctx.fill()
     ctx.fillStyle="#f08fa9";ctx.beginPath();ctx.ellipse(-9,3,3.3,2.2,0,0,Math.PI*2);ctx.ellipse(9,3,3.3,2.2,0,0,Math.PI*2);ctx.fill()
     ctx.strokeStyle="#754e5b";ctx.lineWidth=1.4;ctx.beginPath();ctx.arc(0,2,2.6,.15,Math.PI-.15);ctx.stroke()
