@@ -23,7 +23,7 @@ const SKILLS: {id:Skill; label:string; icon:string; tip:string}[] = [
 const EMPTY_SKILLS:Record<Skill,number>={climber:4,floater:4,bomber:4,blocker:4,builder:12,basher:8,miner:6,digger:6}
 const GROUPS=["Mellow","Mischievous","Tricky","Bao-nkers"]
 const GROUP_COLOURS=["#9ed9ae","#f2c16e","#b9a4e8","#ed9bbd"]
-const W=960, H=420, BAO_W=28, BAO_H=38, GROUND=385
+const W=960, H=420, BAO_W=44, BAO_H=44, GROUND=385
 
 function makeLevel(id:number):Level {
  const group=Math.floor(id/30), n=id%30, width=3000+(n%5)*240+group*120
@@ -224,9 +224,9 @@ export default function SquishyLemmings(){
    g.baos.forEach(b=>{
     if(b.saved||b.dead||b.x<g.camera-40||b.x>g.camera+W+40)return
     const col=BAO_COLOURS[b.id%BAO_COLOURS.length], bob=Math.sin(b.frame*8)*1.2
-    ctx.save();ctx.translate(b.x,b.y+bob);ctx.scale(b.dir,1)
-    ctx.fillStyle="#72555b30";ctx.beginPath();ctx.ellipse(0,BAO_H/2+2,13,4,0,0,Math.PI*2);ctx.fill()
-    ctx.fillStyle="#8c6670";ctx.beginPath();ctx.ellipse(-6,BAO_H/2-1,5,3,0,0,Math.PI*2);ctx.ellipse(6,BAO_H/2-1,5,3,0,0,Math.PI*2);ctx.fill()
+    ctx.save();ctx.translate(b.x,b.y+bob);ctx.scale(b.dir*1.2,1.12)
+    ctx.fillStyle="#72555b30";ctx.beginPath();ctx.ellipse(0,BAO_H/2+2,16,4,0,0,Math.PI*2);ctx.fill()
+    ctx.fillStyle="#8c6670";ctx.beginPath();ctx.ellipse(-8,BAO_H/2-1,6,3,0,0,Math.PI*2);ctx.ellipse(8,BAO_H/2-1,6,3,0,0,Math.PI*2);ctx.fill()
     const body=ctx.createRadialGradient(-5,-9,2,0,0,19);body.addColorStop(0,"#fffdf8");body.addColorStop(.28,col);body.addColorStop(1,"#b889a0")
     ctx.fillStyle=body;ctx.strokeStyle="#986f7c";ctx.lineWidth=1.8;ctx.beginPath();ctx.moveTo(-11,8);ctx.quadraticCurveTo(-15,-4,-8,-14);ctx.quadraticCurveTo(0,-22,8,-13);ctx.quadraticCurveTo(15,-3,11,8);ctx.quadraticCurveTo(8,16,0,16);ctx.quadraticCurveTo(-9,16,-11,8);ctx.fill();ctx.stroke()
     ctx.strokeStyle="#fff9";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-6,-13);ctx.quadraticCurveTo(-4,-19,0,-14);ctx.quadraticCurveTo(4,-19,7,-12);ctx.stroke()
