@@ -93,24 +93,52 @@ export class ShopScene extends Phaser.Scene {
 }
 
 export class EndScene extends Phaser.Scene {
-  ctl!: Controls; ready = false;
+  ctl!: Controls;
+  ready = false;
+  page = 0;
+  storyText?: Phaser.GameObjects.Text;
+  prompt?: Phaser.GameObjects.Text;
+  pages = [
+    "THE GOLD CROWN HAS\nBEEN RETURNED TO RADAXIAN!",
+    "JANKEN'S TYRANNY IS OVER.\nTHE KINGDOM IS FREE!",
+    "ALEX IS REUNITED WITH HIS\nFAMILY. THE PEOPLE CELEBRATE!"
+  ];
   constructor() { super("End"); }
   create(d: { win: boolean }) {
     this.ready = false;
+    this.page = 0;
     if (d.win) {
       this.add.image(128, 96, "bg_hills");
-      txt(this, 128, 50, state.goldCrown ? "THE GOLD CROWN IS RESTORED!" : "YOU SAVED THE ISLAND!", 8, "#f8d820");
-      txt(this, 128, 70, `TREASURE $${state.money}`, 8);
-      this.add.image(128, 112, "hero_jump").setScale(2);
+      txt(this, 128, 24, "ALEX KIDD", 10, "#f8d820");
+      this.add.image(94, 103, "hero_jump").setScale(2);
+      this.add.image(160, 103, "story_npc").setTint(0xf8a8c8).setScale(1.2);
+      this.storyText = txt(this, 128, 145, this.pages[0], 6, "#ffffff");
       sfx.clear();
     } else {
       this.cameras.main.setBackgroundColor("#000000");
       txt(this, 128, 80, "GAME OVER", 16, "#d82800");
     }
-    txt(this, 128, 160, "PRESS START", 8);
+    this.prompt = txt(this, 128, 178, "PRESS START", 6);
     sfx.music(null);
     this.ctl = new Controls(this);
-    this.time.delayedCall(1200, () => { this.ready = true; this.input.once("pointerdown", () => this.scene.start("Title")); });
+    this.time.delayedCall(1000, () => {
+      this.ready = true;
+      this.input.once("pointerdown", () => {
+        if (d.win && this.page < this.pages.length - 1) this.nextPage();
+        else this.scene.start("Title");
+      });
+    });
   }
-  update() { this.ctl.update(); if (this.ready && this.ctl.anyConfirm()) this.scene.start("Title"); }
+  nextPage() {
+    this.page++;
+    this.storyText?.setText(this.pages[this.page]);
+    if (this.page === this.pages.length - 1) this.prompt?.setText("PRESS START TO REPLAY");
+    sfx.select();
+  }
+  update() {
+    this.ctl.update();
+    if (!this.ready || !this.ctl.anyConfirm()) return;
+    if (state.goldCrown && this.page < this.pages.length - 1) this.nextPage();
+    else this.scene.start("Title");
+  }
 }
