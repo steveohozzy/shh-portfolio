@@ -59,30 +59,38 @@ function decodeLevelScreen(hex: string): number[] {
   return tiles;
 }
 
+const SOLID_METATILES_A = "0111111111000000110011111110000000000000000000000000000000000000011111111001110011111111100000000000000000111111111111111100001000000000000000010000000000000000000000000010000000000000000111001111000000000000000000000000001001010000000000000000000000100001";
+const SOLID_METATILES_B = "0111111111000000110011111110000000000000000000000000000000000000011111111001110011000000001011110101111110111111111111111100000011100000000000011111110000000000000000000010000000000000000111001111000000000000000000000000001001010000000000000000000000100001";
+
+function originalTile(id: number, table: "A" | "B", aboveIsSolid: boolean): string {
+  const solids = table === "B" ? SOLID_METATILES_B : SOLID_METATILES_A;
+  if (solids[id] !== "1") return ".";
+  return aboveIsSolid ? "R" : "#";
+}
+
 function mtEternal(): G {
   const g = grid(48, 120);
   const screens = MT_ETERNAL_SCREENS.map(decodeLevelScreen);
-  const token = (id: number) => {
-    if (id === 0 || id === 0x0a || id === 0x0b || id === 0x0c || id === 0x20 || id === 0x21) return ".";
-    if (id >= 0x50 && id <= 0x57) return "#";
-    if (id === 0x01) return "K";
-    if (id === 0x02) return "Q";
-    if (id === 0x03) return "S";
-    return "R";
-  };
+  const token = (id: number, above: number) => originalTile(id, "A", (SOLID_METATILES_A[above] || "0") === "1");
 
   // Original ROM layout: ten vertically stacked screens, then two screens
   // extending the final underwater screen to the right.
   for (let screenY = 0; screenY < 10; screenY++) {
     const data = screens[screenY];
     for (let y = 0; y < 12; y++) {
-      for (let x = 0; x < 16; x++) put(g, x, screenY * 12 + y, token(data[y * 16 + x] || 0));
+      for (let x = 0; x < 16; x++) {
+        const i = y * 16 + x;
+        put(g, x, screenY * 12 + y, token(data[i] || 0, y > 0 ? data[i - 16] || 0 : 0));
+      }
     }
   }
   for (let screenX = 1; screenX < 3; screenX++) {
     const data = screens[9 + screenX];
     for (let y = 0; y < 12; y++) {
-      for (let x = 0; x < 16; x++) put(g, screenX * 16 + x, 108 + y, token(data[y * 16 + x] || 0));
+      for (let x = 0; x < 16; x++) {
+        const i = y * 16 + x;
+        put(g, screenX * 16 + x, 108 + y, token(data[i] || 0, y > 0 ? data[i - 16] || 0 : 0));
+      }
     }
   }
 
@@ -145,26 +153,24 @@ type StageSpec = {
 };
 
 function makeOriginalStage(stageNo: number, spec: StageSpec): G {
-  const screens = ORIGINAL_SCREENS[stageNo] || [];
+  const sourceScreens = ORIGINAL_SCREENS[stageNo] || [];
+  const screens = stageNo === 17 ? sourceScreens.slice(0, 1) : sourceScreens;
   const columns = spec.columns || Math.ceil(spec.width / 16);
   const rows = Math.max(Math.ceil(screens.length / columns), Math.ceil(spec.height / 12));
   const g = grid(columns * 16, rows * 12);
-
-  const token = (id: number) => {
-    if (id === 0 || id === 0x0a || id === 0x0b || id === 0x0c || id === 0x20 || id === 0x21) return ".";
-    if (id >= 0x50 && id <= 0x57) return "#";
-    if (id === 0x01) return "K";
-    if (id === 0x02) return "Q";
-    if (id === 0x03) return "S";
-    return "R";
-  };
+  const table = stageNo === 14 || stageNo === 16 || stageNo === 17 ? "B" : "A";
 
   screens.forEach((hex, index) => {
     const data = decodeLevelScreen(hex);
     const screenX = index % columns;
     const screenY = Math.floor(index / columns);
     for (let y = 0; y < 12; y++) {
-      for (let x = 0; x < 16; x++) put(g, screenX * 16 + x, screenY * 12 + y, token(data[y * 16 + x] || 0));
+      for (let x = 0; x < 16; x++) {
+        const i = y * 16 + x;
+        const id = data[i] || 0;
+        const above = y > 0 ? data[i - 16] || 0 : 0;
+        put(g, screenX * 16 + x, screenY * 12 + y, originalTile(id, table, (table === "B" ? SOLID_METATILES_B : SOLID_METATILES_A)[above] === "1"));
+      }
     }
   });
 
@@ -172,22 +178,27 @@ function makeOriginalStage(stageNo: number, spec: StageSpec): G {
   const startY = spec.startY === undefined ? (spec.water ? 5 : g.length - 3) : spec.startY;
   fill(g, Math.max(0, startX - 1), Math.min(g[0].length - 1, startX + 1), Math.max(0, startY - 1), startY, ".");
   put(g, startX, startY, "P");
-  if (stageNo === 11) fill(g, startX - 1, startX + 1, startY + 1, startY + 1, "#");
 
-  let hasExit = false;
-  let hasBoss = false;
-  (ORIGINAL_ENTITIES[stageNo] || []).forEach(([screen, x, y, entity]) => {
-    const screenX = screen % columns;
-    const screenY = Math.floor(screen / columns);
+  const entities = ORIGINAL_ENTITIES[stageNo] || [];
+  const visibleEntities = stageNo === 17 ? entities.filter(([screen]) => screen === 1) : entities;
+  visibleEntities.forEach(([screen, x, y, entity]) => {
+    const screenX = stageNo === 17 ? 0 : screen % columns;
+    const screenY = stageNo === 17 ? 0 : Math.floor(screen / columns);
     const tx = screenX * 16 + Math.floor(x / 16);
     const ty = screenY * 12 + Math.floor(y / 16);
-    if (entity === "F" || entity === "B") fill(g, Math.max(0, tx - 1), Math.min(g[0].length - 1, tx + 1), Math.max(0, ty - 1), Math.min(g.length - 1, ty + 1), ".");
+    if (tx < 0 || tx >= g[0].length || ty < 0 || ty >= g.length) return;
     put(g, tx, ty, entity);
-    if (entity === "F") hasExit = true;
-    if (entity === "B") hasBoss = true;
   });
 
-  if (!hasExit && !hasBoss) put(g, g[0].length - 3, g.length - 3, "F");
+  if (stageNo === 17) {
+    // The entrance is the open doorway in the lower centre of the original
+    // Cragg Lake screen; the Hirotta Stone chamber is handled as a separate room.
+    put(g, 8, 10, "F");
+  } else {
+    const hasExit = entities.some(([, , , entity]) => entity === "F");
+    const hasBoss = entities.some(([, , , entity]) => entity === "B");
+    if (!hasExit && !hasBoss) put(g, g[0].length - 3, g.length - 3, "F");
+  }
   return g;
 }
 
@@ -267,44 +278,6 @@ function makeStage(s: StageSpec): G {
   return g;
 }
 
-function craggLakeStage(): G {
-  // The original Cragg Lake layout is a short, vertically scrolling dive:
-  // Alex starts near the top, swims down through the lake, then reaches the
-  // cave entrance at the bottom. It is not a horizontal castle platform stage.
-  const g = grid(16, 36);
-  put(g, 1, 8, "P");
-
-  // Narrow the descent in several places while leaving a continuous swimming
-  // channel. The original screen descriptors define three stacked screens.
-  fill(g, 0, 0, 0, 35, "R");
-  fill(g, 15, 15, 0, 35, "R");
-  fill(g, 1, 14, 35, 35, "R");
-
-  // Upper lake entrance and staggered rock formations.
-  fill(g, 3, 6, 3, 3, "R");
-  fill(g, 10, 13, 6, 6, "R");
-  fill(g, 2, 4, 11, 11, "R");
-  fill(g, 8, 12, 14, 14, "R");
-
-  // Lower channel: alternate the obstacles so the player must swim around
-  // them rather than simply holding down through an empty shaft.
-  fill(g, 2, 5, 18, 18, "R");
-  fill(g, 9, 13, 21, 21, "R");
-  fill(g, 3, 7, 25, 25, "R");
-  fill(g, 10, 13, 28, 28, "R");
-
-  // Fish occupy the open water lanes; keep clear space around the spawn.
-  put(g, 11, 9, "p");
-  put(g, 5, 16, "p");
-  put(g, 10, 24, "p");
-  put(g, 7, 30, "p");
-
-  // The submerged cave landing and entrance sit at the foot of the dive.
-  fill(g, 1, 14, 33, 33, "R");
-  fill(g, 6, 10, 32, 32, ".");
-  put(g, 8, 32, "F");
-  return g;
-}
 
 const STAGES: StageSpec[] = [
   { name: "2  MT. ETERNAL PART 2", width: 288, height: 12, theme: "hills", seed: 1, columns: 18, startY: 9, sky: "#5c94fc", boss: true, bossName: "Gooseka the Slippery",
@@ -338,10 +311,10 @@ const STAGES: StageSpec[] = [
     platforms: [[10,7,6],[31,4,5],[53,6,6],[76,3,5],[99,7,6],[122,4,5],[145,6,6]], pits: [[22,24],[44,46],[67,69],[90,92],[113,115],[136,138],[159,161]], blocks: [[14,6,1],[57,5,0],[103,6,2],[149,5,1]] },
   { name: "16  JANKEN'S CASTLE", width: 112, height: 72, theme: "castle", seed: 15, columns: 7, startX: 2, startY: 69, vertical: true, sky: "#200820", boss: true, bossName: "Janken the Great",
     platforms: [[8,63,8],[24,57,7],[42,51,8],[61,45,7],[80,39,8],[96,33,7],[12,27,8],[31,21,7],[50,15,8],[70,9,7],[91,4,8]], blocks: [[12,62,2],[28,56,1],[46,50,2],[65,44,1],[84,38,2],[100,32,1],[16,26,2],[35,20,1],[54,14,2],[74,8,1]] },
-  { name: "17  CRAGG LAKE", width: 16, height: 36, theme: "lake", water: true, vertical: true, seed: 16, columns: 1, startX: 1, startY: 8, sky: "#102b70", platforms: [], blocks: [] }
+  { name: "17  CRAGG LAKE", width: 16, height: 12, theme: "lake", water: true, seed: 16, columns: 1, startX: 1, startY: 8, sky: "#102b70", platforms: [], blocks: [] }
 ];
 
 export const LEVELS: LevelDef[] = [
   { name: "1  MT. ETERNAL", theme: "hills", water: false, vertical: true, waterStartY: 108 * 16, sky: "#5c94fc", grid: mtEternal() },
-  ...STAGES.map((s, i) => ({ name: s.name, theme: s.theme, water: !!s.water, vertical: !!s.vertical, startFacing: s.startFacing, sky: s.sky, bossName: s.bossName, grid: i === 15 ? makeStage(s) : i === 16 ? craggLakeStage() : s.grid || makeStage(s) }))
+  ...STAGES.map((s, i) => ({ name: s.name, theme: s.theme, water: !!s.water, vertical: !!s.vertical, startFacing: s.startFacing, sky: s.sky, bossName: s.bossName, grid: makeOriginalStage(i + 2, s) }))
 ];
