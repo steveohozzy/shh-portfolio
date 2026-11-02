@@ -173,6 +173,33 @@ export class GameScene extends Phaser.Scene {
       this.input.keyboard?.off("keydown-ESC", this.togglePause, this);
       this.input.keyboard?.off("keydown-M", this.toggleSound, this);
     });
+
+    if (this.levelIdx === 16) {
+      let returnLevel = -1;
+      let message = "";
+      if (!state.letterToNibana) {
+        returnLevel = 10;
+        message = "THE LETTER FOR NIBANA IS STILL HIDDEN IN RADAXIAN CASTLE.";
+      } else if (!state.hirottaStone) {
+        returnLevel = 13;
+        message = "RETURN TO KING HIGH STONE AND RECEIVE THE HIROTTA STONE.";
+      } else if (!state.moonlightStone) {
+        returnLevel = 14;
+        message = "THE MOONLIGHT STONE IS STILL MISSING. DEFEAT PARPLIN IN NIBANA.";
+      } else if (!state.sunStone) {
+        returnLevel = 15;
+        message = "THE SUN STONE IS STILL MISSING. DEFEAT JANKEN.";
+      }
+      if (returnLevel >= 0) {
+        this.cleared = true;
+        this.physics.pause();
+        sfx.music(null);
+        this.add.rectangle(128, 96, 238, 72, 0x080820, 0.94).setScrollFactor(0).setDepth(100).setStrokeStyle(1, 0xf8d820);
+        this.add.text(128, 88, message, { fontFamily: FONT, fontSize: "6px", color: "#ffffff", align: "center", wordWrap: { width: 218 } }).setOrigin(0.5).setScrollFactor(0).setDepth(101);
+        this.add.text(128, 122, "RETURNING TO THE QUEST...", { fontFamily: FONT, fontSize: "5px", color: "#f8d820" }).setOrigin(0.5).setScrollFactor(0).setDepth(101);
+        this.time.delayedCall(2400, () => this.scene.start("Game", { level: returnLevel }));
+      }
+    }
   }
 
   togglePause() {
