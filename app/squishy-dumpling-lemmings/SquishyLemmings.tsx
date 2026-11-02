@@ -186,9 +186,22 @@ export default function SquishyLemmings(){
       b.skill=undefined;
      }
      if(b.skill==="basher"){
+      // A basher keeps punching in its current direction until its whole body
+      // has cleared the obstacle. Do not let the ordinary wall-turn logic
+      // reverse it as soon as the front of the tunnel is open.
       const cutX=b.x+b.dir*(BAO_W/2+8), cutY=b.y-5;
-      if(solidAt(g.terrain,cutX,cutY)||solidAt(g.terrain,cutX,cutY+14)){
-       carveTerrain(g.terrain,Math.min(cutX,cutX- b.dir*24),cutY-7,30,27);
+      const bashBlocked=solidAt(g.terrain,cutX,cutY)||solidAt(g.terrain,cutX,cutY+14);
+      const bodyStillInWall=g.terrain.some(t=>
+       !t.steel&&b.y+12>t.y&&b.y-18<t.y+t.h&&
+       b.x+BAO_W/2>t.x&&b.x-BAO_W/2<t.x+t.w
+      );
+      if(bashBlocked){
+       const carveX=b.dir===1?cutX-24:cutX-6;
+       carveTerrain(g.terrain,carveX,cutY-12,32,34);
+       b.x+=b.dir*2.8;
+       return;
+      }
+      if(bodyStillInWall){
        b.x+=b.dir*2.8;
        return;
       }
@@ -206,7 +219,7 @@ export default function SquishyLemmings(){
       if(b.build<12){const bx=b.x+b.dir*7,by=b.y+BAO_H/2-3;b.x+=b.dir*7;b.y-=1.5;b.build++;g.terrain.push({x:bx,y:by,w:9,h:5,bridge:true});return}
       b.skill=undefined;b.build=0
      }
-     if(wall){
+     if(wall&&b.skill!=="basher"){
       if(b.skill==="climber"){b.y-=2;b.x+=b.dir*.5;if(!solidAt(g.terrain,b.x+b.dir*7,b.y-BAO_H/2)){b.y-=5;b.skill=undefined}return}
       b.dir=(b.dir*-1) as 1|-1
      }
