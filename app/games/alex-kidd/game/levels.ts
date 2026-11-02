@@ -204,7 +204,7 @@ function makeOriginalStage(stageNo: number, spec: StageSpec): G {
       fill(g, x, Math.min(106, x + 19), y, y, "#");
       // Keep a clear two-tile jump pocket above every ledge.
       fill(g, x, Math.min(106, x + 19), y - 2, y - 1, ".");
-      if (step % 4 === 1 && y > 5) put(g, Math.min(105, x + 9), y - 1, "Q");
+      if (step % 4 === 1 && y > 5) put(g, Math.min(105, x + 9), y - 1, "$");
     }
 
     // The entrance is a safe landing platform, not a sealed starting pocket.
