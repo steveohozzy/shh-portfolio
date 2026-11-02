@@ -309,6 +309,15 @@ export class GameScene extends Phaser.Scene {
     else if (t === "treasure") { state.money += 100; sfx.power(); }
     else if (t === "bracelet") { state.bracelet = true; sfx.power(); }
     else if (t === "life") { state.lives++; sfx.power(); }
+    else if (t === "crown") {
+      state.goldCrown = true;
+      it.destroy();
+      this.cleared = true;
+      this.physics.pause();
+      sfx.clear();
+      this.time.delayedCall(900, () => this.scene.start("End", { win: true }));
+      return;
+    }
     it.destroy();
   }
 
@@ -405,6 +414,10 @@ export class GameScene extends Phaser.Scene {
 
   clearLevel() {
     if (this.cleared || this.dead) return;
+    if (this.levelIdx === 10) state.letterToNibana = true;
+    if (this.levelIdx === 13) state.hirottaStone = true;
+    if (this.levelIdx === 14) state.moonlightStone = true;
+    if (this.levelIdx === 15) state.sunStone = true;
     this.cleared = true;
     sfx.music(null);
     sfx.clear();
@@ -509,7 +522,7 @@ export class GameScene extends Phaser.Scene {
     this.updateEnemies(dt);
     this.updateMisc(time, dt);
     if (this.boss && !this.jankenDone && this.player.x > this.arenaX && (!this.L.vertical || Math.abs(this.player.y - this.boss.y) < 6 * T)) this.startJanken();
-    this.hud.setText(`LIFE ${Math.max(0, state.lives)}  $${state.money}${state.bracelet ? "  PWR" : ""}`);
+    this.hud.setText(`LIFE ${Math.max(0, state.lives)}  ${state.money}${state.bracelet ? "  PWR" : ""}${state.sunStone ? "  SUN" : ""}${state.moonlightStone ? "  MOON" : ""}`);
   }
 
   updatePlayer(time: number, dt: number) {
@@ -664,6 +677,12 @@ export class GameScene extends Phaser.Scene {
       if (age > 9000) g.destroy();
     }
     for (const s of [...this.shots.getChildren()] as Spr[]) if (time - (s.getData("born") as number) > 650) s.destroy();
+    if (this.room === "puzzle") {
+      for (const tile of [...this.puzzleTiles.getChildren()] as Phaser.Physics.Arcade.Image[]) {
+        if (this.puzzleLastTile === tile && !Phaser.Geom.Intersects.RectangleToRectangle(this.player.getBounds(), tile.getBounds())) this.puzzleLastTile = null;
+        if (this.puzzleLastTile !== tile) tile.setData("stepLock", false);
+      }
+    }
     for (const h of [...this.hazards.getChildren()] as Spr[]) if (h.y > this.L.grid.length * T + 32) h.destroy();
 
     const b = this.boss;
