@@ -29,11 +29,13 @@ function makeLevel(id:number):Level {
  const group=Math.floor(id/30), n=id%30, width=2400+(n%4)*180+group*120;
  const terrain:Terrain[]=[{x:0,y:GROUND-26,w:width,h:140},{x:0,y:GROUND-26,w:150,h:26},{x:width-260,y:GROUND-26,w:260,h:26}];
  const hazards:Hazard[]=[];
- const wall=(x:number,top=205,w=34)=>terrain.push({x,y:top,w,h:GROUND-26-top});
- const shelf=(x:number,y:number,w:number)=>terrain.push({x,y,w,h:15});
- const ramp=(x:number,y:number,steps:number,dir:1|-1=1)=>{for(let k=0;k<steps;k++)terrain.push({x:x+(dir===1?k*22:(steps-k-1)*22),y:y-k*13,w:24,h:GROUND-26-(y-k*13)})};
- const steel=(x:number,y:number,w:number,h:number)=>terrain.push({x,y,w,h,steel:true});
+ const worldShift=group*34;
+ const wall=(x:number,top=205,w=34)=>terrain.push({x:x+worldShift,y:top,w,h:GROUND-26-top});
+ const shelf=(x:number,y:number,w:number)=>terrain.push({x:x+worldShift,y,w,h:15});
+ const ramp=(x:number,y:number,steps:number,dir:1|-1=1)=>{for(let k=0;k<steps;k++)terrain.push({x:x+worldShift+(dir===1?k*22:(steps-k-1)*22),y:y-k*13,w:24,h:GROUND-26-(y-k*13)})};
+ const steel=(x:number,y:number,w:number,h:number)=>terrain.push({x:x+worldShift,y,w,h,steel:true});
  const gap=(x:number,w:number)=>{
+  x+=worldShift;
   const base=terrain.find(t=>t.x===0&&t.w===width&&t.y===GROUND-26&&t.h===140);
   if(base){
    terrain.splice(terrain.indexOf(base),1);
@@ -56,7 +58,7 @@ function makeLevel(id:number):Level {
  else if(n===6){wall(480,125,38);wall(900,125,38);wall(1320,125,38);shelf(1650,280,220)}
  else if(n===7){shelf(420,285,220);shelf(790,235,220);shelf(1160,185,220);wall(1570,155,36)}
  else {
-  const pattern=n%22;
+  const pattern=n%30;
   if(pattern===0){ramp(390,300,6);wall(940,180,38);shelf(1330,270,180)}
   else if(pattern===1){shelf(420,285,210);shelf(760,230,210);shelf(1100,175,210);wall(1580,155,38)}
   else if(pattern===2){gap(620,145);ramp(900,310,5);gap(1450,125)}
@@ -78,11 +80,19 @@ function makeLevel(id:number):Level {
   else if(pattern===18){gap(600,160);shelf(820,275,180);wall(1190,170,38);shelf(1480,240,180)}
   else if(pattern===19){wall(520,130,38);shelf(820,290,180);wall(1160,130,38);shelf(1480,250,180)}
   else if(pattern===20){ramp(420,320,8);steel(1000,245,180,18);wall(1450,175,38)}
-  else {shelf(420,285,180);gap(760,150);shelf(1030,240,180);gap(1380,150);wall(1650,175,38)}
+  else if(pattern===21){shelf(420,285,180);gap(760,150);shelf(1030,240,180);gap(1380,150);wall(1650,175,38)}
+  else if(pattern===22){wall(420,145,38);shelf(690,285,170);gap(1040,190);ramp(1370,315,7);wall(1770,165,38)}
+  else if(pattern===23){steel(460,275,145,18);shelf(720,235,180);wall(1080,150,38);gap(1470,155);shelf(1700,265,180)}
+  else if(pattern===24){ramp(430,315,7);wall(900,180,42);wall(1260,125,42);shelf(1580,250,220)}
+  else if(pattern===25){gap(520,120);shelf(740,285,160);gap(1080,220);shelf(1390,255,190);wall(1780,185,36)}
+  else if(pattern===26){shelf(430,295,180);shelf(730,250,180);steel(1050,205,150,18);shelf(1320,160,180);wall(1730,135,38)}
+  else if(pattern===27){wall(470,175,36);ramp(760,320,6,-1);gap(1190,155);wall(1500,150,40);shelf(1800,275,180)}
+  else if(pattern===28){gap(600,185);ramp(900,315,8);steel(1320,235,180,18);wall(1690,165,38)}
+  else {shelf(420,275,180);wall(760,155,38);shelf(1040,230,190);wall(1420,145,38);gap(1770,135)}
  }
- if(group>=1&&n%3===0){const x=Math.round(width*.52);gap(x,125);hazards.push({x,y:GROUND-26,w:125,h:140,kind:"water"})}
- if(group>=2&&n%4===1)hazards.push({x:width*.7,y:GROUND-62,w:58,h:62,kind:"trap"});
- if(group===3&&n%5===0)hazards.push({x:width*.42,y:GROUND-62,w:95,h:62,kind:"fire"});
+ if(group>=1&&n%3===0){const x=Math.round(width*.52)+worldShift;gap(Math.round(width*.52),125);hazards.push({x,y:GROUND-26,w:125,h:140,kind:"water"})}
+ if(group>=2&&n%4===1)hazards.push({x:width*.7+worldShift,y:GROUND-62,w:58,h:62,kind:"trap"});
+ if(group===3&&n%5===0)hazards.push({x:width*.42+worldShift,y:GROUND-62,w:95,h:62,kind:"fire"});
  const skills:Record<Skill,number>={climber:3,floater:3,bomber:2,blocker:2,builder:8,basher:5,miner:4,digger:3};
  if(n===0){skills.basher=12;skills.builder=0;skills.miner=0;skills.digger=0;skills.climber=0;skills.floater=0;skills.bomber=0;skills.blocker=0}
  if(n===1){skills.basher=0;skills.climber=18;skills.floater=3;skills.builder=0;skills.miner=0;skills.digger=0;skills.blocker=0;skills.bomber=0}
@@ -91,7 +101,7 @@ function makeLevel(id:number):Level {
  if(group>=2){skills.builder=Math.max(2,skills.builder-2);skills.basher=Math.max(1,skills.basher-1)}
  if(group===3){skills.digger=Math.max(1,skills.digger-1);skills.blocker=Math.max(1,skills.blocker-1)}
  const names=["Bao Boulevard","The Wobble Wall","Pudding Gap","The Sticky Passage","Cloud Kitchen","Jellybean Crossing","The Noodle Maze","Mooncake Mountain","Steamed-Up Summit","The Great Bao Escape","Bamboo Bounce","The Sugar Steps","Peachy Passage","The Bao Bridge","Cloudtop Crossing","The Winding Walkway","Pillow Fort","The Matcha Mine","Honeycomb Heights","The Great Drop","Steamer Express","The Split-Level","Lavender Labyrinth","The Golden Gate","Rainbow Run","The Wobbly Workshop","The Secret Staircase","The Waterway","The Castle Courtyard","Homeward Bound"];
- return {id,name:names[n%names.length],group:GROUPS[group],width,total:group===0?12:group===1?18:group===2?24:30,rescue:group===0?65:group===1?72:group===2?78:84,seconds:300-group*25,rate:24+group*5,hatch:75,exit:width-115,terrain,hazards,skills}
+ return {id,name:(group===0?"":group===1?"Sugar Rush · ":group===2?"Cloud Kingdom · ":"Midnight Mochi · ")+names[n%names.length],group:GROUPS[group],width,total:group===0?12:group===1?18:group===2?24:30,rescue:group===0?65:group===1?72:group===2?78:84,seconds:300-group*25,rate:24+group*5,hatch:75,exit:width-115,terrain,hazards,skills}
 }
 const LEVELS=Array.from({length:120},(_,i)=>makeLevel(i))
 const BAO_COLOURS=["#fff0d9","#ffc9d8","#cce5ae","#c9d6ff","#e3d0ff","#ffd6b7","#ffcf63","#f3a6d0"]
