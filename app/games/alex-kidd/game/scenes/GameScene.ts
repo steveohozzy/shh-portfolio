@@ -32,6 +32,7 @@ export class GameScene extends Phaser.Scene {
   jankenActive = false; jankenDone = false;
   room: "dive" | "puzzle" = "dive";
   puzzleTiles!: Phaser.Physics.Arcade.StaticGroup;
+  puzzleSpikes!: Phaser.Physics.Arcade.StaticGroup;
   puzzleStep = 0;
   puzzleLastTile: Phaser.Physics.Arcade.Image | null = null;
   puzzleHint?: Phaser.GameObjects.Text;
@@ -87,6 +88,7 @@ export class GameScene extends Phaser.Scene {
     this.hazards = this.physics.add.group();
     this.ghosts = this.physics.add.group({ allowGravity: false });
     this.puzzleTiles = this.physics.add.staticGroup();
+    this.puzzleSpikes = this.physics.add.staticGroup();
 
     let start = { x: 40, y: 140 };
     let goal: { x: number; y: number } | null = null;
@@ -132,6 +134,7 @@ export class GameScene extends Phaser.Scene {
     this.physics.add.overlap(this.player, this.enemies, () => this.die());
     this.physics.add.overlap(this.player, this.ghosts, () => this.die());
     this.physics.add.overlap(this.player, this.hazards, () => this.die());
+    this.physics.add.overlap(this.player, this.puzzleSpikes, () => this.die());
     this.physics.add.overlap(this.player, this.pickups, (_p, it) => this.collect(it as Spr));
     this.physics.add.overlap(this.shots, this.enemies, (s, e) => { this.killEnemy(e as Spr); (s as Spr).destroy(); });
     const hitSolidWithShot = (s, o) => {
@@ -258,12 +261,10 @@ export class GameScene extends Phaser.Scene {
   }
 
   spawnSpike(x: number, y: number) {
-    const spike = this.hazards.create(x, y, "spike") as Spr;
-    const body = spike.body as Body;
-    body.setAllowGravity(false);
-    body.setImmovable(true);
-    body.setSize(12, 8).setOffset(2, 4);
+    const spike = this.puzzleSpikes.create(x, y, "spike") as Phaser.Physics.Arcade.Image;
     spike.setDepth(7);
+    (spike.body as Phaser.Physics.Arcade.StaticBody).setSize(12, 8).setOffset(2, 4);
+    (spike.body as Phaser.Physics.Arcade.StaticBody).updateFromGameObject();
   }
 
   spawnPickup(x: number, y: number, type: string, pop = true) {
