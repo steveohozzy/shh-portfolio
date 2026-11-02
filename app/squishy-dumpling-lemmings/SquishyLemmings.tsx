@@ -2,251 +2,167 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
-type Skill = "umbrella" | "builder" | "climber" | "digger" | "blocker"
+type Skill = "floater" | "builder" | "climber" | "digger" | "basher" | "miner" | "blocker"
 type BaoKind = "classic" | "strawberry" | "matcha" | "blueberry" | "lavender" | "peach" | "golden" | "rainbow"
-type Bao = { id: number; x: number; y: number; dir: 1 | -1; kind: BaoKind; skill?: Skill; fall: number; saved: boolean; lost?: boolean; walking: boolean }
-type Level = { name: string; subtitle: string; spawn: number; target: number; exitX: number; exitY: number; platforms: { x: number; y: number; w: number; h: number; kind?: string }[]; hazards: { x: number; y: number; w: number; h: number; kind: string }[] }
+type Terrain = { id:number; x:number; y:number; w:number; h:number; kind:"ground"|"rock"|"bridge"|"step" }
+type Bao = { id:number; x:number; y:number; vx:number; vy:number; dir:1|-1; kind:BaoKind; skill?:Skill; fall:number; saved:boolean; lost:boolean; buildCount:number; action:number; animation:number }
+type Level = { name:string; theme:string; subtitle:string; width:number; spawn:number; rescue:number; rate:number; time:number; exitX:number; exitY:number; terrain:Terrain[]; hazards:{x:number;w:number;kind:string}[] }
+type Game = { baos:Bao[]; terrain:Terrain[]; released:number; saved:number; lost:number; elapsed:number; spawnClock:number; nextId:number; running:boolean; complete:boolean; won:boolean }
 
-const LEVELS: Level[] = [
-  { name: "Bao Garden", subtitle: "A little hop, skip & umbrella!", spawn: 8, target: 6, exitX: 91, exitY: 75,
-    platforms: [{x:0,y:83,w:29,h:5},{x:36,y:83,w:23,h:5},{x:66,y:83,w:34,h:5},{x:43,y:62,w:16,h:4},{x:66,y:48,w:13,h:4}],
-    hazards: [{x:29,y:83,w:7,h:5,kind:"gap"},{x:59,y:83,w:7,h:5,kind:"gap"},{x:59,y:83,w:7,h:5,kind:"gap"}] },
-  { name: "Matcha Mountain", subtitle: "Build a bridge across the big gap.", spawn: 10, target: 7, exitX: 92, exitY: 78,
-    platforms: [{x:0,y:83,w:24,h:5},{x:43,y:83,w:18,h:5},{x:77,y:83,w:23,h:5},{x:23,y:65,w:14,h:4},{x:57,y:55,w:13,h:4},{x:77,y:69,w:10,h:4}],
-    hazards: [{x:24,y:83,w:19,h:5,kind:"gap"},{x:61,y:83,w:16,h:5,kind:"gap"}] },
-  { name: "Rainbow Rooftops", subtitle: "Climb up, dig down, and get everyone home.", spawn: 12, target: 8, exitX: 92, exitY: 44,
-    platforms: [{x:0,y:83,w:23,h:5},{x:23,y:68,w:18,h:5},{x:41,y:55,w:17,h:5},{x:58,y:68,w:17,h:5},{x:75,y:48,w:25,h:5},{x:75,y:83,w:25,h:5}],
-    hazards: [{x:23,y:83,w:52,h:5,kind:"gap"}] },
+const makeTerrain = (items:number[][]):Terrain[] => items.map((v,i)=>({id:i,x:v[0],y:v[1],w:v[2],h:v[3],kind:(v[4]===1?"rock":"ground")}))
+const LEVELS:Level[] = [
+ {name:"A Soft Landing",theme:"Bao Garden",subtitle:"Only floaters can make this first big drop safely.",width:3400,spawn:20,rescue:10,rate:55,time:300,exitX:3220,exitY:470,
+  terrain:makeTerrain([[0,450,720,170],[850,450,480,170],[1510,450,580,170],[2290,450,1110,170],[0,270,270,24,1],[430,345,230,24,1],[1000,320,250,24,1],[1420,250,280,24,1],[1800,350,260,24,1],[2150,270,260,24,1],[2600,350,250,24,1]]),hazards:[{x:720,w:130,kind:"pit"},{x:1330,w:180,kind:"pit"},{x:2090,w:200,kind:"pit"}]},
+ {name:"The Matcha Maze",theme:"Matcha Mountain",subtitle:"Build across the ravine, bash through the rock and find the exit.",width:3900,spawn:24,rescue:14,rate:48,time:360,exitX:3710,exitY:450,
+  terrain:makeTerrain([[0,450,570,170],[900,450,400,170],[1640,450,500,170],[2450,450,450,170],[3200,450,700,170],[250,320,260,24,1],[700,350,220,24,1],[1130,280,280,24,1],[1510,350,180,24,1],[1930,300,300,24,1],[2300,360,250,24,1],[2750,280,300,24,1],[3050,350,220,24,1]]),hazards:[{x:570,w:330,kind:"ravine"},{x:1300,w:340,kind:"ravine"},{x:2140,w:310,kind:"ravine"},{x:2900,w:300,kind:"ravine"}]},
+ {name:"Cloud Nine Crossing",theme:"Cloudberry Heights",subtitle:"Climb the walls, mine the slopes and keep the parade together.",width:4300,spawn:28,rescue:18,rate:42,time:420,exitX:4120,exitY:420,
+  terrain:makeTerrain([[0,460,480,160],[760,390,450,230],[1450,320,430,300],[2110,430,520,190],[2880,340,500,280],[3630,460,670,160],[400,300,160,24,1],[1030,250,250,24,1],[1680,210,210,24,1],[2320,300,230,24,1],[2750,230,220,24,1],[3300,280,260,24,1]]),hazards:[{x:480,w:280,kind:"pit"},{x:1210,w:240,kind:"pit"},{x:1880,w:230,kind:"pit"},{x:2630,w:250,kind:"pit"},{x:3380,w:250,kind:"pit"}]},
+ {name:"The Great Bao Escape",theme:"Rainbow Rooftops",subtitle:"A long, multi-route challenge. Every skill counts.",width:5000,spawn:30,rescue:22,rate:38,time:480,exitX:4820,exitY:450,
+  terrain:makeTerrain([[0,450,650,170],[930,450,500,170],[1700,450,520,170],[2510,450,540,170],[3330,450,500,170],[4140,450,860,170],[120,300,280,24,1],[570,340,250,24,1],[1000,270,250,24,1],[1430,330,270,24,1],[1840,250,300,24,1],[2240,330,240,24,1],[2660,270,280,24,1],[3060,330,230,24,1],[3470,250,280,24,1],[3880,330,250,24,1],[4380,270,260,24,1]]),hazards:[{x:650,w:280,kind:"ravine"},{x:1430,w:270,kind:"ravine"},{x:2220,w:290,kind:"ravine"},{x:3050,w:280,kind:"ravine"},{x:3830,w:310,kind:"ravine"}]}
 ]
-
-const COLORS: Record<BaoKind, { fill: string; line: string; cheek: string }> = {
-  classic: {fill:"#fff0d9",line:"#dfbca0",cheek:"#f49c9e"},
-  strawberry: {fill:"#ffc9d8",line:"#e995b0",cheek:"#ef8ea7"},
-  matcha: {fill:"#cce5ae",line:"#96bd7c",cheek:"#f49c9e"},
-  blueberry: {fill:"#c9d6ff",line:"#91a7e6",cheek:"#ee9bb3"},
-  lavender: {fill:"#e3d0ff",line:"#b59add",cheek:"#ef9eb7"},
-  peach: {fill:"#ffd6b7",line:"#e9ae8b",cheek:"#f49c9e"},
-  golden: {fill:"#ffcf63",line:"#d99b2b",cheek:"#f49c9e"},
-  rainbow: {fill:"url(#bao-rainbow-fill)",line:"#c5a0df",cheek:"#f49c9e"},
-}
-const KINDS: BaoKind[] = ["classic","strawberry","matcha","blueberry","lavender","peach","golden","rainbow"]
-const SKILLS: { id: Skill; label: string; icon: string; hint: string; count: number }[] = [
-  {id:"umbrella",label:"Umbrella",icon:"☂️",hint:"Float safely down",count:4},
-  {id:"builder",label:"Builder",icon:"🧱",hint:"Build a little bridge",count:8},
-  {id:"climber",label:"Climber",icon:"🪜",hint:"Climb up walls",count:4},
-  {id:"digger",label:"Digger",icon:"⛏️",hint:"Dig through platforms",count:4},
-  {id:"blocker",label:"Blocker",icon:"🛑",hint:"Turn the parade around",count:2},
+const KINDS:BaoKind[]=["classic","strawberry","matcha","blueberry","lavender","peach","golden","rainbow"]
+const SKILLS:{id:Skill;name:string;icon:string;hint:string;count:number}[]=[
+ {id:"floater",name:"Floater",icon:"☂️",hint:"Drift safely down from high drops",count:8},
+ {id:"builder",name:"Builder",icon:"🧱",hint:"Build a staircase over gaps",count:12},
+ {id:"climber",name:"Climber",icon:"🪜",hint:"Climb vertical walls",count:6},
+ {id:"digger",name:"Digger",icon:"⛏️",hint:"Dig straight down through terrain",count:6},
+ {id:"basher",name:"Basher",icon:"👊",hint:"Punch a horizontal tunnel through rock",count:6},
+ {id:"miner",name:"Miner",icon:"🔨",hint:"Mine a diagonal tunnel downwards",count:6},
+ {id:"blocker",name:"Blocker",icon:"🛑",hint:"Stand still and turn the crowd around",count:4}
 ]
+const PALETTE:Record<BaoKind,{fill:string;line:string;cheek:string}>={classic:{fill:"#fff0d9",line:"#dfbca0",cheek:"#f49c9e"},strawberry:{fill:"#ffc9d8",line:"#e995b0",cheek:"#ef8ea7"},matcha:{fill:"#cce5ae",line:"#96bd7c",cheek:"#f49c9e"},blueberry:{fill:"#c9d6ff",line:"#91a7e6",cheek:"#ee9bb3"},lavender:{fill:"#e3d0ff",line:"#b59add",cheek:"#ef9eb7"},peach:{fill:"#ffd6b7",line:"#e9ae8b",cheek:"#f49c9e"},golden:{fill:"#ffcf63",line:"#d99b2b",cheek:"#f49c9e"},rainbow:{fill:"#d8c5f4",line:"#b59add",cheek:"#f49c9e"}}
+const freshGame=(level:Level):Game=>({baos:[],terrain:level.terrain.map(t=>({...t})),released:0,saved:0,lost:0,elapsed:0,spawnClock:0,nextId:0,running:false,complete:false,won:false})
+const W=960,H=540,BAO_W=27,BAO_H=25
+const clamp=(n:number,min:number,max:number)=>Math.max(min,Math.min(max,n))
 
-function DumplingSprite({kind, skill, tiny=false}: {kind:BaoKind;skill?:Skill;tiny?:boolean}) {
-  const c = COLORS[kind]
-  return <svg className={tiny ? "sdlem-bao-art sdlem-bao-art--tiny" : "sdlem-bao-art"} viewBox="0 0 120 112" aria-label={kind+" dumpling"} role="img">
-    <defs><linearGradient id="bao-rainbow-fill" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#ffb8d2"/><stop offset="35%" stopColor="#ffe2a2"/><stop offset="65%" stopColor="#b8f3db"/><stop offset="100%" stopColor="#c9b8ff"/></linearGradient></defs>
-    <ellipse cx="60" cy="101" rx="35" ry="7" fill="#7d554b" opacity=".12"/>
-    <path d="M18 69 C12 54 25 39 36 31 C42 17 51 12 60 17 C69 12 78 17 84 31 C95 39 108 54 102 69 C97 91 80 99 60 99 C40 99 23 91 18 69Z" fill={c.fill} stroke={c.line} strokeWidth="2.5" strokeLinejoin="round"/>
-    <path d="M34 38 C38 27 47 23 51 30 M60 25 L60 38 M69 30 C75 23 82 28 86 38" fill="none" stroke={c.line} strokeWidth="3" strokeLinecap="round"/>
-    <ellipse cx="42" cy="58" rx="4" ry="5" fill="#543b39"/><ellipse cx="78" cy="58" rx="4" ry="5" fill="#543b39"/>
-    <path d="M52 69 Q60 77 68 69" fill="none" stroke="#543b39" strokeWidth="3" strokeLinecap="round"/>
-    <ellipse cx="31" cy="68" rx="7" ry="4" fill={c.cheek} opacity=".7"/><ellipse cx="89" cy="68" rx="7" ry="4" fill={c.cheek} opacity=".7"/>
-    {kind==="golden" && <path d="M91 15 L94 23 L102 26 L94 29 L91 37 L88 29 L80 26 L88 23Z" fill="#f4b33c"/>}
-    {kind==="rainbow" && <path d="M15 23 L18 30 L25 33 L18 36 L15 43 L12 36 L5 33 L12 30Z" fill="#d7a7ff"/>}
-    {skill==="umbrella" && <g><path d="M25 26 Q60 -3 95 26Z" fill="#ff91b7" stroke="#b96792" strokeWidth="2"/><path d="M60 25 V43 Q60 49 66 46" fill="none" stroke="#8b668d" strokeWidth="3" strokeLinecap="round"/></g>}
-    {skill==="climber" && <text x="83" y="24" fontSize="20">🪜</text>}
-    {skill==="builder" && <text x="80" y="23" fontSize="18">🧱</text>}
-    {skill==="digger" && <text x="81" y="24" fontSize="18">⛏️</text>}
-    {skill==="blocker" && <text x="80" y="24" fontSize="18">✋</text>}
-  </svg>
+function BaoFace({kind,skill}:{kind:BaoKind;skill?:Skill}) {
+ const c=PALETTE[kind]
+ return <svg viewBox="0 0 100 90" className="sdlem-bao-art" aria-hidden="true">
+  <ellipse cx="50" cy="82" rx="30" ry="6" fill="#674d5b" opacity=".15"/>
+  <path d="M12 57C8 42 22 28 32 23C38 8 46 8 50 14C57 7 65 12 69 23C82 29 94 43 88 59C84 76 69 81 50 81C30 81 17 74 12 57Z" fill={c.fill} stroke={c.line} strokeWidth="2.5"/>
+  <path d="M32 29Q40 19 44 28M50 19V29M57 28Q65 19 69 29" fill="none" stroke={c.line} strokeWidth="2.5" strokeLinecap="round"/>
+  <ellipse cx="36" cy="49" rx="3.5" ry="4.5" fill="#543b39"/><ellipse cx="64" cy="49" rx="3.5" ry="4.5" fill="#543b39"/>
+  <path d="M44 59Q50 65 56 59" fill="none" stroke="#543b39" strokeWidth="2.5" strokeLinecap="round"/>
+  <ellipse cx="26" cy="59" rx="6" ry="3.5" fill={c.cheek} opacity=".7"/><ellipse cx="74" cy="59" rx="6" ry="3.5" fill={c.cheek} opacity=".7"/>
+  {skill==="floater"&&<path d="M16 22Q50 -4 84 22Z" fill="#ff91b7" stroke="#b96792" strokeWidth="2"/>}
+  {kind==="golden"&&<path d="M79 5L83 14L92 17L83 20L79 29L76 20L67 17L76 14Z" fill="#f4b33c"/>}
+ </svg>
 }
 
-export default function SquishyLemmings() {
-  const [levelIndex, setLevelIndex] = useState(0)
-  const [baos, setBaos] = useState<Bao[]>([])
-  const [selectedSkill, setSelectedSkill] = useState<Skill>("umbrella")
-  const [skillCounts, setSkillCounts] = useState<Record<Skill,number>>({umbrella:4,builder:8,climber:4,digger:4,blocker:2})
-  const [released, setReleased] = useState(0)
-  const [saved, setSaved] = useState(0)
-  const [lost, setLost] = useState(0)
-  const [running, setRunning] = useState(false)
-  const [paused, setPaused] = useState(false)
-  const [speed, setSpeed] = useState(1)
-  const [message, setMessage] = useState("Choose a skill, then tap a dumpling to give it a job.")
-  const [sound, setSound] = useState(false)
-  const [completed, setCompleted] = useState(false)
-  const [levelBest, setLevelBest] = useState<Record<number,number>>({})
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const level = LEVELS[levelIndex]
-  const activeCount = baos.filter(b=>!b.saved && !b.lost).length
-  const percent = Math.min(100, Math.round((saved / level.target) * 100))
-
-  const resetLevel = useCallback((index=levelIndex) => {
-    setLevelIndex(index)
-    setBaos([])
-    setReleased(0)
-    setSaved(0)
-    setLost(0)
-    setRunning(false)
-    setPaused(false)
-    setCompleted(false)
-    setSkillCounts({umbrella:4,builder:8,climber:4,digger:4,blocker:2})
-    setMessage("Ready when you are! Press Release Bao Parade to begin.")
-  }, [levelIndex])
-
-  useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem("sdlem-level-best")
-      if (raw) setLevelBest(JSON.parse(raw))
-      const savedSound = window.localStorage.getItem("sdlem-sound")
-      if (savedSound !== null) setSound(savedSound === "true")
-    } catch {}
-  }, [])
-
-  const release = () => {
-    if (completed) resetLevel()
-    setRunning(true)
-    setPaused(false)
-    setMessage("Off they go! Tap a dumpling to assign a skill.")
+export default function SquishyLemmings(){
+ const [levelIndex,setLevelIndex]=useState(0)
+ const [game,setGame]=useState<Game>(()=>freshGame(LEVELS[0]))
+ const [selected,setSelected]=useState<Skill>("floater")
+ const [counts,setCounts]=useState<Record<Skill,number>>(()=>Object.fromEntries(SKILLS.map(s=>[s.id,s.count])) as Record<Skill,number>)
+ const [speed,setSpeed]=useState(1)
+ const [camera,setCamera]=useState(0)
+ const [sound,setSound]=useState(false)
+ const [best,setBest]=useState<Record<number,number>>({})
+ const canvasRef=useRef<HTMLCanvasElement>(null)
+ const gameRef=useRef(game)
+ const cameraRef=useRef(0)
+ const level=LEVELS[levelIndex]
+ const active=game.baos.filter(b=>!b.saved&&!b.lost).length
+ const skill=SKILLS.find(s=>s.id===selected)!
+ const setGameSafe=(next:Game)=>{gameRef.current=next;setGame(next)}
+ const reset=(index=levelIndex)=>{const next=freshGame(LEVELS[index]);setLevelIndex(index);setGameSafe(next);setCounts(Object.fromEntries(SKILLS.map(s=>[s.id,s.count])) as Record<Skill,number>);setCamera(0);cameraRef.current=0}
+ const start=()=>{const next={...gameRef.current,running:true,complete:false};setGameSafe(next)}
+ const assign=(id:number)=>{const g=gameRef.current;const bao=g.baos.find(b=>b.id===id);if(!bao||bao.saved||bao.lost||bao.skill||!g.running||g.complete)return;if(counts[selected]<=0)return;const next={...g,baos:g.baos.map(b=>b.id===id?{...b,skill:selected,action:0}:b)};setGameSafe(next);setCounts(c=>({...c,[selected]:c[selected]-1}))}
+ const floorAt=(terrain:Terrain[],x:number,y:number)=>terrain.find(t=>x>=t.x-2&&x<=t.x+t.w+2&&y>=t.y-4&&y<=t.y+t.h&&y<=t.y+15)
+ const tick=useCallback((source:Game,dt:number):Game=>{
+  const g:Game={...source,baos:source.baos.map(b=>({...b})),terrain:source.terrain.map(t=>({...t})),elapsed:source.elapsed+dt}
+  if(g.released<level.spawn){g.spawnClock+=dt*level.rate/1000;if(g.spawnClock>=1){g.spawnClock-=1;const id=g.nextId++;g.released++;g.baos.push({id,x:35,y:level.terrain[0].y-BAO_H,vx:55,vy:0,dir:1,kind:KINDS[id%KINDS.length],fall:0,saved:false,lost:false,buildCount:0,action:0,animation:0})}}
+  g.baos.forEach(b=>{
+   if(b.saved||b.lost)return
+   b.animation+=dt
+   const nearby=floorAt(g.terrain,b.x+b.dir*BAO_W*.45,b.y+BAO_H*.48)
+   const supported=!!nearby
+   const wall=g.terrain.some(t=>b.dir===1?b.x+BAO_W/2>=t.x&&b.x+BAO_W/2<=t.x+9&&b.y+BAO_H/2>t.y+4&&b.y-BAO_H/2<t.y+t.h:b.x-BAO_W/2<=t.x+t.w&&b.x-BAO_W/2>=t.x+t.w-9&&b.y+BAO_H/2>t.y+4&&b.y-BAO_H/2<t.y+t.h)
+   const nextBao=g.baos.some(o=>o.id!==b.id&&!o.saved&&!o.lost&&Math.abs(o.y-b.y)<BAO_H*.7&&Math.abs(o.x-b.x)<BAO_W*.8&&Math.sign(o.x-b.x)===b.dir)
+   if(b.skill==="blocker"){b.vx=0;b.vy=0;return}
+   if(b.skill==="basher"&&supported){const target=g.terrain.find(t=>b.dir===1?b.x+BAO_W/2>=t.x-2&&b.x+BAO_W/2<=t.x+16&&b.y>=t.y-10&&b.y<=t.y+t.h:b.x-BAO_W/2<=t.x+t.w+2&&b.x-BAO_W/2>=t.x+t.w-16&&b.y>=t.y-10&&b.y<=t.y+t.h);if(target){target.x+=b.dir*3;target.w-=3;if(target.w<8)g.terrain=g.terrain.filter(t=>t.id!==target.id);b.x+=b.dir*3;b.y-=1;return}else b.skill=undefined}
+   if(b.skill==="digger"&&supported){const t=nearby!;t.h-=5;t.y+=5;b.y+=5;if(t.h<=5)g.terrain=g.terrain.filter(q=>q.id!==t.id);return}
+   if(b.skill==="miner"&&supported&&b.action%5===0){const t=nearby!;t.x+=b.dir*5;t.y+=3;t.w-=5;t.h-=3;b.x+=b.dir*5;b.y+=3;if(t.w<12||t.h<8)g.terrain=g.terrain.filter(q=>q.id!==t.id);b.action++;return}
+   if(b.skill==="builder"&&supported&&b.action%9===0&&b.buildCount<12){g.terrain.push({id:Date.now()+b.id+b.buildCount,x:b.x+b.dir*7,y:b.y-5,w:23,h:8,kind:"step"});b.x+=b.dir*8;b.y-=5;b.buildCount++;b.action++;return}
+   if(!supported){b.vy+= (b.skill==="floater"?170:700)*dt/1000;b.y+=b.vy*dt/1000;b.fall+=b.vy*dt/1000;if(b.y>H+100){b.lost=true;g.lost++}return}
+   if(b.vy>0){b.y=nearby!.y-BAO_H/2;b.vy=0;if(b.fall>90&&b.skill!=="floater"){b.lost=true;g.lost++;return}b.fall=0}
+   if(wall){if(b.skill==="climber"){b.x+=b.dir*1.5;b.y-=2.4}else b.dir=(b.dir*-1) as 1|-1}
+   else if(nextBao&&g.baos.some(o=>o.skill==="blocker"&&!o.saved&&!o.lost&&Math.abs(o.y-b.y)<BAO_H*1.4&&Math.abs(o.x-b.x)<BAO_W*1.5)){b.dir=(b.dir*-1) as 1|-1}
+   else {b.x+=b.dir*75*dt/1000;if(b.skill==="builder")b.action++}
+   const exit=level.exitX
+   if(Math.abs(b.x-exit)<26&&Math.abs(b.y-(level.exitY-BAO_H/2))<55){b.saved=true;g.saved++}
+   if(b.x<8){b.x=8;b.dir=1}
+   if(b.x>level.width-8){b.x=level.width-8;b.dir=-1}
+  })
+  if(g.saved>=level.rescue){g.complete=true;g.won=true;g.running=false}
+  else if(g.elapsed>=level.time*1000||(g.released>=level.spawn&&g.baos.every(b=>b.saved||b.lost))){g.complete=true;g.running=false;g.won=false}
+  return g
+ },[level])
+ useEffect(()=>{gameRef.current=game},[game])
+ useEffect(()=>{try{const v=localStorage.getItem("sdlem-level-best-v2");if(v)setBest(JSON.parse(v));setSound(localStorage.getItem("sdlem-sound")==="true")}catch{}},[])
+ useEffect(()=>{
+  let raf=0,last=0,acc=0
+  const loop=(now:number)=>{if(!last)last=now;const delta=Math.min(50,now-last);last=now
+   const current=gameRef.current
+   if(current.running&&!current.complete){acc+=delta*speed;while(acc>=33){const next=tick(gameRef.current,33);gameRef.current=next;acc-=33}setGame(gameRef.current)}
+   raf=requestAnimationFrame(loop)
   }
-
-  const assignSkill = (id:number) => {
-    const bao = baos.find(b=>b.id===id)
-    if (!bao || bao.saved || bao.skill || !running || paused) return
-    if (skillCounts[selectedSkill] <= 0) {
-      setMessage("Oops! You've used all your "+selectedSkill+" skills.")
-      return
-    }
-    setBaos(old=>old.map(b=>b.id===id ? {...b,skill:selectedSkill} : b))
-    setSkillCounts(old=>({...old,[selectedSkill]:old[selectedSkill]-1}))
-    const labels:Record<Skill,string> = {umbrella:"opened a teeny umbrella",builder:"started building a squishy bridge",climber:"learned to climb",digger:"started digging",blocker:"became a little traffic marshal"}
-    setMessage("A job for Bao #"+(id+1)+" — "+labels[selectedSkill]+"!")
-  }
-
-  useEffect(() => {
-    if (!running || paused || completed) return
-    intervalRef.current = setInterval(() => {
-      setBaos(old => {
-        const next = old.map(b => {
-          if (b.saved) return b
-          let x = b.x
-          let y = b.y
-          let dir = b.dir
-          let fall = b.fall
-          let walking = true
-          const floor = level.platforms.find(p => x >= p.x && x <= p.x+p.w && y <= p.y && y >= p.y-8)
-          const supported = !!floor
-          if (b.skill === "blocker") { walking = false; dir = (Math.floor(Date.now()/900)%2 ? 1 : -1) as 1|-1; }
-          else if (b.skill === "digger" && supported && floor && floor.w > 7) { y += 1.4; if (y > floor.y + 7) { b.skill = undefined; } }
-          else if (!supported && y < 93) {
-            fall += b.skill === "umbrella" ? 0.22 : 0.9
-            y += Math.min(fall, b.skill === "umbrella" ? 1.1 : 3.4)
-            walking = false
-          } else {
-            if (floor) y = floor.y
-            fall = 0
-            const wall = level.platforms.some(p=>p.h>8 && x+dir*1.1 > p.x && x+dir*1.1 < p.x+p.w && Math.abs(y-p.y)<7)
-            if (wall && b.skill==="climber") { x += dir*1.1; y -= 1.1; }
-            else if (wall) dir = (dir*-1) as 1|-1
-            else x += dir * (b.skill==="builder" ? 0.65 : 0.95)
-            if (b.skill==="builder") {
-              const gapAhead = level.hazards.some(h=>h.kind==="gap" && x+dir*3 >= h.x && x+dir*3 <= h.x+h.w && Math.abs(y-h.y)<9)
-              if (gapAhead) {
-                const exists = level.platforms.some(p=>p.kind==="bridge" && Math.abs(p.x-(x+dir*2))<3)
-                if (!exists) level.platforms.push({x:Math.max(0,x-1),y,w:4,h:2,kind:"bridge"})
-              }
-            }
-          }
-          if (x < 2) { x=2; dir=1 }
-          if (x > 98) { x=98; dir=-1 }
-          const atExit = Math.abs(x-level.exitX)<3 && Math.abs(y-level.exitY)<12
-          if (atExit) return {...b,x,y,dir,fall,walking,saved:true}
-          if (y >= 92 && !level.platforms.some(p=>x>=p.x && x<=p.x+p.w && Math.abs(y-p.y)<5)) return {...b,x,y,dir,fall,walking,saved:false}
-          return {...b,x,y,dir,fall,walking}
-        })
-        const newlySaved = next.filter(b=>b.saved && !old.find(o=>o.id===b.id)?.saved).length
-        if (newlySaved) setSaved(s=>s+newlySaved)
-        const newlyLost = next.filter(b=>b.lost && !old.find(o=>o.id===b.id)?.lost).length
-        if (newlyLost) setLost(s=>s+newlyLost)
-        return next
-      })
-      setReleased(old => {
-        if (old < level.spawn && Math.random() < 0.11 * speed) {
-          const id = old
-          setBaos(current => current.some(b=>b.id===id) ? current : [...current,{id,x:4,y:77,dir:1,kind:KINDS[(id+levelIndex*2)%KINDS.length],fall:0,saved:false,walking:true}])
-          return old+1
-        }
-        return old
-      })
-    }, 100 / speed)
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
-  }, [running,paused,completed,level,levelIndex,speed])
-
-  useEffect(() => {
-    if (!running || completed) return
-    if (saved >= level.target) {
-      setCompleted(true); setRunning(false); setMessage("All those happy baos made it home! Level complete! ✨")
-      setLevelBest(old => {
-        const next = {...old,[levelIndex]:Math.max(old[levelIndex]||0,saved)}
-        try { window.localStorage.setItem("sdlem-level-best",JSON.stringify(next)) } catch {}
-        return next
-      })
-    } else if (released >= level.spawn && baos.length > 0 && activeCount === 0) {
-      setRunning(false); setCompleted(true)
-      setMessage("The parade has finished. "+saved+" made it home — try again and rescue more!")
-    }
-  }, [saved,released,level,baos.length,activeCount,running,completed,levelIndex])
-
-  const toggleSound = () => {
-    setSound(old => { try {window.localStorage.setItem("sdlem-sound",String(!old))} catch {}; return !old })
-  }
-
-  const chooseLevel = (index:number) => resetLevel(index)
-  const platformElements = useMemo(()=>level.platforms.map((p,i)=><g key={i}>
-    <rect x={p.x*10} y={p.y*4.2} width={p.w*10} height={Math.max(7,p.h*4.2)} rx="5" className={p.kind==="bridge"?"sdlem-bridge":"sdlem-platform"}/>
-    <path d={"M"+(p.x*10+7)+" "+(p.y*4.2+3)+" H"+(p.x*10+p.w*10-7)} className="sdlem-platform-shine"/>
-    {p.kind==="bridge" && Array.from({length:Math.max(1,Math.floor(p.w/2))}).map((_,j)=><path key={j} d={"M"+(p.x*10+j*20+10)+" "+(p.y*4.2+4)+" v5"} className="sdlem-bridge-line"/>)}
-  </g>),[level])
-  const skillLabel = SKILLS.find(s=>s.id===selectedSkill)
-
-  return <section className="sdlem-page">
-    <div className="sdlem-shell">
-      <div className="sdlem-eyebrow">✦ THE GOO GANG PRESENTS ✦</div>
-      <div className="sdlem-heading-row"><div><h1>Squishy Dumpling <span>Lemmings</span></h1><p className="sdlem-intro">Tiny baos. Big adventure. Can you guide them all home?</p></div><div className="sdlem-sticker">૮ ˶ᵔ ᵕ ᵔ˶ ა<br/><b>BAO!</b></div></div>
-      <div className="sdlem-stats">
-        <div><span>LEVEL</span><strong>{String(levelIndex+1).padStart(2,"0")} <small>/ {LEVELS.length}</small></strong></div>
-        <div><span>RESCUED</span><strong>{saved} <small>/ {level.target}</small></strong></div>
-        <div><span>ON PARADE</span><strong>{Math.max(0,level.spawn-released)+activeCount}</strong></div>
-        <div><span>OOPSIES</span><strong>{lost}</strong></div>
-      </div>
-      <div className="sdlem-progress"><span style={{width:percent+"%"}}/></div>
-      <div className="sdlem-game-frame">
-        <div className="sdlem-game-top"><div><span className="sdlem-level-pill">WORLD {levelIndex+1}</span><h2>{level.name}</h2><p>{level.subtitle}</p></div><div className="sdlem-top-actions"><button onClick={()=>setPaused(p=>!p)} disabled={!running} className="sdlem-small-btn">{paused?"▶ Resume":"Ⅱ Pause"}</button><button onClick={toggleSound} className="sdlem-small-btn">{sound?"♫ Sound on":"♫ Sound off"}</button></div></div>
-        <div className={"sdlem-world"+(paused?" is-paused":"")}>
-          <svg className="sdlem-scenery" viewBox="0 0 1000 420" preserveAspectRatio="none" aria-hidden="true">
-            <defs><linearGradient id="sdlem-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#dff5ff"/><stop offset="100%" stopColor="#fff0f6"/></linearGradient></defs>
-            <rect width="1000" height="420" fill="url(#sdlem-sky)"/>
-            <circle cx="835" cy="65" r="33" fill="#fff4b5" opacity=".9"/><circle cx="835" cy="65" r="43" fill="#fff4b5" opacity=".25"/>
-            <g fill="#fff" opacity=".8"><ellipse cx="170" cy="76" rx="58" ry="18"/><ellipse cx="205" cy="65" rx="36" ry="22"/><ellipse cx="240" cy="78" rx="45" ry="15"/><ellipse cx="615" cy="105" rx="48" ry="15"/><ellipse cx="644" cy="94" rx="32" ry="21"/></g>
-            <g fill="#a9dfc1" opacity=".55"><circle cx="130" cy="316" r="76"/><circle cx="215" cy="333" r="91"/><circle cx="770" cy="331" r="105"/><circle cx="915" cy="327" r="75"/></g>
-            {Array.from({length:22}).map((_,i)=><g key={i} transform={"translate("+(i*47+18)+" "+(260+(i%4)*23)+")"} opacity=".7"><circle r="3" fill={i%2?"#f6a9c8":"#f7d47c"}/><path d="M0 0 v-8" stroke="#79bd8b" strokeWidth="2"/></g>)}
-            {platformElements}
-            {level.hazards.filter(h=>h.kind==="gap").map((h,i)=><g key={i}><rect x={h.x*10} y="352" width={h.w*10} height="68" fill="#7a8bba" opacity=".17"/><path d={"M"+h.x*10+" 355 l10 12 l10 -12 l10 12"} fill="none" stroke="#9ca9d3" strokeWidth="3" opacity=".6"/></g>)}
-            <g transform={"translate("+(level.exitX*10-10)+" "+(level.exitY*4.2-65)+")"}><path d="M10 66 V8 H66 V66" fill="#fff8fc" stroke="#c18cc6" strokeWidth="5" strokeLinecap="round"/><path d="M19 66 V17 H57 V66" fill="#d8f5e7"/><path d="M20 17 H56" stroke="#c18cc6" strokeWidth="4"/><text x="38" y="43" textAnchor="middle" fontSize="20">♡</text><text x="38" y="-2" textAnchor="middle" fontSize="14" fill="#9d6eb0" fontWeight="bold">HOME</text></g>
-            <g transform="translate(27 280)"><rect x="0" y="0" width="36" height="66" rx="8" fill="#f3c7d9" stroke="#cf9bb8" strokeWidth="3"/><rect x="7" y="7" width="22" height="12" rx="4" fill="#fff2f7"/><text x="18" y="42" fontSize="16" textAnchor="middle">♡</text><text x="18" y="58" fontSize="8" textAnchor="middle" fill="#8d6380">BAO</text></g>
-          </svg>
-          {baos.filter(b=>!b.saved && !b.lost && b.y<94).map(b=><button key={b.id} className={"sdlem-bao"+(b.skill?" has-skill":"")+(b.id===baos.length-1?" is-new":"")} style={{left:b.x+"%",top:b.y+"%",transform:"translate(-50%,-50%) scaleX("+b.dir+")"}} onClick={()=>assignSkill(b.id)} aria-label={"Assign "+selectedSkill+" to dumpling "+(b.id+1)} title={"Bao #"+(b.id+1)+(b.skill?" · "+b.skill:" · tap to assign "+selectedSkill)}><DumplingSprite kind={b.kind} skill={b.skill} tiny/>{b.skill && <span className="sdlem-skill-dot">{SKILLS.find(s=>s.id===b.skill)?.icon}</span>}</button>)}
-          {paused && <div className="sdlem-overlay"><div><span>⏸</span><strong>Parade paused</strong><p>Take your time, little bao boss.</p><button onClick={()=>setPaused(false)}>Back to the parade</button></div></div>}
-          {!running && !completed && <div className="sdlem-start-overlay"><div className="sdlem-start-card"><span className="sdlem-big-bao">૮ ˶ᵔ ᵕ ᵔ˶ ა</span><h3>Ready, set, bao!</h3><p>Give your dumplings skills to get them safely to the HOME door.</p><button onClick={release}>▶ Release Bao Parade</button></div></div>}
-          {completed && <div className="sdlem-overlay"><div className="sdlem-result-card"><span>{saved>=level.target?"🎉":"💗"}</span><strong>{saved>=level.target?"Level complete!":"Parade finished!"}</strong><p>{saved} of {level.target} required baos made it home.</p>{saved>=level.target && levelIndex<LEVELS.length-1 ? <button onClick={()=>chooseLevel(levelIndex+1)}>Next world →</button>:<button onClick={()=>resetLevel()}>↻ Try again</button>}{saved>=level.target && levelIndex===LEVELS.length-1 && <p className="sdlem-winner">You are the ultimate Bao Boss!</p>}</div></div>}
-        </div>
-        <div className="sdlem-message" role="status"><span>✦</span>{message}</div>
-      </div>
-      <div className="sdlem-controls">
-        <div className="sdlem-section-heading"><div><span className="sdlem-kicker">YOUR TOOLBOX</span><h2>Pick a skill</h2></div><span className="sdlem-tool-hint">Choose a tool, then tap a walking bao!</span></div>
-        <div className="sdlem-skills">{SKILLS.map(s=><button key={s.id} className={"sdlem-skill"+(selectedSkill===s.id?" is-selected":"")} onClick={()=>{setSelectedSkill(s.id);setMessage(s.hint+". Now tap a dumpling to assign it.")}}><span className="sdlem-skill-icon">{s.icon}</span><span className="sdlem-skill-copy"><b>{s.label}</b><small>{s.hint}</small></span><span className="sdlem-skill-count">{skillCounts[s.id]}</span></button>)}</div>
-        <div className="sdlem-bottom-row"><div className="sdlem-selected-hint"><span>{skillLabel?.icon}</span><div><b>{skillLabel?.label} selected</b><small>{skillLabel?.hint}. {skillCounts[selectedSkill]} left.</small></div></div><div className="sdlem-play-actions"><label className="sdlem-speed">Speed <select value={speed} onChange={e=>setSpeed(Number(e.target.value))}><option value={1}>1×</option><option value={1.5}>1.5×</option><option value={2}>2×</option></select></label><button className="sdlem-reset" onClick={()=>resetLevel()}>↻ Restart</button><button className="sdlem-release" onClick={running?()=>setPaused(p=>!p):release}>{running?(paused?"▶ Resume":"Ⅱ Pause"):"▶ Release Bao Parade"}</button></div></div>
-      </div>
-      <div className="sdlem-level-select"><div><span className="sdlem-kicker">THE BAO ADVENTURE</span><h2>Choose your world</h2><p>Rescue enough dumplings to unlock the next stage.</p></div><div className="sdlem-world-cards">{LEVELS.map((l,i)=><button key={l.name} onClick={()=>i===0||levelBest[i-1]!==undefined||i<=levelIndex?chooseLevel(i):setMessage("Finish the previous world to unlock "+l.name+"!")} className={"sdlem-world-card"+(i===levelIndex?" is-current":"")+(i>0&&i>levelIndex&&levelBest[i-1]===undefined?" is-locked":"")}><span className="sdlem-world-number">{i===0||i<=levelIndex||levelBest[i-1]!==undefined?"0"+(i+1):"🔒"}</span><span className="sdlem-world-emoji">{["🌷","🍵","🌈"][i]}</span><b>{l.name}</b><small>{i===levelIndex?"You're here":i===0||i<=levelIndex||levelBest[i-1]!==undefined?"Tap to play":"Complete the previous world"}</small></button>)}</div></div>
-      <div className="sdlem-howto"><span className="sdlem-howto-icon">💡</span><div><b>How to play</b><p>Release the parade, then tap individual dumplings to give them a skill. Umbrellas soften long falls, builders bridge gaps, climbers scale walls, diggers tunnel through platforms and blockers turn their friends around. Get enough baos through the HOME door to win. Some skills work best when assigned just before a hazard!</p></div></div>
-      <div className="sdlem-character-strip"><div><span>MEET THE PARADE</span><b>Eight squishy personalities, one big mission.</b></div>{KINDS.map(k=><div key={k} className="sdlem-character"><DumplingSprite kind={k}/><small>{k}</small></div>)}</div>
-    </div>
-  </section>
+  raf=requestAnimationFrame(loop);return()=>cancelAnimationFrame(raf)
+ },[speed,tick])
+ useEffect(()=>{if(game.won){const n={...best,[levelIndex]:Math.max(best[levelIndex]||0,game.saved)};setBest(n);try{localStorage.setItem("sdlem-level-best-v2",JSON.stringify(n))}catch{}}},[game.complete,game.won,game.saved,levelIndex])
+ const draw=useCallback(()=>{
+  const canvas=canvasRef.current;if(!canvas)return
+  const ctx=canvas.getContext("2d");if(!ctx)return
+  const ratio=window.devicePixelRatio||1;const rect=canvas.getBoundingClientRect();canvas.width=Math.round(rect.width*ratio);canvas.height=Math.round(rect.height*ratio);ctx.setTransform(canvas.width/W,0,0,canvas.height/H,0,0)
+  ctx.clearRect(0,0,W,H)
+  const cam=cameraRef.current
+  const sky=ctx.createLinearGradient(0,0,0,H);sky.addColorStop(0,"#dff5ff");sky.addColorStop(1,"#fff0f6");ctx.fillStyle=sky;ctx.fillRect(0,0,W,H)
+  ctx.fillStyle="#fff4b5";ctx.beginPath();ctx.arc(820,76,38,0,Math.PI*2);ctx.fill()
+  for(let i=0;i<18;i++){const x=((i*270-cam*.25)%1200+1200)%1200;ctx.fillStyle=i%2?"#b6e0d0":"#c8e9d9";ctx.beginPath();ctx.arc(x,430,65+(i%3)*12,Math.PI,0);ctx.fill()}
+  ctx.save();ctx.translate(-cam,0)
+  gRound(ctx,level.width,0,0,0)
+  level.hazards.forEach(h=>{ctx.fillStyle="#9b8db9";ctx.globalAlpha=.12;ctx.fillRect(h.x,H-45,h.w,45);ctx.globalAlpha=1})
+  game.terrain.forEach(t=>{ctx.fillStyle=t.kind==="rock"?"#b7a3bd":t.kind==="step"?"#d9b48e":"#9fd3a7";ctx.strokeStyle=t.kind==="rock"?"#907b9b":t.kind==="step"?"#b88b6b":"#6caf83";ctx.lineWidth=3;ctx.beginPath();ctx.roundRect(t.x,t.y,t.w,t.h,5);ctx.fill();ctx.stroke();ctx.fillStyle="#e0f4d9";ctx.fillRect(t.x+5,t.y+3,Math.max(0,t.w-10),3)})
+  ctx.fillStyle="#fff8fc";ctx.strokeStyle="#bd8dc2";ctx.lineWidth=6;ctx.beginPath();ctx.roundRect(level.exitX-30,level.exitY-75,62,75,8);ctx.fill();ctx.stroke();ctx.fillStyle="#d7f3e4";ctx.fillRect(level.exitX-20,level.exitY-65,42,65);ctx.fillStyle="#9d6eb0";ctx.font="bold 15px sans-serif";ctx.textAlign="center";ctx.fillText("HOME",level.exitX,level.exitY-82)
+  game.baos.forEach(b=>{if(b.saved||b.lost)return;ctx.save();ctx.translate(b.x,b.y);ctx.scale(b.dir,1);const c=PALETTE[b.kind];ctx.fillStyle="#72515e";ctx.globalAlpha=.14;ctx.beginPath();ctx.ellipse(0,12,14,3,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1
+   ctx.fillStyle=c.fill;ctx.strokeStyle=c.line;ctx.lineWidth=2.4;ctx.beginPath();ctx.moveTo(-14,5);ctx.bezierCurveTo(-21,-8,-10,-18,-5,-19);ctx.bezierCurveTo(0,-29,7,-22,9,-18);ctx.bezierCurveTo(22,-10,19,1,14,7);ctx.quadraticCurveTo(0,17,-14,5);ctx.fill();ctx.stroke()
+   ctx.strokeStyle=c.line;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-7,-17);ctx.quadraticCurveTo(-3,-23,0,-17);ctx.moveTo(2,-17);ctx.quadraticCurveTo(8,-24,11,-15);ctx.stroke()
+   ctx.fillStyle="#543b39";ctx.beginPath();ctx.arc(-6,-5,1.8,0,7);ctx.arc(6,-5,1.8,0,7);ctx.fill();ctx.strokeStyle="#543b39";ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(0,0,3,.2,Math.PI-.2);ctx.stroke()
+   ctx.fillStyle=c.cheek;ctx.globalAlpha=.75;ctx.beginPath();ctx.ellipse(-11,1,3.5,2,0,0,7);ctx.ellipse(11,1,3.5,2,0,0,7);ctx.fill();ctx.globalAlpha=1
+   if(b.skill==="floater"){ctx.fillStyle="#ff91b7";ctx.beginPath();ctx.moveTo(-17,-19);ctx.quadraticCurveTo(0,-36,17,-19);ctx.closePath();ctx.fill();ctx.strokeStyle="#b96792";ctx.stroke()}
+   if(b.skill==="blocker"){ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(0,-24,9,0,7);ctx.fill();ctx.fillStyle="#a85e8d";ctx.font="bold 12px sans-serif";ctx.textAlign="center";ctx.fillText("!",0,-20)}
+   ctx.restore()
+  })
+  ctx.restore()
+ },[game,level])
+ useEffect(()=>{draw();const resize=()=>draw();window.addEventListener("resize",resize);return()=>window.removeEventListener("resize",resize)},[draw])
+ const clickWorld=(e:React.MouseEvent<HTMLCanvasElement>)=>{const r=e.currentTarget.getBoundingClientRect();const x=(e.clientX-r.left)/r.width*W+cameraRef.current;const y=(e.clientY-r.top)/r.height*H;const hit=game.baos.filter(b=>!b.saved&&!b.lost&&Math.abs(b.x-x)<22&&Math.abs(b.y-y)<23).sort((a,b)=>Math.abs(a.x-x)+Math.abs(a.y-y)-Math.abs(b.x-x)-Math.abs(b.y-y))[0];if(hit)assign(hit.id)}
+ const scroll=(direction:number)=>{const next=clamp(cameraRef.current+direction*W*.72,0,level.width-W);cameraRef.current=next;setCamera(next)}
+ const zoomTo=(value:number)=>{const next=clamp(value,0,level.width-W);cameraRef.current=next;setCamera(next)}
+ const progress=Math.round(game.saved/level.rescue*100)
+ return <section className="sdlem-page">
+  <div className="sdlem-shell">
+   <div className="sdlem-eyebrow">✦ THE GOO GANG PRESENTS ✦</div>
+   <div className="sdlem-heading-row"><div><h1>Squishy Dumpling <span>Lemmings</span></h1><p className="sdlem-intro">A whole parade of tiny baos. One very big rescue mission.</p></div><div className="sdlem-sticker">૮ ˶ᵔ ᵕ ᵔ˶ ა<br/><b>BAO!</b></div></div>
+   <div className="sdlem-stats"><div><span>LEVEL</span><strong>{String(levelIndex+1).padStart(2,"0")} <small>/ {LEVELS.length}</small></strong></div><div><span>RESCUED</span><strong>{game.saved} <small>/ {level.rescue}</small></strong></div><div><span>IN THE WORLD</span><strong>{active+Math.max(0,level.spawn-game.released)}</strong></div><div><span>LOST</span><strong>{game.lost}</strong></div></div>
+   <div className="sdlem-progress"><span style={{width:progress+"%"}}/></div>
+   <div className="sdlem-game-frame">
+    <div className="sdlem-game-top"><div><span className="sdlem-level-pill">WORLD {levelIndex+1} · {level.theme}</span><h2>{level.name}</h2><p>{level.subtitle}</p></div><div className="sdlem-top-actions"><button className="sdlem-small-btn" onClick={()=>setGameSafe({...gameRef.current,running:!gameRef.current.running})} disabled={game.complete}>{game.running?"Ⅱ Pause":"▶ Resume"}</button><button className="sdlem-small-btn" onClick={()=>{setSound(v=>{localStorage.setItem("sdlem-sound",String(!v));return !v})}}>{sound?"♫ Sound on":"♫ Sound off"}</button></div></div>
+    <div className="sdlem-canvas-wrap"><canvas ref={canvasRef} className="sdlem-canvas" onClick={clickWorld} aria-label="Scrollable Squishy Dumpling Lemmings level. Click a dumpling to assign the selected skill."/><div className="sdlem-canvas-hint">CLICK A DUMPLING TO GIVE IT A SKILL</div></div>
+    <div className="sdlem-camera"><button onClick={()=>scroll(-1)} aria-label="Scroll level left">←</button><input aria-label="Scroll through level" type="range" min="0" max={Math.max(0,level.width-W)} value={camera} onChange={e=>zoomTo(Number(e.target.value))}/><button onClick={()=>scroll(1)} aria-label="Scroll level right">→</button><span>{Math.round(camera/level.width*100)}% explored</span></div>
+    <div className="sdlem-message" role="status">{game.complete?(game.won?"🎉 Bao-tastic! You rescued enough dumplings.":"💗 The parade is over. Try a different skill plan."):"✦ "+(game.running?"The parade is marching! Assign skills before the next obstacle.":"Press Release Bao Parade when you're ready.")}</div>
+    {game.complete&&<div className="sdlem-result"><b>{game.won?"Level complete!":"Nearly there!"}</b><span>{game.saved} rescued · {game.lost} lost · {level.spawn} total</span><div><button onClick={()=>reset()}>↻ Retry level</button>{game.won&&levelIndex<LEVELS.length-1&&<button onClick={()=>reset(levelIndex+1)}>Next level →</button>}</div></div>}
+   </div>
+   <div className="sdlem-controls">
+    <div className="sdlem-section-heading"><div><span className="sdlem-kicker">YOUR TOOLBOX</span><h2>Assign a skill</h2></div><span className="sdlem-tool-hint">Select a skill, then click a dumpling in the level.</span></div>
+    <div className="sdlem-skills">{SKILLS.map(s=><button key={s.id} className={"sdlem-skill"+(selected===s.id?" is-selected":"")} onClick={()=>setSelected(s.id)}><span className="sdlem-skill-icon">{s.icon}</span><span className="sdlem-skill-copy"><b>{s.name}</b><small>{s.hint}</small></span><span className="sdlem-skill-count">{counts[s.id]}</span></button>)}</div>
+    <div className="sdlem-bottom-row"><div className="sdlem-selected-hint"><span>{skill.icon}</span><div><b>{skill.name} selected</b><small>{skill.hint} · {counts[selected]} remaining</small></div></div><div className="sdlem-play-actions"><label className="sdlem-speed">Speed <select value={speed} onChange={e=>setSpeed(Number(e.target.value))}><option value={1}>1×</option><option value={2}>2×</option><option value={4}>4×</option></select></label><button className="sdlem-reset" onClick={()=>reset()}>↻ Restart</button><button className="sdlem-release" onClick={()=>game.running?setGameSafe({...gameRef.current,running:false}):start()}>{game.running?"Ⅱ Pause":"▶ Release Bao Parade"}</button></div></div>
+   </div>
+   <div className="sdlem-level-select"><div><span className="sdlem-kicker">THE BAO ADVENTURE</span><h2>Choose your level</h2><p>Longer routes, bigger obstacles and more skills to master.</p></div><div className="sdlem-world-cards">{LEVELS.map((l,i)=><button key={l.name} onClick={()=>i===0||best[i-1]!==undefined||i<=levelIndex?reset(i):undefined} className={"sdlem-world-card"+(i===levelIndex?" is-current":"")+(i>0&&i>levelIndex&&best[i-1]===undefined?" is-locked":"")}><span className="sdlem-world-number">{i===0||i<=levelIndex||best[i-1]!==undefined?"0"+(i+1):"🔒"}</span><span className="sdlem-world-emoji">{["🌷","🍵","☁️","🌈"][i]}</span><b>{l.name}</b><small>{i===levelIndex?"You're here":i===0||i<=levelIndex||best[i-1]!==undefined?"Tap to play":"Complete the previous level"}</small></button>)}</div></div>
+   <div className="sdlem-howto"><span className="sdlem-howto-icon">💡</span><div><b>How to play</b><p>Like the classic lemmings puzzle, your dumplings march on their own. You don't steer them — you assign skills to solve the landscape. Blockers stand still and turn the parade back, builders create steps, bashers punch sideways through rock, miners carve a diagonal path and diggers tunnel down. Floaters slow long falls and climbers scale walls. Scroll across the wide level to see what's coming, and rescue the required number before time runs out.</p></div></div>
+   <div className="sdlem-character-strip"><div><span>MEET THE PARADE</span><b>Eight squishy personalities, one big mission.</b></div>{KINDS.map(k=><div key={k} className="sdlem-character"><span className="sdlem-character-dot" style={{background:PALETTE[k].fill}}/><small>{k}</small></div>)}</div>
+  </div>
+ </section>
 }
+
+function gRound(_ctx:CanvasRenderingContext2D,_width:number,_x:number,_y:number,_r:number){}
