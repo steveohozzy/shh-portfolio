@@ -31,7 +31,7 @@ function makeLevel(id:number):Level {
  const hazards:Hazard[]=[];
  const wall=(x:number,top=205,w=34)=>terrain.push({x,y:top,w,h:GROUND-26-top});
  const shelf=(x:number,y:number,w:number)=>terrain.push({x,y,w,h:15});
- const gap=(x:number,w:number)=>{
+ const ramp=(x:number,y:number,steps:number,dir:1|-1=1)=>{for(let k=0;k<steps;k++)terrain.push({x:x+(dir===1?k*22:(steps-k-1)*22),y:y-k*13,w:24,h:GROUND-26-(y-k*13)})};\n const steel=(x:number,y:number,w:number,h:number)=>terrain.push({x,y,w,h,steel:true});\n const gap=(x:number,w:number)=>{
   const base=terrain.find(t=>t.x===0&&t.w===width&&t.y===GROUND-26&&t.h===140);
   if(base){
    terrain.splice(terrain.indexOf(base),1);
@@ -53,7 +53,31 @@ function makeLevel(id:number):Level {
  else if(n===5){gap(600,170);gap(1280,190);shelf(850,270,170);shelf(1540,250,190)}
  else if(n===6){wall(480,125,38);wall(900,125,38);wall(1320,125,38);shelf(1650,280,220)}
  else if(n===7){shelf(420,285,220);shelf(790,235,220);shelf(1160,185,220);wall(1570,155,36)}
- else {for(let i=0;i<3+group;i++){const x=400+i*390+(n%3)*35;if((i+n)%2===0)wall(x,185-((i+n)%3)*25,32);else shelf(x,260-((i+n)%3)*28,150)}if(n%4===2)gap(1050+(n%3)*100,110+(n%2)*45)}
+ else {
+  const pattern=n%22;
+  if(pattern===0){ramp(390,300,6);wall(940,180,38);shelf(1330,270,180)}
+  else if(pattern===1){shelf(420,285,210);shelf(760,230,210);shelf(1100,175,210);wall(1580,155,38)}
+  else if(pattern===2){gap(620,145);ramp(900,310,5);gap(1450,125)}
+  else if(pattern===3){wall(500,170,38);steel(900,285,180,18);wall(1330,170,38)}
+  else if(pattern===4){ramp(420,320,8);wall(1050,145,42);shelf(1510,260,220)}
+  else if(pattern===5){gap(580,180);gap(1220,180);shelf(850,275,170);shelf(1500,250,170)}
+  else if(pattern===6){wall(470,120,38);wall(850,170,38);wall(1230,120,38);ramp(1580,315,5)}
+  else if(pattern===7){shelf(400,290,200);shelf(720,245,200);shelf(1040,200,200);shelf(1360,155,200)}
+  else if(pattern===8){steel(520,260,170,18);wall(850,180,36);gap(1320,140);ramp(1600,310,5)}
+  else if(pattern===9){ramp(430,310,5,-1);wall(930,150,42);shelf(1270,270,190);wall(1660,190,36)}
+  else if(pattern===10){gap(650,210);wall(1030,175,38);gap(1430,160)}
+  else if(pattern===11){shelf(430,280,230);steel(850,240,160,18);shelf(1190,200,230);wall(1630,160,38)}
+  else if(pattern===12){wall(520,210,34);ramp(800,320,7);wall(1330,155,38);shelf(1650,270,180)}
+  else if(pattern===13){gap(570,135);steel(900,280,200,18);gap(1330,135);shelf(1550,250,180)}
+  else if(pattern===14){shelf(430,300,170);shelf(700,255,170);shelf(970,210,170);shelf(1240,165,170);wall(1610,130,38)}
+  else if(pattern===15){wall(500,160,38);wall(930,210,38);wall(1360,160,38);ramp(1660,310,5)}
+  else if(pattern===16){ramp(420,320,6);gap(1050,180);ramp(1420,320,6)}
+  else if(pattern===17){steel(500,230,130,18);wall(790,170,38);steel(1110,230,130,18);wall(1410,170,38)}
+  else if(pattern===18){gap(600,160);shelf(820,275,180);wall(1190,170,38);shelf(1480,240,180)}
+  else if(pattern===19){wall(520,130,38);shelf(820,290,180);wall(1160,130,38);shelf(1480,250,180)}
+  else if(pattern===20){ramp(420,320,8);steel(1000,245,180,18);wall(1450,175,38)}
+  else {shelf(420,285,180);gap(760,150);shelf(1030,240,180);gap(1380,150);wall(1650,175,38)}
+ }
  if(group>=1&&n%3===0)hazards.push({x:width*.52,y:GROUND-4,w:105,h:55,kind:"water"});
  if(group>=2&&n%4===1)hazards.push({x:width*.7,y:GROUND-4,w:58,h:36,kind:"trap"});
  if(group===3&&n%5===0)hazards.push({x:width*.42,y:GROUND-4,w:95,h:52,kind:"fire"});
@@ -64,7 +88,7 @@ function makeLevel(id:number):Level {
  if(n===3){skills.basher=3;skills.builder=5;skills.miner=3;skills.digger=0}
  if(group>=2){skills.builder=Math.max(2,skills.builder-2);skills.basher=Math.max(1,skills.basher-1)}
  if(group===3){skills.digger=Math.max(1,skills.digger-1);skills.blocker=Math.max(1,skills.blocker-1)}
- const names=["Bao Boulevard","The Wobble Wall","Pudding Gap","The Sticky Passage","Cloud Kitchen","Jellybean Crossing","The Noodle Maze","Mooncake Mountain","Steamed-Up Summit","The Great Bao Escape"];
+ const names=["Bao Boulevard","The Wobble Wall","Pudding Gap","The Sticky Passage","Cloud Kitchen","Jellybean Crossing","The Noodle Maze","Mooncake Mountain","Steamed-Up Summit","The Great Bao Escape","Bamboo Bounce","The Sugar Steps","Peachy Passage","The Bao Bridge","Cloudtop Crossing","The Winding Walkway","Pillow Fort","The Matcha Mine","Honeycomb Heights","The Great Drop","Steamer Express","The Split-Level","Lavender Labyrinth","The Golden Gate","Rainbow Run","The Wobbly Workshop","The Secret Staircase","The Waterway","The Castle Courtyard","Homeward Bound"];
  return {id,name:names[n%names.length],group:GROUPS[group],width,total:group===0?12:group===1?18:group===2?24:30,rescue:group===0?65:group===1?72:group===2?78:84,seconds:300-group*25,rate:24+group*5,hatch:75,exit:width-115,terrain,hazards,skills}
 }
 const LEVELS=Array.from({length:120},(_,i)=>makeLevel(i))
@@ -260,7 +284,7 @@ export default function SquishyLemmings(){
     if(g.saved>=Math.ceil(l.total*l.rescue/100)){g.running=false;g.complete=true;g.failed=false}
     const active=g.baos.filter(b=>!b.saved&&!b.dead).length
     if(g.complete){setBest(old=>{const next={...old,[l.id]:Math.max(old[l.id]||0,g.saved)};try{localStorage.setItem("sdlem-campaign-best",JSON.stringify(next))}catch{};return next})}
-    if(now-hudTick>120){hudTick=now;setCamera(g.camera);setHud({spawned:g.spawned,saved:g.saved,dead:g.dead,time:g.clock,rate:g.rate,active,percent:Math.floor(g.saved/l.total*100),paused:g.paused,running:g.running,complete:g.complete,failed:g.failed})}
+    // Always publish the terminal state immediately. If a level ends between HUD ticks,\n   // the animation loop must not leave the React UI showing a frozen in-progress game.\n   if(now-hudTick>120||g.complete||g.failed){hudTick=now;setCamera(g.camera);setHud({spawned:g.spawned,saved:g.saved,dead:g.dead,time:g.clock,rate:g.rate,active,percent:Math.floor(g.saved/l.total*100),paused:g.paused,running:g.running,complete:g.complete,failed:g.failed})}
    }
    // Follow the parade, while allowing the user to move the camera with the scrollbar/minimap.
    const target=g.baos.find(b=>!b.saved&&!b.dead)
