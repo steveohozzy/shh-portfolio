@@ -35,6 +35,7 @@ export class GameScene extends Phaser.Scene {
   puzzleStep = 0;
   puzzleLastTile: Phaser.Physics.Arcade.Image | null = null;
   puzzleHint?: Phaser.GameObjects.Text;
+  hirottaStone?: Phaser.GameObjects.Image;
   doorOpened = false;
   storyMessageOpen = false;
   shieldUntil = 0;
@@ -147,7 +148,10 @@ export class GameScene extends Phaser.Scene {
 
     this.add.rectangle(128, 6, 256, 12, 0x000000, 0.55).setScrollFactor(0).setDepth(50);
     this.hud = this.add.text(4, 2, "", { fontFamily: FONT, fontSize: "8px", color: "#ffffff" }).setScrollFactor(0).setDepth(51);
-    if (this.room === "puzzle") this.puzzleHint = this.add.text(128, 184, "FOLLOW THE HIROTTA STONE", { fontFamily: FONT, fontSize: "6px", color: "#f8d820", stroke: "#000", strokeThickness: 2 }).setOrigin(0.5).setScrollFactor(0).setDepth(55);
+    if (this.room === "puzzle") {
+      this.puzzleHint = this.add.text(128, 184, "FOLLOW THE HIROTTA STONE", { fontFamily: FONT, fontSize: "6px", color: "#f8d820", stroke: "#000", strokeThickness: 2 }).setOrigin(0.5).setScrollFactor(0).setDepth(55);
+      this.hirottaStone = this.add.image(2 * T + 8, 8 * T + 8, "hirotta_stone").setDepth(8);
+    }
     const banner = this.add.text(128, 80, `STAGE ${L.name}`, { fontFamily: FONT, fontSize: "8px", color: "#f8d820", stroke: "#000", strokeThickness: 3 }).setOrigin(0.5).setScrollFactor(0).setDepth(60);
     this.tweens.add({ targets: banner, alpha: 0, delay: 1600, duration: 500, onComplete: () => banner.destroy() });
 
@@ -287,6 +291,14 @@ export class GameScene extends Phaser.Scene {
     return false;
   }
 
+  tryInspectHirottaStone() {
+    if (this.room !== "puzzle" || !this.hirottaStone ||
+      Phaser.Math.Distance.Between(this.player.x, this.player.y, this.hirottaStone.x, this.hirottaStone.y) > 34) return false;
+    this.showStoryMessage("HIROTTA STONE\nREAD RIGHT TO LEFT, TOP TO BOTTOM:\nSUN - WAVES - MOON - STAR - SUN\nMOON - WAVES - FISH - STAR - FISH");
+    sfx.select();
+    return true;
+  }
+
   addPuzzleSymbol(tx: number, ty: number, symbol: string) {
     const labels = { a: "SUN", b: "WAVES", c: "MOON", d: "STAR", e: "FISH" };
     const tile = this.puzzleTiles.create(tx * T + 8, ty * T + 8, "rock") as Phaser.Physics.Arcade.Image;
@@ -408,6 +420,7 @@ export class GameScene extends Phaser.Scene {
 
   doPunch() {
     if (this.tryTalkToNpc()) return;
+    if (this.tryInspectHirottaStone()) return;
     if (state.capsuleB) {
       state.capsuleB = false;
       this.shieldUntil = this.time.now + 5000;
