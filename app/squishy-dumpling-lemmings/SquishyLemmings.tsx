@@ -114,6 +114,7 @@ export default function SquishyLemmings(){
  const assign=(skill:Skill)=>{const g=gameRef.current;if(!g)return;g.selected=skill;setSelected(skill)}
  const setRate=(delta:number)=>{const g=gameRef.current;if(g)g.rate=clamp(g.rate+delta,level.rate,99)}
  const changeSpeed=(v:number)=>{setSpeed(v);const g=gameRef.current;if(g)g.speed=v}
+ const nuke=()=>{const g=gameRef.current;if(!g||!g.running)return;g.baos.forEach(b=>{if(!b.saved&&!b.dead&&b.skill!=="blocker"){b.skill="bomber";b.bomber=5}})}
  const selectLevel=(id:number)=>reset(id)
 
  const clickWorld=(event:ReactPointerEvent<HTMLCanvasElement>)=>{
@@ -134,6 +135,7 @@ export default function SquishyLemmings(){
   const canvas=canvasRef.current;if(!canvas)return
   const ctx=canvas.getContext("2d");if(!ctx)return
   let alive=true
+  let hudTick=0
   const draw=()=>{
    if(!alive)return
    const g=gameRef.current,l=levelRef.current
@@ -174,7 +176,7 @@ export default function SquishyLemmings(){
       b.skill=undefined
      }
      if(b.skill==="builder"&&supported){
-      if(b.build<12){const bx=b.x+b.dir*10,by=b.y+BAO_H/2-2;b.x+=b.dir*1.3;b.y-=.65;b.build++;g.terrain.push({x:bx,y:by,w:13,h:5,bridge:true});return}
+      if(b.build<12){const bx=b.x+b.dir*7,by=b.y+BAO_H/2-3;b.x+=b.dir*7;b.y-=1.5;b.build++;g.terrain.push({x:bx,y:by,w:9,h:5,bridge:true});return}
       b.skill=undefined;b.build=0
      }
      if(wall){
@@ -191,7 +193,6 @@ export default function SquishyLemmings(){
      if(bomberSkillHazard(b,l.hazards)){b.dead=true;g.dead++;return}
      if(b.y>GROUND+60){b.dead=true;g.dead++;return}
      if(!wall&&supported)b.x+=b.dir*(b.skill==="builder"?1.4:31)*step
-     if(b.skill==="floater"&&supported)b.skill=undefined
      if(b.x>=l.exit-18&&b.x<=l.exit+45&&b.y>GROUND-80){b.saved=true;g.saved++}
      if(b.x<5){b.x=5;b.dir=1}
     })
@@ -200,7 +201,7 @@ export default function SquishyLemmings(){
     if(g.saved>=Math.ceil(l.total*l.rescue/100)){g.running=false;g.complete=true;g.failed=false}
     const active=g.baos.filter(b=>!b.saved&&!b.dead).length
     if(g.complete){setBest(old=>{const next={...old,[l.id]:Math.max(old[l.id]||0,g.saved)};try{localStorage.setItem("sdlem-campaign-best",JSON.stringify(next))}catch{};return next})}
-    setCamera(g.camera);setHud({spawned:g.spawned,saved:g.saved,dead:g.dead,time:g.clock,rate:g.rate,active,percent:Math.floor(g.saved/l.total*100),paused:g.paused,running:g.running,complete:g.complete,failed:g.failed})
+    if(now-hudTick>120){hudTick=now;setCamera(g.camera);setHud({spawned:g.spawned,saved:g.saved,dead:g.dead,time:g.clock,rate:g.rate,active,percent:Math.floor(g.saved/l.total*100),paused:g.paused,running:g.running,complete:g.complete,failed:g.failed})}
    }
    // Follow the parade, while allowing the user to move the camera with the scrollbar/minimap.
    const target=g.baos.find(b=>!b.saved&&!b.dead)
@@ -245,7 +246,7 @@ export default function SquishyLemmings(){
   </div>
   <div className="sdlem-controls"><div className="sdlem-section-heading"><div><span className="sdlem-kicker">SKILL PANEL</span><h2>Choose a job</h2></div><span className="sdlem-tool-hint">Select a skill, then click a walking dumpling.</span></div>
    <div className="sdlem-skills">{SKILLS.map(s=><button key={s.id} disabled={level.skills[s.id]===0||hud.complete||hud.failed} className={"sdlem-skill"+(selected===s.id?" is-selected":"")} onClick={()=>assign(s.id)}><span className="sdlem-skill-icon">{s.icon}</span><span className="sdlem-skill-copy"><b>{s.label}</b><small>{s.tip}</small></span><span className="sdlem-skill-count">{gameRef.current?.skills[s.id]??level.skills[s.id]}</span></button>)}</div>
-   <div className="sdlem-bottom-row"><div className="sdlem-selected-hint"><b>{SKILLS.find(s=>s.id===selected)?.label} selected</b><small>Remaining assignments shown on each skill.</small></div><div className="sdlem-play-actions"><button className="sdlem-small-btn" onClick={()=>setRate(-5)} disabled={!hud.running}>− Release</button><b className="sdlem-rate">{gameRef.current?.rate??level.rate}</b><button className="sdlem-small-btn" onClick={()=>setRate(5)} disabled={!hud.running}>+ Release</button><label className="sdlem-speed">Speed <select value={speed} onChange={e=>changeSpeed(Number(e.target.value))}><option value={1}>1×</option><option value={2}>2×</option><option value={4}>4×</option></select></label><button className="sdlem-release" onClick={start}>{hud.running?"▶ Continue":"▶ Release Bao Parade"}</button></div></div>
+   <div className="sdlem-bottom-row"><div className="sdlem-selected-hint"><b>{SKILLS.find(s=>s.id===selected)?.label} selected</b><small>Remaining assignments shown on each skill.</small></div><div className="sdlem-play-actions"><button className="sdlem-small-btn" onClick={()=>setRate(-5)} disabled={!hud.running}>− Release</button><b className="sdlem-rate">{gameRef.current?.rate??level.rate}</b><button className="sdlem-small-btn" onClick={()=>setRate(5)} disabled={!hud.running}>+ Release</button><button className="sdlem-small-btn" onClick={nuke} disabled={!hud.running}>☠ Nuke</button><label className="sdlem-speed">Speed <select value={speed} onChange={e=>changeSpeed(Number(e.target.value))}><option value={1}>1×</option><option value={2}>2×</option><option value={4}>4×</option></select></label><button className="sdlem-release" onClick={start}>{hud.running?"▶ Continue":"▶ Release Bao Parade"}</button></div></div>
   </div>
   <div className="sdlem-level-select"><div><span className="sdlem-kicker">120 ORIGINAL STAGES</span><h2>Choose your world</h2><p>Four difficulty groups, 30 levels each. Complete a level to unlock the next.</p></div><div className="sdlem-level-picker"><label>Difficulty <select value={Math.floor(levelId/30)} onChange={e=>selectLevel(Number(e.target.value)*30)}>{GROUPS.map((g,i)=><option key={g} value={i}>{g}</option>)}</select></label><label>Level <select value={levelId%30} onChange={e=>selectLevel(Math.floor(levelId/30)*30+Number(e.target.value))}>{Array.from({length:30},(_,i)=><option key={i} value={i}>{String(i+1).padStart(2,"0")} · {LEVELS[Math.floor(levelId/30)*30+i].name}</option>)}</select></label><span className="sdlem-campaign-count">{Object.keys(best).length} / 120 cleared</span></div></div>
   <div className="sdlem-howto"><span className="sdlem-howto-icon">💡</span><div><b>Classic Lemmings rules</b><p>Dumplings walk on their own, turn at walls and fall if you leave a gap. Assign skills to change the landscape or their behaviour. Blockers stop the parade and turn other walkers back; builders lay 12 steps; bashers tunnel sideways; miners cut diagonally; diggers tunnel down; climbers scale walls; floaters survive long falls; bombers clear a small crater. Pause to plan, adjust the release rate and use the mini-map/scrollbar to explore the whole level.</p></div></div>
