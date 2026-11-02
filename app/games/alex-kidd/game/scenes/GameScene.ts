@@ -38,6 +38,9 @@ export class GameScene extends Phaser.Scene {
   puzzleHint?: Phaser.GameObjects.Text;
   hirottaStone?: Phaser.GameObjects.Image;
   doorOpened = false;
+  doorBlockedMessage = false;
+  doorX = 0;
+  doorY = 0;
   storyMessageOpen = false;
   shieldUntil = 0;
   spikesSpawned = false;
@@ -53,6 +56,9 @@ export class GameScene extends Phaser.Scene {
     this.puzzleStep = 0;
     this.puzzleLastTile = null;
     this.doorOpened = false;
+    this.doorBlockedMessage = false;
+    this.doorX = 0;
+    this.doorY = 0;
     this.storyMessageOpen = false;
     this.shieldUntil = 0;
     this.spikesSpawned = false;
@@ -296,10 +302,13 @@ export class GameScene extends Phaser.Scene {
     this.physics.add.overlap(this.player, g, () => {
       if (this.storyMessageOpen) return;
       if (this.levelIdx === 16 && this.room === "dive") {
-        if (this.doorOpened) return;
+        if (this.doorOpened || this.doorBlockedMessage) return;
+        this.doorX = x;
+        this.doorY = y;
         this.doorOpened = true;
         if (!state.sunStone || !state.moonlightStone || !state.hirottaStone) {
           this.doorOpened = false;
+          this.doorBlockedMessage = true;
           this.showStoryMessage("THE STONE DOOR WILL NOT OPEN.\nFIND BOTH MEDALLIONS\nAND THE HIROTTA STONE.");
           return;
         }
@@ -844,6 +853,7 @@ export class GameScene extends Phaser.Scene {
 
   updateMisc(time: number, dt: number) {
     const p = this.player;
+    if (this.doorBlockedMessage && Phaser.Math.Distance.Between(p.x, p.y, this.doorX, this.doorY) > 30) this.doorBlockedMessage = false;
     for (const g of [...this.ghosts.getChildren()] as Spr[]) {
       const age = time - (g.getData("born") as number);
       const a = Phaser.Math.Angle.Between(g.x, g.y, p.x, p.y);
