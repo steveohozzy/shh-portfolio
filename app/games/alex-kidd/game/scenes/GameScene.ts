@@ -640,7 +640,12 @@ export class GameScene extends Phaser.Scene {
       this.cameras.main.setBackgroundColor("#1840b8");
       this.tweens.add({ targets: this.bg, alpha: 1, duration: 650, ease: "Sine.easeInOut" });
     }
-    if (inWater) {
+    if (inWater && this.levelIdx === 8) {
+      b.setMaxVelocity(135, 0);
+      b.setVelocityY(0);
+      b.setAccelerationX(c.held("right") ? 320 : c.held("left") ? -180 : 0);
+      if (b.blocked.left || b.blocked.right) b.setVelocityX(0);
+    } else if (inWater) {
       b.setMaxVelocity(state.boots ? 90 : 75, 130);
       const pushingIntoWall = (b.blocked.left && dir < 0) || (b.blocked.right && dir > 0);
       b.setAccelerationX(pushingIntoWall ? 0 : dir * 280);
