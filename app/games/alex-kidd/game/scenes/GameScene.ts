@@ -1,6 +1,6 @@
 // @ts-nocheck
 import * as Phaser from "phaser";
-import { LEVELS, H, type LevelDef } from "../levels";
+import { LEVELS, H, makeCraggPuzzleStage, type LevelDef } from "../levels";
 import { state } from "../state";
 import { Controls, FONT } from "../controls";
 import { sfx } from "../sfx";
@@ -30,10 +30,20 @@ export class GameScene extends Phaser.Scene {
   facing = 1; coyoteTime = 0; punchT = 0; dead = false; cleared = false; frozenUntil = 0; bubbleT = 0; waterEntered = false; waterExitBlocked = false;
   boss?: Spr; bossHp = 6; bossFight = false; bossTimer = 1; bossMove = 0; bossInv = 0; arenaX = 0;
   jankenActive = false; jankenDone = false;
+  room: "dive" | "puzzle" = "dive";
+  puzzleTiles!: Phaser.Physics.Arcade.StaticGroup;
+  puzzleStep = 0;
+  puzzleLastTile: Phaser.Physics.Arcade.Image | null = null;
+  puzzleHint?: Phaser.GameObjects.Text;
+  doorOpened = false;
   jk = { sel: 0, you: 0, them: 0, phase: "choose" as "choose" | "reveal", ui: [] as Phaser.GameObjects.GameObject[], cursor: null as Phaser.GameObjects.Text | null, bossHand: null as Phaser.GameObjects.Image | null, info: null as Phaser.GameObjects.Text | null, score: null as Phaser.GameObjects.Text | null };
 
-  init(d: { level: number }) {
+  init(d: { level: number; room?: "dive" | "puzzle" }) {
     this.levelIdx = d.level ?? 0;
+    this.room = d.room || "dive";
+    this.puzzleStep = 0;
+    this.puzzleLastTile = null;
+    this.doorOpened = false;
     this.solidSet = new Set();
     this.facing = 1; this.coyoteTime = 0; this.punchT = 0; this.dead = false; this.cleared = false; this.frozenUntil = 0; this.waterEntered = false; this.waterExitBlocked = false;
     this.boss = undefined; this.bossHp = 6; this.bossFight = false; this.bossTimer = 1; this.bossMove = 0; this.bossInv = 0;
@@ -41,7 +51,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   create() {
-    this.L = LEVELS[this.levelIdx];
+    this.L = this.room === "puzzle"
+      ? { ...LEVELS[this.levelIdx], name: "CRAGG LAKE - HIROTTA STONE", water: false, vertical: false, sky: "#102b70", grid: makeCraggPuzzleStage() }
+      : LEVELS[this.levelIdx];
     const L = this.L;
     this.facing = L.startFacing || 1;
     const W = L.grid[0].length * T;
@@ -60,6 +72,7 @@ export class GameScene extends Phaser.Scene {
     this.shots = this.physics.add.group({ allowGravity: false });
     this.hazards = this.physics.add.group();
     this.ghosts = this.physics.add.group({ allowGravity: false });
+    this.puzzleTiles = this.physics.add.staticGroup();
 
     let start = { x: 40, y: 140 };
     let goal: { x: number; y: number } | null = null;
@@ -77,6 +90,7 @@ export class GameScene extends Phaser.Scene {
       else if (c === "g") this.spawnPickup(x, y, "gem", false);
       else if (c === "o") this.spawnPickup(x, y, "treasure", false);
       else if (c === "w" || c === "v" || c === "p") this.spawnEnemy(c, x, y);
+      else if ("abcde".indexOf(c) !== -1 && this.room === "puzzle") this.addPuzzleSymbol(tx, ty, c);
       else if (c === "F") goal = { x, y };
       else if (c === "P") start = { x, y };
       else if (c === "B") bossAt = { x, y };
@@ -92,6 +106,8 @@ export class GameScene extends Phaser.Scene {
 
     this.physics.add.collider(this.player, this.solids);
     this.physics.add.collider(this.player, this.terrain);
+    this.physics.add.collider(this.player, this.puzzleTiles);
+    this.physics.add.overlap(this.player, this.puzzleTiles, (_p, tile) => this.stepCraggPuzzle(tile as Phaser.Physics.Arcade.Image));
     const walkingScorpion = (e) => (e as Spr).getData("type") === "w";
     this.physics.add.collider(this.enemies, this.solids, undefined, walkingScorpion, this);
     this.physics.add.collider(this.enemies, this.terrain, undefined, walkingScorpion, this);
@@ -121,6 +137,7 @@ export class GameScene extends Phaser.Scene {
 
     this.add.rectangle(128, 6, 256, 12, 0x000000, 0.55).setScrollFactor(0).setDepth(50);
     this.hud = this.add.text(4, 2, "", { fontFamily: FONT, fontSize: "8px", color: "#ffffff" }).setScrollFactor(0).setDepth(51);
+    if (this.room === "puzzle") this.puzzleHint = this.add.text(128, 184, "FOLLOW THE HIROTTA STONE", { fontFamily: FONT, fontSize: "6px", color: "#f8d820", stroke: "#000", strokeThickness: 2 }).setOrigin(0.5).setScrollFactor(0).setDepth(55);
     const banner = this.add.text(128, 80, `STAGE ${L.name}`, { fontFamily: FONT, fontSize: "8px", color: "#f8d820", stroke: "#000", strokeThickness: 3 }).setOrigin(0.5).setScrollFactor(0).setDepth(60);
     this.tweens.add({ targets: banner, alpha: 0, delay: 1600, duration: 500, onComplete: () => banner.destroy() });
 
