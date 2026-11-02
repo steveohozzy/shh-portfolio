@@ -184,6 +184,38 @@ function makeOriginalStage(stageNo: number, spec: StageSpec): G {
 
   if (stageNo === 11) put(g, 40, 33, "L");
 
+  // Janken's Castle is a vertical climb in the original game. The ROM screen
+  // records for this stage are stored in traversal order, not a simple 7-column
+  // row-major map. Preserve the decoded castle tiles, but join the spawn ledge
+  // to the rising platforms so a direct stage select cannot start in a sealed bay.
+  if (stageNo === 16) {
+    const clear = (x1: number, x2: number, y1: number, y2: number) => {
+      fill(g, Math.max(1, x1), Math.min(g[0].length - 2, x2), Math.max(1, y1), Math.min(g.length - 2, y2), ".");
+    };
+    // Open the starting chamber and create a continuous alternating ascent.
+    clear(15, 23, 17, 23);
+    clear(18, 30, 18, 21);
+    clear(24, 34, 18, 24);
+    clear(27, 37, 21, 27);
+    clear(31, 41, 24, 30);
+    clear(35, 45, 27, 33);
+    clear(39, 49, 30, 36);
+    clear(43, 53, 33, 39);
+    clear(47, 57, 36, 42);
+    clear(51, 61, 39, 45);
+    clear(55, 65, 42, 48);
+    clear(59, 69, 45, 51);
+    clear(63, 73, 48, 54);
+    clear(67, 77, 51, 57);
+    clear(71, 81, 54, 60);
+    clear(75, 85, 57, 63);
+    clear(79, 89, 60, 66);
+    clear(83, 94, 62, 68);
+    // Keep the original spawn coordinate clear and put a safe landing below it.
+    clear(16, 20, 19, 22);
+    fill(g, 15, 21, 23, 23, "#");
+  }
+
   const entities = ORIGINAL_ENTITIES[stageNo] || [];
   const visibleEntities = stageNo === 17 ? entities.filter(([screen]) => screen === 1) : entities;
   visibleEntities.forEach(([screen, x, y, entity]) => {
