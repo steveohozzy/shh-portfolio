@@ -3,6 +3,12 @@ export const state = {
   money: 0,
   bracelet: false,
   boots: false,
+  teleportPowder: false,
+  cane: false,
+  capsuleA: false,
+  capsuleB: false,
+  motorcycle: false,
+  peticopter: false,
   sunStone: false,
   moonlightStone: false,
   hirottaStone: false,
@@ -16,6 +22,12 @@ export function resetGame() {
     money: 0,
     bracelet: false,
     boots: false,
+    teleportPowder: false,
+    cane: false,
+    capsuleA: false,
+    capsuleB: false,
+    motorcycle: false,
+    peticopter: false,
     sunStone: false,
     moonlightStone: false,
     hirottaStone: false,
@@ -24,4 +36,4 @@ export function resetGame() {
   });
 }
 
-export const PRICES = { bracelet: 100, life: 500, boots: 120 };
+export const PRICES = { teleportPowder: 100, bracelet: 100, life: 500, cane: 120, capsuleA: 100, capsuleB: 120, motorcycle: 200, peticopter: 200 };
