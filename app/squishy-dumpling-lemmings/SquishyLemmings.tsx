@@ -7,7 +7,7 @@ type Skill = "climber" | "floater" | "bomber" | "blocker" | "builder" | "basher"
 type Terrain = { x:number; y:number; w:number; h:number; steel?:boolean; bridge?:boolean }
 type Hazard = { x:number; y:number; w:number; h:number; kind:"water"|"fire"|"trap" }
 type Level = { id:number; name:string; group:string; width:number; total:number; rescue:number; seconds:number; rate:number; hatch:number; exit:number; terrain:Terrain[]; hazards:Hazard[]; skills:Record<Skill,number> }
-type Bao = { id:number; x:number; y:number; dir:1|-1; vy:number; fall:number; skill?:Skill; action:number; saved:boolean; dead:boolean; bomber:number; build:number; frame:number }
+type Bao = { id:number; x:number; y:number; dir:1|-1; vy:number; fall:number; skill?:Skill; action:number; saved:boolean; dead:boolean; bomber:number; build:number; frame:number; splat?:number }
 type Game = { baos:Bao[]; terrain:Terrain[]; spawned:number; saved:number; dead:number; clock:number; spawnClock:number; camera:number; running:boolean; paused:boolean; complete:boolean; failed:boolean; rate:number; speed:number; selected:Skill; skills:Record<Skill,number>; nextId:number }
 
 const SKILLS: {id:Skill; label:string; icon:string; tip:string}[] = [
@@ -181,7 +181,7 @@ export default function SquishyLemmings(){
     g.baos.forEach(b=>{
      if(b.saved||b.dead)return
      b.frame+=step
-     if(b.bomber>0){b.bomber-=step;if(b.bomber<=0){g.terrain=g.terrain.filter(t=>!(b.x>t.x-28&&b.x<t.x+t.w+28&&b.y>t.y-28&&b.y<t.y+t.h+28));b.dead=true;g.dead++;return}}
+     if(b.bomber>0){b.bomber-=step;if(b.bomber<=0){g.terrain=g.terrain.filter(t=>!(b.x>t.x-28&&b.x<t.x+t.w+28&&b.y>t.y-28&&b.y<t.y+t.h+28));b.dead=true;b.splat=1;g.dead++;return}}
      if(bomberSkillHazard(b,l.hazards)){b.dead=true;g.dead++;return}
      const foot=b.y+BAO_H/2
      const support=floorAt(g.terrain,b.x+b.dir*3,foot)
@@ -255,7 +255,14 @@ export default function SquishyLemmings(){
    ctx.fillStyle="#e69abc";ctx.fillRect(l.hatch-20,GROUND-66,40,18);ctx.fillStyle="#fff";ctx.fillRect(l.hatch-14,GROUND-62,28,8);ctx.fillStyle="#8b6389";ctx.font="bold 11px sans-serif";ctx.fillText("IN",l.hatch-7,GROUND-70)
    ctx.fillStyle="#fff4fa";ctx.fillRect(l.exit,GROUND-68,42,68);ctx.strokeStyle="#b97ca5";ctx.lineWidth=5;ctx.strokeRect(l.exit,GROUND-68,42,68);ctx.fillStyle="#e9a8cb";ctx.font="bold 12px sans-serif";ctx.fillText("HOME",l.exit+3,GROUND-77);ctx.font="20px sans-serif";ctx.fillText("♡",l.exit+11,GROUND-25)
    g.baos.forEach(b=>{
-    if(b.saved||b.dead||b.x<g.camera-40||b.x>g.camera+W+40)return
+    if(b.saved||b.x<g.camera-40||b.x>g.camera+W+40)return
+    if(b.dead){
+     const age=Math.min(1,b.frame/0.45), gooX=b.x, gooY=Math.min(H-9,b.y+BAO_H/2);
+     ctx.save();ctx.translate(gooX,gooY);ctx.globalAlpha=1-age*.35;
+     ctx.fillStyle="#f28eae";ctx.beginPath();ctx.ellipse(0,0,17+age*5,5+age*2,0,0,Math.PI*2);ctx.fill();
+     ctx.fillStyle="#ffd5e2";ctx.beginPath();ctx.ellipse(-5,-2,5,2,0,0,Math.PI*2);ctx.ellipse(7,1,3,1.5,0,0,Math.PI*2);ctx.fill();
+     ctx.fillStyle="#fff";ctx.font="bold 12px sans-serif";ctx.fillText("✦",12,-8);ctx.restore();return;
+    }
     const col=BAO_COLOURS[b.id%BAO_COLOURS.length], bob=Math.sin(b.frame*8)*1.2
     ctx.save();ctx.translate(b.x,b.y+bob);ctx.scale(b.dir*1.2,1.12)
     ctx.fillStyle="#72555b30";ctx.beginPath();ctx.ellipse(0,BAO_H/2+2,16,4,0,0,Math.PI*2);ctx.fill()
