@@ -100,6 +100,7 @@ function mtEternal(): G {
   // top border. Open it so Alex can fall straight into the swimming section.
   fill(g, 1, 46, 108, 108, ".");
 
+  fill(g, 17, 19, 16, 17, ".");
   put(g, 18, 17, "P");
   (ORIGINAL_ENTITIES[1] || []).forEach(([screen, x, y, entity]) => {
     const screenX = screen <= 9 ? 0 : screen - 9;
