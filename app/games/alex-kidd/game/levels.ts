@@ -267,6 +267,45 @@ function makeStage(s: StageSpec): G {
   return g;
 }
 
+function craggLakeStage(): G {
+  // The original Cragg Lake layout is a short, vertically scrolling dive:
+  // Alex starts near the top, swims down through the lake, then reaches the
+  // cave entrance at the bottom. It is not a horizontal castle platform stage.
+  const g = grid(16, 36);
+  put(g, 1, 8, "P");
+
+  // Narrow the descent in several places while leaving a continuous swimming
+  // channel. The original screen descriptors define three stacked screens.
+  fill(g, 0, 0, 0, 35, "R");
+  fill(g, 15, 15, 0, 35, "R");
+  fill(g, 1, 14, 35, 35, "R");
+
+  // Upper lake entrance and staggered rock formations.
+  fill(g, 3, 6, 3, 3, "R");
+  fill(g, 10, 13, 6, 6, "R");
+  fill(g, 2, 4, 11, 11, "R");
+  fill(g, 8, 12, 14, 14, "R");
+
+  // Lower channel: alternate the obstacles so the player must swim around
+  // them rather than simply holding down through an empty shaft.
+  fill(g, 2, 5, 18, 18, "R");
+  fill(g, 9, 13, 21, 21, "R");
+  fill(g, 3, 7, 25, 25, "R");
+  fill(g, 10, 13, 28, 28, "R");
+
+  // Fish occupy the open water lanes; keep clear space around the spawn.
+  put(g, 11, 9, "p");
+  put(g, 5, 16, "p");
+  put(g, 10, 24, "p");
+  put(g, 7, 30, "p");
+
+  // The submerged cave landing and entrance sit at the foot of the dive.
+  fill(g, 1, 14, 33, 33, "R");
+  fill(g, 6, 10, 32, 32, ".");
+  put(g, 8, 32, "F");
+  return g;
+}
+
 const STAGES: StageSpec[] = [
   { name: "2  MT. ETERNAL PART 2", width: 288, height: 12, theme: "hills", seed: 1, columns: 18, startY: 9, sky: "#5c94fc", boss: true, bossName: "Gooseka the Slippery",
     platforms: [[12,8,5],[32,7,4],[55,8,6],[79,7,5],[104,6,5],[131,8,6],[158,7,4],[184,8,6],[211,7,5],[239,6,6],[263,8,5]],
@@ -305,5 +344,5 @@ const STAGES: StageSpec[] = [
 
 export const LEVELS: LevelDef[] = [
   { name: "1  MT. ETERNAL", theme: "hills", water: false, vertical: true, waterStartY: 108 * 16, sky: "#5c94fc", grid: mtEternal() },
-  ...STAGES.map((s, i) => ({ name: s.name, theme: s.theme, water: !!s.water, vertical: !!s.vertical, startFacing: s.startFacing, sky: s.sky, bossName: s.bossName, grid: s.grid || makeStage(s) }))
+  ...STAGES.map((s, i) => ({ name: s.name, theme: s.theme, water: !!s.water, vertical: !!s.vertical, startFacing: s.startFacing, sky: s.sky, bossName: s.bossName, grid: i === 15 ? makeStage(s) : i === 16 ? craggLakeStage() : s.grid || makeStage(s) }))
 ];
