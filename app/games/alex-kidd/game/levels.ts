@@ -188,30 +188,28 @@ function makeOriginalStage(stageNo: number, spec: StageSpec): G {
   // traversal order, so retain the decoded screens and connect the original
   // spawn chamber to the alternating ascent route.
   if (stageNo === 16) {
-    // Keep the castle's lower rooms open. The previous full-width floor
-    // turned the stage into a single corridor and sealed off the lower map.
-    // Replace it with a climbable sequence of short, alternating ledges.
-    fill(g, 1, 110, 22, 22, ".");
-    fill(g, 15, 22, 21, 21, "#");
-    fill(g, 15, 22, 17, 20, ".");
-    fill(g, 25, 32, 19, 19, "#");
-    fill(g, 25, 32, 15, 18, ".");
-    fill(g, 35, 42, 17, 17, "#");
-    fill(g, 35, 42, 13, 16, ".");
-    fill(g, 45, 52, 15, 15, "#");
-    fill(g, 45, 52, 11, 14, ".");
-    fill(g, 55, 62, 13, 13, "#");
-    fill(g, 55, 62, 9, 12, ".");
-    fill(g, 65, 72, 11, 11, "#");
-    fill(g, 65, 72, 7, 10, ".");
-    fill(g, 75, 82, 9, 9, "#");
-    fill(g, 75, 82, 5, 8, ".");
-    fill(g, 85, 92, 7, 7, "#");
-    fill(g, 85, 92, 3, 6, ".");
-    fill(g, 95, 102, 5, 5, "#");
-    fill(g, 95, 102, 1, 4, ".");
-    // Spawn on the lower approach, with enough headroom to jump onto ledge 1.
-    fill(g, 17, 21, 18, 20, ".");
+    // Build one continuous, two-way route through the castle. Every ledge
+    // is only two tiles above the previous one and overlaps it horizontally,
+    // so Alex can jump up and can also drop back down without entering a trap.
+    // Clear the old decoded collision maze in the playable shaft; keep the
+    // original enemies/entities, which are added below this override.
+    fill(g, 7, 106, 1, 69, ".");
+    fill(g, 7, 106, 70, 70, "#");
+
+    let step = 0;
+    for (let y = 68; y >= 2; y -= 2, step++) {
+      const swing = step % 28;
+      const offset = swing <= 14 ? swing : 28 - swing;
+      const x = 8 + offset * 3;
+      fill(g, x, Math.min(106, x + 19), y, y, "#");
+      // Keep a clear two-tile jump pocket above every ledge.
+      fill(g, x, Math.min(106, x + 19), y - 2, y - 1, ".");
+      if (step % 4 === 1 && y > 5) put(g, Math.min(105, x + 9), y - 1, "Q");
+    }
+
+    // The entrance is a safe landing platform, not a sealed starting pocket.
+    fill(g, 14, 36, 18, 20, ".");
+    fill(g, 12, 34, 21, 21, "#");
     put(g, 18, 20, "P");
   }
 
