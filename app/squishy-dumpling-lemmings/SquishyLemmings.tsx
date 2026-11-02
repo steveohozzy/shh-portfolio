@@ -31,7 +31,9 @@ function makeLevel(id:number):Level {
  const hazards:Hazard[]=[];
  const wall=(x:number,top=205,w=34)=>terrain.push({x,y:top,w,h:GROUND-26-top});
  const shelf=(x:number,y:number,w:number)=>terrain.push({x,y,w,h:15});
- const ramp=(x:number,y:number,steps:number,dir:1|-1=1)=>{for(let k=0;k<steps;k++)terrain.push({x:x+(dir===1?k*22:(steps-k-1)*22),y:y-k*13,w:24,h:GROUND-26-(y-k*13)})};\n const steel=(x:number,y:number,w:number,h:number)=>terrain.push({x,y,w,h,steel:true});\n const gap=(x:number,w:number)=>{
+ const ramp=(x:number,y:number,steps:number,dir:1|-1=1)=>{for(let k=0;k<steps;k++)terrain.push({x:x+(dir===1?k*22:(steps-k-1)*22),y:y-k*13,w:24,h:GROUND-26-(y-k*13)})};
+ const steel=(x:number,y:number,w:number,h:number)=>terrain.push({x,y,w,h,steel:true});
+ const gap=(x:number,w:number)=>{
   const base=terrain.find(t=>t.x===0&&t.w===width&&t.y===GROUND-26&&t.h===140);
   if(base){
    terrain.splice(terrain.indexOf(base),1);
@@ -284,7 +286,9 @@ export default function SquishyLemmings(){
     if(g.saved>=Math.ceil(l.total*l.rescue/100)){g.running=false;g.complete=true;g.failed=false}
     const active=g.baos.filter(b=>!b.saved&&!b.dead).length
     if(g.complete){setBest(old=>{const next={...old,[l.id]:Math.max(old[l.id]||0,g.saved)};try{localStorage.setItem("sdlem-campaign-best",JSON.stringify(next))}catch{};return next})}
-    // Always publish the terminal state immediately. If a level ends between HUD ticks,\n   // the animation loop must not leave the React UI showing a frozen in-progress game.\n   if(now-hudTick>120||g.complete||g.failed){hudTick=now;setCamera(g.camera);setHud({spawned:g.spawned,saved:g.saved,dead:g.dead,time:g.clock,rate:g.rate,active,percent:Math.floor(g.saved/l.total*100),paused:g.paused,running:g.running,complete:g.complete,failed:g.failed})}
+    // Always publish the terminal state immediately. If a level ends between HUD ticks,
+   // the animation loop must not leave the React UI showing a frozen in-progress game.
+   if(now-hudTick>120||g.complete||g.failed){hudTick=now;setCamera(g.camera);setHud({spawned:g.spawned,saved:g.saved,dead:g.dead,time:g.clock,rate:g.rate,active,percent:Math.floor(g.saved/l.total*100),paused:g.paused,running:g.running,complete:g.complete,failed:g.failed})}
    }
    // Follow the parade, while allowing the user to move the camera with the scrollbar/minimap.
    const target=g.baos.find(b=>!b.saved&&!b.dead)
