@@ -156,7 +156,7 @@ type StageSpec = {
 
 function makeOriginalStage(stageNo: number, spec: StageSpec): G {
   const sourceScreens = ORIGINAL_SCREENS[stageNo] || [];
-  const screens = stageNo === 17 ? sourceScreens.slice(0, 1) : sourceScreens;
+  const screens = sourceScreens;
   const columns = spec.columns || Math.ceil(spec.width / 16);
   const rows = Math.max(Math.ceil(screens.length / columns), Math.ceil(spec.height / 12));
   const g = grid(columns * 16, rows * 12);
@@ -195,10 +195,17 @@ function makeOriginalStage(stageNo: number, spec: StageSpec): G {
   });
 
   if (stageNo === 17) {
-    // The entrance is the open doorway in the lower centre of the original
-    // Cragg Lake screen; the Hirotta Stone chamber is handled as a separate room.
-    put(g, 8, 7, "f");
-    put(g, 8, 10, "F");
+    // Cragg Lake is the original four-screen, two-by-two underwater map.
+    // The final screen contains the five floor symbols and the three spikes.
+    put(g, 14, 18, "f");
+    put(g, 21, 15, "^");
+    put(g, 24, 15, "^");
+    put(g, 27, 15, "^");
+    put(g, 18, 22, "a");
+    put(g, 21, 22, "b");
+    put(g, 24, 22, "c");
+    put(g, 27, 22, "d");
+    put(g, 30, 22, "e");
   } else {
     const hasExit = entities.some(([, , , entity]) => entity === "F");
     const hasBoss = entities.some(([, , , entity]) => entity === "B");
@@ -316,7 +323,7 @@ const STAGES: StageSpec[] = [
     platforms: [[10,7,6],[31,4,5],[53,6,6],[76,3,5],[99,7,6],[122,4,5],[145,6,6]], pits: [[22,24],[44,46],[67,69],[90,92],[113,115],[136,138],[159,161]], blocks: [[14,6,1],[57,5,0],[103,6,2],[149,5,1]] },
   { name: "16  JANKEN'S CASTLE", width: 112, height: 72, theme: "castle", seed: 15, columns: 7, startX: 18, startY: 20, vertical: true, sky: "#200820", boss: true, bossName: "Janken the Great",
     platforms: [[8,63,8],[24,57,7],[42,51,8],[61,45,7],[80,39,8],[96,33,7],[12,27,8],[31,21,7],[50,15,8],[70,9,7],[91,4,8]], blocks: [[12,62,2],[28,56,1],[46,50,2],[65,44,1],[84,38,2],[100,32,1],[16,26,2],[35,20,1],[54,14,2],[74,8,1]] },
-  { name: "17  CRAGG LAKE", width: 16, height: 12, theme: "lake", water: true, seed: 16, columns: 1, startX: 1, startY: 8, sky: "#102b70", platforms: [], blocks: [] }
+  { name: "17  CRAGG LAKE", width: 32, height: 24, theme: "lake", water: true, vertical: true, seed: 16, columns: 2, startX: 17, startY: 8, sky: "#102b70", platforms: [], blocks: [] }
 ];
 
 export function makeCraggPuzzleStage(): G {
