@@ -253,5 +253,5 @@ export function makeTextures(s: Phaser.Scene) {
 
   const a = s.anims;
   if (!a.exists("run")) a.create({ key: "run", frames: [{ key: "hero_run1" }, { key: "hero_run2" }], frameRate: 10, repeat: -1 });
-  if (!a.exists("swim")) a.create({ key: "swim", frames: [{ key: "hero_swim1" }, { key: "hero_swim2" }], frameRate: 7, repeat: -1 });
+  if (!a.exists("swim")) a.create({ key: "swim", frames: [{ key: "hero_jump" }, { key: "hero_idle" }], frameRate: 3, repeat: -1 });
 }
