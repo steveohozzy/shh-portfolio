@@ -169,7 +169,7 @@ export default function SquishyLemmings(){
      if(b.skill==="digger"&&supported&&support){const idx=g.terrain.indexOf(support);if(!support.steel){support.y+=3;support.h=Math.max(0,support.h-3);b.y+=3;if(support.h<=0)g.terrain.splice(idx,1)}else b.skill=undefined;return}
      if(b.skill==="basher"){
       const targetX=frontX
-      const target=g.terrain.find(t=>targetX>=t.x-3&&targetX<=t.x+t.w+3&&b.y>=t.y-BAO_H&&b.y<=t.y+t.h)
+      const target=g.terrain.find(t=>targetX>=t.x-3&&targetX<=t.x+t.w+3&&b.y+4>=t.y&&b.y-4<=t.y+t.h)
       if(target&&!target.steel){const cut=20;const cutX=b.dir===1?targetX:targetX-cut;target.x+=b.dir===1?cut:0;target.w=Math.max(0,target.w-cut);if(target.w===0)g.terrain=g.terrain.filter(t=>t!==target);b.x+=b.dir*2;return}
       b.skill=undefined
      }
