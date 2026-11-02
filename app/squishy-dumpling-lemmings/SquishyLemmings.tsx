@@ -31,7 +31,20 @@ function makeLevel(id:number):Level {
  const hazards:Hazard[]=[];
  const wall=(x:number,top=205,w=34)=>terrain.push({x,y:top,w,h:GROUND-26-top});
  const shelf=(x:number,y:number,w:number)=>terrain.push({x,y,w,h:15});
- const gap=(x:number,w:number)=>{terrain.splice(terrain.findIndex(t=>t.x===0&&t.w===width),1);terrain.push({x,y:GROUND+4,w,h:150})};
+ const gap=(x:number,w:number)=>{
+  const base=terrain.find(t=>t.x===0&&t.w===width&&t.y===GROUND-26&&t.h===140);
+  if(base){
+   terrain.splice(terrain.indexOf(base),1);
+   terrain.push({x:0,y:GROUND-26,w,h:140},{x:x+w,y:GROUND-26,w:width-x-w,h:140});
+   return;
+  }
+  const segment=terrain.find(t=>t.y===GROUND-26&&t.h===140&&x>=t.x&&x+w<=t.x+t.w);
+  if(segment){
+   terrain.splice(terrain.indexOf(segment),1);
+   if(x>segment.x)terrain.push({x:segment.x,y:GROUND-26,w:x-segment.x,h:140});
+   if(x+w<segment.x+segment.w)terrain.push({x:x+w,y:GROUND-26,w:segment.x+segment.w-x-w,h:140});
+  }
+ };
  if(n===0){wall(510,205,38);shelf(850,300,150)}
  else if(n===1){wall(620,155,42);shelf(1120,280,190)}
  else if(n===2){gap(720,130);shelf(980,285,190);wall(1460,220,34)}
@@ -270,7 +283,7 @@ export default function SquishyLemmings(){
    ctx.fillStyle="#775e7a";ctx.font="10px sans-serif";ctx.fillText("LEVEL MAP",miniX,miniY-4)
    rafRef.current=requestAnimationFrame(draw)
   }
-  const bomberSkillHazard=(b:Bao,hazards:Hazard[])=>hazards.some(h=>b.x>h.x&&b.x<h.x+h.w&&b.y>h.y-10&&b.y<h.y+h.h)
+  const bomberSkillHazard=(b:Bao,hazards:Hazard[])=>hazards.some(h=>b.x>h.x&&b.x<h.x+h.w&&b.y+BAO_H/2>h.y-8&&b.y-BAO_H/2<h.y+h.h)
   rafRef.current=requestAnimationFrame(draw)
   return()=>{alive=false;cancelAnimationFrame(rafRef.current)}
  },[])
