@@ -1,7 +1,27 @@
-export const state = { lives: 3, money: 0, bracelet: false, boots: false };
+export const state = {
+  lives: 3,
+  money: 0,
+  bracelet: false,
+  boots: false,
+  sunStone: false,
+  moonlightStone: false,
+  hirottaStone: false,
+  letterToNibana: false,
+  goldCrown: false,
+};
 
 export function resetGame() {
-  Object.assign(state, { lives: 3, money: 0, bracelet: false, boots: false });
+  Object.assign(state, {
+    lives: 3,
+    money: 0,
+    bracelet: false,
+    boots: false,
+    sunStone: false,
+    moonlightStone: false,
+    hirottaStone: false,
+    letterToNibana: false,
+    goldCrown: false,
+  });
 }
 
-export const PRICES = { bracelet: 100, life: 150, boots: 120 };
+export const PRICES = { bracelet: 100, life: 500, boots: 120 };
