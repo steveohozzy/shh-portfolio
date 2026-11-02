@@ -186,8 +186,8 @@ function makeOriginalStage(stageNo: number, spec: StageSpec): G {
   const entities = ORIGINAL_ENTITIES[stageNo] || [];
   const visibleEntities = stageNo === 17 ? entities.filter(([screen]) => screen === 1) : entities;
   visibleEntities.forEach(([screen, x, y, entity]) => {
-    const screenX = stageNo === 17 ? 0 : screen % columns;
-    const screenY = stageNo === 17 ? 0 : Math.floor(screen / columns);
+    const screenX = screen % columns;
+    const screenY = Math.floor(screen / columns);
     const tx = screenX * 16 + Math.floor(x / 16);
     const ty = screenY * 12 + Math.floor(y / 16);
     if (tx < 0 || tx >= g[0].length || ty < 0 || ty >= g.length) return;
