@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { vpad, type PadKey } from "./game/input";
 import { sfx } from "./game/sfx";
+import { LEVELS } from "./game/levels";
 
 const controls: { key: PadKey; label: string; className?: string }[] = [
   { key: "up", label: "▲", className: "up" },
@@ -74,6 +75,18 @@ export default function AlexKiddGame() {
   const gameRef = useRef<any>(null);
   const [muted, setMuted] = useState(false);
   const [paused, setPaused] = useState(false);
+  const [selectedLevel, setSelectedLevel] = useState(0);
+
+  const jumpToLevel = (value: string) => {
+    const nextLevel = Number(value);
+    const game = gameRef.current;
+    if (!game || !Number.isInteger(nextLevel) || nextLevel < 0 || nextLevel >= LEVELS.length) return;
+    setSelectedLevel(nextLevel);
+    setPaused(false);
+    game.scene.stop("Shop");
+    game.scene.stop("End");
+    game.scene.start("Game", { level: nextLevel });
+  };
 
   const togglePause = () => {
     const game = gameRef.current;
@@ -148,6 +161,17 @@ export default function AlexKiddGame() {
             >
               {muted ? "SOUND OFF" : "SOUND ON"}
             </button>
+            <select
+              className="ak-game-tool ak-level-select"
+              aria-label="Skip to stage for testing"
+              title="Skip to stage for testing"
+              value={selectedLevel}
+              onChange={(event) => jumpToLevel(event.target.value)}
+            >
+              {LEVELS.map((level, index) => (
+                <option key={level.name} value={index}>{level.name}</option>
+              ))}
+            </select>
             <button type="button" className="ak-game-tool" onClick={togglePause}>
               {paused ? "RESUME" : "PAUSE"}
             </button>
