@@ -273,7 +273,7 @@ export default function SquishyLemmings(){
        frontX>=t.x-4&&frontX<=t.x+t.w+4&&
        b.y+BAO_H/2>t.y&&b.y-BAO_H/2<t.y+t.h
       );
-      if(!climbWall||climbWall.steel){
+      if(!climbWall){
        b.skill=undefined;
        b.dir=(-b.dir) as 1|-1;
        return;
