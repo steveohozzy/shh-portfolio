@@ -270,7 +270,14 @@ export default function SquishyLemmings(){
        b.x+=b.dir*2.8;
        return;
       }
-      b.skill=undefined;
+      // Keep the basher assignment queued while walking. It only starts
+      // punching when the worker reaches destructible terrain.
+      if(wall){
+       const carveX=b.dir===1?cutX-24:cutX-6;
+       carveTerrain(g.terrain,carveX,cutY-12,32,34);
+       b.x+=b.dir*2.8;
+       return;
+      }
      }
      if(b.skill==="miner"){
       const cutX=b.x+b.dir*13, cutY=foot+9;
@@ -280,7 +287,8 @@ export default function SquishyLemmings(){
        carveTerrain(g.terrain,Math.min(cutX,cutX- b.dir*22),cutY-8,30,23);
        b.x+=b.dir*2.1;b.y+=2.1;b.vy=0;return;
       }
-      b.skill=undefined;
+      // Mining is a queued order too: retain it until the worker reaches
+      // terrain that can actually be mined instead of silently cancelling it.
      }
      if(b.skill==="builder"&&supported){
       if(b.build<12){const bx=b.x+b.dir*8,by=b.y+BAO_H/2-8;b.x+=b.dir*8;b.y-=8;b.build++;g.terrain.push({x:bx,y:by,w:19,h:9,bridge:true});return}
@@ -361,6 +369,17 @@ export default function SquishyLemmings(){
     ctx.fillStyle="#72555b30";ctx.beginPath();ctx.ellipse(0,BAO_H/2+2,16,4,0,0,Math.PI*2);ctx.fill()
     if(baoSprites[b.variant])ctx.drawImage(baoSprites[b.variant],-24,-24,48,48);
     else {ctx.fillStyle="#fff0d8";ctx.beginPath();ctx.ellipse(0,0,19,17,0,0,Math.PI*2);ctx.fill();ctx.fillStyle="#493640";ctx.beginPath();ctx.arc(-5,-2,2,0,Math.PI*2);ctx.arc(5,-2,2,0,Math.PI*2);ctx.fill()}
+    // Every assigned skill gets a persistent, readable badge so queued
+    // orders are visible before their trigger condition is reached.
+    if(b.skill){
+     const skillIcons:Record<Skill,string>={climber:"↟",floater:"☂",bomber:"✹",blocker:"Ⅱ",builder:"▰",basher:"✊",miner:"⚒",digger:"↓"};
+     const badgeText=skillIcons[b.skill];
+     ctx.save();ctx.scale(b.dir,1);
+     ctx.fillStyle="#fff";ctx.strokeStyle="#9b6a91";ctx.lineWidth=1.5;
+     ctx.beginPath();ctx.roundRect(-12,-38,24,17,7);ctx.fill();ctx.stroke();
+     ctx.fillStyle="#704b72";ctx.font="bold 13px sans-serif";ctx.textAlign="center";ctx.fillText(badgeText,0,-26);
+     ctx.restore();
+    }
     if(b.skill==="climber"||b.skill==="builder"){ctx.fillStyle=b.skill==="builder"?"#f4bd42":"#e96b67";ctx.beginPath();ctx.arc(0,-15,10,Math.PI,0);ctx.lineTo(10,-12);ctx.lineTo(-10,-12);ctx.fill();ctx.fillStyle="#fff8";ctx.fillRect(-5,-17,5,2);ctx.fillStyle="#fff";ctx.font="bold 8px sans-serif";ctx.fillText(b.skill==="builder"?"BUILD":"UP",-9,-27)}
     if(b.skill==="floater"){ctx.fillStyle="#ef8eb7";ctx.strokeStyle="#865b91";ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(-13,-25);ctx.quadraticCurveTo(0,-43,13,-25);ctx.closePath();ctx.fill();ctx.stroke();ctx.beginPath();ctx.moveTo(0,-25);ctx.lineTo(0,-15);ctx.moveTo(-11,-25);ctx.lineTo(0,-15);ctx.lineTo(11,-25);ctx.stroke()}
     if(b.skill==="bomber"){ctx.fillStyle="#333";ctx.beginPath();ctx.arc(0,-22,4,0,Math.PI*2);ctx.fill();ctx.fillStyle="#f4c84b";ctx.fillRect(2,-28,4,3);ctx.fillStyle="#e85b68";ctx.font="bold 10px sans-serif";ctx.fillText(Math.ceil(b.bomber||0).toString(),-3,-30)}
@@ -393,12 +412,12 @@ export default function SquishyLemmings(){
   <div className="sdlem-game-frame"><div className="sdlem-game-top"><div><span className="sdlem-level-pill">{level.group.toUpperCase()} · LEVEL {String(level.id+1).padStart(3,"0")}</span><h2>{level.name}</h2><p>Rescue {level.rescue}% · {level.total} dumplings · {Math.floor(level.seconds/60)} minutes</p></div><div className="sdlem-top-actions"><button className="sdlem-small-btn" onClick={pause} disabled={!hud.running}>Ⅱ Pause</button><button className="sdlem-small-btn" onClick={()=>reset(levelId)}>↻ Restart</button></div></div>
    <div className="sdlem-canvas-wrap"><canvas ref={canvasRef} width={W} height={H} onPointerDown={clickWorld} aria-label="Scrollable Squishy Dumpling Lemmings level"/></div>
    <div className="sdlem-scroll"><button onClick={()=>scroll(clamp((gameRef.current?.camera||0)-220,0,maxCamera))}>◀</button><input aria-label="Scroll level" type="range" min="0" max={maxCamera} value={Math.min(camera,maxCamera)} onChange={e=>scroll(Number(e.target.value))}/><button onClick={()=>scroll(clamp((gameRef.current?.camera||0)+220,0,maxCamera))}>▶</button><span>{Math.round((camera/maxCamera||0)*100)}%</span></div>
-   <div className="sdlem-message">{hud.complete?"🎉 Level complete!":hud.failed?"💗 Not quite — have another go.":hud.paused?"⏸ Parade paused.":hud.running?"Tap a dumpling to assign the selected job; tap it again to remove the job.":"Press release to start the parade. Select a skill first or during play."}</div>
+   <div className="sdlem-message">{hud.complete?"🎉 Level complete!":hud.failed?"💗 Not quite — have another go.":hud.paused?"⏸ Parade paused.":hud.running?"Tap any dumpling to queue the selected job; it will trigger when its conditions are met. Tap again to cancel.":"Press release to start the parade. Select a skill first or during play."}</div>
    {(hud.complete||hud.failed)&&<div className="sdlem-result"><b>{hud.complete?"Beautifully done, Bao Boss!":"The parade has finished."}</b><span>{hud.saved} rescued out of {level.total}. {hud.complete?"The next stage is unlocked.":"Try changing the release rate or skill timing."}</span><button onClick={()=>hud.complete&&levelId<119?reset(levelId+1):reset(levelId)}>{hud.complete&&levelId<119?"Next level →":"Try again"}</button></div>}
   </div>
-  <div className="sdlem-controls"><div className="sdlem-section-heading"><div><span className="sdlem-kicker">SKILL PANEL</span><h2>Choose a job</h2></div><span className="sdlem-tool-hint">1. Pick a job · 2. Tap a dumpling · 3. Tap again to undo</span></div>
+  <div className="sdlem-controls"><div className="sdlem-section-heading"><div><span className="sdlem-kicker">SKILL PANEL</span><h2>Choose a job</h2></div><span className="sdlem-tool-hint">1. Pick a job · 2. Tap any dumpling · 3. It triggers automatically</span></div>
    <div className="sdlem-skills">{SKILLS.map(s=><button key={s.id} disabled={(gameRef.current?.skills[s.id]??level.skills[s.id])===0||hud.complete||hud.failed} className={"sdlem-skill"+(selected===s.id?" is-selected":"")} onClick={()=>assign(s.id)}><span className="sdlem-skill-icon">{s.icon}</span><span className="sdlem-skill-copy"><b>{s.label}</b><small>{s.tip}</small></span><span className="sdlem-skill-count">{gameRef.current?.skills[s.id]??level.skills[s.id]}</span></button>)}</div>
-   <div className="sdlem-bottom-row"><div className="sdlem-selected-hint"><b>Active tool: {SKILLS.find(s=>s.id===selected)?.icon} {SKILLS.find(s=>s.id===selected)?.label}</b><small>Click a worker to apply the selected job; click that worker again to remove the job.</small></div><div className="sdlem-play-actions"><button className="sdlem-small-btn" onClick={()=>setRate(-5)} disabled={!hud.running}>− Release</button><b className="sdlem-rate">{gameRef.current?.rate??level.rate}</b><button className="sdlem-small-btn" onClick={()=>setRate(5)} disabled={!hud.running}>+ Release</button><button className="sdlem-small-btn" onClick={nuke} disabled={!hud.running}>☠ Nuke</button><label className="sdlem-speed">Speed <select value={speed} onChange={e=>changeSpeed(Number(e.target.value))}><option value={1}>1×</option><option value={2}>2×</option><option value={4}>4×</option></select></label><button className="sdlem-release" onClick={start}>{hud.running?"▶ Continue":"▶ Release Bao Parade"}</button></div></div>
+   <div className="sdlem-bottom-row"><div className="sdlem-selected-hint"><b>Active tool: {SKILLS.find(s=>s.id===selected)?.icon} {SKILLS.find(s=>s.id===selected)?.label}</b><small>Click a worker anywhere in the level to queue the job; it stays assigned until it triggers. Click again to cancel.</small></div><div className="sdlem-play-actions"><button className="sdlem-small-btn" onClick={()=>setRate(-5)} disabled={!hud.running}>− Release</button><b className="sdlem-rate">{gameRef.current?.rate??level.rate}</b><button className="sdlem-small-btn" onClick={()=>setRate(5)} disabled={!hud.running}>+ Release</button><button className="sdlem-small-btn" onClick={nuke} disabled={!hud.running}>☠ Nuke</button><label className="sdlem-speed">Speed <select value={speed} onChange={e=>changeSpeed(Number(e.target.value))}><option value={1}>1×</option><option value={2}>2×</option><option value={4}>4×</option></select></label><button className="sdlem-release" onClick={start}>{hud.running?"▶ Continue":"▶ Release Bao Parade"}</button></div></div>
   </div>
   <div className="sdlem-level-select"><div><span className="sdlem-kicker">120 ORIGINAL STAGES</span><h2>Choose your world</h2><p>Four difficulty groups, 30 levels each. Complete a level to unlock the next.</p></div><div className="sdlem-level-picker"><label>Difficulty <select value={Math.floor(levelId/30)} onChange={e=>selectLevel(Number(e.target.value)*30)}>{GROUPS.map((g,i)=><option key={g} value={i} disabled={i*30>unlockedThrough}>{g}</option>)}</select></label><label>Level <select value={levelId%30} onChange={e=>selectLevel(Math.floor(levelId/30)*30+Number(e.target.value))}>{Array.from({length:30},(_,i)=><option key={i} value={i} disabled={Math.floor(levelId/30)*30+i>unlockedThrough}>{String(i+1).padStart(2,"0")} · {LEVELS[Math.floor(levelId/30)*30+i].name}</option>)}</select></label><span className="sdlem-campaign-count">{Object.keys(best).length} / 120 cleared</span></div></div>
   <div className="sdlem-howto"><span className="sdlem-howto-icon">💡</span><div><b>Classic Lemmings rules</b><p>Dumplings walk on their own, turn at walls and fall if you leave a gap. Assign skills to change the landscape or their behaviour. Blockers stop the parade and turn other walkers back; builders lay 12 steps; bashers tunnel sideways; miners cut diagonally; diggers tunnel down; climbers scale walls; floaters survive long falls; bombers clear a small crater. Pause to plan, adjust the release rate and use the mini-map/scrollbar to explore the whole level.</p></div></div>
