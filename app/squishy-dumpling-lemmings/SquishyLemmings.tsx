@@ -157,7 +157,7 @@ function makeOpeningPuzzle(id:number):Level|null {
   ],platforms:[
    {x:606,y:235,w:310},{x:980,y:195,w:230},{x:1260,y:245,w:210},
    {x:1540,y:285,w:180},{x:1830,y:315,w:170}
-  ],skills:{climber:12,floater:4}},
+  ],skills:{climber:12,floater:8}},
   // Level 9 — steel changes the route: it supports the upper crossing but cannot be mined or bashed.
   8:{name:"Steamed-Up Summit",objective:"The steel shelf is permanent. Use the lower soft-rock passage and the stepped ledges to reach the far side.",width:2460,walls:[
    {x:650,y:225,w:42,h:134},{x:1470,y:205,w:42,h:154}
@@ -275,8 +275,8 @@ function makeCampaignLevel(id:number):Level {
  }
  // The rescue quota is the number of workers who must be able to use the
  // high route. Traits are permanent and can be combined with action skills.
- if(needsClimb)skills.climber=total;
- if(needsFloat)skills.floater=total;
+ if(needsClimb)skills.climber=required;
+ if(needsFloat)skills.floater=required;
  // One assignment per obstacle; the same worker can receive another
  // action after the previous bash/build has finished.
  skills.basher=softWalls;
@@ -284,8 +284,13 @@ function makeCampaignLevel(id:number):Level {
  terrain.push({x:0,y:GROUND-26,w:150,h:26},{x:width-260,y:GROUND-26,w:260,h:26});
  const seconds=Math.max(300,Math.ceil(width/31*1.55));
  let objective="Use bashers to open the soft gates and builders to cross every break and trap.";
- if(needsClimb&&buildCrossings>0)objective="Give the parade climbers and floaters for the high gallery, then use builders and bashers to clear the route.";
- else if(needsClimb)objective="Assign climbers for the high walls and floaters for the long descent.";
+ if(needsClimb&&buildCrossings>0)objective="Assign climbers and floaters to enough Bao to meet the rescue quota. Use builders and bashers for the route, then nuke any stragglers left at the high wall.";
+ else if(needsClimb)objective="Assign climbers and floaters to the required rescue quota, then nuke the stragglers left behind.";
+ else if(buildCrossings>0)objective="Time your builder assignments carefully; one completed staircase can carry the parade over each break and trap.";
+ if(needsClimb){
+  if(skills.climber<required||skills.floater<required)throw new Error("Campaign level "+(id+1)+" does not provide enough permanent traits for its rescue quota");
+ }
+ if(skills.builder<buildCrossings||skills.basher<softWalls)throw new Error("Campaign level "+(id+1)+" is missing an obstacle skill assignment");
  else if(buildCrossings>0)objective="Time your builder assignments carefully; one completed staircase can carry the parade over each danger.";
  return {id,name,group:GROUPS[group],width,total,rescue,seconds,rate:24+group*5+Math.floor(n/8),hatch:75,exit:width-115,terrain,hazards,skills,objective};
 }
