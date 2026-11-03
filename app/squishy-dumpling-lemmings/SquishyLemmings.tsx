@@ -179,12 +179,9 @@ function makeOpeningPuzzle(id:number):Level|null {
    {x:520,y:205,w:42,h:154},{x:1270,y:220,w:42,h:139}
   ],platforms:[],skills:{basher:2,builder:2}},
   // Level 12 — combine a climb, a bridge and a controlled descent.
-  11:{name:"The Sugar Steps",objective:"Scale both towers and build across the broken walkway. Climbing is permanent; the builder can be reassigned after the staircase is complete.",width:2520,walls:[
+  11:{name:"The Sugar Steps",objective:"Give the parade the permanent climber trait to scale both towers. Assign one builder just before the wide floor gap; the completed staircase stays in place for everyone behind.",width:2520,walls:[
    {x:470,y:145,w:48,h:214},{x:1640,y:205,w:44,h:154}
-  ],gaps:[{x:1120,w:88}],platforms:[
-   {x:518,y:250,w:250},{x:820,y:220,w:190},{x:1010,y:250,w:110},
-   {x:1210,y:250,w:200},{x:1450,y:285,w:150},{x:1730,y:295,w:180},{x:1950,y:320,w:150}
-  ],skills:{climber:12,builder:1}}
+  ],gaps:[{x:1120,w:88}],platforms:[],skills:{climber:12,builder:1}}
  };
  const spec=authored[id];
  if(!spec)return null;
