@@ -173,14 +173,11 @@ function makeOpeningPuzzle(id:number):Level|null {
    {x:1710,y:300,w:180},{x:1940,y:270,w:155}
   ],skills:{builder:7,floater:3}},
   // Level 11 — the trap sits in the obvious corridor; the upper ledges provide an alternative route.
-  10:{name:"Bamboo Bounce",objective:"Assign climbers to the parade. Climb both walls and follow the continuous raised walkway over the two red traps to the pavilion.",width:2380,hazards:[
+  10:{name:"Bamboo Bounce",objective:"Two bashers must open the bamboo gates. Assign a builder before each red trap to raise a staircase the parade can follow. Keep each skill for the obstacle it is meant to solve.",width:2380,hazards:[
    {x:690,y:323,w:58,h:62,kind:"trap"},{x:1500,y:323,w:58,h:62,kind:"trap"}
   ],walls:[
    {x:520,y:205,w:42,h:154},{x:1270,y:220,w:42,h:139}
-  ],platforms:[
-   {x:570,y:285,w:240},{x:790,y:245,w:250},{x:1020,y:285,w:250},
-   {x:1320,y:285,w:300},{x:1600,y:245,w:200},{x:1780,y:285,w:220}
-  ],skills:{climber:12}},
+  ],platforms:[],skills:{basher:2,builder:2}},
   // Level 12 — combine a climb, a bridge and a controlled descent.
   11:{name:"The Sugar Steps",objective:"Scale the first tower, bridge the broken upper walkway, then float down to the low exit path.",width:2520,walls:[
    {x:470,y:145,w:48,h:214},{x:1640,y:205,w:44,h:154}
