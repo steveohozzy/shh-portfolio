@@ -184,45 +184,9 @@ function makeOriginalStage(stageNo: number, spec: StageSpec): G {
 
   if (stageNo === 11) put(g, 40, 33, "L");
 
-  // Janken's Castle is a vertical climb. The ROM records are stored in
-  // traversal order, so retain the decoded screens and connect the original
-  // spawn chamber to the alternating ascent route.
-  if (stageNo === 16) {
-    // Build one continuous, two-way route through the castle. Every ledge
-    // is only two tiles above the previous one and overlaps it horizontally,
-    // so Alex can jump up and can also drop back down without entering a trap.
-    // Clear the old decoded collision maze in the playable shaft; keep the
-    // original enemies/entities, which are added below this override.
-    fill(g, 7, 106, 1, 69, ".");
-    fill(g, 7, 106, 70, 70, "#");
-
-    let step = 0;
-    for (let y = 68; y >= 2; y -= 2, step++) {
-      const swing = step % 28;
-      const offset = swing <= 14 ? swing : 28 - swing;
-      const x = 8 + offset * 3;
-      fill(g, x, Math.min(106, x + 19), y, y, "#");
-      // Keep a clear two-tile jump pocket above every ledge.
-      fill(g, x, Math.min(106, x + 19), y - 2, y - 1, ".");
-      if (step % 4 === 1 && y > 5) put(g, Math.min(105, x + 9), y - 1, "$");
-    }
-
-    // Carry the upper route across to Janken's original arena. Alex can
-    // step off the top ledge onto this lower bridge, then drop into the
-    // clear boss chamber at the far right.
-    fill(g, 43, 106, 2, 3, ".");
-    fill(g, 40, 106, 4, 4, "#");
-    fill(g, 100, 110, 5, 22, ".");
-    fill(g, 96, 111, 23, 23, "#");
-    fill(g, 96, 111, 21, 22, ".");
-
-    // Start Alex on the first platform in the actual climb. The old
-    // entrance spawn sat below a cleared section of the route, leaving no
-    // reachable ledge above him.
-    fill(g, 14, 36, 18, 20, ".");
-    fill(g, 12, 34, 21, 21, "#");
-    put(g, 18, 67, "P");
-  }
+  // Stage 16 uses the original decoded castle screens without synthetic
+  // platforms. The ROM layout contains the intended route through the castle;
+  // keep the original entrance spawn defined above and preserve its geometry.
 
   const entities = ORIGINAL_ENTITIES[stageNo] || [];
   const visibleEntities = stageNo === 17 ? entities.filter(([screen]) => screen === 1) : entities;
