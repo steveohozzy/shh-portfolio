@@ -74,7 +74,7 @@ function makeLevel(id:number):Level {
    if(variant===0){wall(x,145+Math.round(rand()*85),32+Math.round(rand()*12))}
    else if(variant===1){shelf(x,245-Math.round(rand()*85),145+Math.round(rand()*95))}
    else if(variant===2){ramp(x,315-Math.round(rand()*25),5+Math.floor(rand()*4),rand()>.5?1:-1)}
-   else if(variant===3){steel(x,235-Math.round(rand()*65),120+Math.round(rand()*75))}
+   else if(variant===3){if(group===0)wall(x,165+Math.round(rand()*65),38);else steel(x,235-Math.round(rand()*65),120+Math.round(rand()*75))}
    else if(variant===4){gap(x,105+Math.round(rand()*75),group>=1&&rand()>.25?"water":"pit")}
    else if(variant===5){wall(x,180,34);shelf(x+105,270-Math.round(rand()*45),135)}
    else if(variant===6){shelf(x,285,145);shelf(x+190,225,145);wall(x+390,155,34)}
