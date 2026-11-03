@@ -317,34 +317,33 @@ export default function SquishyLemmings(){
       else if(b.action===4){b.skill=undefined;b.action=0}
      }
      if(b.skill==="basher"){
-      const cutX=b.x+b.dir*(BAO_W/2+8);
+      // Probe beyond the strip being carved. Probing inside the fresh tunnel
+      // made the basher believe the wall had ended after its first swing.
+      const probeX=b.x+b.dir*(BAO_W/2+24);
       const bashTop=b.y-BAO_H/2+5;
       const bashBottom=b.y+BAO_H/2-5;
+      const overlapsBashHeight=(t:Terrain)=>bashBottom>t.y&&bashTop<t.y+t.h;
       const steelBlocked=g.terrain.some(t=>
-       t.steel&&cutX>=t.x-2&&cutX<=t.x+t.w+2&&bashBottom>t.y&&bashTop<t.y+t.h
+       t.steel&&probeX>=t.x-2&&probeX<=t.x+t.w+2&&overlapsBashHeight(t)
       );
       if(steelBlocked){b.skill=undefined;b.action=0;b.dir=(-b.dir) as 1|-1;return}
-      // Check the full height of the worker, not a thin strip around its
-      // centre. This keeps the bash active through tall walls and uneven ground.
       const materialAhead=g.terrain.some(t=>
-       !t.steel&&cutX>=t.x-2&&cutX<=t.x+t.w+2&&bashBottom>t.y&&bashTop<t.y+t.h
+       !t.steel&&probeX>=t.x-2&&probeX<=t.x+t.w+2&&overlapsBashHeight(t)
       );
       const bodyStillInWall=g.terrain.some(t=>
        !t.steel&&b.y+BAO_H/2-5>t.y&&b.y-BAO_H/2+5<t.y+t.h&&
        b.x+BAO_W/2>t.x&&b.x-BAO_W/2<t.x+t.w
       );
-      if(b.action===2&&!materialAhead&&!bodyStillInWall){b.skill=undefined;b.action=0}
-      else if(materialAhead){
+      if(b.action===2&&!materialAhead&&!bodyStillInWall){
+       b.skill=undefined;
+       b.action=0;
+      }else if(materialAhead||(b.action!==2&&wall)){
        b.action=2;
-       carveTerrain(g.terrain,b.dir===1?cutX-25:cutX-5,b.y-BAO_H/2+3,34,BAO_H-6);
+       const carveX=b.dir===1?b.x+BAO_W/2-4:b.x-BAO_W/2-24;
+       carveTerrain(g.terrain,carveX,b.y-BAO_H/2+3,28,BAO_H-6);
        b.x+=b.dir*2.8;
        return;
       }else if(b.action===2&&bodyStillInWall){
-       b.x+=b.dir*2.8;
-       return;
-      }else if(b.action!==2&&wall){
-       b.action=2;
-       carveTerrain(g.terrain,b.dir===1?cutX-25:cutX-5,b.y-BAO_H/2+3,34,BAO_H-6);
        b.x+=b.dir*2.8;
        return;
       }
