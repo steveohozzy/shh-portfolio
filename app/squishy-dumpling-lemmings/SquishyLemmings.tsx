@@ -174,7 +174,7 @@ function makeOpeningPuzzle(id:number):Level|null {
   ],skills:{builder:2}},
   // Level 11 — the trap sits in the obvious corridor; the upper ledges provide an alternative route.
   10:{name:"Bamboo Bounce",objective:"Bash through both bamboo gates, then build over each red trap. Completed action skills can be assigned again, so one worker can tackle several obstacles.",width:2380,hazards:[
-   {x:690,y:323,w:58,h:62,kind:"trap"},{x:1500,y:323,w:58,h:62,kind:"trap"}
+   {x:690,y:323,w:20,h:62,kind:"trap"},{x:1500,y:323,w:20,h:62,kind:"trap"}
   ],walls:[
    {x:520,y:205,w:42,h:154},{x:1270,y:220,w:42,h:139}
   ],platforms:[],skills:{basher:2,builder:2}},
@@ -266,7 +266,7 @@ function makeCampaignLevel(id:number):Level {
    buildCrossings++;
   }else{
    const hazardWidth=54+((id+i*5)%22);
-   hazards.push({x,y:GROUND-62,w:hazardWidth,h:62,kind:"trap"});
+   hazards.push({x,y:GROUND-62,w:20,h:62,kind:"trap"});
    buildCrossings++;
   }
  }
