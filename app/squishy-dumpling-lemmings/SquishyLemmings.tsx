@@ -167,7 +167,7 @@ function makeOpeningPuzzle(id:number):Level|null {
   ],gaps:[{x:1970,w:72}],skills:{basher:2,builder:3,miner:2,floater:2}},
   // Level 10 — a water basin with a stepped approach and a second, ordinary pit.
   9:{name:"The Great Bao Escape",objective:"The blue basin is deadly. Build a continuous crossing, then bridge the smaller dry pit before the pavilion.",width:2500,gaps:[
-   {x:620,w:104,water:true},{x:1510,w:76}
+   {x:620,w:88,water:true},{x:1510,w:76}
   ],platforms:[
    {x:820,y:315,w:170},{x:1030,y:278,w:170},{x:1240,y:315,w:150},
    {x:1710,y:300,w:180},{x:1940,y:270,w:155}
@@ -180,14 +180,14 @@ function makeOpeningPuzzle(id:number):Level|null {
   ],platforms:[
    {x:570,y:285,w:210},{x:800,y:245,w:190},{x:1010,y:285,w:180},
    {x:1390,y:285,w:190},{x:1610,y:245,w:190},{x:1830,y:285,w:180}
-  ],skills:{climber:2,builder:5,blocker:1,floater:2}},
+  ],skills:{climber:12,builder:5,blocker:1,floater:2}},
   // Level 12 — combine a climb, a bridge and a controlled descent.
   11:{name:"The Sugar Steps",objective:"Scale the first tower, bridge the broken upper walkway, then float down to the low exit path.",width:2520,walls:[
    {x:470,y:145,w:48,h:214},{x:1640,y:205,w:44,h:154}
   ],gaps:[{x:1120,w:88}],platforms:[
    {x:518,y:250,w:250},{x:820,y:220,w:190},{x:1010,y:250,w:110},
    {x:1210,y:250,w:200},{x:1450,y:285,w:150},{x:1730,y:295,w:180},{x:1950,y:320,w:150}
-  ],skills:{climber:3,builder:5,floater:4,basher:1}}
+  ],skills:{climber:12,builder:5,floater:4,basher:1}}
  };
  const spec=authored[id];
  if(!spec)return null;
