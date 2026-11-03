@@ -180,7 +180,7 @@ function makeOpeningPuzzle(id:number):Level|null {
   ],platforms:[
    {x:570,y:285,w:210},{x:800,y:245,w:190},{x:1010,y:285,w:180},
    {x:1390,y:285,w:190},{x:1610,y:245,w:190},{x:1830,y:285,w:180}
-  ],skills:{climber:12,builder:5,blocker:1,floater:2}},
+  ],skills:{climber:10,builder:2,floater:2}},
   // Level 12 — combine a climb, a bridge and a controlled descent.
   11:{name:"The Sugar Steps",objective:"Scale the first tower, bridge the broken upper walkway, then float down to the low exit path.",width:2520,walls:[
    {x:470,y:145,w:48,h:214},{x:1640,y:205,w:44,h:154}
@@ -274,7 +274,7 @@ export default function SquishyLemmings(){
  const assign=(skill:Skill)=>{const g=gameRef.current;if(!g)return;g.selected=skill;setSelected(skill)}
  const setRate=(delta:number)=>{const g=gameRef.current;if(g)g.rate=clamp(g.rate+delta,1,99)}
  const changeSpeed=(v:number)=>{setSpeed(v);const g=gameRef.current;if(g)g.speed=v}
- const nuke=()=>{const g=gameRef.current;if(!g||!g.running)return;g.baos.forEach(b=>{if(!b.saved&&!b.dead&&b.skill!=="blocker"){b.skill="bomber";b.bomber=5}})}
+ const nuke=()=>{const g=gameRef.current;if(!g||!g.running)return;g.baos.forEach(b=>{if(!b.saved&&!b.dead){b.skill="bomber";b.action=0;b.climbTop=undefined;b.climbExitX=undefined;b.bomber=5}})}
  const selectLevel=(id:number)=>{if(id<=unlockedThrough)reset(id)}
  const setFollow=(value:boolean)=>{const g=gameRef.current;if(g)g.cameraFollow=value;setCameraFollow(value)}
  const moveCamera=(value:number)=>{const g=gameRef.current;if(!g)return;g.camera=clamp(value,0,Math.max(0,levelRef.current.width-W));setCamera(g.camera)}
