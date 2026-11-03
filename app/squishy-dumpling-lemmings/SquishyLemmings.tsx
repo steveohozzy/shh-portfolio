@@ -317,25 +317,38 @@ export default function SquishyLemmings(){
       else if(b.action===4){b.skill=undefined;b.action=0}
      }
      if(b.skill==="basher"){
-      const cutX=b.x+b.dir*(BAO_W/2+8),cutY=b.y-5;
-      const steelBlocked=g.terrain.some(t=>t.steel&&cutX>=t.x&&cutX<=t.x+t.w&&cutY+14>=t.y&&cutY<=t.y+t.h);
+      const cutX=b.x+b.dir*(BAO_W/2+8);
+      const bashTop=b.y-BAO_H/2+5;
+      const bashBottom=b.y+BAO_H/2-5;
+      const steelBlocked=g.terrain.some(t=>
+       t.steel&&cutX>=t.x-2&&cutX<=t.x+t.w+2&&bashBottom>t.y&&bashTop<t.y+t.h
+      );
       if(steelBlocked){b.skill=undefined;b.action=0;b.dir=(-b.dir) as 1|-1;return}
-      const materialAhead=g.terrain.some(t=>!t.steel&&cutX>=t.x-2&&cutX<=t.x+t.w+2&&cutY+14>=t.y&&cutY<=t.y+t.h);
-      const bodyStillInWall=g.terrain.some(t=>!t.steel&&b.y+12>t.y&&b.y-18<t.y+t.h&&b.x+BAO_W/2>t.x&&b.x-BAO_W/2<t.x+t.w);
+      // Check the full height of the worker, not a thin strip around its
+      // centre. This keeps the bash active through tall walls and uneven ground.
+      const materialAhead=g.terrain.some(t=>
+       !t.steel&&cutX>=t.x-2&&cutX<=t.x+t.w+2&&bashBottom>t.y&&bashTop<t.y+t.h
+      );
+      const bodyStillInWall=g.terrain.some(t=>
+       !t.steel&&b.y+BAO_H/2-5>t.y&&b.y-BAO_H/2+5<t.y+t.h&&
+       b.x+BAO_W/2>t.x&&b.x-BAO_W/2<t.x+t.w
+      );
       if(b.action===2&&!materialAhead&&!bodyStillInWall){b.skill=undefined;b.action=0}
-      else if(materialAhead){b.action=2;carveTerrain(g.terrain,b.dir===1?cutX-24:cutX-6,cutY-12,32,34);b.x+=b.dir*2.8;return}
-      else if(b.action===2&&bodyStillInWall){b.x+=b.dir*2.8;return}
-      else if(b.action!==2){
-       if(wall){
-        b.action=2;
-        carveTerrain(g.terrain,b.dir===1?cutX-24:cutX-6,cutY-12,32,34);
-        b.x+=b.dir*2.8;
-        return;
-       }
-       // Keep the assignment queued while walking. The skill token is
-       // spent when assigned; bashing begins only when suitable terrain
-       // is reached, even if the player assigned it well in advance.
+      else if(materialAhead){
+       b.action=2;
+       carveTerrain(g.terrain,b.dir===1?cutX-25:cutX-5,b.y-BAO_H/2+3,34,BAO_H-6);
+       b.x+=b.dir*2.8;
+       return;
+      }else if(b.action===2&&bodyStillInWall){
+       b.x+=b.dir*2.8;
+       return;
+      }else if(b.action!==2&&wall){
+       b.action=2;
+       carveTerrain(g.terrain,b.dir===1?cutX-25:cutX-5,b.y-BAO_H/2+3,34,BAO_H-6);
+       b.x+=b.dir*2.8;
+       return;
       }
+      // If no wall is in front yet, retain the queued assignment.
      }
      if(b.skill==="miner"){
       const cutX=b.x+b.dir*13,cutY=foot+9;
