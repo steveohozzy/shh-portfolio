@@ -184,9 +184,44 @@ function makeOriginalStage(stageNo: number, spec: StageSpec): G {
 
   if (stageNo === 11) put(g, 40, 33, "L");
 
-  // Stage 16 uses the original decoded castle screens without synthetic
-  // platforms. The ROM layout contains the intended route through the castle;
-  // keep the original entrance spawn defined above and preserve its geometry.
+  // Janken's Castle: a deliberately tough but continuous switchback climb.
+  // The decoded castle collision data traps the player in this build, so keep
+  // the original castle art/theme and enemies, but replace the broken collision
+  // route with narrow, reachable ledges leading to Janken's original arena.
+  if (stageNo === 16) {
+    // Clear the central tower shaft and rebuild a safe floor.
+    fill(g, 5, 111, 1, 69, ".");
+    fill(g, 0, 111, 70, 71, "#");
+
+    // Each ledge is two tiles above the last (32px), within Alex's jump
+    // height. The six-tile horizontal shift and short ledges require aiming
+    // at the edge rather than simply holding jump in place.
+    let x = 8;
+    let direction = 1;
+    for (let y = 68; y >= 4; y -= 2) {
+      fill(g, x, x + 9, y, y, "#");
+      // A clear jump pocket prevents old castle blocks from capping the route.
+      fill(g, Math.max(5, x - 1), Math.min(110, x + 10), y - 2, y - 1, ".");
+      x += direction * 6;
+      if (x >= 80) {
+        x = 80;
+        direction = -1;
+      } else if (x <= 8) {
+        x = 8;
+        direction = 1;
+      }
+    }
+
+    // Top walkway leads to the original Janken arena. Drop down the right
+    // hand shaft to fight him on the arena floor.
+    fill(g, 8, 106, 4, 4, "#");
+    fill(g, 100, 111, 5, 22, ".");
+    fill(g, 96, 111, 23, 23, "#");
+    fill(g, 96, 111, 21, 22, ".");
+
+    // Start on the first climb ledge, not inside the old sealed entrance.
+    put(g, 12, 67, "P");
+  }
 
   const entities = ORIGINAL_ENTITIES[stageNo] || [];
   const visibleEntities = stageNo === 17 ? entities.filter(([screen]) => screen === 1) : entities;
