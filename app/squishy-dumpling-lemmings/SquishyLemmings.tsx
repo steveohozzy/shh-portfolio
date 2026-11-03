@@ -291,7 +291,6 @@ function makeCampaignLevel(id:number):Level {
   if(skills.climber<required||skills.floater<required)throw new Error("Campaign level "+(id+1)+" does not provide enough permanent traits for its rescue quota");
  }
  if(skills.builder<buildCrossings||skills.basher<softWalls)throw new Error("Campaign level "+(id+1)+" is missing an obstacle skill assignment");
- else if(buildCrossings>0)objective="Time your builder assignments carefully; one completed staircase can carry the parade over each danger.";
  return {id,name,group:GROUPS[group],width,total,rescue,seconds,rate:24+group*5+Math.floor(n/8),hatch:75,exit:width-115,terrain,hazards,skills,objective};
 }
 
