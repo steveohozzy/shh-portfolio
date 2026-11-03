@@ -194,7 +194,7 @@ export default function SquishyLemmings(){
   const screenX=(event.clientX-rect.left)/rect.width*W
   const px=screenX+g.camera
   const py=(event.clientY-rect.top)/rect.height*H
-  if(py>H-42&&screenX>W-285){moveCamera(((screenX-(W-272))/260)*levelRef.current.width-W/2);miniDragRef.current=true;return}
+  if(py>H-42&&screenX>W-285){event.currentTarget.setPointerCapture(event.pointerId);moveCamera(((screenX-(W-272))/260)*levelRef.current.width-W/2);miniDragRef.current=true;return}
   const bao=g.baos.filter(b=>!b.saved&&!b.dead).sort((a,b)=>Math.abs(a.x-px)+Math.abs(a.y-py)-Math.abs(b.x-px)-Math.abs(b.y-py))[0]
   // Wider hit area makes tapping individual workers easier on phones.
   if(!bao||Math.abs(bao.x-px)>48||Math.abs(bao.y-py)>52)return
