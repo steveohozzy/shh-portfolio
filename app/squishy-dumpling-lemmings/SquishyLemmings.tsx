@@ -317,37 +317,37 @@ export default function SquishyLemmings(){
       else if(b.action===4){b.skill=undefined;b.action=0}
      }
      if(b.skill==="basher"){
-      // Scan a broad strip in front of the worker rather than a single point.
-      // This catches thin leftover edges as well as the main wall face.
-      const bashLeft=b.dir===1?b.x+BAO_W/2-6:b.x-BAO_W/2-30;
-      const bashRight=b.dir===1?b.x+BAO_W/2+30:b.x-BAO_W/2+6;
-      const bashTop=b.y-BAO_H/2-4;
-      const bashBottom=b.y+BAO_H/2+4;
-      const overlapsBashArea=(t:Terrain)=>
-       bashRight>t.x&&bashLeft<t.x+t.w&&bashBottom>t.y&&bashTop<t.y+t.h;
-      const steelBlocked=g.terrain.some(t=>t.steel&&overlapsBashArea(t));
-      if(steelBlocked){
-       b.skill=undefined;
-       b.action=0;
-       b.dir=(-b.dir) as 1|-1;
-       return;
-      }
-      const materialAhead=g.terrain.some(t=>!t.steel&&overlapsBashArea(t));
+      // Keep the proven narrow vertical tunnel: widening this vertically can
+      // cut into the floor and leave the worker with no proper footing.
+      const probeX=b.x+b.dir*(BAO_W/2+30);
+      const bashTop=b.y-BAO_H/2+5;
+      const bashBottom=b.y+BAO_H/2-5;
+      const overlapsBashHeight=(t:Terrain)=>bashBottom>t.y&&bashTop<t.y+t.h;
+      const steelBlocked=g.terrain.some(t=>
+       t.steel&&probeX>=t.x-2&&probeX<=t.x+t.w+2&&overlapsBashHeight(t)
+      );
+      if(steelBlocked){b.skill=undefined;b.action=0;b.dir=(-b.dir) as 1|-1;return}
+      const materialAhead=g.terrain.some(t=>
+       !t.steel&&probeX>=t.x-2&&probeX<=t.x+t.w+2&&overlapsBashHeight(t)
+      );
       const bodyStillInWall=g.terrain.some(t=>
-       !t.steel&&b.y+BAO_H/2>t.y&&b.y-BAO_H/2<t.y+t.h&&
+       !t.steel&&b.y+BAO_H/2-5>t.y&&b.y-BAO_H/2+5<t.y+t.h&&
        b.x+BAO_W/2>t.x&&b.x-BAO_W/2<t.x+t.w
       );
-      if(materialAhead||(b.action===2&&bodyStillInWall)||(b.action!==2&&wall)){
-       b.action=2;
-       // Deliberately overlap each cut by more than the movement per frame,
-       // and extend it slightly beyond the worker's body to remove tiny lips.
-       carveTerrain(g.terrain,bashLeft-4,bashTop, bashRight-bashLeft+8,bashBottom-bashTop);
-       b.x+=b.dir*2.8;
-       return;
-      }
       if(b.action===2&&!materialAhead&&!bodyStillInWall){
        b.skill=undefined;
        b.action=0;
+      }else if(materialAhead||(b.action!==2&&wall)){
+       b.action=2;
+       // A slightly wider horizontal cut removes the thin front lip that
+       // could survive between consecutive bash frames, without cutting down.
+       const carveX=b.dir===1?b.x+BAO_W/2-4:b.x-BAO_W/2-30;
+       carveTerrain(g.terrain,carveX,b.y-BAO_H/2+3,34,BAO_H-6);
+       b.x+=b.dir*2.8;
+       return;
+      }else if(b.action===2&&bodyStillInWall){
+       b.x+=b.dir*2.8;
+       return;
       }
       // If no wall is in front yet, retain the queued assignment.
      }
