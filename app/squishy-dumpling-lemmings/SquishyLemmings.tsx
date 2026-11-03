@@ -326,8 +326,15 @@ export default function SquishyLemmings(){
       else if(materialAhead){b.action=2;carveTerrain(g.terrain,b.dir===1?cutX-24:cutX-6,cutY-12,32,34);b.x+=b.dir*2.8;return}
       else if(b.action===2&&bodyStillInWall){b.x+=b.dir*2.8;return}
       else if(b.action!==2){
-       if(wall){b.action=2;carveTerrain(g.terrain,b.dir===1?cutX-24:cutX-6,cutY-12,32,34);b.x+=b.dir*2.8;return}
-       b.skill=undefined;
+       if(wall){
+        b.action=2;
+        carveTerrain(g.terrain,b.dir===1?cutX-24:cutX-6,cutY-12,32,34);
+        b.x+=b.dir*2.8;
+        return;
+       }
+       // Keep the assignment queued while walking. The skill token is
+       // spent when assigned; bashing begins only when suitable terrain
+       // is reached, even if the player assigned it well in advance.
       }
      }
      if(b.skill==="miner"){
