@@ -8,7 +8,7 @@ type Terrain = { x:number; y:number; w:number; h:number; steel?:boolean; bridge?
 type Hazard = { x:number; y:number; w:number; h:number; kind:"water"|"fire"|"trap" }
 type Level = { id:number; name:string; group:string; width:number; total:number; rescue:number; seconds:number; rate:number; hatch:number; exit:number; terrain:Terrain[]; hazards:Hazard[]; skills:Record<Skill,number>; objective:string }
 type Bao = { id:number; variant:number; x:number; y:number; dir:1|-1; vy:number; fall:number; skill?:Skill; action:number; saved:boolean; dead:boolean; bomber:number; build:number; frame:number; splat?:number; climbTop?:number; climbExitX?:number }
-type Game = { baos:Bao[]; terrain:Terrain[]; spawned:number; saved:number; dead:number; clock:number; spawnClock:number; camera:number; running:boolean; paused:boolean; complete:boolean; failed:boolean; rate:number; speed:number; selected:Skill; skills:Record<Skill,number>; nextId:number }
+type Game = { baos:Bao[]; terrain:Terrain[]; spawned:number; saved:number; dead:number; clock:number; spawnClock:number; camera:number; cameraFollow:boolean; running:boolean; paused:boolean; complete:boolean; failed:boolean; rate:number; speed:number; selected:Skill; skills:Record<Skill,number>; nextId:number }
 
 const SKILLS: {id:Skill; label:string; icon:string; tip:string}[] = [
  {id:"climber",label:"Climber",icon:"🧗",tip:"Climb vertical walls"},
@@ -148,6 +148,8 @@ export default function SquishyLemmings(){
  const [selected,setSelected]=useState<Skill>("floater")
  const [hud,setHud]=useState({spawned:0,saved:0,dead:0,time:360,rate:20,active:0,percent:0,paused:false,running:false,complete:false,failed:false})
  const [camera,setCamera]=useState(0)
+ const [cameraFollow,setCameraFollow]=useState(false)
+ const miniDragRef=useRef(false)
  const [speed,setSpeed]=useState(1)
  const [best,setBest]=useState<Record<number,number>>({})
  const level=LEVELS[levelId]
@@ -158,12 +160,12 @@ export default function SquishyLemmings(){
   else break
  }
  levelRef.current=level
- if(!gameRef.current){gameRef.current={baos:[],terrain:level.terrain.map(t=>({...t})),spawned:0,saved:0,dead:0,clock:level.seconds,spawnClock:0,camera:0,running:false,paused:false,complete:false,failed:false,rate:level.rate,speed:1,selected:"floater",skills:cloneSkills(level.skills),nextId:0}}
+ if(!gameRef.current){gameRef.current={baos:[],terrain:level.terrain.map(t=>({...t})),spawned:0,saved:0,dead:0,clock:level.seconds,spawnClock:0,camera:0,cameraFollow:false,running:false,paused:false,complete:false,failed:false,rate:level.rate,speed:1,selected:"floater",skills:cloneSkills(level.skills),nextId:0}}
 
  const reset=useCallback((id=levelId)=>{
   const l=LEVELS[id]
   gameRef.current={baos:[],terrain:l.terrain.map(t=>({...t})),spawned:0,saved:0,dead:0,clock:l.seconds,spawnClock:0,camera:0,running:false,paused:false,complete:false,failed:false,rate:l.rate,speed:1,selected:"floater",skills:cloneSkills(l.skills),nextId:0}
-  setLevelId(id);setSelected("floater");setCamera(0);setSpeed(1)
+  setLevelId(id);setSelected("floater");setCamera(0);setCameraFollow(false);setSpeed(1)
   setHud({spawned:0,saved:0,dead:0,time:l.seconds,rate:l.rate,active:0,percent:0,paused:false,running:false,complete:false,failed:false})
  },[levelId])
 
@@ -176,6 +178,15 @@ export default function SquishyLemmings(){
  const changeSpeed=(v:number)=>{setSpeed(v);const g=gameRef.current;if(g)g.speed=v}
  const nuke=()=>{const g=gameRef.current;if(!g||!g.running)return;g.baos.forEach(b=>{if(!b.saved&&!b.dead&&b.skill!=="blocker"){b.skill="bomber";b.bomber=5}})}
  const selectLevel=(id:number)=>{if(id<=unlockedThrough)reset(id)}
+ const setFollow=(value:boolean)=>{const g=gameRef.current;if(g)g.cameraFollow=value;setCameraFollow(value)}
+ const moveCamera=(value:number)=>{const g=gameRef.current;if(!g)return;g.camera=clamp(value,0,Math.max(0,levelRef.current.width-W));setCamera(g.camera)}
+ const handleCanvasMove=(event:ReactPointerEvent<HTMLCanvasElement>)=>{
+  const g=gameRef.current;if(!g)return
+  const rect=event.currentTarget.getBoundingClientRect()
+  const x=(event.clientX-rect.left)/rect.width*W
+  if(miniDragRef.current){moveCamera(((x-(W-272))/260)*levelRef.current.width-W/2);return}
+  if(!g.cameraFollow&&event.buttons===0){if(x<18)moveCamera(g.camera-18);else if(x>W-18)moveCamera(g.camera+18)}
+ }
 
  const clickWorld=(event:ReactPointerEvent<HTMLCanvasElement>)=>{
   const g=gameRef.current;if(!g||!g.running||g.paused)return
@@ -183,7 +194,7 @@ export default function SquishyLemmings(){
   const screenX=(event.clientX-rect.left)/rect.width*W
   const px=screenX+g.camera
   const py=(event.clientY-rect.top)/rect.height*H
-  if(py>H-30&&screenX>W-285){g.camera=clamp(((screenX-(W-272))/260)*levelRef.current.width,0,levelRef.current.width-W);setCamera(g.camera);return}
+  if(py>H-42&&screenX>W-285){moveCamera(((screenX-(W-272))/260)*levelRef.current.width-W/2);miniDragRef.current=true;return}
   const bao=g.baos.filter(b=>!b.saved&&!b.dead).sort((a,b)=>Math.abs(a.x-px)+Math.abs(a.y-py)-Math.abs(b.x-px)-Math.abs(b.y-py))[0]
   // Wider hit area makes tapping individual workers easier on phones.
   if(!bao||Math.abs(bao.x-px)>48||Math.abs(bao.y-py)>52)return
@@ -397,9 +408,9 @@ export default function SquishyLemmings(){
    // the animation loop must not leave the React UI showing a frozen in-progress game.
    if(now-hudTick>120||g.complete||g.failed){hudTick=now;setCamera(g.camera);setHud({spawned:g.spawned,saved:g.saved,dead:g.dead,time:g.clock,rate:g.rate,active,percent:Math.floor(g.saved/l.total*100),paused:g.paused,running:g.running,complete:g.complete,failed:g.failed})}
    }
-   // Follow the parade, while allowing the user to move the camera with the scrollbar/minimap.
+   // Optional camera follow. Classic mode leaves camera movement in the player's hands.
    const target=g.baos.find(b=>!b.saved&&!b.dead)
-   if(target&&g.running&&!g.paused){if(target.x>g.camera+W-90)g.camera=clamp(g.camera+(target.x-(g.camera+W-90))*.12,0,l.width-W);else if(target.x<g.camera+70)g.camera=clamp(g.camera-(g.camera+70-target.x)*.12,0,l.width-W)}
+   if(g.cameraFollow&&target&&g.running&&!g.paused){const desired=clamp(target.x-W*.38,0,l.width-W);g.camera+=(desired-g.camera)*.12}
    ctx.clearRect(0,0,W,H)
    const sky=ctx.createLinearGradient(0,0,0,H);sky.addColorStop(0,"#dff4ff");sky.addColorStop(1,"#fff1f6");ctx.fillStyle=sky;ctx.fillRect(0,0,W,H)
    ctx.save();ctx.translate(-g.camera,0)
@@ -466,10 +477,14 @@ export default function SquishyLemmings(){
     ctx.restore()
    })
    ctx.restore()
-   // mini-map and viewport marker
-   const miniY=H-19,miniW=260,miniX= W-miniW-12
-   ctx.fillStyle="#fffD";ctx.fillRect(miniX,miniY,miniW,10);ctx.fillStyle="#83c995";ctx.fillRect(miniX,miniY,miniW*W/l.width,10);ctx.strokeStyle="#745c7a";ctx.strokeRect(miniX+(g.camera/l.width)*miniW,miniY,miniW*W/l.width,10)
-   ctx.fillStyle="#775e7a";ctx.font="10px sans-serif";ctx.fillText("LEVEL MAP",miniX,miniY-4)
+   // Full-level minimap with terrain, hazards, workers and the current viewport.
+   const miniY=H-36,miniW=260,miniX=W-miniW-12,miniH=25,scale=miniW/l.width
+   ctx.fillStyle="#fffE";ctx.fillRect(miniX,miniY,miniW,miniH);ctx.fillStyle="#d6ebdc";ctx.fillRect(miniX,miniY+miniH-5,miniW,5)
+   g.terrain.forEach(t=>{ctx.fillStyle=t.steel?"#647889":t.bridge?"#a87553":"#6eae7c";ctx.fillRect(miniX+t.x*scale,miniY+Math.max(2,Math.min(miniH-7,(t.y/H)*miniH)),Math.max(1,t.w*scale),Math.max(1,t.h/H*miniH))})
+   l.hazards.forEach(h=>{ctx.fillStyle=h.kind==="water"?"#45b6df":h.kind==="fire"?"#ef8955":"#d66f86";ctx.fillRect(miniX+h.x*scale,miniY+miniH-7,Math.max(2,h.w*scale),4)})
+   g.baos.forEach(b=>{if(!b.saved&&!b.dead){ctx.fillStyle="#d94d92";ctx.fillRect(miniX+b.x*scale,miniY+miniH-10,2,3)}})
+   ctx.strokeStyle="#674a70";ctx.lineWidth=2;ctx.strokeRect(miniX+g.camera*scale,miniY,Math.max(3,W*scale),miniH)
+   ctx.fillStyle="#775e7a";ctx.font="10px sans-serif";ctx.fillText("LEVEL MAP · CLICK OR DRAG",miniX,miniY-4)
    rafRef.current=requestAnimationFrame(draw)
   }
   const bomberSkillHazard=(b:Bao,hazards:Hazard[])=>hazards.some(h=>b.x>h.x&&b.x<h.x+h.w&&b.y+BAO_H/2>h.y-8&&b.y-BAO_H/2<h.y+h.h)
@@ -477,7 +492,8 @@ export default function SquishyLemmings(){
   return()=>{alive=false;cancelAnimationFrame(rafRef.current)}
  },[])
 
- const scroll=(value:number)=>{const g=gameRef.current;if(!g)return;g.camera=value;setCamera(value)}
+ const scroll=(value:number)=>moveCamera(value)
+ useEffect(()=>{const onKey=(event:KeyboardEvent)=>{if(event.key==="ArrowLeft"||event.key.toLowerCase()==="a"){event.preventDefault();moveCamera((gameRef.current?.camera||0)-90)}else if(event.key==="ArrowRight"||event.key.toLowerCase()==="d"){event.preventDefault();moveCamera((gameRef.current?.camera||0)+90)}};window.addEventListener("keydown",onKey);return()=>window.removeEventListener("keydown",onKey)},[])
  const maxCamera=Math.max(0,level.width-W)
  return <section className="sdlem-page"><div className="sdlem-shell">
   <div className="sdlem-eyebrow">✦ THE GOO GANG PRESENTS ✦</div>
@@ -485,8 +501,8 @@ export default function SquishyLemmings(){
   <div className="sdlem-stats"><div><span>OUT</span><strong>{hud.spawned}<small> / {level.total}</small></strong></div><div><span>RESCUED</span><strong>{hud.saved}<small> / {Math.ceil(level.total*level.rescue/100)}</small></strong></div><div><span>ON SCREEN</span><strong>{hud.active}</strong></div><div><span>TIME LEFT</span><strong>{Math.floor(hud.time/60)}:{String(Math.floor(hud.time%60)).padStart(2,"0")}</strong></div></div>
   <div className="sdlem-progress"><span style={{width:hud.percent+"%"}}/></div>
   <div className="sdlem-game-frame"><div className="sdlem-game-top"><div><span className="sdlem-level-pill">{level.group.toUpperCase()} · LEVEL {String(level.id+1).padStart(3,"0")}</span><h2>{level.name}</h2><p>Rescue {level.rescue}% · {level.total} dumplings · {Math.floor(level.seconds/60)} minutes</p><p className="sdlem-objective">✦ {level.objective}</p></div><div className="sdlem-top-actions"><button className="sdlem-small-btn" onClick={pause} disabled={!hud.running}>Ⅱ Pause</button><button className="sdlem-small-btn" onClick={()=>reset(levelId)}>↻ Restart</button></div></div>
-   <div className="sdlem-canvas-wrap"><canvas ref={canvasRef} width={W} height={H} onPointerDown={clickWorld} aria-label="Scrollable Squishy Dumpling Lemmings level"/></div>
-   <div className="sdlem-scroll"><button onClick={()=>scroll(clamp((gameRef.current?.camera||0)-220,0,maxCamera))}>◀</button><input aria-label="Scroll level" type="range" min="0" max={maxCamera} value={Math.min(camera,maxCamera)} onChange={e=>scroll(Number(e.target.value))}/><button onClick={()=>scroll(clamp((gameRef.current?.camera||0)+220,0,maxCamera))}>▶</button><span>{Math.round((camera/maxCamera||0)*100)}%</span></div>
+   <div className="sdlem-canvas-wrap"><canvas ref={canvasRef} width={W} height={H} onPointerDown={clickWorld} onPointerMove={handleCanvasMove} onPointerUp={()=>{miniDragRef.current=false}} onPointerLeave={()=>{miniDragRef.current=false}} aria-label="Scrollable Squishy Dumpling Lemmings level"/></div>
+   <div className="sdlem-scroll"><button onClick={()=>scroll((gameRef.current?.camera||0)-220)} aria-label="Scroll left">◀</button><input aria-label="Scroll level" type="range" min="0" max={maxCamera} value={Math.min(camera,maxCamera)} onChange={e=>scroll(Number(e.target.value))}/><button onClick={()=>scroll((gameRef.current?.camera||0)+220)} aria-label="Scroll right">▶</button><label className="sdlem-follow-toggle"><input type="checkbox" checked={cameraFollow} onChange={e=>setFollow(e.target.checked)}/> Follow action</label><span>{Math.round((camera/maxCamera||0)*100)}%</span></div>
    <div className="sdlem-message">{hud.complete?"🎉 Level complete!":hud.failed?"💗 Not quite — have another go.":hud.paused?"⏸ Parade paused.":hud.running?"Tap any dumpling to queue the selected job; it will trigger when its conditions are met. Tap again to cancel.":"Press release to start the parade. Select a skill first or during play."}</div>
    {(hud.complete||hud.failed)&&<div className="sdlem-result"><b>{hud.complete?"Beautifully done, Bao Boss!":"The parade has finished."}</b><span>{hud.saved} rescued out of {level.total}. {hud.complete?"The next stage is unlocked.":"Try changing the release rate or skill timing."}</span><button onClick={()=>hud.complete&&levelId<119?reset(levelId+1):reset(levelId)}>{hud.complete&&levelId<119?"Next level →":"Try again"}</button></div>}
   </div>
