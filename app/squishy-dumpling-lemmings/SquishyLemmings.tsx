@@ -265,6 +265,21 @@ export default function SquishyLemmings(){
      const supported=!!support
      const frontX=b.x+b.dir*(BAO_W/2+2)
      const wall=solidAt(g.terrain,frontX,b.y-4)||solidAt(g.terrain,frontX,b.y+4)
+     // Built steps are walkable ramps, not vertical walls. Step onto the
+     // next overlapping bridge segment when its top is within one step.
+     if(wall&&supported){
+      const nextStep=g.terrain.find(t=>
+       t.bridge&&frontX>=t.x-1&&frontX<=t.x+t.w+1&&
+       t.y<foot&&foot-t.y<=12
+      );
+      if(nextStep){
+       b.y=nextStep.y-BAO_H/2;
+       b.vy=0;
+       b.fall=0;
+       b.x+=b.dir*31*step;
+       return;
+      }
+     }
      const blocker=g.baos.find(o=>o!==b&&!o.dead&&!o.saved&&o.skill==="blocker"&&o.action===1&&Math.abs(o.x-b.x)<18&&Math.abs(o.y-b.y)<24)
      if(b.skill==="blocker"&&supported){b.y=support!.y-BAO_H/2;b.vy=0;b.fall=0;b.action=1;return}
      if(blocker){b.dir=(b.x<blocker.x?-1:1);b.x+=b.dir*1.2;return}
