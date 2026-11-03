@@ -157,7 +157,7 @@ function makeOpeningPuzzle(id:number):Level|null {
   ],platforms:[
    {x:606,y:235,w:310},{x:980,y:195,w:230},{x:1260,y:245,w:210},
    {x:1540,y:285,w:180},{x:1830,y:315,w:170}
-  ],skills:{climber:4,floater:4}},
+  ],skills:{climber:12,floater:4}},
   // Level 9 — steel changes the route: it supports the upper crossing but cannot be mined or bashed.
   8:{name:"Steamed-Up Summit",objective:"The steel shelf is permanent. Use the lower soft-rock passage and the stepped ledges to reach the far side.",width:2460,walls:[
    {x:650,y:225,w:42,h:134},{x:1470,y:205,w:42,h:154}
@@ -376,6 +376,8 @@ export default function SquishyLemmings(){
        b.x=b.climbExitX;
        b.climbTop=undefined;
        b.climbExitX=undefined;
+       // Resume walking immediately once the climber clears the wall.
+       b.x+=b.dir*31*step;
       }
       return;
      }
@@ -400,6 +402,8 @@ export default function SquishyLemmings(){
        b.x=b.climbExitX;
        b.climbTop=undefined;
        b.climbExitX=undefined;
+       // Don't leave the dumpling paused at the top of the wall.
+       b.x+=b.dir*31*step;
       }
       return;
      }
