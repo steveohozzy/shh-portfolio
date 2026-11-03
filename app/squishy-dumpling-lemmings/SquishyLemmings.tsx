@@ -6,7 +6,7 @@ import type { PointerEvent as ReactPointerEvent } from "react"
 type Skill = "climber" | "floater" | "bomber" | "blocker" | "builder" | "basher" | "miner" | "digger"
 type Terrain = { x:number; y:number; w:number; h:number; steel?:boolean; bridge?:boolean }
 type Hazard = { x:number; y:number; w:number; h:number; kind:"water"|"fire"|"trap" }
-type Level = { id:number; name:string; group:string; width:number; total:number; rescue:number; seconds:number; rate:number; hatch:number; exit:number; terrain:Terrain[]; hazards:Hazard[]; skills:Record<Skill,number> }
+type Level = { id:number; name:string; group:string; width:number; total:number; rescue:number; seconds:number; rate:number; hatch:number; exit:number; terrain:Terrain[]; hazards:Hazard[]; skills:Record<Skill,number>; objective:string }
 type Bao = { id:number; variant:number; x:number; y:number; dir:1|-1; vy:number; fall:number; skill?:Skill; action:number; saved:boolean; dead:boolean; bomber:number; build:number; frame:number; splat?:number }
 type Game = { baos:Bao[]; terrain:Terrain[]; spawned:number; saved:number; dead:number; clock:number; spawnClock:number; camera:number; running:boolean; paused:boolean; complete:boolean; failed:boolean; rate:number; speed:number; selected:Skill; skills:Record<Skill,number>; nextId:number }
 
@@ -26,82 +26,91 @@ const GROUP_COLOURS=["#9ed9ae","#f2c16e","#b9a4e8","#ed9bbd"]
 const W=960, H=420, BAO_W=44, BAO_H=44, GROUND=385
 
 function makeLevel(id:number):Level {
- const group=Math.floor(id/30), n=id%30, width=2400+(n%4)*180+group*120;
- const terrain:Terrain[]=[{x:0,y:GROUND-26,w:width,h:140},{x:0,y:GROUND-26,w:150,h:26},{x:width-260,y:GROUND-26,w:260,h:26}];
+ const group=Math.floor(id/30), n=id%30;
+ const width=2520+group*180+(id%5)*110;
+ const terrain:Terrain[]=[{x:0,y:GROUND-26,w:width,h:140}];
  const hazards:Hazard[]=[];
- const worldShift=group*34;
- const wall=(x:number,top=205,w=34)=>terrain.push({x:x+worldShift,y:top,w,h:GROUND-26-top});
- const shelf=(x:number,y:number,w:number)=>terrain.push({x:x+worldShift,y,w,h:15});
- const ramp=(x:number,y:number,steps:number,dir:1|-1=1)=>{for(let k=0;k<steps;k++)terrain.push({x:x+worldShift+(dir===1?k*22:(steps-k-1)*22),y:y-k*13,w:24,h:GROUND-26-(y-k*13)})};
- const steel=(x:number,y:number,w:number,h:number)=>terrain.push({x:x+worldShift,y,w,h,steel:true});
- const gap=(x:number,w:number)=>{
-  x+=worldShift;
-  const base=terrain.find(t=>t.x===0&&t.w===width&&t.y===GROUND-26&&t.h===140);
-  if(base){
-   terrain.splice(terrain.indexOf(base),1);
-   terrain.push({x:0,y:GROUND-26,w,h:140},{x:x+w,y:GROUND-26,w:width-x-w,h:140});
-   return;
-  }
-  const segment=terrain.find(t=>t.y===GROUND-26&&t.h===140&&x>=t.x&&x+w<=t.x+t.w);
-  if(segment){
-   terrain.splice(terrain.indexOf(segment),1);
-   if(x>segment.x)terrain.push({x:segment.x,y:GROUND-26,w:x-segment.x,h:140});
-   if(x+w<segment.x+segment.w)terrain.push({x:x+w,y:GROUND-26,w:segment.x+segment.w-x-w,h:140});
-  }
+ const rand=(()=>{let seed=(id+1)*7919;return()=>{seed=(seed*48271)%2147483647;return seed/2147483647}})();
+ const wall=(x:number,top:number,w=34)=>terrain.push({x,y:top,w,h:GROUND-26-top});
+ const shelf=(x:number,y:number,w:number)=>terrain.push({x,y,w,h:15});
+ const steel=(x:number,y:number,w:number,h=18)=>terrain.push({x,y,w,h,steel:true});
+ const ramp=(x:number,y:number,steps:number,dir:1|-1=1)=>{
+  for(let k=0;k<steps;k++)terrain.push({x:x+(dir===1?k*21:(steps-k-1)*21),y:y-k*12,w:23,h:GROUND-26-(y-k*12)});
  };
- if(n===0){wall(510,205,38);shelf(850,300,150)}
- else if(n===1){wall(620,155,42);shelf(1120,280,190)}
- else if(n===2){gap(720,130);shelf(980,285,190);wall(1460,220,34)}
- else if(n===3){wall(540,195,34);gap(1050,150);wall(1510,175,36)}
- else if(n===4){shelf(440,270,250);wall(820,160,38);shelf(1190,245,210);wall(1660,190,36)}
- else if(n===5){gap(600,170);gap(1280,190);shelf(850,270,170);shelf(1540,250,190)}
- else if(n===6){wall(480,125,38);wall(900,125,38);wall(1320,125,38);shelf(1650,280,220)}
- else if(n===7){shelf(420,285,220);shelf(790,235,220);shelf(1160,185,220);wall(1570,155,36)}
+ const gap=(x:number,w:number,kind:"water"|"pit"="pit")=>{
+  const right=x+w;
+  for(let i=terrain.length-1;i>=0;i--){
+   const t=terrain[i];
+   if(t.y!==GROUND-26||t.h!==140||right<=t.x||x>=t.x+t.w)continue;
+   terrain.splice(i,1);
+   if(x>t.x)terrain.push({x:t.x,y:t.y,w:x-t.x,h:t.h});
+   if(right<t.x+t.w)terrain.push({x:right,y:t.y,w:t.x+t.w-right,h:t.h});
+  }
+  if(kind==="water")hazards.push({x,y:GROUND-26,w,h:140,kind:"water"});
+ };
+ const names=[
+  "Bao Boulevard","The Wobble Wall","Pudding Gap","The Sticky Passage","Cloud Kitchen","Jellybean Crossing","The Noodle Maze","Mooncake Mountain","Steamed-Up Summit","The Great Bao Escape",
+  "Bamboo Bounce","The Sugar Steps","Peachy Passage","The Bao Bridge","Cloudtop Crossing","The Winding Walkway","Pillow Fort","The Matcha Mine","Honeycomb Heights","The Great Drop",
+  "Steamer Express","The Split-Level","Lavender Labyrinth","The Golden Gate","Rainbow Run","The Wobbly Workshop","The Secret Staircase","The Waterway","The Castle Courtyard","Homeward Bound"
+ ];
+ const prefixes=["","Sugar Rush · ","Cloud Kingdom · ","Midnight Mochi · "];
+ const title=prefixes[group]+names[n]+(n>=10?" "+String(n+1).padStart(2,"0"):"");
+ const skills:Record<Skill,number>={climber:0,floater:0,bomber:0,blocker:0,builder:0,basher:0,miner:0,digger:0};
+ const total=group===0?12:group===1?18:group===2?24:30;
+ const rescue=[65,72,78,84][group];
+ let objective="Guide the parade safely to the pavilion";
+ if(id===0){wall(510,205,38);skills.basher=12;objective="Learn to bash through a soft wall"}
+ else if(id===1){wall(620,155,42);skills.climber=12;skills.floater=2;objective="Climb the tall wall and reach the exit"}
+ else if(id===2){gap(720,130);shelf(980,285,190);skills.builder=5;skills.floater=4;objective="Build a staircase across the first chasm"}
+ else if(id===3){wall(540,195,34);gap(1050,150);wall(1510,175,36);skills.basher=3;skills.builder=5;skills.miner=3;objective="Combine tunnelling and building to cross the split path"}
  else {
-  const pattern=n%30;
-  if(pattern===0){ramp(390,300,6);wall(940,180,38);shelf(1330,270,180)}
-  else if(pattern===1){shelf(420,285,210);shelf(760,230,210);shelf(1100,175,210);wall(1580,155,38)}
-  else if(pattern===2){gap(620,145);ramp(900,310,5);gap(1450,125)}
-  else if(pattern===3){wall(500,170,38);steel(900,285,180,18);wall(1330,170,38)}
-  else if(pattern===4){ramp(420,320,8);wall(1050,145,42);shelf(1510,260,220)}
-  else if(pattern===5){gap(580,180);gap(1220,180);shelf(850,275,170);shelf(1500,250,170)}
-  else if(pattern===6){wall(470,120,38);wall(850,170,38);wall(1230,120,38);ramp(1580,315,5)}
-  else if(pattern===7){shelf(400,290,200);shelf(720,245,200);shelf(1040,200,200);shelf(1360,155,200)}
-  else if(pattern===8){steel(520,260,170,18);wall(850,180,36);gap(1320,140);ramp(1600,310,5)}
-  else if(pattern===9){ramp(430,310,5,-1);wall(930,150,42);shelf(1270,270,190);wall(1660,190,36)}
-  else if(pattern===10){gap(650,210);wall(1030,175,38);gap(1430,160)}
-  else if(pattern===11){shelf(430,280,230);steel(850,240,160,18);shelf(1190,200,230);wall(1630,160,38)}
-  else if(pattern===12){wall(520,210,34);ramp(800,320,7);wall(1330,155,38);shelf(1650,270,180)}
-  else if(pattern===13){gap(570,135);steel(900,280,200,18);gap(1330,135);shelf(1550,250,180)}
-  else if(pattern===14){shelf(430,300,170);shelf(700,255,170);shelf(970,210,170);shelf(1240,165,170);wall(1610,130,38)}
-  else if(pattern===15){wall(500,160,38);wall(930,210,38);wall(1360,160,38);ramp(1660,310,5)}
-  else if(pattern===16){ramp(420,320,6);gap(1050,180);ramp(1420,320,6)}
-  else if(pattern===17){steel(500,230,130,18);wall(790,170,38);steel(1110,230,130,18);wall(1410,170,38)}
-  else if(pattern===18){gap(600,160);shelf(820,275,180);wall(1190,170,38);shelf(1480,240,180)}
-  else if(pattern===19){wall(520,130,38);shelf(820,290,180);wall(1160,130,38);shelf(1480,250,180)}
-  else if(pattern===20){ramp(420,320,8);steel(1000,245,180,18);wall(1450,175,38)}
-  else if(pattern===21){shelf(420,285,180);gap(760,150);shelf(1030,240,180);gap(1380,150);wall(1650,175,38)}
-  else if(pattern===22){wall(420,145,38);shelf(690,285,170);gap(1040,190);ramp(1370,315,7);wall(1770,165,38)}
-  else if(pattern===23){steel(460,275,145,18);shelf(720,235,180);wall(1080,150,38);gap(1470,155);shelf(1700,265,180)}
-  else if(pattern===24){ramp(430,315,7);wall(900,180,42);wall(1260,125,42);shelf(1580,250,220)}
-  else if(pattern===25){gap(520,120);shelf(740,285,160);gap(1080,220);shelf(1390,255,190);wall(1780,185,36)}
-  else if(pattern===26){shelf(430,295,180);shelf(730,250,180);steel(1050,205,150,18);shelf(1320,160,180);wall(1730,135,38)}
-  else if(pattern===27){wall(470,175,36);ramp(760,320,6,-1);gap(1190,155);wall(1500,150,40);shelf(1800,275,180)}
-  else if(pattern===28){gap(600,185);ramp(900,315,8);steel(1320,235,180,18);wall(1690,165,38)}
-  else {shelf(420,275,180);wall(760,155,38);shelf(1040,230,190);wall(1420,145,38);gap(1770,135)}
+  const sections=3+group+Math.floor(n/7);
+  const startX=360;
+  const usable=width-760;
+  for(let i=0;i<sections;i++){
+   const fraction=(i+1)/(sections+1);
+   const x=Math.round(startX+usable*fraction+(rand()-.5)*105);
+   const variant=(id*7+i*11+Math.floor(rand()*8))%8;
+   if(variant===0){wall(x,145+Math.round(rand()*85),32+Math.round(rand()*12))}
+   else if(variant===1){shelf(x,245-Math.round(rand()*85),145+Math.round(rand()*95))}
+   else if(variant===2){ramp(x,315-Math.round(rand()*25),5+Math.floor(rand()*4),rand()>.5?1:-1)}
+   else if(variant===3){steel(x,235-Math.round(rand()*65),120+Math.round(rand()*75))}
+   else if(variant===4){gap(x,105+Math.round(rand()*75),group>=1&&rand()>.25?"water":"pit")}
+   else if(variant===5){wall(x,180,34);shelf(x+105,270-Math.round(rand()*45),135)}
+   else if(variant===6){shelf(x,285,145);shelf(x+190,225,145);wall(x+390,155,34)}
+   else{gap(x,95+Math.round(rand()*55));ramp(x+145,315,5,1)}
+  }
+  skills.climber=group===0?(n>5?2:0):Math.max(1,4-group);
+  skills.floater=group===0?(n>8?2:1):3+group;
+  skills.bomber=group===0?1:2+group;
+  skills.blocker=group===0?(n>14?1:0):1+group;
+  skills.builder=Math.max(2,9-group*2-Math.floor(n/10));
+  skills.basher=Math.max(1,6-group-Math.floor(n/12));
+  skills.miner=group===0?(n>20?1:0):Math.max(1,4-group);
+  skills.digger=group<2?(n>21?1:0):Math.max(1,3-group);
+  if(group>=2&&n%4===0){
+   const hx=Math.round(width*(.42+rand()*.28));
+   hazards.push({x:hx,y:GROUND-62,w:42+Math.round(rand()*24),h:62,kind:"trap"});
+  }
+  if(group===3&&n%3===0){
+   const hx=Math.round(width*(.3+rand()*.35));
+   hazards.push({x:hx,y:GROUND-62,w:78,h:62,kind:"fire"});
+  }
+  const challenges=[
+   "Find the safe route through staggered platforms",
+   "Use a builder to bridge the wide break",
+   "Keep the group moving past the steel barrier",
+   "Choose the right worker to open a tunnel",
+   "Manage the crowd around the hazard",
+   "Rescue the required number with a limited toolkit",
+   "Cross the split route without losing the parade",
+   "Use height and timing to reach the pavilion"
+  ];
+  objective=challenges[(id*5+n)%challenges.length];
  }
- if(group>=1&&n%3===0){const x=Math.round(width*.52)+worldShift;gap(Math.round(width*.52),125);hazards.push({x,y:GROUND-26,w:125,h:140,kind:"water"})}
- if(group>=2&&n%4===1)hazards.push({x:width*.7+worldShift,y:GROUND-62,w:58,h:62,kind:"trap"});
- if(group===3&&n%5===0)hazards.push({x:width*.42+worldShift,y:GROUND-62,w:95,h:62,kind:"fire"});
- const skills:Record<Skill,number>={climber:3,floater:3,bomber:2,blocker:2,builder:8,basher:5,miner:4,digger:3};
- if(n===0){skills.basher=12;skills.builder=0;skills.miner=0;skills.digger=0;skills.climber=0;skills.floater=0;skills.bomber=0;skills.blocker=0}
- if(n===1){skills.basher=0;skills.climber=18;skills.floater=3;skills.builder=0;skills.miner=0;skills.digger=0;skills.blocker=0;skills.bomber=0}
- if(n===2){skills.builder=5;skills.floater=4;skills.basher=0;skills.miner=0;skills.digger=0;skills.climber=0}
- if(n===3){skills.basher=3;skills.builder=5;skills.miner=3;skills.digger=0}
- if(group>=2){skills.builder=Math.max(2,skills.builder-2);skills.basher=Math.max(1,skills.basher-1)}
- if(group===3){skills.digger=Math.max(1,skills.digger-1);skills.blocker=Math.max(1,skills.blocker-1)}
- const names=["Bao Boulevard","The Wobble Wall","Pudding Gap","The Sticky Passage","Cloud Kitchen","Jellybean Crossing","The Noodle Maze","Mooncake Mountain","Steamed-Up Summit","The Great Bao Escape","Bamboo Bounce","The Sugar Steps","Peachy Passage","The Bao Bridge","Cloudtop Crossing","The Winding Walkway","Pillow Fort","The Matcha Mine","Honeycomb Heights","The Great Drop","Steamer Express","The Split-Level","Lavender Labyrinth","The Golden Gate","Rainbow Run","The Wobbly Workshop","The Secret Staircase","The Waterway","The Castle Courtyard","Homeward Bound"];
- return {id,name:(group===0?"":group===1?"Sugar Rush · ":group===2?"Cloud Kingdom · ":"Midnight Mochi · ")+names[n%names.length],group:GROUPS[group],width,total:group===0?12:group===1?18:group===2?24:30,rescue:group===0?65:group===1?72:group===2?78:84,seconds:300-group*25,rate:24+group*5,hatch:75,exit:width-115,terrain,hazards,skills}
+ terrain.push({x:0,y:GROUND-26,w:150,h:26},{x:width-260,y:GROUND-26,w:260,h:26});
+ const seconds=group===0?300:group===1?285:group===2?270:255;
+ return {id,name:title,group:GROUPS[group],width,total,rescue,seconds,rate:24+group*5+Math.floor(n/8),hatch:75,exit:width-115,terrain,hazards,skills,objective};
 }
 const LEVELS=Array.from({length:120},(_,i)=>makeLevel(i))
 const BAO_COLOURS=["#fff0d9","#ffc9d8","#cce5ae","#c9d6ff","#e3d0ff","#ffd6b7","#ffcf63","#f3a6d0"]
@@ -409,7 +418,7 @@ export default function SquishyLemmings(){
   <div className="sdlem-heading-row"><div><h1>Squishy Dumpling <span>Lemmings</span></h1><p className="sdlem-intro">A proper little puzzle campaign. One tiny job at a time.</p></div><div className="sdlem-sticker">૮ ˶ᵔ ᵕ ᵔ˶ ა<br/><b>BAO!</b></div></div>
   <div className="sdlem-stats"><div><span>OUT</span><strong>{hud.spawned}<small> / {level.total}</small></strong></div><div><span>RESCUED</span><strong>{hud.saved}<small> / {Math.ceil(level.total*level.rescue/100)}</small></strong></div><div><span>ON SCREEN</span><strong>{hud.active}</strong></div><div><span>TIME LEFT</span><strong>{Math.floor(hud.time/60)}:{String(Math.floor(hud.time%60)).padStart(2,"0")}</strong></div></div>
   <div className="sdlem-progress"><span style={{width:hud.percent+"%"}}/></div>
-  <div className="sdlem-game-frame"><div className="sdlem-game-top"><div><span className="sdlem-level-pill">{level.group.toUpperCase()} · LEVEL {String(level.id+1).padStart(3,"0")}</span><h2>{level.name}</h2><p>Rescue {level.rescue}% · {level.total} dumplings · {Math.floor(level.seconds/60)} minutes</p></div><div className="sdlem-top-actions"><button className="sdlem-small-btn" onClick={pause} disabled={!hud.running}>Ⅱ Pause</button><button className="sdlem-small-btn" onClick={()=>reset(levelId)}>↻ Restart</button></div></div>
+  <div className="sdlem-game-frame"><div className="sdlem-game-top"><div><span className="sdlem-level-pill">{level.group.toUpperCase()} · LEVEL {String(level.id+1).padStart(3,"0")}</span><h2>{level.name}</h2><p>Rescue {level.rescue}% · {level.total} dumplings · {Math.floor(level.seconds/60)} minutes</p><p className="sdlem-objective">✦ {level.objective}</p></div><div className="sdlem-top-actions"><button className="sdlem-small-btn" onClick={pause} disabled={!hud.running}>Ⅱ Pause</button><button className="sdlem-small-btn" onClick={()=>reset(levelId)}>↻ Restart</button></div></div>
    <div className="sdlem-canvas-wrap"><canvas ref={canvasRef} width={W} height={H} onPointerDown={clickWorld} aria-label="Scrollable Squishy Dumpling Lemmings level"/></div>
    <div className="sdlem-scroll"><button onClick={()=>scroll(clamp((gameRef.current?.camera||0)-220,0,maxCamera))}>◀</button><input aria-label="Scroll level" type="range" min="0" max={maxCamera} value={Math.min(camera,maxCamera)} onChange={e=>scroll(Number(e.target.value))}/><button onClick={()=>scroll(clamp((gameRef.current?.camera||0)+220,0,maxCamera))}>▶</button><span>{Math.round((camera/maxCamera||0)*100)}%</span></div>
    <div className="sdlem-message">{hud.complete?"🎉 Level complete!":hud.failed?"💗 Not quite — have another go.":hud.paused?"⏸ Parade paused.":hud.running?"Tap any dumpling to queue the selected job; it will trigger when its conditions are met. Tap again to cancel.":"Press release to start the parade. Select a skill first or during play."}</div>
