@@ -300,11 +300,51 @@ export default function SquishyLemmings(){
       // terrain that can actually be mined instead of silently cancelling it.
      }
      if(b.skill==="builder"&&supported){
-      if(b.build<12){const bx=b.x+b.dir*8,by=b.y+BAO_H/2-8;b.x+=b.dir*8;b.y-=8;b.build++;g.terrain.push({x:bx,y:by,w:19,h:9,bridge:true});return}
-      b.skill=undefined;b.build=0
+      if(wall){
+       // A builder cannot lay steps into a solid wall; finish the order and turn.
+       b.skill=undefined;
+       b.build=0;
+       b.dir=(-b.dir) as 1|-1;
+       return;
+      }
+      if(b.build<12){
+       const bx=b.x+b.dir*8,by=b.y+BAO_H/2-8;
+       b.x+=b.dir*8;
+       b.y-=8;
+       b.build++;
+       g.terrain.push({x:bx,y:by,w:19,h:9,bridge:true});
+       return;
+      }
+      b.skill=undefined;
+      b.build=0;
+     }
+     if(wall&&b.skill==="climber"){
+      // Climb the actual face of the obstacle. The old head-clearance test
+      // cancelled the order almost immediately, so workers bounced back.
+      const climbWall=g.terrain.find(t=>
+       frontX>=t.x-4&&frontX<=t.x+t.w+4&&
+       b.y+BAO_H/2>t.y&&b.y-BAO_H/2<t.y+t.h
+      );
+      if(!climbWall||climbWall.steel){
+       b.skill=undefined;
+       b.dir=(-b.dir) as 1|-1;
+       return;
+      }
+      b.vy=0;
+      b.fall=0;
+      b.y-=118*step;
+      if(b.y+BAO_H/2<=climbWall.y+1){
+       // Put the whole dumpling on the far side, standing on the wall top.
+       b.y=climbWall.y-BAO_H/2;
+       b.x=b.dir===1
+        ? climbWall.x+climbWall.w+BAO_W/2+2
+        : climbWall.x-BAO_W/2-2;
+       b.skill=undefined;
+       b.action=0;
+      }
+      return;
      }
      if(wall&&b.skill!=="basher"){
-      if(b.skill==="climber"){b.y-=2;b.x+=b.dir*.5;if(!solidAt(g.terrain,b.x+b.dir*7,b.y-BAO_H/2)){b.y-=5;b.skill=undefined}return}
       b.dir=(b.dir*-1) as 1|-1
      }
      if(supported&&support){if(b.fall>112&&b.skill!=="floater"){b.dead=true;b.splat=1;g.dead++;return}b.y=support.y-BAO_H/2;b.vy=0;b.fall=0}
