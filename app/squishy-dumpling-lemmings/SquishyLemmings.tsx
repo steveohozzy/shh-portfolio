@@ -123,37 +123,96 @@ function makeLevel(id:number):Level {
  * of hazards or terrain decisions before later groups combine them.
  */
 function makeOpeningPuzzle(id:number):Level|null {
- const authored:Record<number,{name:string;objective:string;walls?:number[];gaps?:{x:number;w:number;water?:boolean}[];shelves?:{x:number;y:number;w:number}[];steel?:{x:number;y:number;w:number;h:number}[];hazards?:Hazard[];skills:Partial<Record<Skill,number>>}> = {
-  4:{name:"Cloud Kitchen",objective:"A low wall blocks the route. Bash through, then let the whole group follow.",walls:[520],skills:{basher:2}},
-  5:{name:"Jellybean Crossing",objective:"The first wide break needs a builder. Save enough builders for the second step.",gaps:[{x:620,w:82}],skills:{builder:5,floater:2}},
-  6:{name:"The Noodle Maze",objective:"Two walls split the route. Use a basher on each, but keep the crowd together.",walls:[470,1120],skills:{basher:3,blocker:1}},
-  7:{name:"Mooncake Mountain",objective:"Climb the tall barrier, then use a floater for the long drop beyond it.",walls:[610],skills:{climber:4,floater:3}},
-  8:{name:"Steamed-Up Summit",objective:"A steel ceiling cannot be bashed. Find the lower route and mine beneath the ledge.",steel:[{x:820,y:245,w:150,h:18}],shelves:[{x:790,y:285,w:220}],skills:{miner:3,builder:2}},
-  9:{name:"The Great Bao Escape",objective:"A water channel separates the platforms. Build across it; floaters are your backup.",gaps:[{x:680,w:88,water:true}],skills:{builder:5,floater:4}},
-  10:{name:"Bamboo Bounce",objective:"A trap guards the straight path. Change the route with a digger before the crowd arrives.",hazards:[{x:700,y:323,w:52,h:62,kind:"trap"}],shelves:[{x:880,y:285,w:180}],skills:{digger:2,builder:3}},
-  11:{name:"The Sugar Steps",objective:"A tall wall and a narrow pit demand two different jobs: climb, then build.",walls:[520],gaps:[{x:1110,w:78}],skills:{climber:3,builder:5,floater:2}}
+ const authored:Record<number,{
+  name:string;objective:string;width:number;total?:number;rescue?:number;rate?:number;
+  gaps?:{x:number;w:number;water?:boolean}[];
+  walls?:{x:number;y:number;w:number;h:number}[];
+  platforms?:{x:number;y:number;w:number;h?:number;steel?:boolean}[];
+  hazards?:Hazard[];
+  skills:Partial<Record<Skill,number>>;
+ }> = {
+  // Level 5 — teach bashing, then ask the player to use the opening it creates.
+  4:{name:"Cloud Kitchen",objective:"Open the two sealed kitchen passages. The second wall is narrower, so save a basher for it.",width:2260,walls:[
+   {x:470,y:218,w:48,h:141},{x:1120,y:185,w:42,h:174},
+   {x:1570,y:248,w:48,h:111}
+  ],platforms:[
+   {x:700,y:305,w:150},{x:880,y:270,w:145},{x:1320,y:315,w:130},{x:1810,y:292,w:170}
+  ],skills:{basher:3}},
+  // Level 6 — two separate bridges, with a raised landing between them.
+  5:{name:"Jellybean Crossing",objective:"Two breaks interrupt the parade. Build across each one, using the raised middle shelf as a landing.",width:2380,gaps:[
+   {x:520,w:76},{x:1120,w:84}
+  ],platforms:[
+   {x:760,y:300,w:210},{x:1450,y:292,w:190},{x:1680,y:250,w:145},{x:1900,y:305,w:140}
+  ],skills:{builder:5,floater:2}},
+  // Level 7 — a layered maze. Bash the lower walls; the steel roof is deliberately indestructible.
+  6:{name:"The Noodle Maze",objective:"The lower route is blocked twice. Bash through the soft walls; the steel canopy cannot be destroyed.",width:2420,walls:[
+   {x:440,y:235,w:42,h:124},{x:1010,y:210,w:46,h:149},{x:1740,y:240,w:42,h:119}
+  ],platforms:[
+   {x:610,y:300,w:190},{x:820,y:265,w:170},{x:1190,y:285,w:190},
+   {x:1430,y:250,w:190},{x:1640,y:205,w:135}
+  ],skills:{basher:3,blocker:1}},
+  // Level 8 — climb to the upper gallery, then descend safely to the exit route.
+  7:{name:"Mooncake Mountain",objective:"Climb the tall outer wall to reach the gallery. The far drop is too high to survive without a floater.",width:2320,walls:[
+   {x:560,y:150,w:46,h:209}
+  ],platforms:[
+   {x:606,y:235,w:310},{x:980,y:195,w:230},{x:1260,y:245,w:210},
+   {x:1540,y:285,w:180},{x:1830,y:315,w:170}
+  ],skills:{climber:4,floater:4}},
+  // Level 9 — steel changes the route: it supports the upper crossing but cannot be mined or bashed.
+  8:{name:"Steamed-Up Summit",objective:"The steel shelf is permanent. Use the lower soft-rock passage and the stepped ledges to reach the far side.",width:2460,walls:[
+   {x:650,y:225,w:42,h:134},{x:1470,y:205,w:42,h:154}
+  ],platforms:[
+   {x:820,y:300,w:170},{x:1010,y:270,w:170},{x:1200,y:240,w:180},
+   {x:1580,y:295,w:150},{x:1770,y:260,w:170}
+  ],gaps:[{x:1970,w:72}],skills:{basher:2,builder:3,miner:2,floater:2}},
+  // Level 10 — a water basin with a stepped approach and a second, ordinary pit.
+  9:{name:"The Great Bao Escape",objective:"The blue basin is deadly. Build a continuous crossing, then bridge the smaller dry pit before the pavilion.",width:2500,gaps:[
+   {x:620,w:104,water:true},{x:1510,w:76}
+  ],platforms:[
+   {x:820,y:315,w:170},{x:1030,y:278,w:170},{x:1240,y:315,w:150},
+   {x:1710,y:300,w:180},{x:1940,y:270,w:155}
+  ],skills:{builder:7,floater:3}},
+  // Level 11 — the trap sits in the obvious corridor; the upper ledges provide an alternative route.
+  10:{name:"Bamboo Bounce",objective:"Don't send the parade through the trap. Use the stepped upper route, then bring everyone back down to the main path.",width:2380,hazards:[
+   {x:690,y:323,w:58,h:62,kind:"trap"},{x:1500,y:323,w:58,h:62,kind:"trap"}
+  ],walls:[
+   {x:520,y:205,w:42,h:154},{x:1270,y:220,w:42,h:139}
+  ],platforms:[
+   {x:570,y:285,w:210},{x:800,y:245,w:190},{x:1010,y:285,w:180},
+   {x:1390,y:285,w:190},{x:1610,y:245,w:190},{x:1830,y:285,w:180}
+  ],skills:{climber:2,builder:5,blocker:1,floater:2}},
+  // Level 12 — combine a climb, a bridge and a controlled descent.
+  11:{name:"The Sugar Steps",objective:"Scale the first tower, bridge the broken upper walkway, then float down to the low exit path.",width:2520,walls:[
+   {x:470,y:145,w:48,h:214},{x:1640,y:205,w:44,h:154}
+  ],gaps:[{x:1120,w:88}],platforms:[
+   {x:518,y:250,w:250},{x:820,y:220,w:190},{x:1010,y:250,w:110},
+   {x:1210,y:250,w:200},{x:1450,y:285,w:150},{x:1730,y:295,w:180},{x:1950,y:320,w:150}
+  ],skills:{climber:3,builder:5,floater:4,basher:1}}
  };
  const spec=authored[id];
  if(!spec)return null;
- const width=2520+(id%3)*120;
  const floorY=GROUND-26;
  const terrain:Terrain[]=[];
  const hazards:Hazard[]=(spec.hazards||[]).map(h=>({...h}));
- const gaps=spec.gaps||[];
+ const gaps=(spec.gaps||[]).slice().sort((a,b)=>a.x-b.x);
  let cursor=0;
- gaps.slice().sort((a,b)=>a.x-b.x).forEach(g=>{
+ gaps.forEach(g=>{
   if(g.x>cursor)terrain.push({x:cursor,y:floorY,w:g.x-cursor,h:140});
   if(g.water)hazards.push({x:g.x,y:floorY,w:g.w,h:140,kind:"water"});
   cursor=g.x+g.w;
  });
- if(cursor<width)terrain.push({x:cursor,y:floorY,w:width-cursor,h:140});
- (spec.walls||[]).forEach(x=>terrain.push({x,y:205,w:38,h:floorY-205}));
- (spec.shelves||[]).forEach(s=>terrain.push({x:s.x,y:s.y,w:s.w,h:15}));
- (spec.steel||[]).forEach(s=>terrain.push({...s,steel:true}));
- terrain.push({x:0,y:floorY,w:150,h:26},{x:width-260,y:floorY,w:260,h:26});
+ if(cursor<spec.width)terrain.push({x:cursor,y:floorY,w:spec.width-cursor,h:140});
+ (spec.walls||[]).forEach(w=>terrain.push({...w}));
+ (spec.platforms||[]).forEach(p=>terrain.push({x:p.x,y:p.y,w:p.w,h:p.h||15,steel:p.steel}));
+ // Keep the hatch and rescue pavilion on dependable ground.
+ terrain.push({x:0,y:floorY,w:150,h:26},{x:spec.width-260,y:floorY,w:260,h:26});
  const skills:Record<Skill,number>={climber:0,floater:0,bomber:0,blocker:0,builder:0,basher:0,miner:0,digger:0};
  Object.keys(spec.skills).forEach(key=>{skills[key as Skill]=spec.skills[key as Skill]||0});
- return {id,name:spec.name,group:GROUPS[0],width,total:12,rescue:65,seconds:300,rate:24+Math.floor(id/4),hatch:75,exit:width-115,terrain,hazards,skills,objective:spec.objective};
+ return {
+  id,name:spec.name,group:GROUPS[0],width:spec.width,total:spec.total||12,
+  rescue:spec.rescue||65,seconds:300,rate:spec.rate||24,hatch:75,
+  exit:spec.width-115,terrain,hazards,skills,objective:spec.objective
+ };
 }
 const LEVELS=Array.from({length:120},(_,i)=>makeOpeningPuzzle(i)||makeLevel(i))
 const BAO_COLOURS=["#fff0d9","#ffc9d8","#cce5ae","#c9d6ff","#e3d0ff","#ffd6b7","#ffcf63","#f3a6d0"]
