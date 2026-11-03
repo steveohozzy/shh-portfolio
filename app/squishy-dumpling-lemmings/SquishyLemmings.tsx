@@ -63,10 +63,10 @@ function makeLevel(id:number):Level {
  const total=group===0?12:group===1?18:group===2?24:30;
  const rescue=[65,72,78,84][group];
  let objective="Guide the parade safely to the pavilion";
- if(id===0){wall(510,205,38);skills.basher=12;objective="Learn to bash through a soft wall"}
- else if(id===1){wall(620,255,42);skills.climber=12;skills.floater=2;objective="Climb the tall wall and reach the exit"}
- else if(id===2){gap(720,85);shelf(980,285,190);skills.builder=5;skills.floater=4;objective="Build a staircase across the first chasm"}
- else if(id===3){wall(540,195,34);gap(1050,85);wall(1510,175,36);skills.basher=3;skills.builder=5;skills.miner=3;objective="Combine tunnelling and building to cross the split path"}
+ if(id===0){wall(510,205,38);skills.basher=1;objective="Assign one basher to open the wall; the rest of the parade can follow through the tunnel"}
+ else if(id===1){wall(620,255,42);skills.climber=12;objective="Give the parade the permanent climber trait so everyone can scale the wall"}
+ else if(id===2){gap(720,85);shelf(980,285,190);skills.builder=1;objective="Assign one builder at the edge to make a staircase across the chasm"}
+ else if(id===3){wall(540,195,34);gap(1050,85);wall(1510,175,36);skills.basher=2;skills.builder=1;objective="Bash the first wall, build across the break, then bash the final wall. Completed actions can be reassigned."}
  else {
   const sections=3+group+Math.floor(n/7);
   const startX=360;
@@ -143,14 +143,14 @@ function makeOpeningPuzzle(id:number):Level|null {
    {x:520,w:76},{x:1120,w:84}
   ],platforms:[
    {x:760,y:300,w:210},{x:1450,y:292,w:190},{x:1680,y:250,w:145},{x:1900,y:305,w:140}
-  ],skills:{builder:5,floater:2}},
+  ],skills:{builder:2}},
   // Level 7 — a layered maze. Bash the lower walls; the steel roof is deliberately indestructible.
   6:{name:"The Noodle Maze",objective:"The lower route is blocked twice. Bash through the soft walls; the steel canopy cannot be destroyed.",width:2420,walls:[
    {x:440,y:235,w:42,h:124},{x:1010,y:210,w:46,h:149},{x:1740,y:240,w:42,h:119}
   ],platforms:[
    {x:610,y:300,w:190},{x:820,y:265,w:170},{x:1190,y:285,w:190},
    {x:1430,y:250,w:190},{x:1640,y:205,w:135}
-  ],skills:{basher:3,blocker:1}},
+  ],skills:{basher:3}},
   // Level 8 — climb to the upper gallery, then descend safely to the exit route.
   7:{name:"Mooncake Mountain",objective:"Climb the tall outer wall to reach the gallery. The far drop is too high to survive without a floater.",width:2320,walls:[
    {x:560,y:150,w:46,h:209}
@@ -164,14 +164,14 @@ function makeOpeningPuzzle(id:number):Level|null {
   ],platforms:[
    {x:820,y:300,w:170},{x:1010,y:270,w:170},{x:1200,y:240,w:180},
    {x:1580,y:295,w:150},{x:1770,y:260,w:170}
-  ],gaps:[{x:1970,w:72}],skills:{basher:2,builder:3,miner:2,floater:2}},
+  ],gaps:[{x:1970,w:72}],skills:{basher:2,builder:1}},
   // Level 10 — a water basin with a stepped approach and a second, ordinary pit.
   9:{name:"The Great Bao Escape",objective:"The blue basin is deadly. Build a continuous crossing, then bridge the smaller dry pit before the pavilion.",width:2500,gaps:[
    {x:620,w:88,water:true},{x:1510,w:76}
   ],platforms:[
    {x:820,y:315,w:170},{x:1030,y:278,w:170},{x:1240,y:315,w:150},
    {x:1710,y:300,w:180},{x:1940,y:270,w:155}
-  ],skills:{builder:7,floater:3}},
+  ],skills:{builder:2}},
   // Level 11 — the trap sits in the obvious corridor; the upper ledges provide an alternative route.
   10:{name:"Bamboo Bounce",objective:"Two bashers must open the bamboo gates. Assign a builder before each red trap to raise a staircase the parade can follow. Keep each skill for the obstacle it is meant to solve.",width:2380,hazards:[
    {x:690,y:323,w:58,h:62,kind:"trap"},{x:1500,y:323,w:58,h:62,kind:"trap"}
@@ -184,7 +184,7 @@ function makeOpeningPuzzle(id:number):Level|null {
   ],gaps:[{x:1120,w:88}],platforms:[
    {x:518,y:250,w:250},{x:820,y:220,w:190},{x:1010,y:250,w:110},
    {x:1210,y:250,w:200},{x:1450,y:285,w:150},{x:1730,y:295,w:180},{x:1950,y:320,w:150}
-  ],skills:{climber:12,builder:5,floater:4,basher:1}}
+  ],skills:{climber:12,builder:1}}
  };
  const spec=authored[id];
  if(!spec)return null;
