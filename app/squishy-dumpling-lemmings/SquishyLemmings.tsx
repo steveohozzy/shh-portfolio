@@ -180,7 +180,7 @@ function makeOpeningPuzzle(id:number):Level|null {
   ],platforms:[
    {x:570,y:285,w:210},{x:800,y:245,w:190},{x:1010,y:285,w:180},
    {x:1390,y:285,w:190},{x:1610,y:245,w:190},{x:1830,y:285,w:180}
-  ],skills:{climber:10,builder:2,floater:2}},
+  ],skills:{climber:12}},
   // Level 12 — combine a climb, a bridge and a controlled descent.
   11:{name:"The Sugar Steps",objective:"Scale the first tower, bridge the broken upper walkway, then float down to the low exit path.",width:2520,walls:[
    {x:470,y:145,w:48,h:214},{x:1640,y:205,w:44,h:154}
@@ -214,7 +214,18 @@ function makeOpeningPuzzle(id:number):Level|null {
   exit:spec.width-115,terrain,hazards,skills,objective:spec.objective
  };
 }
-const LEVELS=Array.from({length:120},(_,i)=>makeOpeningPuzzle(i)||makeLevel(i))
+// Every campaign stage gets a dependable traversal toolkit. Climbing is
+// permanent, so every dumpling may need its own climber assignment; builders
+// are reusable once their staircase is complete. Keep the authored skill
+// choices, but never let a compulsory wall or gap be impossible through lack
+// of the relevant skill tokens.
+function ensureCampaignSkills(level:Level):Level {
+ const skills={...level.skills};
+ skills.climber=Math.max(skills.climber,level.total);
+ skills.builder=Math.max(skills.builder,2);
+ return {...level,skills};
+}
+const LEVELS=Array.from({length:120},(_,i)=>ensureCampaignSkills(makeOpeningPuzzle(i)||makeLevel(i)))
 const BAO_COLOURS=["#fff0d9","#ffc9d8","#cce5ae","#c9d6ff","#e3d0ff","#ffd6b7","#ffcf63","#f3a6d0"]
 const clamp=(v:number,min:number,max:number)=>Math.max(min,Math.min(max,v))
 const floorAt=(terrain:Terrain[],x:number,y:number)=>terrain.filter(t=>x>=t.x-2&&x<=t.x+t.w+2&&y<=t.y+34&&y>=t.y-32).sort((a,b)=>a.y-b.y)[0]
