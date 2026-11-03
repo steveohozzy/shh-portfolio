@@ -387,11 +387,18 @@ export default function SquishyLemmings(){
    if(bao.floater)return
    bao.floater=true
   }else{
-   // Action skills occupy the worker only while the action is active.
-   // Blockers remain fixed; completed builders/bashers/miners/diggers
-   // clear their task in the simulation and can receive another order.
-   if(bao.skill)return
-   bao.skill=g.selected
+   // A blocker can be released by assigning a bomber, as in classic Lemmings.
+   if(bao.skill==="blocker"&&g.selected==="bomber"){
+    bao.skill="bomber"
+    bao.action=0
+    bao.bomber=2.5
+   }else{
+    // Action skills occupy the worker only while the action is active.
+    // Completed builders/bashers/miners/diggers clear their task and can
+    // receive another order; a blocker stays fixed until bombed.
+    if(bao.skill)return
+    bao.skill=g.selected
+   }
   }
   g.skills[g.selected]--
   if(g.selected==="bomber")bao.bomber=2.5
