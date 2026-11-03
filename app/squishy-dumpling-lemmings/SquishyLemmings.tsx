@@ -7,7 +7,7 @@ type Skill = "climber" | "floater" | "bomber" | "blocker" | "builder" | "basher"
 type Terrain = { x:number; y:number; w:number; h:number; steel?:boolean; bridge?:boolean }
 type Hazard = { x:number; y:number; w:number; h:number; kind:"water"|"fire"|"trap" }
 type Level = { id:number; name:string; group:string; width:number; total:number; rescue:number; seconds:number; rate:number; hatch:number; exit:number; terrain:Terrain[]; hazards:Hazard[]; skills:Record<Skill,number>; objective:string }
-type Bao = { id:number; variant:number; x:number; y:number; dir:1|-1; vy:number; fall:number; skill?:Skill; action:number; saved:boolean; dead:boolean; bomber:number; build:number; frame:number; splat?:number }
+type Bao = { id:number; variant:number; x:number; y:number; dir:1|-1; vy:number; fall:number; skill?:Skill; action:number; saved:boolean; dead:boolean; bomber:number; build:number; frame:number; splat?:number; climbTop?:number; climbExitX?:number }
 type Game = { baos:Bao[]; terrain:Terrain[]; spawned:number; saved:number; dead:number; clock:number; spawnClock:number; camera:number; running:boolean; paused:boolean; complete:boolean; failed:boolean; rate:number; speed:number; selected:Skill; skills:Record<Skill,number>; nextId:number }
 
 const SKILLS: {id:Skill; label:string; icon:string; tip:string}[] = [
@@ -253,6 +253,47 @@ export default function SquishyLemmings(){
      const blocker=g.baos.find(o=>o!==b&&!o.dead&&!o.saved&&o.skill==="blocker"&&o.action===1&&Math.abs(o.x-b.x)<18&&Math.abs(o.y-b.y)<24)
      if(b.skill==="blocker"&&supported){b.y=support!.y-BAO_H/2;b.vy=0;b.fall=0;b.action=1;return}
      if(blocker){b.dir=(b.x<blocker.x?-1:1);b.x+=b.dir*1.2;return}
+     // Once a climber starts scaling a wall, keep climbing even after its
+     // head rises above the wall's collision area. Finish on the far side.
+     if(b.skill==="climber"&&b.climbTop!==undefined&&b.climbExitX!==undefined){
+      b.vy=0;
+      b.fall=0;
+      b.y-=118*step;
+      if(b.y+BAO_H/2<=b.climbTop+1){
+       b.y=b.climbTop-BAO_H/2;
+       b.x=b.climbExitX;
+       b.skill=undefined;
+       b.climbTop=undefined;
+       b.climbExitX=undefined;
+      }
+      return;
+     }
+     if(wall&&b.skill==="climber"){
+      const climbWall=g.terrain.find(t=>
+       frontX>=t.x-4&&frontX<=t.x+t.w+4&&
+       b.y+BAO_H/2>t.y&&b.y-BAO_H/2<t.y+t.h
+      );
+      if(!climbWall||climbWall.steel){
+       b.skill=undefined;
+       b.dir=(-b.dir) as 1|-1;
+       return;
+      }
+      b.climbTop=climbWall.y;
+      b.climbExitX=b.dir===1
+       ? climbWall.x+climbWall.w+BAO_W/2+2
+       : climbWall.x-BAO_W/2-2;
+      b.vy=0;
+      b.fall=0;
+      b.y-=118*step;
+      if(b.y+BAO_H/2<=b.climbTop+1){
+       b.y=b.climbTop-BAO_H/2;
+       b.x=b.climbExitX;
+       b.skill=undefined;
+       b.climbTop=undefined;
+       b.climbExitX=undefined;
+      }
+      return;
+     }
      if(b.skill==="digger"&&supported&&support){
       if(!support.steel){carveTerrain(g.terrain,b.x-12,foot-2,24,30);b.y+=4;b.vy=0;return}
       b.skill=undefined;
@@ -318,32 +359,6 @@ export default function SquishyLemmings(){
       b.skill=undefined;
       b.build=0;
      }
-     if(wall&&b.skill==="climber"){
-      // Climb the actual face of the obstacle. The old head-clearance test
-      // cancelled the order almost immediately, so workers bounced back.
-      const climbWall=g.terrain.find(t=>
-       frontX>=t.x-4&&frontX<=t.x+t.w+4&&
-       b.y+BAO_H/2>t.y&&b.y-BAO_H/2<t.y+t.h
-      );
-      if(!climbWall||climbWall.steel){
-       b.skill=undefined;
-       b.dir=(-b.dir) as 1|-1;
-       return;
-      }
-      b.vy=0;
-      b.fall=0;
-      b.y-=118*step;
-      if(b.y+BAO_H/2<=climbWall.y+1){
-       // Put the whole dumpling on the far side, standing on the wall top.
-       b.y=climbWall.y-BAO_H/2;
-       b.x=b.dir===1
-        ? climbWall.x+climbWall.w+BAO_W/2+2
-        : climbWall.x-BAO_W/2-2;
-       b.skill=undefined;
-       b.action=0;
-      }
-      return;
-     }
      if(wall&&b.skill!=="basher"){
       b.dir=(b.dir*-1) as 1|-1
      }
@@ -355,7 +370,9 @@ export default function SquishyLemmings(){
       if(b.y>H+20){b.dead=true;b.splat=1;g.dead++;return}
      }
      if(b.y>GROUND+60){b.dead=true;b.splat=1;g.dead++;return}
-     if(!wall&&supported)b.x+=b.dir*(b.skill==="builder"?1.4:31)*step
+     // Walk horizontally while grounded or airborne. Stopping x movement
+     // during a fall made every gap behave like an invisible safety net.
+     if(!wall)b.x+=b.dir*31*step
      if(b.x>=l.exit-18&&b.x<=l.exit+45&&b.y>GROUND-80){b.saved=true;g.saved++}
      if(b.x<5){b.x=5;b.dir=1}
     })
