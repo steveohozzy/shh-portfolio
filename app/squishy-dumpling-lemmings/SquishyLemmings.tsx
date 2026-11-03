@@ -116,7 +116,46 @@ function makeLevel(id:number):Level {
  const seconds=group===0?300:group===1?285:group===2?270:255;
  return {id,name:title,group:GROUPS[group],width,total,rescue,seconds,rate:24+group*5+Math.floor(n/8),hatch:75,exit:width-115,terrain,hazards,skills,objective};
 }
-const LEVELS=Array.from({length:120},(_,i)=>makeLevel(i))
+
+/**
+ * The opening campaign is authored rather than randomly assembled.
+ * Keep these layouts deliberately readable: each introduces a small number
+ * of hazards or terrain decisions before later groups combine them.
+ */
+function makeOpeningPuzzle(id:number):Level|null {
+ const authored:Record<number,{name:string;objective:string;walls?:number[];gaps?:{x:number;w:number;water?:boolean}[];shelves?:{x:number;y:number;w:number}[];steel?:{x:number;y:number;w:number;h:number}[];hazards?:Hazard[];skills:Partial<Record<Skill,number>>}> = {
+  4:{name:"Cloud Kitchen",objective:"A low wall blocks the route. Bash through, then let the whole group follow.",walls:[520],skills:{basher:2}},
+  5:{name:"Jellybean Crossing",objective:"The first wide break needs a builder. Save enough builders for the second step.",gaps:[{x:620,w:82}],skills:{builder:5,floater:2}},
+  6:{name:"The Noodle Maze",objective:"Two walls split the route. Use a basher on each, but keep the crowd together.",walls:[470,1120],skills:{basher:3,blocker:1}},
+  7:{name:"Mooncake Mountain",objective:"Climb the tall barrier, then use a floater for the long drop beyond it.",walls:[610],skills:{climber:4,floater:3}},
+  8:{name:"Steamed-Up Summit",objective:"A steel ceiling cannot be bashed. Find the lower route and mine beneath the ledge.",steel:[{x:820,y:245,w:150,h:18}],shelves:[{x:790,y:285,w:220}],skills:{miner:3,builder:2}},
+  9:{name:"The Great Bao Escape",objective:"A water channel separates the platforms. Build across it; floaters are your backup.",gaps:[{x:680,w:88,water:true}],skills:{builder:5,floater:4}},
+  10:{name:"Bamboo Bounce",objective:"A trap guards the straight path. Change the route with a digger before the crowd arrives.",hazards:[{x:700,y:323,w:52,h:62,kind:"trap"}],shelves:[{x:880,y:285,w:180}],skills:{digger:2,builder:3}},
+  11:{name:"The Sugar Steps",objective:"A tall wall and a narrow pit demand two different jobs: climb, then build.",walls:[520],gaps:[{x:1110,w:78}],skills:{climber:3,builder:5,floater:2}}
+ };
+ const spec=authored[id];
+ if(!spec)return null;
+ const width=2520+(id%3)*120;
+ const floorY=GROUND-26;
+ const terrain:Terrain[]=[];
+ const hazards:Hazard[]=(spec.hazards||[]).map(h=>({...h}));
+ const gaps=spec.gaps||[];
+ let cursor=0;
+ gaps.slice().sort((a,b)=>a.x-b.x).forEach(g=>{
+  if(g.x>cursor)terrain.push({x:cursor,y:floorY,w:g.x-cursor,h:140});
+  if(g.water)hazards.push({x:g.x,y:floorY,w:g.w,h:140,kind:"water"});
+  cursor=g.x+g.w;
+ });
+ if(cursor<width)terrain.push({x:cursor,y:floorY,w:width-cursor,h:140});
+ (spec.walls||[]).forEach(x=>terrain.push({x,y:205,w:38,h:floorY-205}));
+ (spec.shelves||[]).forEach(s=>terrain.push({x:s.x,y:s.y,w:s.w,h:15}));
+ (spec.steel||[]).forEach(s=>terrain.push({...s,steel:true}));
+ terrain.push({x:0,y:floorY,w:150,h:26},{x:width-260,y:floorY,w:260,h:26});
+ const skills:Record<Skill,number>={climber:0,floater:0,bomber:0,blocker:0,builder:0,basher:0,miner:0,digger:0};
+ Object.keys(spec.skills).forEach(key=>{skills[key as Skill]=spec.skills[key as Skill]||0});
+ return {id,name:spec.name,group:GROUPS[0],width,total:12,rescue:65,seconds:300,rate:24+Math.floor(id/4),hatch:75,exit:width-115,terrain,hazards,skills,objective:spec.objective};
+}
+const LEVELS=Array.from({length:120},(_,i)=>makeOpeningPuzzle(i)||makeLevel(i))
 const BAO_COLOURS=["#fff0d9","#ffc9d8","#cce5ae","#c9d6ff","#e3d0ff","#ffd6b7","#ffcf63","#f3a6d0"]
 const clamp=(v:number,min:number,max:number)=>Math.max(min,Math.min(max,v))
 const floorAt=(terrain:Terrain[],x:number,y:number)=>terrain.filter(t=>x>=t.x-2&&x<=t.x+t.w+2&&y<=t.y+34&&y>=t.y-32).sort((a,b)=>a.y-b.y)[0]
