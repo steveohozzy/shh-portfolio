@@ -7,7 +7,7 @@ type Skill = "climber" | "floater" | "bomber" | "blocker" | "builder" | "basher"
 type Terrain = { x:number; y:number; w:number; h:number; steel?:boolean; bridge?:boolean }
 type Hazard = { x:number; y:number; w:number; h:number; kind:"water"|"fire"|"trap" }
 type Level = { id:number; name:string; group:string; width:number; total:number; rescue:number; seconds:number; rate:number; hatch:number; exit:number; terrain:Terrain[]; hazards:Hazard[]; skills:Record<Skill,number>; objective:string }
-type Bao = { id:number; variant:number; x:number; y:number; dir:1|-1; vy:number; fall:number; skill?:Skill; action:number; saved:boolean; dead:boolean; bomber:number; build:number; frame:number; splat?:number; climbTop?:number; climbExitX?:number }
+type Bao = { id:number; variant:number; x:number; y:number; dir:1|-1; vy:number; fall:number; skill?:Skill; assigned:boolean; action:number; saved:boolean; dead:boolean; bomber:number; build:number; frame:number; splat?:number; climbTop?:number; climbExitX?:number }
 type Game = { baos:Bao[]; terrain:Terrain[]; spawned:number; saved:number; dead:number; clock:number; spawnClock:number; camera:number; cameraFollow:boolean; running:boolean; paused:boolean; complete:boolean; failed:boolean; rate:number; speed:number; selected:Skill; skills:Record<Skill,number>; nextId:number }
 
 const SKILLS: {id:Skill; label:string; icon:string; tip:string}[] = [
@@ -294,10 +294,11 @@ export default function SquishyLemmings(){
   // Wider hit area makes tapping individual workers easier on phones.
   if(!bao||Math.abs(bao.x-px)>48||Math.abs(bao.y-py)>52)return
   // Skill assignments are permanent once made, as in classic Lemmings.
-  if(bao.skill)return
+  if(bao.assigned)return
 
   if(g.skills[g.selected]<=0)return
   bao.skill=g.selected
+  bao.assigned=true
   g.skills[g.selected]--
   if(g.selected==="bomber")bao.bomber=2.5
  }
@@ -339,7 +340,7 @@ export default function SquishyLemmings(){
     g.spawnClock+=step*(g.rate/60)
     if(g.spawned<l.total&&g.spawnClock>=1){
      g.spawnClock-=1
-     g.baos.push({id:g.nextId++,variant:g.nextId%8,x:l.hatch+26,y:GROUND-52,dir:1,vy:0,fall:0,action:0,saved:false,dead:false,bomber:0,build:0,frame:0})
+     g.baos.push({id:g.nextId++,variant:g.nextId%8,x:l.hatch+26,y:GROUND-52,dir:1,vy:0,fall:0,assigned:false,action:0,saved:false,dead:false,bomber:0,build:0,frame:0})
      g.spawned++
     }
     g.baos.forEach(b=>{
