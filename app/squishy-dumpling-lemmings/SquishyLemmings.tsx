@@ -250,7 +250,7 @@ export default function SquishyLemmings(){
      if(b.bomber>0){b.bomber-=step;if(b.bomber<=0){carveTerrain(g.terrain,b.x-38,b.y-34,76,68);b.dead=true;b.splat=1;g.dead++;return}}
      if(bomberSkillHazard(b,l.hazards)){b.dead=true;b.splat=1;g.dead++;return}
      const foot=b.y+BAO_H/2
-     const support=floorAt(g.terrain,b.x+b.dir*3,foot)
+     const support=floorAt(g.terrain,b.x,foot)
      const supported=!!support
      const frontX=b.x+b.dir*(BAO_W/2+2)
      const wall=solidAt(g.terrain,frontX,b.y-4)||solidAt(g.terrain,frontX,b.y+4)
@@ -368,7 +368,12 @@ export default function SquishyLemmings(){
      }
      if(supported&&support){if(b.fall>112&&b.skill!=="floater"){b.dead=true;b.splat=1;g.dead++;return}b.y=support.y-BAO_H/2;b.vy=0;b.fall=0}
      else{
-      b.vy+=b.skill==="floater"?180:620
+      if(b.skill==="floater"){
+       // The umbrella actively limits descent speed, even if assigned mid-fall.
+       b.vy=Math.min(b.vy+180*step,75);
+      }else{
+       b.vy+=620*step;
+      }
       b.y+=b.vy*step
       b.fall+=b.vy*step
       if(b.y>H+20){b.dead=true;b.splat=1;g.dead++;return}
