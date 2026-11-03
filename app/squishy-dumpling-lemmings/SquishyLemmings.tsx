@@ -174,7 +174,7 @@ export default function SquishyLemmings(){
  const start=()=>{const g=gameRef.current;if(!g)return;if(g.complete||g.failed)reset(levelId);const next=gameRef.current;if(next){next.running=true;next.paused=false}}
  const pause=()=>{const g=gameRef.current;if(g){g.paused=!g.paused;setHud(h=>({...h,paused:g.paused}))}}
  const assign=(skill:Skill)=>{const g=gameRef.current;if(!g)return;g.selected=skill;setSelected(skill)}
- const setRate=(delta:number)=>{const g=gameRef.current;if(g)g.rate=clamp(g.rate+delta,1,99)}
+ const setRate=(delta:number)=>{const g=gameRef.current;if(g)g.rate=clamp(g.rate+delta,levelRef.current.rate,99)}
  const changeSpeed=(v:number)=>{setSpeed(v);const g=gameRef.current;if(g)g.speed=v}
  const nuke=()=>{const g=gameRef.current;if(!g||!g.running)return;g.baos.forEach(b=>{if(!b.saved&&!b.dead&&b.skill!=="blocker"){b.skill="bomber";b.bomber=5}})}
  const selectLevel=(id:number)=>{if(id<=unlockedThrough)reset(id)}
@@ -198,16 +198,9 @@ export default function SquishyLemmings(){
   const bao=g.baos.filter(b=>!b.saved&&!b.dead).sort((a,b)=>Math.abs(a.x-px)+Math.abs(a.y-py)-Math.abs(b.x-px)-Math.abs(b.y-py))[0]
   // Wider hit area makes tapping individual workers easier on phones.
   if(!bao||Math.abs(bao.x-px)>48||Math.abs(bao.y-py)>52)return
-  // A second click toggles the worker's current job off and restores its skill token.
-  if(bao.skill){
-   const oldSkill=bao.skill
-   bao.skill=undefined
-   if(oldSkill!=="bomber"||bao.bomber<=0)g.skills[oldSkill]=Math.min(levelRef.current.skills[oldSkill],g.skills[oldSkill]+1)
-   bao.bomber=0
-   bao.action=0
-   bao.build=0
-   return
-  }
+  // Skill assignments are permanent once made, as in classic Lemmings.
+  if(bao.skill)return
+
   if(g.skills[g.selected]<=0)return
   bao.skill=g.selected
   g.skills[g.selected]--
@@ -283,7 +276,6 @@ export default function SquishyLemmings(){
       if(b.y+BAO_H/2<=b.climbTop+1){
        b.y=b.climbTop-BAO_H/2;
        b.x=b.climbExitX;
-       b.skill=undefined;
        b.climbTop=undefined;
        b.climbExitX=undefined;
       }
@@ -315,51 +307,41 @@ export default function SquishyLemmings(){
       }
       return;
      }
-     if(b.skill==="digger"&&supported&&support){
-      if(!support.steel){carveTerrain(g.terrain,b.x-12,foot-2,24,30);b.y+=4;b.vy=0;return}
-      b.skill=undefined;
+     // Diggers stop when they break through the floor; they then fall normally.
+     if(b.skill==="digger"){
+      if(supported&&support&&!support.steel){
+       b.action=4;
+       carveTerrain(g.terrain,b.x-12,foot-2,24,30);
+       b.y+=4;b.vy=0;b.fall=0;
+       return;
+      }
+      if(supported&&support&&support.steel){b.skill=undefined;b.action=0}
+      else if(b.action===4){b.skill=undefined;b.action=0}
      }
      if(b.skill==="basher"){
-      // Steel is indestructible: a basher stops and turns instead of walking
-      // through an obstacle it cannot carve.
-      const cutX=b.x+b.dir*(BAO_W/2+8), cutY=b.y-5;
+      const cutX=b.x+b.dir*(BAO_W/2+8),cutY=b.y-5;
       const steelBlocked=g.terrain.some(t=>t.steel&&cutX>=t.x&&cutX<=t.x+t.w&&cutY+14>=t.y&&cutY<=t.y+t.h);
-      if(steelBlocked){b.skill=undefined;b.dir=(-b.dir) as 1|-1;return}
-      // Keep punching in the chosen direction until the whole body clears.
-      const bashBlocked=solidAt(g.terrain,cutX,cutY)||solidAt(g.terrain,cutX,cutY+14);
-      const bodyStillInWall=g.terrain.some(t=>
-       !t.steel&&b.y+12>t.y&&b.y-18<t.y+t.h&&
-       b.x+BAO_W/2>t.x&&b.x-BAO_W/2<t.x+t.w
-      );
-      if(bashBlocked){
-       const carveX=b.dir===1?cutX-24:cutX-6;
-       carveTerrain(g.terrain,carveX,cutY-12,32,34);
-       b.x+=b.dir*2.8;
-       return;
-      }
-      if(bodyStillInWall){
-       b.x+=b.dir*2.8;
-       return;
-      }
-      // Keep the basher assignment queued while walking. It only starts
-      // punching when the worker reaches destructible terrain.
-      if(wall){
-       const carveX=b.dir===1?cutX-24:cutX-6;
-       carveTerrain(g.terrain,carveX,cutY-12,32,34);
-       b.x+=b.dir*2.8;
-       return;
+      if(steelBlocked){b.skill=undefined;b.action=0;b.dir=(-b.dir) as 1|-1;return}
+      const materialAhead=g.terrain.some(t=>!t.steel&&cutX>=t.x-2&&cutX<=t.x+t.w+2&&cutY+14>=t.y&&cutY<=t.y+t.h);
+      const bodyStillInWall=g.terrain.some(t=>!t.steel&&b.y+12>t.y&&b.y-18<t.y+t.h&&b.x+BAO_W/2>t.x&&b.x-BAO_W/2<t.x+t.w);
+      if(b.action===2&&!materialAhead&&!bodyStillInWall){b.skill=undefined;b.action=0}
+      else if(materialAhead){b.action=2;carveTerrain(g.terrain,b.dir===1?cutX-24:cutX-6,cutY-12,32,34);b.x+=b.dir*2.8;return}
+      else if(b.action===2&&bodyStillInWall){b.x+=b.dir*2.8;return}
+      else if(b.action!==2){
+       if(wall){b.action=2;carveTerrain(g.terrain,b.dir===1?cutX-24:cutX-6,cutY-12,32,34);b.x+=b.dir*2.8;return}
+       b.skill=undefined;
       }
      }
      if(b.skill==="miner"){
-      const cutX=b.x+b.dir*13, cutY=foot+9;
+      const cutX=b.x+b.dir*13,cutY=foot+9;
       const steelBlocked=g.terrain.some(t=>t.steel&&cutX>=t.x&&cutX<=t.x+t.w&&cutY>=t.y&&cutY<=t.y+t.h);
-      if(steelBlocked){b.skill=undefined;return}
-      if(solidAt(g.terrain,cutX,cutY)){
-       carveTerrain(g.terrain,Math.min(cutX,cutX- b.dir*22),cutY-8,30,23);
+      if(steelBlocked){b.skill=undefined;b.action=0}
+      else if(solidAt(g.terrain,cutX,cutY)){
+       b.action=3;
+       carveTerrain(g.terrain,Math.min(cutX,cutX-b.dir*22),cutY-8,30,23);
        b.x+=b.dir*2.1;b.y+=2.1;b.vy=0;return;
-      }
-      // Mining is a queued order too: retain it until the worker reaches
-      // terrain that can actually be mined instead of silently cancelling it.
+      }else if(b.action===3){b.skill=undefined;b.action=0}
+      else{b.skill=undefined}
      }
      if(b.skill==="builder"&&supported){
       if(wall){
