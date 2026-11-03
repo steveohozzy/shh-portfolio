@@ -293,7 +293,7 @@ export default function SquishyLemmings(){
   const bao=g.baos.filter(b=>!b.saved&&!b.dead).sort((a,b)=>Math.abs(a.x-px)+Math.abs(a.y-py)-Math.abs(b.x-px)-Math.abs(b.y-py))[0]
   // Wider hit area makes tapping individual workers easier on phones.
   if(!bao||Math.abs(bao.x-px)>48||Math.abs(bao.y-py)>52)return
-  // Skill assignments are permanent once made, as in classic Lemmings.
+  // Permanent traits and temporary actions follow classic Lemmings rules.
   if(g.skills[g.selected]<=0)return
   // Climber and Floater are permanent traits in classic Lemmings. They do
   // not replace a worker's active task, so that worker can still build/bash.
@@ -573,8 +573,7 @@ export default function SquishyLemmings(){
     ctx.fillStyle="#72555b30";ctx.beginPath();ctx.ellipse(0,BAO_H/2+2,16,4,0,0,Math.PI*2);ctx.fill()
     if(baoSprites[b.variant])ctx.drawImage(baoSprites[b.variant],-24,-24,48,48);
     else {ctx.fillStyle="#fff0d8";ctx.beginPath();ctx.ellipse(0,0,19,17,0,0,Math.PI*2);ctx.fill();ctx.fillStyle="#493640";ctx.beginPath();ctx.arc(-5,-2,2,0,Math.PI*2);ctx.arc(5,-2,2,0,Math.PI*2);ctx.fill()}
-    // Every assigned skill gets a persistent, readable badge so queued
-    // orders are visible before their trigger condition is reached.
+    // Show the current temporary task; permanent traits have their own markers.
     if(b.skill){
      const skillIcons:Record<Skill,string>={climber:"↟",floater:"☂",bomber:"✹",blocker:"Ⅱ",builder:"▰",basher:"✊",miner:"⚒",digger:"↓"};
      const badgeText=skillIcons[b.skill];
