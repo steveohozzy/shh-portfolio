@@ -7,7 +7,7 @@ type Skill = "climber" | "floater" | "bomber" | "blocker" | "builder" | "basher"
 type Terrain = { x:number; y:number; w:number; h:number; steel?:boolean; bridge?:boolean }
 type Hazard = { x:number; y:number; w:number; h:number; kind:"water"|"fire"|"trap" }
 type Level = { id:number; name:string; group:string; width:number; total:number; rescue:number; seconds:number; rate:number; hatch:number; exit:number; terrain:Terrain[]; hazards:Hazard[]; skills:Record<Skill,number>; objective:string }
-type Bao = { id:number; variant:number; x:number; y:number; dir:1|-1; vy:number; fall:number; skill?:Skill; assigned:boolean; action:number; saved:boolean; dead:boolean; bomber:number; build:number; frame:number; splat?:number; climbTop?:number; climbExitX?:number }
+type Bao = { id:number; variant:number; x:number; y:number; dir:1|-1; vy:number; fall:number; skill?:Skill; climber:boolean; floater:boolean; action:number; saved:boolean; dead:boolean; bomber:number; build:number; frame:number; splat?:number; climbTop?:number; climbExitX?:number }
 type Game = { baos:Bao[]; terrain:Terrain[]; spawned:number; saved:number; dead:number; clock:number; spawnClock:number; camera:number; cameraFollow:boolean; running:boolean; paused:boolean; complete:boolean; failed:boolean; rate:number; speed:number; selected:Skill; skills:Record<Skill,number>; nextId:number }
 
 const SKILLS: {id:Skill; label:string; icon:string; tip:string}[] = [
@@ -294,11 +294,22 @@ export default function SquishyLemmings(){
   // Wider hit area makes tapping individual workers easier on phones.
   if(!bao||Math.abs(bao.x-px)>48||Math.abs(bao.y-py)>52)return
   // Skill assignments are permanent once made, as in classic Lemmings.
-  if(bao.assigned)return
-
   if(g.skills[g.selected]<=0)return
-  bao.skill=g.selected
-  bao.assigned=true
+  // Climber and Floater are permanent traits in classic Lemmings. They do
+  // not replace a worker's active task, so that worker can still build/bash.
+  if(g.selected==="climber"){
+   if(bao.climber)return
+   bao.climber=true
+  }else if(g.selected==="floater"){
+   if(bao.floater)return
+   bao.floater=true
+  }else{
+   // Action skills occupy the worker only while the action is active.
+   // Blockers remain fixed; completed builders/bashers/miners/diggers
+   // clear their task in the simulation and can receive another order.
+   if(bao.skill)return
+   bao.skill=g.selected
+  }
   g.skills[g.selected]--
   if(g.selected==="bomber")bao.bomber=2.5
  }
@@ -340,7 +351,7 @@ export default function SquishyLemmings(){
     g.spawnClock+=step*(g.rate/60)
     if(g.spawned<l.total&&g.spawnClock>=1){
      g.spawnClock-=1
-     g.baos.push({id:g.nextId++,variant:g.nextId%8,x:l.hatch+26,y:GROUND-52,dir:1,vy:0,fall:0,assigned:false,action:0,saved:false,dead:false,bomber:0,build:0,frame:0})
+     g.baos.push({id:g.nextId++,variant:g.nextId%8,x:l.hatch+26,y:GROUND-52,dir:1,vy:0,fall:0,climber:false,floater:false,action:0,saved:false,dead:false,bomber:0,build:0,frame:0})
      g.spawned++
     }
     g.baos.forEach(b=>{
@@ -365,7 +376,7 @@ export default function SquishyLemmings(){
      if(blocker){b.dir=(b.x<blocker.x?-1:1);b.x+=b.dir*1.2;return}
      // Once a climber starts scaling a wall, keep climbing even after its
      // head rises above the wall's collision area. Finish on the far side.
-     if(b.skill==="climber"&&b.climbTop!==undefined&&b.climbExitX!==undefined){
+     if(b.climber&&b.climbTop!==undefined&&b.climbExitX!==undefined){
       b.vy=0;
       b.fall=0;
       b.y-=118*step;
@@ -379,7 +390,7 @@ export default function SquishyLemmings(){
       }
       return;
      }
-     if(wall&&b.skill==="climber"){
+     if(wall&&b.climber){
       const climbWall=g.terrain.find(t=>
        frontX>=t.x-4&&frontX<=t.x+t.w+4&&
        b.y+BAO_H/2>t.y&&b.y-BAO_H/2<t.y+t.h
@@ -484,9 +495,9 @@ export default function SquishyLemmings(){
      if(wall&&b.skill!=="basher"){
       b.dir=(b.dir*-1) as 1|-1
      }
-     if(supported&&support){if(b.fall>112&&b.skill!=="floater"){b.dead=true;b.splat=1;g.dead++;return}b.y=support.y-BAO_H/2;b.vy=0;b.fall=0}
+     if(supported&&support){if(b.fall>112&&!b.floater){b.dead=true;b.splat=1;g.dead++;return}b.y=support.y-BAO_H/2;b.vy=0;b.fall=0}
      else{
-      if(b.skill==="floater"){
+      if(b.floater){
        // The umbrella actively limits descent speed, even if assigned mid-fall.
        b.vy=Math.min(b.vy+180*step,75);
       }else{
@@ -573,8 +584,8 @@ export default function SquishyLemmings(){
      ctx.fillStyle="#704b72";ctx.font="bold 13px sans-serif";ctx.textAlign="center";ctx.fillText(badgeText,0,-26);
      ctx.restore();
     }
-    if(b.skill==="climber"||b.skill==="builder"){ctx.fillStyle=b.skill==="builder"?"#f4bd42":"#e96b67";ctx.beginPath();ctx.arc(0,-15,10,Math.PI,0);ctx.lineTo(10,-12);ctx.lineTo(-10,-12);ctx.fill();ctx.fillStyle="#fff8";ctx.fillRect(-5,-17,5,2);ctx.fillStyle="#fff";ctx.font="bold 8px sans-serif";ctx.fillText(b.skill==="builder"?"BUILD":"UP",-9,-27)}
-    if(b.skill==="floater"){ctx.fillStyle="#ef8eb7";ctx.strokeStyle="#865b91";ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(-13,-25);ctx.quadraticCurveTo(0,-43,13,-25);ctx.closePath();ctx.fill();ctx.stroke();ctx.beginPath();ctx.moveTo(0,-25);ctx.lineTo(0,-15);ctx.moveTo(-11,-25);ctx.lineTo(0,-15);ctx.lineTo(11,-25);ctx.stroke()}
+    if(b.climber||b.skill==="builder"){ctx.fillStyle=b.skill==="builder"?"#f4bd42":"#e96b67";ctx.beginPath();ctx.arc(0,-15,10,Math.PI,0);ctx.lineTo(10,-12);ctx.lineTo(-10,-12);ctx.fill();ctx.fillStyle="#fff8";ctx.fillRect(-5,-17,5,2);ctx.fillStyle="#fff";ctx.font="bold 8px sans-serif";ctx.fillText(b.skill==="builder"?"BUILD":"UP",-9,-27)}
+    if(b.floater){ctx.fillStyle="#ef8eb7";ctx.strokeStyle="#865b91";ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(-13,-25);ctx.quadraticCurveTo(0,-43,13,-25);ctx.closePath();ctx.fill();ctx.stroke();ctx.beginPath();ctx.moveTo(0,-25);ctx.lineTo(0,-15);ctx.moveTo(-11,-25);ctx.lineTo(0,-15);ctx.lineTo(11,-25);ctx.stroke()}
     if(b.skill==="bomber"){ctx.fillStyle="#333";ctx.beginPath();ctx.arc(0,-22,4,0,Math.PI*2);ctx.fill();ctx.fillStyle="#f4c84b";ctx.fillRect(2,-28,4,3);ctx.fillStyle="#e85b68";ctx.font="bold 10px sans-serif";ctx.fillText(Math.ceil(b.bomber||0).toString(),-3,-30)}
     if(b.skill==="blocker"){ctx.fillStyle="#df5965";ctx.strokeStyle="#8e3547";ctx.lineWidth=1.5;ctx.fillRect(-13,-8,26,7);ctx.strokeRect(-13,-8,26,7);ctx.fillStyle="#fff";ctx.font="bold 8px sans-serif";ctx.fillText("STOP",-10,-2);ctx.fillStyle="#fff";ctx.font="bold 8px sans-serif";ctx.fillText("BLOCK",-13,-20)}
     if(b.skill==="basher"){ctx.fillStyle="#e7a34c";ctx.fillRect(-10,-19,20,5);ctx.strokeStyle="#80535c";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(8,-3);ctx.lineTo(17,3);ctx.stroke()}
