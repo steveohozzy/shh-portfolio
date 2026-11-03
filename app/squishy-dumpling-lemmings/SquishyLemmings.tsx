@@ -30,6 +30,7 @@ function makeLevel(id:number):Level {
  const width=2520+group*180+(id%5)*110;
  const terrain:Terrain[]=[{x:0,y:GROUND-26,w:width,h:140}];
  const hazards:Hazard[]=[];
+ let gapCount=0;
  const rand=(()=>{let seed=(id+1)*7919;return()=>{seed=(seed*48271)%2147483647;return seed/2147483647}})();
  const wall=(x:number,top:number,w=34)=>terrain.push({x,y:top,w,h:GROUND-26-top});
  const shelf=(x:number,y:number,w:number)=>terrain.push({x,y,w,h:15});
@@ -38,6 +39,9 @@ function makeLevel(id:number):Level {
   for(let k=0;k<steps;k++)terrain.push({x:x+(dir===1?k*21:(steps-k-1)*21),y:y-k*12,w:23,h:GROUND-26-(y-k*12)});
  };
  const gap=(x:number,w:number,kind:"water"|"pit"="pit")=>{
+  if(gapCount>=2)return;
+  gapCount++;
+  w=Math.min(90,w);
   const right=x+w;
   for(let i=terrain.length-1;i>=0;i--){
    const t=terrain[i];
@@ -60,9 +64,9 @@ function makeLevel(id:number):Level {
  const rescue=[65,72,78,84][group];
  let objective="Guide the parade safely to the pavilion";
  if(id===0){wall(510,205,38);skills.basher=12;objective="Learn to bash through a soft wall"}
- else if(id===1){wall(620,155,42);skills.climber=12;skills.floater=2;objective="Climb the tall wall and reach the exit"}
- else if(id===2){gap(720,130);shelf(980,285,190);skills.builder=5;skills.floater=4;objective="Build a staircase across the first chasm"}
- else if(id===3){wall(540,195,34);gap(1050,150);wall(1510,175,36);skills.basher=3;skills.builder=5;skills.miner=3;objective="Combine tunnelling and building to cross the split path"}
+ else if(id===1){wall(620,255,42);skills.climber=12;skills.floater=2;objective="Climb the tall wall and reach the exit"}
+ else if(id===2){gap(720,85);shelf(980,285,190);skills.builder=5;skills.floater=4;objective="Build a staircase across the first chasm"}
+ else if(id===3){wall(540,195,34);gap(1050,85);wall(1510,175,36);skills.basher=3;skills.builder=5;skills.miner=3;objective="Combine tunnelling and building to cross the split path"}
  else {
   const sections=3+group+Math.floor(n/7);
   const startX=360;
@@ -75,10 +79,10 @@ function makeLevel(id:number):Level {
    else if(variant===1){shelf(x,245-Math.round(rand()*85),145+Math.round(rand()*95))}
    else if(variant===2){ramp(x,315-Math.round(rand()*25),5+Math.floor(rand()*4),rand()>.5?1:-1)}
    else if(variant===3){if(group===0)wall(x,165+Math.round(rand()*65),38);else steel(x,235-Math.round(rand()*65),120+Math.round(rand()*75))}
-   else if(variant===4){gap(x,105+Math.round(rand()*75),group>=1&&rand()>.25?"water":"pit")}
+   else if(variant===4){gap(x,65+Math.round(rand()*25),group>=1&&rand()>.25?"water":"pit")}
    else if(variant===5){wall(x,180,34);shelf(x+105,270-Math.round(rand()*45),135)}
    else if(variant===6){shelf(x,285,145);shelf(x+190,225,145);wall(x+390,155,34)}
-   else{gap(x,95+Math.round(rand()*55));ramp(x+145,315,5,1)}
+   else{gap(x,65+Math.round(rand()*25));ramp(x+115,315,5,1)}
   }
   skills.climber=group===0?(n>5?2:0):Math.max(1,4-group);
   skills.floater=group===0?(n>8?2:1):3+group;
