@@ -164,7 +164,7 @@ export default function SquishyLemmings(){
 
  const reset=useCallback((id=levelId)=>{
   const l=LEVELS[id]
-  gameRef.current={baos:[],terrain:l.terrain.map(t=>({...t})),spawned:0,saved:0,dead:0,clock:l.seconds,spawnClock:0,camera:0,running:false,paused:false,complete:false,failed:false,rate:l.rate,speed:1,selected:"floater",skills:cloneSkills(l.skills),nextId:0}
+  gameRef.current={baos:[],terrain:l.terrain.map(t=>({...t})),spawned:0,saved:0,dead:0,clock:l.seconds,spawnClock:0,camera:0,cameraFollow:false,running:false,paused:false,complete:false,failed:false,rate:l.rate,speed:1,selected:"floater",skills:cloneSkills(l.skills),nextId:0}
   setLevelId(id);setSelected("floater");setCamera(0);setCameraFollow(false);setSpeed(1)
   setHud({spawned:0,saved:0,dead:0,time:l.seconds,rate:l.rate,active:0,percent:0,paused:false,running:false,complete:false,failed:false})
  },[levelId])
