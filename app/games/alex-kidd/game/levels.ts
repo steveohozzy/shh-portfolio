@@ -216,10 +216,12 @@ function makeOriginalStage(stageNo: number, spec: StageSpec): G {
     fill(g, 96, 111, 23, 23, "#");
     fill(g, 96, 111, 21, 22, ".");
 
-    // The entrance is a safe landing platform, not a sealed starting pocket.
+    // Start Alex on the first platform in the actual climb. The old
+    // entrance spawn sat below a cleared section of the route, leaving no
+    // reachable ledge above him.
     fill(g, 14, 36, 18, 20, ".");
     fill(g, 12, 34, 21, 21, "#");
-    put(g, 18, 20, "P");
+    put(g, 18, 67, "P");
   }
 
   const entities = ORIGINAL_ENTITIES[stageNo] || [];
