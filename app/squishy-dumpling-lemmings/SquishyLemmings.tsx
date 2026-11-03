@@ -211,7 +211,86 @@ function makeOpeningPuzzle(id:number):Level|null {
   exit:spec.width-115,terrain,hazards,skills,objective:spec.objective
  };
 }
-const LEVELS=Array.from({length:120},(_,i)=>makeOpeningPuzzle(i)||makeLevel(i))
+
+/**
+ * Later campaign levels use a controlled obstacle grammar instead of
+ * unconstrained random terrain. Every generated obstacle has a matching
+ * skill budget, and the route remains physically connected/solvable.
+ */
+function makeCampaignLevel(id:number):Level {
+ const group=Math.floor(id/30), n=id%30;
+ const total=group===0?12:group===1?18:group===2?24:30;
+ const rescue=[65,72,78,84][group];
+ const required=Math.ceil(total*rescue/100);
+ const obstacleCount=Math.min(14,3+group*2+Math.floor(n/5));
+ const width=2000+obstacleCount*430+group*450;
+ const terrain:Terrain[]=[{x:0,y:GROUND-26,w:width,h:140}];
+ const hazards:Hazard[]=[];
+ const skills:Record<Skill,number>={climber:0,floater:0,bomber:0,blocker:0,builder:0,basher:0,miner:0,digger:0};
+ let softWalls=0,buildCrossings=0,needsClimb=false,needsFloat=false;
+ const names=[
+  "Bao Boulevard","The Wobble Wall","Pudding Gap","The Sticky Passage","Cloud Kitchen","Jellybean Crossing","The Noodle Maze","Mooncake Mountain","Steamed-Up Summit","The Great Bao Escape",
+  "Bamboo Bounce","The Sugar Steps","Peachy Passage","The Bao Bridge","Cloudtop Crossing","The Winding Walkway","Pillow Fort","The Matcha Mine","Honeycomb Heights","The Great Drop",
+  "Steamer Express","The Split-Level","Lavender Labyrinth","The Golden Gate","Rainbow Run","The Wobbly Workshop","The Secret Staircase","The Waterway","The Castle Courtyard","Homeward Bound"
+ ];
+ const prefixes=["","Sugar Rush · ","Cloud Kingdom · ","Midnight Mochi · "];
+ const name=prefixes[group]+names[n]+(n>=10?" "+String(n+1).padStart(2,"0"):"");
+ const spacing=(width-1000)/obstacleCount;
+ for(let i=0;i<obstacleCount;i++){
+  const x=Math.round(520+i*spacing);
+  // Every later level teaches or revisits a high route. Steel versions
+  // appear later, but use the same climber/floater solution.
+  const highRoute=i===1&&id>=12 || (group>=2&&i>1&&i%5===1);
+  const steelRoute=highRoute&&id>=45&&((id+i)%3===0);
+  if(highRoute){
+   const top=190+((id+i*13)%3)*12;
+   const wallWidth=42;
+   terrain.push({x,y:top,w:wallWidth,h:GROUND-26-top,steel:steelRoute});
+   terrain.push({x:x+wallWidth,y:top,w:220,h:15});
+   needsClimb=true;
+   needsFloat=true;
+   continue;
+  }
+  const pattern=(id*7+i*11)%5;
+  if(pattern===0||pattern===3){
+   const top=155+((id+i*17)%5)*13;
+   terrain.push({x,y:top,w:36+((id+i)%3)*4,h:GROUND-26-top});
+   softWalls++;
+  }else if(pattern===1||pattern===4){
+   const gapWidth=62+((id*3+i*7)%25);
+   const right=x+gapWidth;
+   for(let t=terrain.length-1;t>=0;t--){
+    const part=terrain[t];
+    if(part.y!==GROUND-26||part.h!==140||right<=part.x||x>=part.x+part.w)continue;
+    terrain.splice(t,1);
+    if(x>part.x)terrain.push({x:part.x,y:part.y,w:x-part.x,h:part.h});
+    if(right<part.x+part.w)terrain.push({x:right,y:part.y,w:part.x+part.w-right,h:part.h});
+   }
+   buildCrossings++;
+  }else{
+   const hazardWidth=54+((id+i*5)%22);
+   hazards.push({x,y:GROUND-62,w:hazardWidth,h:62,kind:"trap"});
+   buildCrossings++;
+  }
+ }
+ // The rescue quota is the number of workers who must be able to use the
+ // high route. Traits are permanent and can be combined with action skills.
+ if(needsClimb)skills.climber=total;
+ if(needsFloat)skills.floater=total;
+ // One assignment per obstacle; the same worker can receive another
+ // action after the previous bash/build has finished.
+ skills.basher=softWalls;
+ skills.builder=buildCrossings;
+ terrain.push({x:0,y:GROUND-26,w:150,h:26},{x:width-260,y:GROUND-26,w:260,h:26});
+ const seconds=Math.max(300,Math.ceil(width/31*1.55));
+ let objective="Use bashers to open the soft gates and builders to cross every break and trap.";
+ if(needsClimb&&buildCrossings>0)objective="Give the parade climbers and floaters for the high gallery, then use builders and bashers to clear the route.";
+ else if(needsClimb)objective="Assign climbers for the high walls and floaters for the long descent.";
+ else if(buildCrossings>0)objective="Time your builder assignments carefully; one completed staircase can carry the parade over each danger.";
+ return {id,name,group:GROUPS[group],width,total,rescue,seconds,rate:24+group*5+Math.floor(n/8),hatch:75,exit:width-115,terrain,hazards,skills,objective};
+}
+
+const LEVELS=Array.from({length:120},(_,i)=>makeOpeningPuzzle(i)||(i<4?makeLevel(i):makeCampaignLevel(i)))
 const BAO_COLOURS=["#fff0d9","#ffc9d8","#cce5ae","#c9d6ff","#e3d0ff","#ffd6b7","#ffcf63","#f3a6d0"]
 const clamp=(v:number,min:number,max:number)=>Math.max(min,Math.min(max,v))
 const floorAt=(terrain:Terrain[],x:number,y:number)=>terrain.filter(t=>x>=t.x-2&&x<=t.x+t.w+2&&y<=t.y+34&&y>=t.y-32).sort((a,b)=>a.y-b.y)[0]
