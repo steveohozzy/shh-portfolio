@@ -241,7 +241,7 @@ function makeCampaignLevel(id:number):Level {
   // Every later level teaches or revisits a high route. Steel versions
   // appear later, but use the same climber/floater solution.
   const highRoute=i===1&&id>=12 || (group>=2&&i>1&&i%5===1);
-  const steelRoute=highRoute&&id>=45&&((id+i)%3===0);
+  const steelRoute=highRoute;
   if(highRoute){
    const top=190+((id+i*13)%3)*12;
    const wallWidth=42;
@@ -284,8 +284,8 @@ function makeCampaignLevel(id:number):Level {
  terrain.push({x:0,y:GROUND-26,w:150,h:26},{x:width-260,y:GROUND-26,w:260,h:26});
  const seconds=Math.max(300,Math.ceil(width/31*1.55));
  let objective="Use bashers to open the soft gates and builders to cross every break and trap.";
- if(needsClimb&&buildCrossings>0)objective="Assign climbers and floaters to enough Bao to meet the rescue quota. Use builders and bashers for the route, then nuke any stragglers left at the high wall.";
- else if(needsClimb)objective="Assign climbers and floaters to the required rescue quota, then nuke the stragglers left behind.";
+ if(needsClimb&&buildCrossings>0)objective="Assign climbers and floaters to the same Bao until the rescue quota can cross the steel gallery. Use builders and bashers for the other obstacles, then nuke the stragglers.";
+ else if(needsClimb)objective="Assign climbers and floaters to the same Bao until the rescue quota can cross the steel gallery, then nuke the stragglers.";
  else if(buildCrossings>0)objective="Time your builder assignments carefully; one completed staircase can carry the parade over each break and trap.";
  if(needsClimb){
   if(skills.climber<required||skills.floater<required)throw new Error("Campaign level "+(id+1)+" does not provide enough permanent traits for its rescue quota");
