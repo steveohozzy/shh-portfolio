@@ -11,11 +11,11 @@ type Bao = { id:number; variant:number; x:number; y:number; dir:1|-1; vy:number;
 type Game = { baos:Bao[]; terrain:Terrain[]; spawned:number; saved:number; dead:number; clock:number; spawnClock:number; camera:number; cameraFollow:boolean; running:boolean; paused:boolean; complete:boolean; failed:boolean; rate:number; speed:number; selected:Skill; skills:Record<Skill,number>; nextId:number }
 
 const SKILLS: {id:Skill; label:string; icon:string; tip:string}[] = [
- {id:"climber",label:"Climber",icon:"🧗",tip:"Climb vertical walls"},
- {id:"floater",label:"Floater",icon:"☂️",tip:"Float safely down"},
+ {id:"climber",label:"Climber",icon:"🧗",tip:"Permanent trait: climb vertical walls"},
+ {id:"floater",label:"Floater",icon:"☂️",tip:"Permanent trait: survive long falls"},
  {id:"bomber",label:"Bomber",icon:"💣",tip:"Explode after a short fuse"},
- {id:"blocker",label:"Blocker",icon:"🛑",tip:"Stop and turn the crowd"},
- {id:"builder",label:"Builder",icon:"🧱",tip:"Build a staircase"},
+ {id:"blocker",label:"Blocker",icon:"🛑",tip:"Stop the crowd; assign a bomber to release"},
+ {id:"builder",label:"Builder",icon:"🧱",tip:"Build 12 steps; assign another task when finished"},
  {id:"basher",label:"Basher",icon:"👊",tip:"Tunnel horizontally"},
  {id:"miner",label:"Miner",icon:"⛏️",tip:"Mine diagonally down"},
  {id:"digger",label:"Digger",icon:"⬇️",tip:"Dig straight down"}
@@ -132,7 +132,7 @@ function makeOpeningPuzzle(id:number):Level|null {
   skills:Partial<Record<Skill,number>>;
  }> = {
   // Level 5 — teach bashing, then ask the player to use the opening it creates.
-  4:{name:"Cloud Kitchen",objective:"Open the two sealed kitchen passages. The second wall is narrower, so save a basher for it.",width:2260,walls:[
+  4:{name:"Cloud Kitchen",objective:"Open all three sealed kitchen passages. A completed basher can be assigned again at the next wall.",width:2260,walls:[
    {x:470,y:218,w:48,h:141},{x:1120,y:185,w:42,h:174},
    {x:1570,y:248,w:48,h:111}
   ],platforms:[
@@ -173,13 +173,13 @@ function makeOpeningPuzzle(id:number):Level|null {
    {x:1710,y:300,w:180},{x:1940,y:270,w:155}
   ],skills:{builder:2}},
   // Level 11 — the trap sits in the obvious corridor; the upper ledges provide an alternative route.
-  10:{name:"Bamboo Bounce",objective:"Two bashers must open the bamboo gates. Assign a builder before each red trap to raise a staircase the parade can follow. Keep each skill for the obstacle it is meant to solve.",width:2380,hazards:[
+  10:{name:"Bamboo Bounce",objective:"Bash through both bamboo gates, then build over each red trap. Completed action skills can be assigned again, so one worker can tackle several obstacles.",width:2380,hazards:[
    {x:690,y:323,w:58,h:62,kind:"trap"},{x:1500,y:323,w:58,h:62,kind:"trap"}
   ],walls:[
    {x:520,y:205,w:42,h:154},{x:1270,y:220,w:42,h:139}
   ],platforms:[],skills:{basher:2,builder:2}},
   // Level 12 — combine a climb, a bridge and a controlled descent.
-  11:{name:"The Sugar Steps",objective:"Scale the first tower, bridge the broken upper walkway, then float down to the low exit path.",width:2520,walls:[
+  11:{name:"The Sugar Steps",objective:"Scale both towers and build across the broken walkway. Climbing is permanent; the builder can be reassigned after the staircase is complete.",width:2520,walls:[
    {x:470,y:145,w:48,h:214},{x:1640,y:205,w:44,h:154}
   ],gaps:[{x:1120,w:88}],platforms:[
    {x:518,y:250,w:250},{x:820,y:220,w:190},{x:1010,y:250,w:110},
@@ -377,6 +377,7 @@ export default function SquishyLemmings(){
   // Wider hit area makes tapping individual workers easier on phones.
   if(!bao||Math.abs(bao.x-px)>48||Math.abs(bao.y-py)>52)return
   // Permanent traits and temporary actions follow classic Lemmings rules.
+  if(bao.skill==="bomber"||(bao.skill==="blocker"&&g.selected!=="bomber"))return
   if(g.skills[g.selected]<=0)return
   // Climber and Floater are permanent traits in classic Lemmings. They do
   // not replace a worker's active task, so that worker can still build/bash.
