@@ -287,7 +287,6 @@ export default function SquishyLemmings(){
        b.y+BAO_H/2>t.y&&b.y-BAO_H/2<t.y+t.h
       );
       if(!climbWall){
-       b.skill=undefined;
        b.dir=(-b.dir) as 1|-1;
        return;
       }
@@ -301,7 +300,6 @@ export default function SquishyLemmings(){
       if(b.y+BAO_H/2<=b.climbTop+1){
        b.y=b.climbTop-BAO_H/2;
        b.x=b.climbExitX;
-       b.skill=undefined;
        b.climbTop=undefined;
        b.climbExitX=undefined;
       }
