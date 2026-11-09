@@ -7,15 +7,15 @@ type Skill = "climber" | "floater" | "bomber" | "blocker" | "builder" | "basher"
 type Terrain = { x:number; y:number; w:number; h:number; steel?:boolean; bridge?:boolean }
 type Hazard = { x:number; y:number; w:number; h:number; kind:"water"|"fire"|"trap" }
 type Level = { id:number; name:string; group:string; width:number; total:number; rescue:number; seconds:number; rate:number; hatch:number; exit:number; terrain:Terrain[]; hazards:Hazard[]; skills:Record<Skill,number>; objective:string }
-type Bao = { id:number; variant:number; x:number; y:number; dir:1|-1; vy:number; fall:number; skill?:Skill; action:number; saved:boolean; dead:boolean; bomber:number; build:number; frame:number; splat?:number; climbTop?:number; climbExitX?:number }
+type Bao = { id:number; variant:number; x:number; y:number; dir:1|-1; vy:number; fall:number; skill?:Skill; climber:boolean; floater:boolean; action:number; saved:boolean; dead:boolean; bomber:number; build:number; frame:number; splat?:number; climbTop?:number; climbExitX?:number }
 type Game = { baos:Bao[]; terrain:Terrain[]; spawned:number; saved:number; dead:number; clock:number; spawnClock:number; camera:number; cameraFollow:boolean; running:boolean; paused:boolean; complete:boolean; failed:boolean; rate:number; speed:number; selected:Skill; skills:Record<Skill,number>; nextId:number }
 
 const SKILLS: {id:Skill; label:string; icon:string; tip:string}[] = [
- {id:"climber",label:"Climber",icon:"🧗",tip:"Climb vertical walls"},
- {id:"floater",label:"Floater",icon:"☂️",tip:"Float safely down"},
+ {id:"climber",label:"Climber",icon:"🧗",tip:"Permanent trait: climb vertical walls"},
+ {id:"floater",label:"Floater",icon:"☂️",tip:"Permanent trait: survive long falls"},
  {id:"bomber",label:"Bomber",icon:"💣",tip:"Explode after a short fuse"},
- {id:"blocker",label:"Blocker",icon:"🛑",tip:"Stop and turn the crowd"},
- {id:"builder",label:"Builder",icon:"🧱",tip:"Build a staircase"},
+ {id:"blocker",label:"Blocker",icon:"🛑",tip:"Stop the crowd; assign a bomber to release"},
+ {id:"builder",label:"Builder",icon:"🧱",tip:"Build 12 steps; assign another task when finished"},
  {id:"basher",label:"Basher",icon:"👊",tip:"Tunnel horizontally"},
  {id:"miner",label:"Miner",icon:"⛏️",tip:"Mine diagonally down"},
  {id:"digger",label:"Digger",icon:"⬇️",tip:"Dig straight down"}
@@ -63,10 +63,10 @@ function makeLevel(id:number):Level {
  const total=group===0?12:group===1?18:group===2?24:30;
  const rescue=[65,72,78,84][group];
  let objective="Guide the parade safely to the pavilion";
- if(id===0){wall(510,205,38);skills.basher=12;objective="Learn to bash through a soft wall"}
- else if(id===1){wall(620,255,42);skills.climber=12;skills.floater=2;objective="Climb the tall wall and reach the exit"}
- else if(id===2){gap(720,85);shelf(980,285,190);skills.builder=5;skills.floater=4;objective="Build a staircase across the first chasm"}
- else if(id===3){wall(540,195,34);gap(1050,85);wall(1510,175,36);skills.basher=3;skills.builder=5;skills.miner=3;objective="Combine tunnelling and building to cross the split path"}
+ if(id===0){wall(510,205,38);skills.basher=1;objective="Assign one basher to open the wall; the rest of the parade can follow through the tunnel"}
+ else if(id===1){wall(620,255,42);skills.climber=12;objective="Give the parade the permanent climber trait so everyone can scale the wall"}
+ else if(id===2){gap(720,85);shelf(980,285,190);skills.builder=1;objective="Assign one builder at the edge to make a staircase across the chasm"}
+ else if(id===3){wall(540,195,34);gap(1050,85);wall(1510,175,36);skills.basher=2;skills.builder=1;objective="Bash the first wall, build across the break, then bash the final wall. Completed actions can be reassigned."}
  else {
   const sections=3+group+Math.floor(n/7);
   const startX=360;
@@ -116,7 +116,182 @@ function makeLevel(id:number):Level {
  const seconds=group===0?300:group===1?285:group===2?270:255;
  return {id,name:title,group:GROUPS[group],width,total,rescue,seconds,rate:24+group*5+Math.floor(n/8),hatch:75,exit:width-115,terrain,hazards,skills,objective};
 }
-const LEVELS=Array.from({length:120},(_,i)=>makeLevel(i))
+
+/**
+ * The opening campaign is authored rather than randomly assembled.
+ * Keep these layouts deliberately readable: each introduces a small number
+ * of hazards or terrain decisions before later groups combine them.
+ */
+function makeOpeningPuzzle(id:number):Level|null {
+ const authored:Record<number,{
+  name:string;objective:string;width:number;total?:number;rescue?:number;rate?:number;
+  gaps?:{x:number;w:number;water?:boolean}[];
+  walls?:{x:number;y:number;w:number;h:number}[];
+  platforms?:{x:number;y:number;w:number;h?:number;steel?:boolean}[];
+  hazards?:Hazard[];
+  skills:Partial<Record<Skill,number>>;
+ }> = {
+  // Level 5 — teach bashing, then ask the player to use the opening it creates.
+  4:{name:"Cloud Kitchen",objective:"Open all three sealed kitchen passages. A completed basher can be assigned again at the next wall.",width:2260,walls:[
+   {x:470,y:218,w:48,h:141},{x:1120,y:185,w:42,h:174},
+   {x:1570,y:248,w:48,h:111}
+  ],platforms:[
+   {x:700,y:305,w:150},{x:880,y:270,w:145},{x:1320,y:315,w:130},{x:1810,y:292,w:170}
+  ],skills:{basher:3}},
+  // Level 6 — two separate bridges, with a raised landing between them.
+  5:{name:"Jellybean Crossing",objective:"Two breaks interrupt the parade. Build across each one, using the raised middle shelf as a landing.",width:2380,gaps:[
+   {x:520,w:76},{x:1120,w:84}
+  ],platforms:[
+   {x:760,y:300,w:210},{x:1450,y:292,w:190},{x:1680,y:250,w:145},{x:1900,y:305,w:140}
+  ],skills:{builder:2}},
+  // Level 7 — a layered maze. Bash the lower walls; the steel roof is deliberately indestructible.
+  6:{name:"The Noodle Maze",objective:"The lower route is blocked twice. Bash through the soft walls; the steel canopy cannot be destroyed.",width:2420,walls:[
+   {x:440,y:235,w:42,h:124},{x:1010,y:210,w:46,h:149},{x:1740,y:240,w:42,h:119}
+  ],platforms:[
+   {x:610,y:300,w:190},{x:820,y:265,w:170},{x:1190,y:285,w:190},
+   {x:1430,y:250,w:190},{x:1640,y:205,w:135}
+  ],skills:{basher:3}},
+  // Level 8 — climb to the upper gallery, then descend safely to the exit route.
+  7:{name:"Mooncake Mountain",objective:"Climb the tall outer wall to reach the gallery. The far drop is too high to survive without a floater.",width:2320,walls:[
+   {x:560,y:150,w:46,h:209}
+  ],platforms:[
+   {x:606,y:235,w:310},{x:980,y:195,w:230},{x:1260,y:245,w:210},
+   {x:1540,y:285,w:180},{x:1830,y:315,w:170}
+  ],skills:{climber:12,floater:8}},
+  // Level 9 — steel changes the route: it supports the upper crossing but cannot be mined or bashed.
+  8:{name:"Steamed-Up Summit",objective:"The steel shelf is permanent. Use the lower soft-rock passage and the stepped ledges to reach the far side.",width:2460,walls:[
+   {x:650,y:225,w:42,h:134},{x:1470,y:205,w:42,h:154}
+  ],platforms:[
+   {x:820,y:300,w:170},{x:1010,y:270,w:170},{x:1200,y:240,w:180},
+   {x:1580,y:295,w:150},{x:1770,y:260,w:170}
+  ],gaps:[{x:1970,w:72}],skills:{basher:2,builder:1}},
+  // Level 10 — a water basin with a stepped approach and a second, ordinary pit.
+  9:{name:"The Great Bao Escape",objective:"The blue basin is deadly. Build a continuous crossing, then bridge the smaller dry pit before the pavilion.",width:2500,gaps:[
+   {x:620,w:88,water:true},{x:1510,w:76}
+  ],platforms:[
+   {x:820,y:315,w:170},{x:1030,y:278,w:170},{x:1240,y:315,w:150},
+   {x:1710,y:300,w:180},{x:1940,y:270,w:155}
+  ],skills:{builder:2}},
+  // Level 11 — the trap sits in the obvious corridor; the upper ledges provide an alternative route.
+  10:{name:"Bamboo Bounce",objective:"Bash through both bamboo gates, then build over each red trap. Completed action skills can be assigned again, so one worker can tackle several obstacles.",width:2380,hazards:[
+   {x:690,y:323,w:20,h:62,kind:"trap"},{x:1500,y:323,w:20,h:62,kind:"trap"}
+  ],walls:[
+   {x:520,y:205,w:42,h:154},{x:1270,y:220,w:42,h:139}
+  ],platforms:[],skills:{basher:2,builder:2}},
+  // Level 12 — combine a climb, a bridge and a controlled descent.
+  11:{name:"The Sugar Steps",objective:"Give the parade the permanent climber trait to scale both towers. Assign one builder just before the wide floor gap; the completed staircase stays in place for everyone behind.",width:2520,walls:[
+   {x:470,y:145,w:48,h:214},{x:1640,y:205,w:44,h:154}
+  ],gaps:[{x:1120,w:88}],platforms:[],skills:{climber:12,builder:1}}
+ };
+ const spec=authored[id];
+ if(!spec)return null;
+ const floorY=GROUND-26;
+ const terrain:Terrain[]=[];
+ const hazards:Hazard[]=(spec.hazards||[]).map(h=>({...h}));
+ const gaps=(spec.gaps||[]).slice().sort((a,b)=>a.x-b.x);
+ let cursor=0;
+ gaps.forEach(g=>{
+  if(g.x>cursor)terrain.push({x:cursor,y:floorY,w:g.x-cursor,h:140});
+  if(g.water)hazards.push({x:g.x,y:floorY,w:g.w,h:140,kind:"water"});
+  cursor=g.x+g.w;
+ });
+ if(cursor<spec.width)terrain.push({x:cursor,y:floorY,w:spec.width-cursor,h:140});
+ (spec.walls||[]).forEach(w=>terrain.push({...w}));
+ (spec.platforms||[]).forEach(p=>terrain.push({x:p.x,y:p.y,w:p.w,h:p.h||15,steel:p.steel}));
+ // Keep the hatch and rescue pavilion on dependable ground.
+ terrain.push({x:0,y:floorY,w:150,h:26},{x:spec.width-260,y:floorY,w:260,h:26});
+ const skills:Record<Skill,number>={climber:0,floater:0,bomber:0,blocker:0,builder:0,basher:0,miner:0,digger:0};
+ Object.keys(spec.skills).forEach(key=>{skills[key as Skill]=spec.skills[key as Skill]||0});
+ return {
+  id,name:spec.name,group:GROUPS[0],width:spec.width,total:spec.total||12,
+  rescue:spec.rescue||65,seconds:300,rate:spec.rate||24,hatch:75,
+  exit:spec.width-115,terrain,hazards,skills,objective:spec.objective
+ };
+}
+
+/**
+ * Later campaign levels use a controlled obstacle grammar instead of
+ * unconstrained random terrain. Every generated obstacle has a matching
+ * skill budget, and the route remains physically connected/solvable.
+ */
+function makeCampaignLevel(id:number):Level {
+ const group=Math.floor(id/30), n=id%30;
+ const total=group===0?12:group===1?18:group===2?24:30;
+ const rescue=[65,72,78,84][group];
+ const required=Math.ceil(total*rescue/100);
+ const obstacleCount=Math.min(14,3+group*2+Math.floor(n/5));
+ const width=2000+obstacleCount*430+group*450;
+ const terrain:Terrain[]=[{x:0,y:GROUND-26,w:width,h:140}];
+ const hazards:Hazard[]=[];
+ const skills:Record<Skill,number>={climber:0,floater:0,bomber:0,blocker:0,builder:0,basher:0,miner:0,digger:0};
+ let softWalls=0,buildCrossings=0,needsClimb=false,needsFloat=false;
+ const names=[
+  "Bao Boulevard","The Wobble Wall","Pudding Gap","The Sticky Passage","Cloud Kitchen","Jellybean Crossing","The Noodle Maze","Mooncake Mountain","Steamed-Up Summit","The Great Bao Escape",
+  "Bamboo Bounce","The Sugar Steps","Peachy Passage","The Bao Bridge","Cloudtop Crossing","The Winding Walkway","Pillow Fort","The Matcha Mine","Honeycomb Heights","The Great Drop",
+  "Steamer Express","The Split-Level","Lavender Labyrinth","The Golden Gate","Rainbow Run","The Wobbly Workshop","The Secret Staircase","The Waterway","The Castle Courtyard","Homeward Bound"
+ ];
+ const prefixes=["","Sugar Rush · ","Cloud Kingdom · ","Midnight Mochi · "];
+ const name=prefixes[group]+names[n]+(n>=10?" "+String(n+1).padStart(2,"0"):"");
+ const spacing=(width-1000)/obstacleCount;
+ for(let i=0;i<obstacleCount;i++){
+  const x=Math.round(520+i*spacing);
+  // Every later level teaches or revisits a high route. Steel versions
+  // appear later, but use the same climber/floater solution.
+  const highRoute=i===1&&id>=12 || (group>=2&&i>1&&i%5===1);
+  const steelRoute=highRoute;
+  if(highRoute){
+   const top=190+((id+i*13)%3)*12;
+   const wallWidth=42;
+   terrain.push({x,y:top,w:wallWidth,h:GROUND-26-top,steel:steelRoute});
+   terrain.push({x:x+wallWidth,y:top,w:220,h:15});
+   needsClimb=true;
+   needsFloat=true;
+   continue;
+  }
+  const pattern=(id*7+i*11)%5;
+  if(pattern===0||pattern===3){
+   const top=155+((id+i*17)%5)*13;
+   terrain.push({x,y:top,w:36+((id+i)%3)*4,h:GROUND-26-top});
+   softWalls++;
+  }else if(pattern===1||pattern===4){
+   const gapWidth=62+((id*3+i*7)%25);
+   const right=x+gapWidth;
+   for(let t=terrain.length-1;t>=0;t--){
+    const part=terrain[t];
+    if(part.y!==GROUND-26||part.h!==140||right<=part.x||x>=part.x+part.w)continue;
+    terrain.splice(t,1);
+    if(x>part.x)terrain.push({x:part.x,y:part.y,w:x-part.x,h:part.h});
+    if(right<part.x+part.w)terrain.push({x:right,y:part.y,w:part.x+part.w-right,h:part.h});
+   }
+   buildCrossings++;
+  }else{
+   const hazardWidth=54+((id+i*5)%22);
+   hazards.push({x,y:GROUND-62,w:20,h:62,kind:"trap"});
+   buildCrossings++;
+  }
+ }
+ // The rescue quota is the number of workers who must be able to use the
+ // high route. Traits are permanent and can be combined with action skills.
+ if(needsClimb)skills.climber=required;
+ if(needsFloat)skills.floater=required;
+ // One assignment per obstacle; the same worker can receive another
+ // action after the previous bash/build has finished.
+ skills.basher=softWalls;
+ skills.builder=buildCrossings;
+ terrain.push({x:0,y:GROUND-26,w:150,h:26},{x:width-260,y:GROUND-26,w:260,h:26});
+ const seconds=Math.max(300,Math.ceil(width/31*1.55));
+ let objective="Use bashers to open the soft gates and builders to cross every break and trap.";
+ if(needsClimb&&buildCrossings>0)objective="Assign climbers and floaters to the same Bao until the rescue quota can cross the steel gallery. Use builders and bashers for the other obstacles, then nuke the stragglers.";
+ else if(needsClimb)objective="Assign climbers and floaters to the same Bao until the rescue quota can cross the steel gallery, then nuke the stragglers.";
+ else if(buildCrossings>0)objective="Time your builder assignments carefully; one completed staircase can carry the parade over each break and trap.";
+ if(needsClimb){
+  if(skills.climber<required||skills.floater<required)throw new Error("Campaign level "+(id+1)+" does not provide enough permanent traits for its rescue quota");
+ }
+ if(skills.builder<buildCrossings||skills.basher<softWalls)throw new Error("Campaign level "+(id+1)+" is missing an obstacle skill assignment");
+ return {id,name,group:GROUPS[group],width,total,rescue,seconds,rate:24+group*5+Math.floor(n/8),hatch:75,exit:width-115,terrain,hazards,skills,objective};
+}
+
+const LEVELS=Array.from({length:120},(_,i)=>makeOpeningPuzzle(i)||(i<4?makeLevel(i):makeCampaignLevel(i)))
 const BAO_COLOURS=["#fff0d9","#ffc9d8","#cce5ae","#c9d6ff","#e3d0ff","#ffd6b7","#ffcf63","#f3a6d0"]
 const clamp=(v:number,min:number,max:number)=>Math.max(min,Math.min(max,v))
 const floorAt=(terrain:Terrain[],x:number,y:number)=>terrain.filter(t=>x>=t.x-2&&x<=t.x+t.w+2&&y<=t.y+34&&y>=t.y-32).sort((a,b)=>a.y-b.y)[0]
@@ -176,7 +351,7 @@ export default function SquishyLemmings(){
  const assign=(skill:Skill)=>{const g=gameRef.current;if(!g)return;g.selected=skill;setSelected(skill)}
  const setRate=(delta:number)=>{const g=gameRef.current;if(g)g.rate=clamp(g.rate+delta,1,99)}
  const changeSpeed=(v:number)=>{setSpeed(v);const g=gameRef.current;if(g)g.speed=v}
- const nuke=()=>{const g=gameRef.current;if(!g||!g.running)return;g.baos.forEach(b=>{if(!b.saved&&!b.dead&&b.skill!=="blocker"){b.skill="bomber";b.bomber=5}})}
+ const nuke=()=>{const g=gameRef.current;if(!g||!g.running)return;g.baos.forEach(b=>{if(!b.saved&&!b.dead){b.skill="bomber";b.action=0;b.climbTop=undefined;b.climbExitX=undefined;b.bomber=5}})}
  const selectLevel=(id:number)=>{if(id<=unlockedThrough)reset(id)}
  const setFollow=(value:boolean)=>{const g=gameRef.current;if(g)g.cameraFollow=value;setCameraFollow(value)}
  const moveCamera=(value:number)=>{const g=gameRef.current;if(!g)return;g.camera=clamp(value,0,Math.max(0,levelRef.current.width-W));setCamera(g.camera)}
@@ -198,11 +373,31 @@ export default function SquishyLemmings(){
   const bao=g.baos.filter(b=>!b.saved&&!b.dead).sort((a,b)=>Math.abs(a.x-px)+Math.abs(a.y-py)-Math.abs(b.x-px)-Math.abs(b.y-py))[0]
   // Wider hit area makes tapping individual workers easier on phones.
   if(!bao||Math.abs(bao.x-px)>48||Math.abs(bao.y-py)>52)return
-  // Skill assignments are permanent once made, as in classic Lemmings.
-  if(bao.skill)return
-
+  // Permanent traits and temporary actions follow classic Lemmings rules.
+  if(bao.skill==="bomber"||(bao.skill==="blocker"&&g.selected!=="bomber"))return
   if(g.skills[g.selected]<=0)return
-  bao.skill=g.selected
+  // Climber and Floater are permanent traits in classic Lemmings. They do
+  // not replace a worker's active task, so that worker can still build/bash.
+  if(g.selected==="climber"){
+   if(bao.climber)return
+   bao.climber=true
+  }else if(g.selected==="floater"){
+   if(bao.floater)return
+   bao.floater=true
+  }else{
+   // A blocker can be released by assigning a bomber, as in classic Lemmings.
+   if(bao.skill==="blocker"&&g.selected==="bomber"){
+    bao.skill="bomber"
+    bao.action=0
+    bao.bomber=2.5
+   }else{
+    // Action skills occupy the worker only while the action is active.
+    // Completed builders/bashers/miners/diggers clear their task and can
+    // receive another order; a blocker stays fixed until bombed.
+    if(bao.skill)return
+    bao.skill=g.selected
+   }
+  }
   g.skills[g.selected]--
   if(g.selected==="bomber")bao.bomber=2.5
  }
@@ -244,7 +439,7 @@ export default function SquishyLemmings(){
     g.spawnClock+=step*(g.rate/60)
     if(g.spawned<l.total&&g.spawnClock>=1){
      g.spawnClock-=1
-     g.baos.push({id:g.nextId++,variant:g.nextId%8,x:l.hatch+26,y:GROUND-52,dir:1,vy:0,fall:0,action:0,saved:false,dead:false,bomber:0,build:0,frame:0})
+     g.baos.push({id:g.nextId++,variant:g.nextId%8,x:l.hatch+26,y:GROUND-52,dir:1,vy:0,fall:0,climber:false,floater:false,action:0,saved:false,dead:false,bomber:0,build:0,frame:0})
      g.spawned++
     }
     g.baos.forEach(b=>{
@@ -269,7 +464,7 @@ export default function SquishyLemmings(){
      if(blocker){b.dir=(b.x<blocker.x?-1:1);b.x+=b.dir*1.2;return}
      // Once a climber starts scaling a wall, keep climbing even after its
      // head rises above the wall's collision area. Finish on the far side.
-     if(b.skill==="climber"&&b.climbTop!==undefined&&b.climbExitX!==undefined){
+     if(b.climber&&b.climbTop!==undefined&&b.climbExitX!==undefined){
       b.vy=0;
       b.fall=0;
       b.y-=118*step;
@@ -278,10 +473,12 @@ export default function SquishyLemmings(){
        b.x=b.climbExitX;
        b.climbTop=undefined;
        b.climbExitX=undefined;
+       // Resume walking immediately once the climber clears the wall.
+       b.x+=b.dir*31*step;
       }
       return;
      }
-     if(wall&&b.skill==="climber"){
+     if(wall&&b.climber){
       const climbWall=g.terrain.find(t=>
        frontX>=t.x-4&&frontX<=t.x+t.w+4&&
        b.y+BAO_H/2>t.y&&b.y-BAO_H/2<t.y+t.h
@@ -302,6 +499,8 @@ export default function SquishyLemmings(){
        b.x=b.climbExitX;
        b.climbTop=undefined;
        b.climbExitX=undefined;
+       // Don't leave the dumpling paused at the top of the wall.
+       b.x+=b.dir*31*step;
       }
       return;
      }
@@ -384,9 +583,9 @@ export default function SquishyLemmings(){
      if(wall&&b.skill!=="basher"){
       b.dir=(b.dir*-1) as 1|-1
      }
-     if(supported&&support){if(b.fall>112&&b.skill!=="floater"){b.dead=true;b.splat=1;g.dead++;return}b.y=support.y-BAO_H/2;b.vy=0;b.fall=0}
+     if(supported&&support){if(b.fall>112&&!b.floater){b.dead=true;b.splat=1;g.dead++;return}b.y=support.y-BAO_H/2;b.vy=0;b.fall=0}
      else{
-      if(b.skill==="floater"){
+      if(b.floater){
        // The umbrella actively limits descent speed, even if assigned mid-fall.
        b.vy=Math.min(b.vy+180*step,75);
       }else{
@@ -462,8 +661,7 @@ export default function SquishyLemmings(){
     ctx.fillStyle="#72555b30";ctx.beginPath();ctx.ellipse(0,BAO_H/2+2,16,4,0,0,Math.PI*2);ctx.fill()
     if(baoSprites[b.variant])ctx.drawImage(baoSprites[b.variant],-24,-24,48,48);
     else {ctx.fillStyle="#fff0d8";ctx.beginPath();ctx.ellipse(0,0,19,17,0,0,Math.PI*2);ctx.fill();ctx.fillStyle="#493640";ctx.beginPath();ctx.arc(-5,-2,2,0,Math.PI*2);ctx.arc(5,-2,2,0,Math.PI*2);ctx.fill()}
-    // Every assigned skill gets a persistent, readable badge so queued
-    // orders are visible before their trigger condition is reached.
+    // Show the current temporary task; permanent traits have their own markers.
     if(b.skill){
      const skillIcons:Record<Skill,string>={climber:"↟",floater:"☂",bomber:"✹",blocker:"Ⅱ",builder:"▰",basher:"✊",miner:"⚒",digger:"↓"};
      const badgeText=skillIcons[b.skill];
@@ -473,8 +671,8 @@ export default function SquishyLemmings(){
      ctx.fillStyle="#704b72";ctx.font="bold 13px sans-serif";ctx.textAlign="center";ctx.fillText(badgeText,0,-26);
      ctx.restore();
     }
-    if(b.skill==="climber"||b.skill==="builder"){ctx.fillStyle=b.skill==="builder"?"#f4bd42":"#e96b67";ctx.beginPath();ctx.arc(0,-15,10,Math.PI,0);ctx.lineTo(10,-12);ctx.lineTo(-10,-12);ctx.fill();ctx.fillStyle="#fff8";ctx.fillRect(-5,-17,5,2);ctx.fillStyle="#fff";ctx.font="bold 8px sans-serif";ctx.fillText(b.skill==="builder"?"BUILD":"UP",-9,-27)}
-    if(b.skill==="floater"){ctx.fillStyle="#ef8eb7";ctx.strokeStyle="#865b91";ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(-13,-25);ctx.quadraticCurveTo(0,-43,13,-25);ctx.closePath();ctx.fill();ctx.stroke();ctx.beginPath();ctx.moveTo(0,-25);ctx.lineTo(0,-15);ctx.moveTo(-11,-25);ctx.lineTo(0,-15);ctx.lineTo(11,-25);ctx.stroke()}
+    if(b.climber||b.skill==="builder"){ctx.fillStyle=b.skill==="builder"?"#f4bd42":"#e96b67";ctx.beginPath();ctx.arc(0,-15,10,Math.PI,0);ctx.lineTo(10,-12);ctx.lineTo(-10,-12);ctx.fill();ctx.fillStyle="#fff8";ctx.fillRect(-5,-17,5,2);ctx.fillStyle="#fff";ctx.font="bold 8px sans-serif";ctx.fillText(b.skill==="builder"?"BUILD":"UP",-9,-27)}
+    if(b.floater){ctx.fillStyle="#ef8eb7";ctx.strokeStyle="#865b91";ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(-13,-25);ctx.quadraticCurveTo(0,-43,13,-25);ctx.closePath();ctx.fill();ctx.stroke();ctx.beginPath();ctx.moveTo(0,-25);ctx.lineTo(0,-15);ctx.moveTo(-11,-25);ctx.lineTo(0,-15);ctx.lineTo(11,-25);ctx.stroke()}
     if(b.skill==="bomber"){ctx.fillStyle="#333";ctx.beginPath();ctx.arc(0,-22,4,0,Math.PI*2);ctx.fill();ctx.fillStyle="#f4c84b";ctx.fillRect(2,-28,4,3);ctx.fillStyle="#e85b68";ctx.font="bold 10px sans-serif";ctx.fillText(Math.ceil(b.bomber||0).toString(),-3,-30)}
     if(b.skill==="blocker"){ctx.fillStyle="#df5965";ctx.strokeStyle="#8e3547";ctx.lineWidth=1.5;ctx.fillRect(-13,-8,26,7);ctx.strokeRect(-13,-8,26,7);ctx.fillStyle="#fff";ctx.font="bold 8px sans-serif";ctx.fillText("STOP",-10,-2);ctx.fillStyle="#fff";ctx.font="bold 8px sans-serif";ctx.fillText("BLOCK",-13,-20)}
     if(b.skill==="basher"){ctx.fillStyle="#e7a34c";ctx.fillRect(-10,-19,20,5);ctx.strokeStyle="#80535c";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(8,-3);ctx.lineTo(17,3);ctx.stroke()}
@@ -510,14 +708,14 @@ export default function SquishyLemmings(){
   <div className="sdlem-game-frame"><div className="sdlem-game-top"><div><span className="sdlem-level-pill">{level.group.toUpperCase()} · LEVEL {String(level.id+1).padStart(3,"0")}</span><h2>{level.name}</h2><p>Rescue {level.rescue}% · {level.total} dumplings · {Math.floor(level.seconds/60)} minutes</p><p className="sdlem-objective">✦ {level.objective}</p></div><div className="sdlem-top-actions"><button className="sdlem-small-btn" onClick={pause} disabled={!hud.running}>Ⅱ Pause</button><button className="sdlem-small-btn" onClick={()=>reset(levelId)}>↻ Restart</button></div></div>
    <div className="sdlem-canvas-wrap"><canvas ref={canvasRef} width={W} height={H} onPointerDown={clickWorld} onPointerMove={handleCanvasMove} onPointerUp={()=>{miniDragRef.current=false}} onPointerLeave={()=>{miniDragRef.current=false}} aria-label="Scrollable Squishy Dumpling Lemmings level"/></div>
    <div className="sdlem-scroll"><button onClick={()=>scroll((gameRef.current?.camera||0)-220)} aria-label="Scroll left">◀</button><input aria-label="Scroll level" type="range" min="0" max={maxCamera} value={Math.min(camera,maxCamera)} onChange={e=>scroll(Number(e.target.value))}/><button onClick={()=>scroll((gameRef.current?.camera||0)+220)} aria-label="Scroll right">▶</button><label className="sdlem-follow-toggle"><input type="checkbox" checked={cameraFollow} onChange={e=>setFollow(e.target.checked)}/> Follow action</label><span>{Math.round((camera/maxCamera||0)*100)}%</span></div>
-   <div className="sdlem-message">{hud.complete?"🎉 Level complete!":hud.failed?"💗 Not quite — have another go.":hud.paused?"⏸ Parade paused.":hud.running?"Tap any dumpling to queue the selected job; it will trigger when its conditions are met. Tap again to cancel.":"Press release to start the parade. Select a skill first or during play."}</div>
+   <div className="sdlem-message">{hud.complete?"🎉 Level complete!":hud.failed?"💗 Not quite — have another go.":hud.paused?"⏸ Parade paused.":hud.running?"Tap a dumpling once to assign the selected job permanently; it triggers when its conditions are met.":"Press release to start the parade. Select a skill first or during play."}</div>
    {(hud.complete||hud.failed)&&<div className="sdlem-result"><b>{hud.complete?"Beautifully done, Bao Boss!":"The parade has finished."}</b><span>{hud.saved} rescued out of {level.total}. {hud.complete?"The next stage is unlocked.":"Try changing the release rate or skill timing."}</span><button onClick={()=>hud.complete&&levelId<119?reset(levelId+1):reset(levelId)}>{hud.complete&&levelId<119?"Next level →":"Try again"}</button></div>}
   </div>
   <div className="sdlem-controls"><div className="sdlem-section-heading"><div><span className="sdlem-kicker">SKILL PANEL</span><h2>Choose a job</h2></div><span className="sdlem-tool-hint">1. Pick a job · 2. Tap any dumpling · 3. It triggers automatically</span></div>
    <div className="sdlem-skills">{SKILLS.map(s=><button key={s.id} disabled={(gameRef.current?.skills[s.id]??level.skills[s.id])===0||hud.complete||hud.failed} className={"sdlem-skill"+(selected===s.id?" is-selected":"")} onClick={()=>assign(s.id)}><span className="sdlem-skill-icon">{s.icon}</span><span className="sdlem-skill-copy"><b>{s.label}</b><small>{s.tip}</small></span><span className="sdlem-skill-count">{gameRef.current?.skills[s.id]??level.skills[s.id]}</span></button>)}</div>
-   <div className="sdlem-bottom-row"><div className="sdlem-selected-hint"><b>Active tool: {SKILLS.find(s=>s.id===selected)?.icon} {SKILLS.find(s=>s.id===selected)?.label}</b><small>Click a worker anywhere in the level to queue the job; it stays assigned until it triggers. Click again to cancel.</small></div><div className="sdlem-play-actions"><button className="sdlem-small-btn" onClick={()=>setRate(-5)} disabled={!hud.running}>− Release</button><b className="sdlem-rate">{gameRef.current?.rate??level.rate}</b><button className="sdlem-small-btn" onClick={()=>setRate(5)} disabled={!hud.running}>+ Release</button><button className="sdlem-small-btn" onClick={nuke} disabled={!hud.running}>☠ Nuke</button><label className="sdlem-speed">Speed <select value={speed} onChange={e=>changeSpeed(Number(e.target.value))}><option value={1}>1×</option><option value={2}>2×</option><option value={4}>4×</option></select></label><button className="sdlem-release" onClick={start}>{hud.running?"▶ Continue":"▶ Release Bao Parade"}</button></div></div>
+   <div className="sdlem-bottom-row"><div className="sdlem-selected-hint"><b>Active tool: {SKILLS.find(s=>s.id===selected)?.icon} {SKILLS.find(s=>s.id===selected)?.label}</b><small>Click a worker once to assign the job permanently; it triggers when its conditions are met.</small></div><div className="sdlem-play-actions"><button className="sdlem-small-btn" onClick={()=>setRate(-5)} disabled={!hud.running}>− Release</button><b className="sdlem-rate">{gameRef.current?.rate??level.rate}</b><button className="sdlem-small-btn" onClick={()=>setRate(5)} disabled={!hud.running}>+ Release</button><button className="sdlem-small-btn" onClick={nuke} disabled={!hud.running}>☠ Nuke</button><label className="sdlem-speed">Speed <select value={speed} onChange={e=>changeSpeed(Number(e.target.value))}><option value={1}>1×</option><option value={2}>2×</option><option value={4}>4×</option></select></label><button className="sdlem-release" onClick={start}>{hud.running?"▶ Continue":"▶ Release Bao Parade"}</button></div></div>
   </div>
-  <div className="sdlem-level-select"><div><span className="sdlem-kicker">120 ORIGINAL STAGES</span><h2>Choose your world</h2><p>Four difficulty groups, 30 levels each. Complete a level to unlock the next.</p></div><div className="sdlem-level-picker"><label>Difficulty <select value={Math.floor(levelId/30)} onChange={e=>selectLevel(Number(e.target.value)*30)}>{GROUPS.map((g,i)=><option key={g} value={i} disabled={i*30>unlockedThrough}>{g}</option>)}</select></label><label>Level <select value={levelId%30} onChange={e=>selectLevel(Math.floor(levelId/30)*30+Number(e.target.value))}>{Array.from({length:30},(_,i)=><option key={i} value={i} disabled={Math.floor(levelId/30)*30+i>unlockedThrough}>{String(i+1).padStart(2,"0")} · {LEVELS[Math.floor(levelId/30)*30+i].name}</option>)}</select></label><span className="sdlem-campaign-count">{Object.keys(best).length} / 120 cleared</span></div></div>
+  <div className="sdlem-level-select"><div><span className="sdlem-kicker">120 PUZZLE STAGES</span><h2>Choose your world</h2><p>Four difficulty groups, 30 levels each. Complete a level to unlock the next.</p></div><div className="sdlem-level-picker"><label>Difficulty <select value={Math.floor(levelId/30)} onChange={e=>selectLevel(Number(e.target.value)*30)}>{GROUPS.map((g,i)=><option key={g} value={i} disabled={i*30>unlockedThrough}>{g}</option>)}</select></label><label>Level <select value={levelId%30} onChange={e=>selectLevel(Math.floor(levelId/30)*30+Number(e.target.value))}>{Array.from({length:30},(_,i)=><option key={i} value={i} disabled={Math.floor(levelId/30)*30+i>unlockedThrough}>{String(i+1).padStart(2,"0")} · {LEVELS[Math.floor(levelId/30)*30+i].name}</option>)}</select></label><span className="sdlem-campaign-count">{Object.keys(best).length} / 120 cleared</span></div></div>
   <div className="sdlem-howto"><span className="sdlem-howto-icon">💡</span><div><b>Classic Lemmings rules</b><p>Dumplings walk on their own, turn at walls and fall if you leave a gap. Assign skills to change the landscape or their behaviour. Blockers stop the parade and turn other walkers back; builders lay 12 steps; bashers tunnel sideways; miners cut diagonally; diggers tunnel down; climbers scale walls; floaters survive long falls; bombers clear a small crater. Pause to plan, adjust the release rate and use the mini-map/scrollbar to explore the whole level.</p></div></div>
  </div></section>
 }

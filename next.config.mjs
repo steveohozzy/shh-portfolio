@@ -1,3 +1,4 @@
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   serverExternalPackages: ['firebase-admin'],
@@ -10,8 +11,17 @@ const nextConfig = {
     unoptimized: true,
   },
 
-  // Enforce consistent clean URLs globally (strips trailing slashes automatically)
+  // Enforce consistent clean URLs globally
   trailingSlash: false,
+
+  async rewrites() {
+    return [
+      {
+        source: '/squishy-dumpling-board-game',
+        destination: '/squishy-dumpling-board-game/index.html',
+      },
+    ];
+  },
 
   async redirects() {
     return [
@@ -47,8 +57,8 @@ const nextConfig = {
         destination: '/',
         permanent: true,
       },
-    ]
+    ];
   },
-}
+};
 
 export default nextConfig;
