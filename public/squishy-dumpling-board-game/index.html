@@ -1,0 +1,4357 @@
+
+<title>Squishy Dumpling Board Game – Free Online Multiplayer Game | SHHDesign</title>
+
+<meta name="description" content="Play the Squishy Dumpling Board Game, a fun free online multiplayer adventure. Play with friends, roll the dice, explore the board and see who reaches the finish first!">
+
+<meta name="robots" content="index, follow">
+
+<link rel="canonical" href="https://shhdesign.co.uk/squishy-dumpling-board-game">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Squishy Dumpling Board Game | SHHDesign">
+<meta property="og:description" content="Play the free Squishy Dumpling Board Game online with friends. Roll the dice, explore the board and race to the finish!">
+<meta property="og:url" content="https://shhdesign.co.uk/squishy-dumpling-board-game">
+<meta property="og:site_name" content="SHHDesign">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Squishy Dumpling Board Game | SHHDesign">
+<meta name="twitter:description" content="Play this fun free online multiplayer board game with friends!">
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap');
+#squishy-dumpling-game {
+  --boardgame-night-dark: #6b3f22;
+  --boardgame-gold: #ff8fab;
+  --boardgame-card: #fff3e2;
+  --boardgame-card-text: #6b4329;
+  --boardgame-white: #ffffff;
+
+  position: relative;
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: 850px;
+  min-height: 620px;
+  overflow: hidden;
+  isolation: isolate;
+  background: #fde4cc;
+  color: var(--boardgame-white);
+  font-family: 'Nunito', 'Segoe UI', Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
+}
+
+#squishy-dumpling-game,
+#squishy-dumpling-game * {
+  box-sizing: border-box;
+}
+
+/* ---------- Main game container ---------- */
+
+#squishy-dumpling-game #boardgame-app-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+  background: #fde4cc;
+}
+
+/* ---------- HUD Bar ---------- */
+
+#squishy-dumpling-game #boardgame-hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 16px;
+  background: rgba(255, 247, 236, 0.94);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  border-bottom: 2px solid rgba(255, 143, 171, 0.45);
+  flex-wrap: wrap;
+  z-index: 100;
+}
+
+#squishy-dumpling-game #boardgame-hud h1 {
+  margin: 0;
+  padding: 0;
+  color: var(--boardgame-white);
+  font-family: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  line-height: 1.3;
+  white-space: nowrap;
+  text-align: center;
+  margin: 0;
+}
+
+#squishy-dumpling-game #boardgame-hud h1 span {
+  color: var(--boardgame-gold);
+}
+
+#squishy-dumpling-game #boardgame-players {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px 4px;
+  scrollbar-width: none;
+}
+
+#squishy-dumpling-game #boardgame-players::-webkit-scrollbar {
+  display: none;
+}
+
+#squishy-dumpling-game .boardgame-player-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.12);
+  padding: 4px 10px 4px 4px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 2px solid transparent;
+  white-space: nowrap;
+}
+
+#squishy-dumpling-game .boardgame-player-chip.boardgame-active {
+  border-color: var(--boardgame-gold);
+  background: rgba(255, 143, 171, 0.2);
+}
+
+#squishy-dumpling-game .boardgame-player-chip .boardgame-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--boardgame-white);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  flex: 0 0 auto;
+}
+
+#squishy-dumpling-game .boardgame-player-chip.boardgame-missed {
+  opacity: 0.55;
+}
+
+/* ---------- Character images ---------- */
+
+#squishy-dumpling-game .boardgame-character-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  object-position: center;
+  pointer-events: none;
+  user-select: none;
+}
+
+#squishy-dumpling-game .boardgame-avatar .boardgame-character-image {
+  width: 88%;
+  height: 88%;
+}
+
+#squishy-dumpling-game .boardgame-token .boardgame-character-image {
+  width: 100%;
+  height: 100%;
+}
+
+#squishy-dumpling-game .boardgame-character-picker img {
+  width: 32px;
+  height: 32px;
+}
+
+#squishy-dumpling-game .boardgame-setup-characters {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0 auto 8px;
+}
+
+#squishy-dumpling-game .boardgame-setup-characters img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
+/* ---------- 3D Cube Dice ---------- */
+
+#squishy-dumpling-game .boardgame-dice-widget {
+  font-family: 'Nunito', 'Segoe UI', Arial, sans-serif;
+  background: linear-gradient(135deg, #fffaf2 0%, #ffe3ea 100%);
+  border: 2px solid #ffc7d4;
+  padding: 6px 12px;
+  border-radius: 14px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  user-select: none;
+}
+
+#squishy-dumpling-game .boardgame-dice-stage {
+  perspective: 500px;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+  cursor: pointer;
+}
+
+#squishy-dumpling-game .boardgame-dice {
+  width: 44px;
+  height: 44px;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.8s cubic-bezier(0.15, 1.15, 0.35, 1.25);
+}
+
+#squishy-dumpling-game .boardgame-dice-face {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  background: #fff4e4;
+  border: 2px solid #e9bf8f;
+  border-radius: 8px;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+  display: grid;
+  grid-template: repeat(3, 1fr) / repeat(3, 1fr);
+  padding: 4px;
+}
+
+#squishy-dumpling-game .boardgame-dice-dot {
+  background-color: #8a5a3b;
+  border-radius: 50%;
+  width: 6px;
+  height: 6px;
+  align-self: center;
+  justify-self: center;
+}
+
+/* Cube face positions */
+#squishy-dumpling-game .boardgame-face-1 { transform: rotateY(0deg) translateZ(22px); }
+#squishy-dumpling-game .boardgame-face-6 { transform: rotateY(180deg) translateZ(22px); }
+#squishy-dumpling-game .boardgame-face-3 { transform: rotateY(90deg) translateZ(22px); }
+#squishy-dumpling-game .boardgame-face-4 { transform: rotateY(-90deg) translateZ(22px); }
+#squishy-dumpling-game .boardgame-face-2 { transform: rotateX(90deg) translateZ(22px); }
+#squishy-dumpling-game .boardgame-face-5 { transform: rotateX(-90deg) translateZ(22px); }
+
+/* Explicit grid positions for every dice dot */
+#squishy-dumpling-game .boardgame-dot-center { grid-area: 2 / 2 / 3 / 3; }
+#squishy-dumpling-game .boardgame-dot-top-left { grid-area: 1 / 1 / 2 / 2; }
+#squishy-dumpling-game .boardgame-dot-top-right { grid-area: 1 / 3 / 2 / 4 !important; }
+#squishy-dumpling-game .boardgame-dot-middle-left { grid-area: 2 / 1 / 3 / 2; }
+#squishy-dumpling-game .boardgame-dot-middle-right { grid-area: 2 / 3 / 3 / 4; }
+#squishy-dumpling-game .boardgame-dot-bottom-left { grid-area: 3 / 1 / 4 / 2; }
+#squishy-dumpling-game .boardgame-dot-bottom-right { grid-area: 3 / 3 / 4 / 4; }
+
+#squishy-dumpling-game .boardgame-dice-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  text-align: left;
+}
+
+#squishy-dumpling-game #boardgame-turn-label {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--boardgame-gold);
+}
+
+#squishy-dumpling-game .boardgame-roll-button {
+  background-color: #ff8fab;
+  color: #6b3f22;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 12px;
+  cursor: pointer;
+  box-shadow: 0 2px 0 #e0668a;
+}
+
+#squishy-dumpling-game .boardgame-roll-button:active {
+  transform: scale(0.96);
+}
+
+#squishy-dumpling-game .boardgame-roll-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* ---------- Board scroller ---------- */
+
+#squishy-dumpling-game #boardgame-scroller {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+  position: relative;
+  touch-action: pan-x pan-y;
+  -webkit-overflow-scrolling: touch;
+  background: #fde4cc;
+}
+
+#squishy-dumpling-game #boardgame-board-viewport {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  height: 1400px;
+  min-height: 1400px;
+  padding: 60px 40px;
+  box-shadow: 0 0 50px rgba(0,0,0,0.7);
+  flex-shrink: 0;
+  background: #fde4cc;
+  width: max-content;
+}
+
+#squishy-dumpling-game .boardgame-board-panel {
+  position: relative;
+  height: 100%;
+  flex-shrink: 0;
+}
+
+#squishy-dumpling-game .boardgame-board-panel + .boardgame-board-panel {
+  margin-left: -1% !important;
+}
+
+#squishy-dumpling-game #boardgame-panel-0 { z-index: 1; }
+#squishy-dumpling-game #boardgame-panel-1 { z-index: 2; }
+#squishy-dumpling-game #boardgame-panel-2 { z-index: 3; }
+
+#squishy-dumpling-game .boardgame-artwork-stage {
+  display: block;
+  height: 100%;
+  width: auto;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ---------- Board spaces and player tokens ---------- */
+
+#squishy-dumpling-game .boardgame-panel-spaces {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+#squishy-dumpling-game .boardgame-token {
+  position: absolute;
+  width: 72px;
+  height: 72px;
+  margin-left: -36px;
+  margin-top: -36px;
+  border-radius: 50%;
+  background: var(--boardgame-white);
+  border: 5px solid var(--boardgame-gold);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 8px 22px rgba(0,0,0,0.6);
+  transition: left 0.3s cubic-bezier(0.25, 1, 0.5, 1), top 0.3s cubic-bezier(0.25, 1, 0.5, 1), transform 0.2s;
+  z-index: 10;
+  overflow: hidden;
+  user-select: none;
+}
+
+#squishy-dumpling-game .boardgame-token.boardgame-hop {
+  transform: translateY(-30px) scale(1.15);
+}
+
+#squishy-dumpling-game .boardgame-token.boardgame-current {
+  z-index: 15;
+  animation: boardgame-token-bob 1.2s infinite ease-in-out;
+}
+
+@keyframes boardgame-token-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+/* ---------- Game overlays ---------- */
+
+#squishy-dumpling-game .boardgame-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(120, 70, 40, 0.38);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 5px;
+  overflow-y: auto;
+}
+
+#squishy-dumpling-game .boardgame-overlay.boardgame-visible {
+  display: flex;
+}
+
+#squishy-dumpling-game .boardgame-modal-panel {
+  max-width: 480px;
+  width: 100%;
+  max-height: 90%;
+  overflow-y: auto;
+  padding: 24px;
+  text-align: center;
+  border: 1px solid rgba(246, 207, 174, 1);
+  border-radius: 26px;
+  background: linear-gradient(145deg, #fffaf2, #ffeedd);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, .4), 0 0 35px rgba(255, 143, 171, .2);
+  animation: boardgame-modal-pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#squishy-dumpling-game .boardgame-modal-panel p b {
+  display: block;
+}
+
+@keyframes boardgame-modal-pop {
+  from {
+    transform: scale(0.85);
+    opacity: 0;
+  }
+}
+
+#squishy-dumpling-game .boardgame-modal-panel h2 {
+  font-family: inherit;
+  font-size: 18px;
+  line-height: 1;
+  margin: 0 0 5px;
+  padding: 0;
+  color: #6b3f22;
+  text-shadow: 0 3px 14px rgba(253, 224, 71, .15);
+}
+
+#squishy-dumpling-game .boardgame-modal-panel p {
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.45;
+  margin: 10px 0;
+  padding: 0;
+  color: #8a5a3b;
+}
+
+#squishy-dumpling-game .boardgame-big-emoji {
+  font-size: 52px;
+  line-height: 1.1;
+  margin: 4px 0;
+  max-width: 30%;
+  margin: auto;
+}
+
+#squishy-dumpling-game .boardgame-big-emoji img {
+  width: 100%;
+  height: auto;
+}
+
+/* ---------- Game buttons ---------- */
+
+#squishy-dumpling-game .boardgame-action-button {
+  background: #6b3f22;
+  color: var(--boardgame-white);
+  padding: 12px 24px;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 6px;
+  border: 0;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #e8b98f;
+  max-width: 100%;
+  margin: auto;
+}
+
+#squishy-dumpling-game .boardgame-action-button.boardgame-gold-button {
+  background: var(--boardgame-gold);
+  color: #6b3f22;
+  box-shadow: 0 4px 0 #e0668a;
+}
+
+/* ---------- Player count selector ---------- */
+
+#squishy-dumpling-game .boardgame-player-counts {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin: 12px 0 18px;
+}
+
+#squishy-dumpling-game .boardgame-player-counts button {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: #fff1e2;
+  color: #6b3f22;
+  font-family: inherit;
+  font-size: 20px;
+  font-weight: 700;
+  border: 0;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+#squishy-dumpling-game .boardgame-player-counts button.boardgame-selected {
+  background: #6b3f22;
+  color: var(--boardgame-white);
+  border-color: #fff1e2;
+}
+
+/* ---------- Game mode selector ---------- */
+
+#squishy-dumpling-game .boardgame-mode-buttons button {
+  width: auto;
+  min-height: 42px;
+  height: auto;
+  padding: 8px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+#squishy-dumpling-game label {
+  color: #6b3f22;
+  margin: 0 0 8px 0;
+  display: block;
+}
+
+.boardgame-online-panel strong {
+  color: #6b3f22;
+}
+
+#squishy-dumpling-game label[for="boardgame-online-pin-input"] {
+  margin-top: 8px;
+  margin-bottom: 8px;
+  display: block;
+}
+
+/* ---------- Player setup rows ---------- */
+
+#squishy-dumpling-game .boardgame-player-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0;
+  padding: 10px;
+  border-radius: 16px;
+  background: #fff1e2;
+  flex-wrap: wrap;
+}
+
+#squishy-dumpling-game .boardgame-player-row input {
+  flex: 1;
+  min-width: 120px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 2px solid #f2d5bd;
+  font-family: inherit;
+  font-size: 15px;
+  outline: none;
+  color: #6b3f22;
+}
+
+#squishy-dumpling-game .boardgame-character-picker {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+#squishy-dumpling-game .boardgame-character-picker button {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--boardgame-white);
+  border: 3px solid #f2d5bd;
+  font-family: inherit;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  overflow: hidden;
+  padding: 2px;
+}
+
+#squishy-dumpling-game .boardgame-character-picker button.boardgame-selected {
+  border-color: var(--boardgame-gold);
+  background: #ffe4ec;
+}
+
+/* ---------- Lucky Dumpling card ---------- */
+
+#squishy-dumpling-game .boardgame-wisdom-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  max-width: 320px;
+  aspect-ratio: 1 / 1;
+  margin: 12px auto 16px;
+  padding: 22px 20px 16px;
+  overflow: hidden;
+  color: #ffffff;
+  background-image: none;
+
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  border: 0;
+  border-radius: 18px;
+
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+}
+
+/* Remove previous decorative overlays */
+
+#squishy-dumpling-game .boardgame-wisdom-card:before,
+#squishy-dumpling-game .boardgame-wisdom-card:after {
+  display: none;
+  content: none;
+}
+
+/* Card heading */
+
+#squishy-dumpling-game .boardgame-wisdom-card-header {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  padding: 0 5px 8px;
+  color: #ffffff;
+  font-family: 'Nunito', 'Segoe UI', Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-align: center;
+  text-transform: uppercase;
+  text-shadow:
+    0 2px 4px rgba(0,0,0,0.9),
+    0 1px 2px rgba(0,0,0,0.9);
+}
+
+/* Text content sits directly over the artwork */
+
+#squishy-dumpling-game .boardgame-wisdom-card-inner {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: calc(100% - 28px);
+  margin: 0 auto;
+  padding: 12px 18px 10px;
+
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+
+  text-align: center;
+}
+
+/* Question and answer labels */
+
+#squishy-dumpling-game .boardgame-wisdom-card-question-label,
+#squishy-dumpling-game .boardgame-wisdom-card-answer-label {
+  display: block;
+  margin: 0 0 5px;
+  color: #ffffff;
+  font-family: 'Nunito', 'Segoe UI', Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.1;
+  font-weight: 800;
+  text-shadow:
+    0 2px 4px rgba(0,0,0,0.95),
+    0 1px 2px rgba(0,0,0,0.9);
+}
+
+/* Question text */
+
+#squishy-dumpling-game .boardgame-wisdom-card-question {
+  margin: 0 auto 12px;
+  color: #ffffff;
+  font-family: 'Nunito', 'Segoe UI', Arial, sans-serif;
+  font-size: 17px;
+  line-height: 1.25;
+  font-weight: 800;
+  text-shadow:
+    0 2px 5px rgba(0,0,0,0.95),
+    0 1px 2px rgba(0,0,0,0.9);
+}
+
+/* Answer input */
+
+#squishy-dumpling-game .boardgame-wisdom-card-answer-input {
+  display: block;
+  width: 100%;
+  max-width: 210px;
+  margin: 5px auto 6px;
+  padding: 8px 10px;
+  border: 2px solid rgba(255,255,255,0.9);
+  border-radius: 8px;
+  background: rgba(255,255,255,0.92);
+  color: #6b3f22;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  outline: none;
+}
+
+#squishy-dumpling-game .boardgame-wisdom-card-answer-input:focus {
+  border-color: #ff8fab;
+  box-shadow: 0 0 0 3px rgba(255,143,171,0.3);
+}
+
+/* Feedback */
+
+#squishy-dumpling-game .boardgame-wisdom-card-feedback {
+  min-height: 15px;
+  margin: 3px 0 0;
+  color: #ffffff;
+  font-size: 12px;
+  line-height: 1.15;
+  font-weight: 800;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.95);
+}
+
+/* Footer instruction */
+
+#squishy-dumpling-game .boardgame-wisdom-card-footer {
+  margin: 9px 0 0;
+  color: #ffffff;
+  font-family: 'Nunito', 'Segoe UI', Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.2;
+  font-weight: 800;
+  text-transform: uppercase;
+  text-shadow:
+    0 2px 5px rgba(0,0,0,0.95),
+    0 1px 2px rgba(0,0,0,0.9);
+}
+
+/* Correct / incorrect result icon */
+
+#squishy-dumpling-game .boardgame-wisdom-result-icon {
+  font-size: 34px;
+  line-height: 1;
+  margin: 0 0 8px;
+}
+
+/* ---------- Toast ---------- */
+
+#squishy-dumpling-game #boardgame-toast {
+  position: absolute;
+  bottom: 50%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-50%) scale(0);
+  background: var(--boardgame-gold);
+  color: #6b3f22;
+  padding: 12px 24px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 15px;
+  z-index: 120;
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+  max-width: 90%;
+  text-align: center;
+  pointer-events: none;
+}
+
+#squishy-dumpling-game #boardgame-toast.boardgame-toast-visible {
+  transform: translateX(-50%) translateY(-50%) scale(1);
+}
+
+/* ---------- Choice buttons ---------- */
+
+#squishy-dumpling-game .boardgame-choice {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 640px) {
+  #squishy-dumpling-game {
+    position: relative;
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: calc(100vh - var(--site-header-height, 0px));
+  height: calc(100dvh - var(--site-header-height, 0px));
+  min-height: 0;
+  max-height: calc(100dvh - (var(--site-header-height, 0px) + 30px));
+  overflow: hidden;
+  isolation: isolate;
+  background: #fde4cc;
+  color: var(--boardgame-white);
+  font-family: 'Nunito', 'Segoe UI', Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
+  }
+
+  #squishy-dumpling-game #boardgame-hud {
+    padding: 6px 10px;
+  }
+
+  #squishy-dumpling-game #boardgame-hud h1 {
+    font-size: 14px;
+  }
+
+  #squishy-dumpling-game .boardgame-player-chip {
+    font-size: 12px;
+    padding: 2px 6px 2px 2px;
+  }
+
+  #squishy-dumpling-game .boardgame-player-chip .boardgame-avatar {
+    width: 24px;
+    height: 24px;
+  }
+
+  #squishy-dumpling-game .boardgame-dice-widget {
+    padding: 4px 8px;
+    gap: 8px;
+  }
+
+  #squishy-dumpling-game .boardgame-dice-stage {
+    width: 40px;
+    height: 40px;
+  }
+
+  #squishy-dumpling-game .boardgame-dice {
+    width: 46px;
+    height: 46px;
+  }
+
+  #squishy-dumpling-game .boardgame-dice-face {
+    width: 46px;
+    height: 46px;
+  }
+
+  #squishy-dumpling-game #boardgame-board-viewport {
+    height: 900px;
+    min-height: 900px;
+    padding: 50px 20px;
+  }
+
+  #squishy-dumpling-game .boardgame-token {
+    width: 56px;
+    height: 56px;
+    margin-left: -28px;
+    margin-top: -28px;
+  }
+
+  #squishy-dumpling-game .boardgame-modal-panel {
+    padding: 20px 16px;
+  }
+
+  #squishy-dumpling-game .boardgame-wisdom-card {
+    max-width: 290px;
+  }
+
+  #squishy-dumpling-game .boardgame-wisdom-card-inner {
+    padding: 10px 14px 8px;
+  }
+}
+
+/* =========================================================
+   MOBILE HUD AND DICE FIXES
+   ========================================================= */
+
+@media (max-width: 640px) {
+
+  #squishy-dumpling-game #boardgame-hud {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 6px;
+    height: 146px;
+    min-height: 146px;
+    padding: 7px 10px 5px;
+    flex-wrap: nowrap;
+    overflow: hidden;
+  }
+
+  #squishy-dumpling-game #boardgame-hud h1 {
+    width: 100%;
+    text-align: center;
+    font-size: 14px;
+    line-height: 18px;
+    flex: 0 0 18px;
+  }
+
+  #squishy-dumpling-game #boardgame-players {
+    display: flex;
+    flex: 0 0 30px;
+    width: 100%;
+    min-width: 0;
+    height: 30px;
+    gap: 6px;
+    padding: 1px 2px 3px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    align-items: center;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #squishy-dumpling-game #boardgame-players::-webkit-scrollbar {
+    display: none;
+  }
+
+  #squishy-dumpling-game .boardgame-player-chip {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: max-content;
+    height: 26px;
+    gap: 5px;
+    padding: 2px 8px 2px 3px;
+    font-size: 11px;
+    line-height: 1;
+  }
+
+  #squishy-dumpling-game .boardgame-player-chip .boardgame-avatar {
+    flex: 0 0 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  #squishy-dumpling-game .boardgame-dice-widget {
+    align-self: center;
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    width: max-content;
+    max-width: 100%;
+    min-height: 68px;
+    padding: 3px 10px;
+    gap: 9px;
+    border-radius: 12px;
+  }
+
+  #squishy-dumpling-game .boardgame-dice-stage {
+    flex: 0 0 38px;
+    width: 48px;
+    height: 58px;
+    perspective: 500px;
+    overflow: visible;
+  }
+
+  #squishy-dumpling-game .boardgame-dice {
+    width: 46px;
+    height: 46px;
+    transform-style: preserve-3d;
+  }
+
+  #squishy-dumpling-game .boardgame-dice-face {
+    width: 46px;
+    height: 46px;
+    padding: 4px;
+    border-radius: 7px;
+    backface-visibility: visible;
+    -webkit-backface-visibility: visible;
+  }
+
+  #squishy-dumpling-game .boardgame-face-1 {
+    transform: rotateY(0deg) translateZ(18px);
+  }
+
+  #squishy-dumpling-game .boardgame-face-2 {
+    transform: rotateX(90deg) translateZ(18px);
+  }
+
+  #squishy-dumpling-game .boardgame-face-3 {
+    transform: rotateY(90deg) translateZ(18px);
+  }
+
+  #squishy-dumpling-game .boardgame-face-4 {
+    transform: rotateY(-90deg) translateZ(18px);
+  }
+
+  #squishy-dumpling-game .boardgame-face-5 {
+    transform: rotateX(-90deg) translateZ(18px);
+  }
+
+  #squishy-dumpling-game .boardgame-face-6 {
+    transform: rotateY(180deg) translateZ(18px);
+  }
+
+  #squishy-dumpling-game .boardgame-dice-dot {
+    width: 5px;
+    height: 5px;
+  }
+
+  #squishy-dumpling-game .boardgame-dot-top-right {
+    grid-area: 1 / 3 / 2 / 4 !important;
+  }
+
+  #squishy-dumpling-game .boardgame-dot-middle-right {
+    grid-area: 2 / 3 / 3 / 4;
+  }
+
+  #squishy-dumpling-game .boardgame-dice-controls {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  #squishy-dumpling-game #boardgame-turn-label {
+    font-size: 10px;
+    line-height: 12px;
+    white-space: nowrap;
+  }
+
+  #squishy-dumpling-game .boardgame-roll-button {
+    padding: 6px 15px;
+    font-size: 14px;
+    line-height: 15px;
+    white-space: nowrap;
+  }
+
+  #squishy-dumpling-game #boardgame-scroller {
+    padding-top: 136px;
+    scroll-padding-top: 136px;
+  }
+
+  #squishy-dumpling-game #boardgame-board-viewport {
+    margin-top: 0;
+  }
+}
+
+@media (max-width: 380px) {
+  #squishy-dumpling-game #boardgame-hud {
+    padding-left: 7px;
+    padding-right: 7px;
+  }
+
+  #squishy-dumpling-game .boardgame-player-chip {
+    gap: 4px;
+    padding-right: 6px;
+    font-size: 10px;
+  }
+
+  #squishy-dumpling-game .boardgame-dice-widget {
+    gap: 7px;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  #squishy-dumpling-game .boardgame-wisdom-card {
+    max-width: 270px;
+  }
+}
+
+/* =========================================================
+   LUCKY DUMPLING – FULL MODAL CARD
+   ========================================================= */
+
+#squishy-dumpling-game #boardgame-msg-body.boardgame-wisdom-modal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  max-width: 420px;
+  aspect-ratio: 1 / 1;
+  max-height: none;
+  overflow: visible;
+
+  padding: 32px 34px 24px;
+  margin: auto;
+
+  background-color: transparent;
+  background-image: none;
+
+  background-size: 100% 100%;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  color: #6b4329;
+}
+
+/* Remove the original inner card background */
+#squishy-dumpling-game .boardgame-wisdom-modal .boardgame-wisdom-card {
+  display: flex;
+  flex: 1;
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+  aspect-ratio: auto;
+  margin: 0;
+  padding: 0;
+
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  color: #6b4329;
+}
+
+/* Card heading */
+#squishy-dumpling-game .boardgame-wisdom-modal .boardgame-wisdom-card-header {
+  color: #DED1B2;
+  font-family: 'Nunito', 'Segoe UI', Arial, sans-serif;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-shadow: none;
+}
+
+/* Text content */
+#squishy-dumpling-game .boardgame-wisdom-modal .boardgame-wisdom-card-inner {
+  flex: 1;
+  height: auto;
+  justify-content: center;
+  padding: 8px 14px;
+
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+/* Question and answer labels */
+#squishy-dumpling-game .boardgame-wisdom-modal .boardgame-wisdom-card-question-label,
+#squishy-dumpling-game .boardgame-wisdom-modal .boardgame-wisdom-card-answer-label {
+  color: #805333;
+  font-family: 'Nunito', 'Segoe UI', Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  text-shadow: none;
+}
+
+/* Main question and result text */
+#squishy-dumpling-game .boardgame-wisdom-modal .boardgame-wisdom-card-question {
+  color: #59351e;
+  font-family: 'Nunito', 'Segoe UI', Arial, sans-serif;
+  font-size: 19px;
+  line-height: 1.3;
+  font-weight: 700;
+  text-shadow: none;
+  padding: 0 15px;
+}
+
+/* Answer field */
+#squishy-dumpling-game .boardgame-wisdom-modal .boardgame-wisdom-card-answer-input {
+  background: rgba(255, 250, 235, 0.9);
+  border: 2px solid #b8956c;
+  border-radius: 8px;
+  color: #59351e;
+}
+
+/* Feedback */
+#squishy-dumpling-game .boardgame-wisdom-modal .boardgame-wisdom-card-feedback {
+  color: #805333;
+  text-shadow: none;
+}
+
+/* Instruction */
+#squishy-dumpling-game .boardgame-wisdom-modal .boardgame-wisdom-card-footer {
+  color: #68452c;
+  font-family: 'Nunito', 'Segoe UI', Arial, sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  text-shadow: none;
+}
+
+/* Button sits inside the full card */
+#squishy-dumpling-game .boardgame-wisdom-modal .boardgame-action-button {
+  position: relative;
+  z-index: 3;
+  flex: 0 0 auto;
+  width: auto;
+  max-width: none;
+  margin: 8px auto 0;
+  padding: 10px 25px;
+
+  background: #704426;
+  color: #fff4df;
+  border: 2px solid #59351e;
+  border-radius: 999px;
+  box-shadow: 0 3px 0 #422516;
+  font-family: 'Nunito', 'Segoe UI', Arial, sans-serif;
+  font-weight: 700;
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+  #squishy-dumpling-game #boardgame-msg-body.boardgame-wisdom-modal {
+    width: min(94vw, 360px);
+    padding: 27px 27px 20px;
+  }
+
+  #squishy-dumpling-game .boardgame-wisdom-modal .boardgame-wisdom-card-question {
+    font-size: 16px;
+  }
+
+  #squishy-dumpling-game .boardgame-wisdom-modal .boardgame-wisdom-card-header {
+    font-size: 15px;
+  }
+}
+
+.boardgame-character-landing {
+  width: 30%;
+  margin: 0 auto;
+}
+
+/* =========================================================
+   WINNER CELEBRATION
+   ========================================================= */
+
+#squishy-dumpling-game .boardgame-winner-celebration {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 110;
+  pointer-events: none;
+}
+
+#squishy-dumpling-game.boardgame-celebrating {
+  box-shadow: inset 0 0 0 4px rgba(255, 143, 171, 0.85);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #squishy-dumpling-game.boardgame-celebrating {
+    box-shadow: none;
+  }
+}
+.breadcrumb-section {display: none;}
+
+/* Online multiplayer lobby */
+#squishy-dumpling-game .boardgame-online-panel{display:none;margin:14px 0;padding:14px;border:1px solid rgba(246,207,174,1);border-radius:14px;background:#fff6ec;text-align:left}
+#squishy-dumpling-game .boardgame-online-panel.boardgame-online-active{display:block}
+#squishy-dumpling-game .boardgame-online-panel input{width:100%;box-sizing:border-box;padding:11px;border:1px solid #f2c9a8;border-radius:8px;margin:5px 0 10px;font:inherit; color: #6b3f22;}
+#squishy-dumpling-game .boardgame-online-actions{display:flex;gap:8px;flex-wrap:wrap}
+#squishy-dumpling-game .boardgame-online-actions button{flex:1;min-width:120px}
+#squishy-dumpling-game .boardgame-online-status{font-size:14px;line-height:1.45;margin:9px 0;color:#6b3f22;overflow-wrap:anywhere}
+#squishy-dumpling-game .boardgame-online-pin{font-size:18px;font-weight:800;letter-spacing:5px;text-align:center;padding:8px;color:#6b3f22}
+#squishy-dumpling-game .boardgame-online-start{display:none;width:100%;margin-top:10px}
+
+
+/* =========================================================
+   SQUISHY KAWAII DUMPLING SKIN
+   Soft dough creams, blush pinks, honey and soy-sauce browns
+   to match the dumpling board artwork.
+   ========================================================= */
+
+#squishy-dumpling-game {
+  --boardgame-night-dark: #6b3f22;
+  --boardgame-gold: #ff8fab;
+  --boardgame-card: #fff3e2;
+  --boardgame-card-text: #6b3f22;
+  --boardgame-white: #ffffff;
+  --sdg-dough: #fff7ec;
+  --sdg-dough-deep: #f6dcb8;
+  --sdg-crust: #e9bf8f;
+  --sdg-soy: #6b3f22;
+  --sdg-soy-soft: #8a5a3b;
+  --sdg-blush: #ff8fab;
+  --sdg-blush-deep: #e0668a;
+  --sdg-blush-pale: #ffe4ec;
+  --sdg-honey: #ffc24d;
+  --sdg-honey-deep: #e09a1c;
+  --sdg-matcha: #9fd27f;
+  --sdg-shadow: rgba(170, 100, 60, 0.28);
+
+  background:
+    radial-gradient(circle at 12px 12px, rgba(255, 255, 255, 0.55) 0 4px, transparent 5px) 0 0 / 34px 34px,
+    radial-gradient(circle at 29px 29px, rgba(255, 170, 190, 0.35) 0 3px, transparent 4px) 0 0 / 34px 34px,
+    linear-gradient(180deg, #ffe9d6 0%, #fcd9c0 100%);
+  color: var(--sdg-soy);
+  font-family: 'Fredoka', 'Nunito', 'Segoe UI', Arial, sans-serif;
+}
+
+#squishy-dumpling-game #boardgame-app-container,
+#squishy-dumpling-game #boardgame-scroller,
+#squishy-dumpling-game #boardgame-board-viewport {
+  background: transparent;
+}
+
+#squishy-dumpling-game #boardgame-board-viewport {
+  box-shadow: none;
+}
+
+/* ---------- HUD ---------- */
+
+#squishy-dumpling-game #boardgame-hud {
+  background: rgba(255, 247, 236, 0.94);
+  border-bottom: 3px solid #ffc7d4;
+  box-shadow: 0 6px 18px var(--sdg-shadow);
+  border-radius: 0 0 26px 26px;
+}
+
+#squishy-dumpling-game #boardgame-hud h1 {
+  color: var(--sdg-soy);
+  font-family: 'Fredoka', 'Nunito', sans-serif;
+  font-weight: 700;
+  font-size: 19px;
+  letter-spacing: 0.3px;
+}
+
+#squishy-dumpling-game #boardgame-hud h1 span {
+  color: var(--sdg-blush-deep);
+}
+
+#squishy-dumpling-game .boardgame-player-chip {
+  background: #ffffff;
+  color: var(--sdg-soy);
+  border: 2px solid #f6dcc6;
+  box-shadow: 0 3px 0 #f1cfb3;
+}
+
+#squishy-dumpling-game .boardgame-player-chip.boardgame-active {
+  border-color: var(--sdg-blush);
+  background: var(--sdg-blush-pale);
+  box-shadow: 0 3px 0 #f6a9bc;
+}
+
+#squishy-dumpling-game .boardgame-player-chip .boardgame-avatar {
+  background: var(--sdg-dough);
+}
+
+/* ---------- Character art ---------- */
+
+#squishy-dumpling-game .boardgame-character-image svg,
+#squishy-dumpling-game .boardgame-setup-characters svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+#squishy-dumpling-game .boardgame-setup-characters svg {
+  width: 52px;
+  height: 52px;
+  animation: sdg-bounce 1.6s ease-in-out infinite;
+  filter: drop-shadow(0 4px 4px rgba(170, 100, 60, 0.25));
+}
+
+#squishy-dumpling-game .boardgame-setup-characters svg:first-child {
+  width: 66px;
+  height: 66px;
+}
+
+#squishy-dumpling-game .boardgame-setup-characters svg:nth-child(2) { animation-delay: 0.15s; }
+#squishy-dumpling-game .boardgame-setup-characters svg:nth-child(3) { animation-delay: 0.3s; }
+#squishy-dumpling-game .boardgame-setup-characters svg:nth-child(4) { animation-delay: 0.45s; }
+#squishy-dumpling-game .boardgame-setup-characters svg:nth-child(5) { animation-delay: 0.6s; }
+#squishy-dumpling-game .boardgame-setup-characters svg:nth-child(6) { animation-delay: 0.75s; }
+
+@keyframes sdg-bounce {
+  0%, 100% { transform: translateY(0) scale(1, 1); }
+  40% { transform: translateY(-6px) scale(0.96, 1.05); }
+  60% { transform: translateY(0) scale(1.08, 0.92); }
+}
+
+/* ---------- Squishy bao dice ---------- */
+
+#squishy-dumpling-game .boardgame-dice-widget {
+  background: linear-gradient(135deg, #fffaf2 0%, #ffe3ea 100%);
+  border: 2px solid #ffc7d4;
+  border-radius: 20px;
+  box-shadow: 0 4px 0 #f6b3c4, 0 8px 16px var(--sdg-shadow);
+  font-family: 'Fredoka', 'Nunito', sans-serif;
+}
+
+#squishy-dumpling-game .boardgame-dice-face {
+  background: radial-gradient(circle at 30% 25%, #ffffff 0%, #fff4e4 55%, #f8dfbf 100%);
+  border: 2px solid var(--sdg-crust);
+  border-radius: 12px;
+  box-shadow: inset 0 -3px 0 rgba(233, 191, 143, 0.55);
+}
+
+#squishy-dumpling-game .boardgame-dice-dot {
+  background-color: var(--sdg-soy);
+}
+
+#squishy-dumpling-game .boardgame-face-1 .boardgame-dice-dot {
+  background-color: var(--sdg-blush-deep);
+  width: 9px;
+  height: 9px;
+}
+
+#squishy-dumpling-game #boardgame-turn-label {
+  color: var(--sdg-soy-soft);
+}
+
+#squishy-dumpling-game .boardgame-roll-button {
+  background: var(--sdg-blush);
+  color: #ffffff;
+  border-radius: 999px;
+  box-shadow: 0 3px 0 var(--sdg-blush-deep);
+  font-family: inherit;
+  font-weight: 700;
+  transition: transform 0.15s;
+}
+
+#squishy-dumpling-game .boardgame-roll-button:active {
+  transform: scale(1.06, 0.9);
+}
+
+/* ---------- Player tokens ---------- */
+
+#squishy-dumpling-game .boardgame-token {
+  background: var(--sdg-dough);
+  border: 5px solid var(--sdg-blush);
+  box-shadow: 0 6px 0 rgba(224, 102, 138, 0.35), 0 10px 18px var(--sdg-shadow);
+}
+
+#squishy-dumpling-game .boardgame-token.boardgame-hop {
+  transform: translateY(-30px) scale(0.92, 1.15);
+}
+
+#squishy-dumpling-game .boardgame-token.boardgame-current {
+  animation: sdg-token-squish 1.3s infinite ease-in-out;
+}
+
+@keyframes sdg-token-squish {
+  0%, 100% { transform: translateY(0) scale(1, 1); }
+  35% { transform: translateY(-10px) scale(0.94, 1.06); }
+  65% { transform: translateY(0) scale(1.08, 0.92); }
+}
+
+/* ---------- Pop-ups ---------- */
+
+#squishy-dumpling-game .boardgame-overlay {
+  background: rgba(120, 70, 40, 0.38);
+}
+
+#squishy-dumpling-game .boardgame-modal-panel {
+  background: radial-gradient(circle at 50% 0%, #ffffff 0%, #fff7ec 45%, #ffeedd 100%);
+  border: 3px solid #f6cfae;
+  border-radius: 34px;
+  box-shadow: 0 8px 0 #f1c39c, 0 22px 50px rgba(120, 70, 40, 0.3);
+  color: var(--sdg-soy);
+  animation: sdg-modal-squish 0.45s cubic-bezier(0.2, 1.3, 0.4, 1);
+}
+
+@keyframes sdg-modal-squish {
+  0% { transform: scale(0.7, 0.7); opacity: 0; }
+  55% { transform: scale(1.06, 0.94); opacity: 1; }
+  80% { transform: scale(0.98, 1.03); }
+  100% { transform: scale(1, 1); }
+}
+
+#squishy-dumpling-game .boardgame-modal-panel h2 {
+  font-family: 'Fredoka', 'Nunito', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--sdg-soy);
+  text-shadow: 0 2px 0 #ffe0e8;
+}
+
+#squishy-dumpling-game .boardgame-modal-panel p {
+  color: var(--sdg-soy-soft);
+  font-size: 15px;
+}
+
+#squishy-dumpling-game .boardgame-modal-panel p b {
+  color: var(--sdg-blush-deep);
+}
+
+#squishy-dumpling-game .boardgame-big-emoji {
+  max-width: none;
+  font-size: inherit;
+  margin: 2px auto 6px;
+}
+
+#squishy-dumpling-game .boardgame-celebrate-line {
+  font-size: 24px;
+  letter-spacing: 4px;
+  margin: 10px 0;
+}
+
+/* ---------- Buttons ---------- */
+
+#squishy-dumpling-game .boardgame-action-button {
+  background: #ffffff;
+  color: var(--sdg-soy);
+  border: 2px solid #f2c9a8;
+  box-shadow: 0 4px 0 #e8b98f;
+  font-family: 'Fredoka', 'Nunito', sans-serif;
+  font-weight: 600;
+  transition: transform 0.15s;
+}
+
+#squishy-dumpling-game .boardgame-action-button.boardgame-gold-button {
+  background: var(--sdg-blush);
+  color: #ffffff;
+  border-color: var(--sdg-blush-deep);
+  box-shadow: 0 4px 0 var(--sdg-blush-deep);
+}
+
+#squishy-dumpling-game .boardgame-action-button:active {
+  transform: translateY(2px) scale(1.04, 0.94);
+}
+
+#squishy-dumpling-game .boardgame-player-counts button {
+  background: #fff1e2;
+  color: var(--sdg-soy);
+  border: 2px solid #f6d6ba;
+  border-radius: 18px;
+  box-shadow: 0 3px 0 #efc9a6;
+  font-family: 'Fredoka', 'Nunito', sans-serif;
+}
+
+#squishy-dumpling-game .boardgame-player-counts button.boardgame-selected {
+  background: var(--sdg-blush);
+  color: #ffffff;
+  border-color: var(--sdg-blush-deep);
+  box-shadow: 0 3px 0 var(--sdg-blush-deep);
+}
+
+/* ---------- Setup ---------- */
+
+#squishy-dumpling-game label,
+#squishy-dumpling-game .boardgame-online-panel strong {
+  color: var(--sdg-soy);
+}
+
+#squishy-dumpling-game .boardgame-player-row {
+  background: #fff1e2;
+  border: 2px dashed #f6cfae;
+  border-radius: 22px;
+}
+
+#squishy-dumpling-game .boardgame-player-row input,
+#squishy-dumpling-game .boardgame-online-panel input {
+  border: 2px solid #f2c9a8;
+  border-radius: 14px;
+  color: var(--sdg-soy);
+  background: #ffffff;
+  font-family: 'Fredoka', 'Nunito', sans-serif;
+}
+
+#squishy-dumpling-game .boardgame-player-row input:focus,
+#squishy-dumpling-game .boardgame-online-panel input:focus {
+  border-color: var(--sdg-blush);
+  box-shadow: 0 0 0 3px rgba(255, 143, 171, 0.3);
+}
+
+#squishy-dumpling-game .boardgame-character-picker button {
+  background: #ffffff;
+  border: 3px solid #f2d5bd;
+}
+
+#squishy-dumpling-game .boardgame-character-picker button.boardgame-selected {
+  border-color: var(--sdg-blush);
+  background: var(--sdg-blush-pale);
+  transform: scale(1.1);
+}
+
+#squishy-dumpling-game .boardgame-character-picker button:disabled {
+  opacity: 0.35;
+}
+
+#squishy-dumpling-game .boardgame-online-panel {
+  background: #fff6ec;
+  border: 2px dashed #f6cfae;
+  border-radius: 20px;
+}
+
+#squishy-dumpling-game .boardgame-online-status,
+#squishy-dumpling-game .boardgame-online-pin {
+  color: var(--sdg-soy);
+}
+
+/* ---------- Toast ---------- */
+
+#squishy-dumpling-game #boardgame-toast {
+  background: var(--sdg-blush);
+  color: #ffffff;
+  border: 3px solid #ffffff;
+  box-shadow: 0 4px 0 var(--sdg-blush-deep), 0 10px 22px var(--sdg-shadow);
+  font-family: 'Fredoka', 'Nunito', sans-serif;
+}
+
+/* ---------- Lucky Dumpling Card (steamer basket lid) ---------- */
+
+#squishy-dumpling-game .boardgame-wisdom-card,
+#squishy-dumpling-game #boardgame-msg-body.boardgame-wisdom-modal {
+  background-image: none;
+}
+
+#squishy-dumpling-game #boardgame-msg-body.boardgame-wisdom-modal {
+  background:
+    radial-gradient(circle at 50% 45%, #fffbf3 0 58%, #fff1df 59% 100%);
+  border: 12px solid #e8bb82;
+  border-radius: 48px;
+  box-shadow:
+    inset 0 0 0 4px #f8dcae,
+    inset 0 0 0 9px #e8bb82,
+    0 8px 0 #c99a62,
+    0 22px 50px rgba(120, 70, 40, 0.3);
+  color: var(--sdg-soy);
+}
+
+#squishy-dumpling-game .boardgame-wisdom-modal .boardgame-wisdom-card {
+  background: transparent;
+  color: var(--sdg-soy);
+}
+
+#squishy-dumpling-game .boardgame-wisdom-modal .boardgame-wisdom-card-header,
+#squishy-dumpling-game .boardgame-wisdom-card-header {
+  display: inline-block;
+  width: auto;
+  margin: 0 auto 4px;
+  padding: 6px 18px;
+  border-radius: 999px;
+  background: var(--sdg-blush);
+  color: #ffffff;
+  box-shadow: 0 3px 0 var(--sdg-blush-deep);
+  font-family: 'Fredoka', 'Nunito', sans-serif;
+  font-weight: 700;
+  text-shadow: none;
+  text-transform: none;
+}
+
+#squishy-dumpling-game .boardgame-wisdom-modal .boardgame-wisdom-card-question-label,
+#squishy-dumpling-game .boardgame-wisdom-modal .boardgame-wisdom-card-answer-label {
+  color: var(--sdg-blush-deep);
+  font-family: 'Fredoka', 'Nunito', sans-serif;
+}
+
+#squishy-dumpling-game .boardgame-wisdom-modal .boardgame-wisdom-card-question {
+  color: var(--sdg-soy);
+  font-family: 'Fredoka', 'Nunito', sans-serif;
+  font-weight: 600;
+}
+
+#squishy-dumpling-game .boardgame-wisdom-modal .boardgame-wisdom-card-answer-input {
+  background: #ffffff;
+  border: 2px solid #f2c9a8;
+  border-radius: 14px;
+  color: var(--sdg-soy);
+}
+
+#squishy-dumpling-game .boardgame-wisdom-card-answer-input:focus {
+  border-color: var(--sdg-blush);
+  box-shadow: 0 0 0 3px rgba(255, 143, 171, 0.3);
+}
+
+#squishy-dumpling-game .boardgame-wisdom-modal .boardgame-wisdom-card-feedback {
+  color: var(--sdg-blush-deep);
+}
+
+#squishy-dumpling-game .boardgame-wisdom-modal .boardgame-wisdom-card-footer {
+  color: var(--sdg-soy-soft);
+  font-family: 'Fredoka', 'Nunito', sans-serif;
+  font-weight: 700;
+  text-transform: none;
+}
+
+#squishy-dumpling-game .boardgame-wisdom-modal .boardgame-action-button {
+  background: var(--sdg-blush);
+  color: #ffffff;
+  border: 2px solid var(--sdg-blush-deep);
+  box-shadow: 0 4px 0 var(--sdg-blush-deep);
+  font-family: 'Fredoka', 'Nunito', sans-serif;
+}
+
+/* ---------- CSS-drawn dumplings for pop-ups ---------- */
+
+#squishy-dumpling-game .boardgame-css-dumpling {
+  position: relative;
+  width: 118px;
+  height: 92px;
+  margin: 26px auto 8px;
+  border-radius: 50% 50% 44% 44% / 64% 64% 38% 38%;
+  background:
+    radial-gradient(ellipse at 32% 26%, rgba(255, 255, 255, 0.95) 0 9%, transparent 10%),
+    linear-gradient(165deg, #fff8ec 0%, #f6dbb4 100%);
+  border: 3px solid #e3b48a;
+  box-shadow: inset 0 -9px 0 rgba(227, 180, 138, 0.35), 0 10px 18px var(--sdg-shadow);
+  animation: sdg-bounce 1.5s ease-in-out infinite;
+}
+
+#squishy-dumpling-game .boardgame-css-dumpling:before {
+  content: "";
+  position: absolute;
+  top: -13px;
+  left: 50%;
+  width: 28px;
+  height: 20px;
+  margin-left: -14px;
+  border-radius: 50% 50% 35% 35%;
+  background: #fff6e8;
+  border: 3px solid #e3b48a;
+  border-bottom: 0;
+}
+
+#squishy-dumpling-game .boardgame-css-dumpling:after {
+  content: "";
+  position: absolute;
+  top: 52px;
+  left: 16px;
+  width: 17px;
+  height: 9px;
+  border-radius: 50%;
+  background: #ffa9bb;
+  box-shadow: 69px 0 0 #ffa9bb;
+  opacity: 0.85;
+}
+
+#squishy-dumpling-game .boardgame-css-dumpling-eye {
+  position: absolute;
+  top: 38px;
+  width: 9px;
+  height: 12px;
+  border-radius: 50%;
+  background: #59464a;
+}
+
+#squishy-dumpling-game .boardgame-css-dumpling-eye:after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+#squishy-dumpling-game .boardgame-css-dumpling-eye--left { left: 36px; }
+#squishy-dumpling-game .boardgame-css-dumpling-eye--right { right: 36px; }
+
+#squishy-dumpling-game .boardgame-css-dumpling-mouth {
+  position: absolute;
+  top: 53px;
+  left: 50%;
+  width: 16px;
+  height: 8px;
+  margin-left: -8px;
+  border: 3px solid #59464a;
+  border-top: 0;
+  border-radius: 0 0 16px 16px;
+}
+
+#squishy-dumpling-game .boardgame-css-dumpling--golden {
+  background:
+    radial-gradient(ellipse at 32% 26%, rgba(255, 255, 255, 0.95) 0 9%, transparent 10%),
+    linear-gradient(165deg, #fff06a 0%, #ffb21a 100%);
+  border-color: #d98a00;
+  box-shadow: inset 0 -9px 0 rgba(217, 138, 0, 0.3), 0 0 0 10px rgba(255, 212, 59, 0.3), 0 10px 18px var(--sdg-shadow);
+}
+
+#squishy-dumpling-game .boardgame-css-dumpling--golden:before {
+  background: #fff3a0;
+  border-color: #d98a00;
+}
+
+#squishy-dumpling-game .boardgame-css-dumpling-crown {
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  z-index: 2;
+  width: 54px;
+  height: 32px;
+  margin-left: -27px;
+  background: linear-gradient(180deg, #ffe066 0%, #ffb321 100%);
+  clip-path: polygon(0 100%, 0 20%, 22% 55%, 50% 0, 78% 55%, 100% 20%, 100% 100%);
+  filter: drop-shadow(0 2px 0 #c97f00);
+}
+
+#squishy-dumpling-game .boardgame-css-dumpling-crown:after {
+  content: "";
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  width: 9px;
+  height: 9px;
+  margin-left: -4.5px;
+  border-radius: 50%;
+  background: #ff6f91;
+}
+
+/* ---------- Win celebration ---------- */
+
+#squishy-dumpling-game.boardgame-celebrating {
+  box-shadow: inset 0 0 0 5px rgba(255, 143, 171, 0.85);
+}
+
+@media (max-width: 640px) {
+  #squishy-dumpling-game #boardgame-hud {
+    border-radius: 0 0 20px 20px;
+  }
+
+  #squishy-dumpling-game #boardgame-hud h1 {
+    font-size: 15px;
+  }
+
+  #squishy-dumpling-game .boardgame-modal-panel h2 {
+    font-size: 19px;
+  }
+
+  #squishy-dumpling-game #boardgame-msg-body.boardgame-wisdom-modal {
+    border-width: 9px;
+    border-radius: 38px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #squishy-dumpling-game .boardgame-setup-characters svg,
+  #squishy-dumpling-game .boardgame-css-dumpling,
+  #squishy-dumpling-game .boardgame-token.boardgame-current {
+    animation: none;
+  }
+}
+
+</style>
+<div id="squishy-dumpling-game">
+
+  <div id="boardgame-app-container">
+
+    <div id="boardgame-hud">
+      <h1>Squishy <span>Dumpling</span> Board Game/h1>
+      <div id="boardgame-players"></div>
+
+      <div class="boardgame-dice-widget">
+        <div class="boardgame-dice-stage" id="boardgame-toy-dice-stage" onclick="window.rollDice()">
+          <div id="boardgame-toy-dice" class="boardgame-dice" style="transform: rotateX(0deg) rotateY(0deg);">
+            <div class="boardgame-dice-face boardgame-face-1"><span class="boardgame-dice-dot boardgame-dot-center"></span></div>
+            <div class="boardgame-dice-face boardgame-face-2"><span class="boardgame-dice-dot boardgame-dot-top-left"></span><span class="boardgame-dice-dot boardgame-dot-bottom-right"></span></div>
+            <div class="boardgame-dice-face boardgame-face-3"><span class="boardgame-dice-dot boardgame-dot-top-left"></span><span class="boardgame-dice-dot boardgame-dot-center"></span><span class="boardgame-dice-dot boardgame-dot-bottom-right"></span></div>
+            <div class="boardgame-dice-face boardgame-face-4"><span class="boardgame-dice-dot boardgame-dot-top-left"></span><span class="boardgame-dice-dot boardgame-dot-top-right"></span><span class="boardgame-dice-dot boardgame-dot-bottom-left"></span><span class="boardgame-dice-dot boardgame-dot-bottom-right"></span></div>
+            <div class="boardgame-dice-face boardgame-face-5"><span class="boardgame-dice-dot boardgame-dot-top-left"></span><span class="boardgame-dice-dot boardgame-dot-top-right"></span><span class="boardgame-dice-dot boardgame-dot-center"></span><span class="boardgame-dice-dot boardgame-dot-bottom-left"></span><span class="boardgame-dice-dot boardgame-dot-bottom-right"></span></div>
+            <div class="boardgame-dice-face boardgame-face-6"><span class="boardgame-dice-dot boardgame-dot-top-left"></span><span class="boardgame-dice-dot boardgame-dot-top-right"></span><span class="boardgame-dice-dot boardgame-dot-middle-left"></span><span class="boardgame-dice-dot boardgame-dot-middle-right"></span><span class="boardgame-dice-dot boardgame-dot-bottom-left"></span><span class="boardgame-dice-dot boardgame-dot-bottom-right"></span></div>
+          </div>
+        </div>
+
+        <div class="boardgame-dice-controls">
+          <span id="boardgame-turn-label">Turn</span>
+          <button type="button" class="boardgame-roll-button" id="boardgame-roll-btn" onclick="window.rollDice()">Roll 🎲</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="boardgame-scroller">
+      <div id="boardgame-board-viewport">
+
+        <div class="boardgame-board-panel" id="boardgame-panel-0">
+          <img class="boardgame-artwork-stage" src="squish-stage1.png" alt="Stage 1 - Moonlit Steamer" loading="eager">
+          <div class="boardgame-panel-spaces" id="boardgame-spaces-0"></div>
+        </div>
+
+        <div class="boardgame-board-panel" id="boardgame-panel-1">
+          <img class="boardgame-artwork-stage" src="squish-stage2.jpeg" alt="Stage 2 - Soy Sauce Caves" loading="eager">
+          <div class="boardgame-panel-spaces" id="boardgame-spaces-1"></div>
+        </div>
+
+        <div class="boardgame-board-panel" id="boardgame-panel-2">
+          <img class="boardgame-artwork-stage" src="squish-stage3.jpeg" alt="Stage 3 - Steam Cloud Kingdom" loading="eager">
+          <div class="boardgame-panel-spaces" id="boardgame-spaces-2"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Setup overlay -->
+  <div class="boardgame-overlay boardgame-visible" id="boardgame-setup">
+    <div class="boardgame-modal-panel">
+      <div class="boardgame-setup-characters">
+        <svg class="sdm-dumpling" viewBox="0 0 120 112" role="img" aria-label="Cloud Cream"><defs><linearGradient id="sdm-classic-body-hdr0" x1="0" y1="0" x2="0.8" y2="1"><stop offset="0%" stop-color="#fff0d8"></stop><stop offset="100%" stop-color="#f3d4ac"></stop></linearGradient><linearGradient id="sdm-classic-shine-hdr0" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ffffff" stop-opacity=".85"></stop><stop offset="100%" stop-color="#ffffff" stop-opacity="0"></stop></linearGradient><clipPath id="sdm-classic-clip-hdr0"><path d="M15 70 Q9 53 25 39 Q35 30 45 26 Q52 18 60 25 Q68 18 75 27 Q90 30 99 43 Q112 57 105 75 Q98 95 60 98 Q22 97 15 70Z"></path></clipPath></defs><path d="M15 70 Q9 53 25 39 Q35 30 45 26 Q52 18 60 25 Q68 18 75 27 Q90 30 99 43 Q112 57 105 75 Q98 95 60 98 Q22 97 15 70Z" fill="url(#sdm-classic-body-hdr0)" stroke="#dba98a" stroke-width="2.5" stroke-linejoin="round"></path><path d="M29 43 Q39 32 47 32 M52 29 Q60 24 66 31 M74 32 Q84 34 91 45" fill="none" stroke="#fffaf0" stroke-width="4" stroke-linecap="round" opacity=".9"></path><ellipse cx="44" cy="62" rx="3.7" ry="5" fill="#59464a"></ellipse><ellipse cx="76" cy="62" rx="3.7" ry="5" fill="#59464a"></ellipse><path d="M54 71 Q60 78 66 71" fill="none" stroke="#59464a" stroke-width="2.8" stroke-linecap="round"></path><ellipse cx="34" cy="70" rx="7" ry="4" fill="#f49ca8" opacity=".75"></ellipse><ellipse cx="86" cy="70" rx="7" ry="4" fill="#f49ca8" opacity=".75"></ellipse><path d="M28 53 Q31 49 35 52 M83 52 Q88 49 91 53" fill="none" stroke="#fffaf0" stroke-width="2.5" stroke-linecap="round"></path></svg>
+        <svg class="sdm-dumpling sdm-dumpling--small" viewBox="0 0 120 112" role="img" aria-label="Strawberry Milk"><defs><linearGradient id="sdm-strawberry-body-hdr1" x1="0" y1="0" x2="0.8" y2="1"><stop offset="0%" stop-color="#ffd8e5"></stop><stop offset="100%" stop-color="#f4aac3"></stop></linearGradient><linearGradient id="sdm-strawberry-shine-hdr1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ffffff" stop-opacity=".85"></stop><stop offset="100%" stop-color="#ffffff" stop-opacity="0"></stop></linearGradient><clipPath id="sdm-strawberry-clip-hdr1"><path d="M15 70 Q9 53 25 39 Q35 30 45 26 Q52 18 60 25 Q68 18 75 27 Q90 30 99 43 Q112 57 105 75 Q98 95 60 98 Q22 97 15 70Z"></path></clipPath></defs><path d="M15 70 Q9 53 25 39 Q35 30 45 26 Q52 18 60 25 Q68 18 75 27 Q90 30 99 43 Q112 57 105 75 Q98 95 60 98 Q22 97 15 70Z" fill="url(#sdm-strawberry-body-hdr1)" stroke="#e98cab" stroke-width="2.5" stroke-linejoin="round"></path><path d="M29 43 Q39 32 47 32 M52 29 Q60 24 66 31 M74 32 Q84 34 91 45" fill="none" stroke="#fffaf0" stroke-width="4" stroke-linecap="round" opacity=".9"></path><path d="M77 35 Q87 22 95 33 Q93 44 77 35Z" fill="#f18eae" stroke="#db7595" stroke-width="1.5"></path><ellipse cx="44" cy="62" rx="3.7" ry="5" fill="#59464a"></ellipse><ellipse cx="76" cy="62" rx="3.7" ry="5" fill="#59464a"></ellipse><path d="M54 71 Q60 78 66 71" fill="none" stroke="#59464a" stroke-width="2.8" stroke-linecap="round"></path><ellipse cx="34" cy="70" rx="7" ry="4" fill="#f49ca8" opacity=".75"></ellipse><ellipse cx="86" cy="70" rx="7" ry="4" fill="#f49ca8" opacity=".75"></ellipse><path d="M28 53 Q31 49 35 52 M83 52 Q88 49 91 53" fill="none" stroke="#fffaf0" stroke-width="2.5" stroke-linecap="round"></path></svg>
+        <svg class="sdm-dumpling sdm-dumpling--small" viewBox="0 0 120 112" role="img" aria-label="Matcha Mochi"><defs><linearGradient id="sdm-matcha-body-hdr2" x1="0" y1="0" x2="0.8" y2="1"><stop offset="0%" stop-color="#d7edb9"></stop><stop offset="100%" stop-color="#a9ce85"></stop></linearGradient><linearGradient id="sdm-matcha-shine-hdr2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ffffff" stop-opacity=".85"></stop><stop offset="100%" stop-color="#ffffff" stop-opacity="0"></stop></linearGradient><clipPath id="sdm-matcha-clip-hdr2"><path d="M15 70 Q9 53 25 39 Q35 30 45 26 Q52 18 60 25 Q68 18 75 27 Q90 30 99 43 Q112 57 105 75 Q98 95 60 98 Q22 97 15 70Z"></path></clipPath></defs><path d="M15 70 Q9 53 25 39 Q35 30 45 26 Q52 18 60 25 Q68 18 75 27 Q90 30 99 43 Q112 57 105 75 Q98 95 60 98 Q22 97 15 70Z" fill="url(#sdm-matcha-body-hdr2)" stroke="#7ca95e" stroke-width="2.5" stroke-linejoin="round"></path><path d="M29 43 Q39 32 47 32 M52 29 Q60 24 66 31 M74 32 Q84 34 91 45" fill="none" stroke="#fffaf0" stroke-width="4" stroke-linecap="round" opacity=".9"></path><path d="M76 35 Q83 17 98 25 Q95 39 76 35Z" fill="#7eae5c" stroke="#659449" stroke-width="1.5"></path><ellipse cx="44" cy="62" rx="3.7" ry="5" fill="#59464a"></ellipse><ellipse cx="76" cy="62" rx="3.7" ry="5" fill="#59464a"></ellipse><path d="M54 71 Q60 78 66 71" fill="none" stroke="#59464a" stroke-width="2.8" stroke-linecap="round"></path><ellipse cx="34" cy="70" rx="7" ry="4" fill="#f49ca8" opacity=".75"></ellipse><ellipse cx="86" cy="70" rx="7" ry="4" fill="#f49ca8" opacity=".75"></ellipse><path d="M28 53 Q31 49 35 52 M83 52 Q88 49 91 53" fill="none" stroke="#fffaf0" stroke-width="2.5" stroke-linecap="round"></path></svg>
+        <svg class="sdm-dumpling sdm-dumpling--small sdm-dumpling--golden" viewBox="0 0 120 112" role="img" aria-label="Honey Gold"><defs><linearGradient id="sdm-golden-body-hdr3" x1="0" y1="0" x2="0.8" y2="1"><stop offset="0%" stop-color="#fff064"></stop><stop offset="100%" stop-color="#ffad08"></stop></linearGradient><linearGradient id="sdm-golden-shine-hdr3" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ffffff" stop-opacity=".85"></stop><stop offset="100%" stop-color="#ffffff" stop-opacity="0"></stop></linearGradient><clipPath id="sdm-golden-clip-hdr3"><path d="M15 70 Q9 53 25 39 Q35 30 45 26 Q52 18 60 25 Q68 18 75 27 Q90 30 99 43 Q112 57 105 75 Q98 95 60 98 Q22 97 15 70Z"></path></clipPath></defs><circle class="sdm-special-halo" cx="60" cy="57" r="47" fill="#ffd43b" opacity=".45"></circle><path d="M16 46 L20 36 L24 46 L34 50 L24 54 L20 64 L16 54 L6 50Z" fill="#ffbd20"></path><path d="M96 53 L100 43 L104 53 L114 57 L104 61 L100 71 L96 61 L86 57Z" fill="#ffbd20"></path><path d="M15 70 Q9 53 25 39 Q35 30 45 26 Q52 18 60 25 Q68 18 75 27 Q90 30 99 43 Q112 57 105 75 Q98 95 60 98 Q22 97 15 70Z" fill="url(#sdm-golden-body-hdr3)" stroke="#d97800" stroke-width="4" stroke-linejoin="round"></path><path d="M29 43 Q39 32 47 32 M52 29 Q60 24 66 31 M74 32 Q84 34 91 45" fill="none" stroke="#fffaf0" stroke-width="4" stroke-linecap="round" opacity=".9"></path><path d="M60 11 L67 23 L81 25 L71 35 L73 49 L60 42 L47 49 L49 35 L39 25 L53 23Z" fill="#fffef0" stroke="#e58b00" stroke-width="2.5" stroke-linejoin="round"></path><path d="M60 16 L64 26 L74 27 L66 34 L68 43 L60 38 L52 43 L54 34 L46 27 L56 26Z" fill="#ffbe19"></path><path d="M28 65 Q32 58 36 65 M84 65 Q88 58 92 65" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round"></path><ellipse cx="44" cy="62" rx="3.7" ry="5" fill="#59464a"></ellipse><ellipse cx="76" cy="62" rx="3.7" ry="5" fill="#59464a"></ellipse><path d="M54 71 Q60 78 66 71" fill="none" stroke="#59464a" stroke-width="2.8" stroke-linecap="round"></path><ellipse cx="34" cy="70" rx="7" ry="4" fill="#f49ca8" opacity=".75"></ellipse><ellipse cx="86" cy="70" rx="7" ry="4" fill="#f49ca8" opacity=".75"></ellipse><path d="M28 53 Q31 49 35 52 M83 52 Q88 49 91 53" fill="none" stroke="#fffaf0" stroke-width="2.5" stroke-linecap="round"></path></svg>
+        <svg class="sdm-dumpling sdm-dumpling--small sdm-dumpling--rainbow" viewBox="0 0 120 112" role="img" aria-label="Rainbow Pop"><defs><linearGradient id="sdm-rainbow-body-hdr4" x1="0" y1="0" x2="0.8" y2="1"><stop offset="0%" stop-color="#ff78bb"></stop><stop offset="28%" stop-color="#ffad69"></stop><stop offset="50%" stop-color="#fff078"></stop><stop offset="70%" stop-color="#71edc2"></stop><stop offset="100%" stop-color="#8a70ff"></stop></linearGradient><linearGradient id="sdm-rainbow-shine-hdr4" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ffffff" stop-opacity=".85"></stop><stop offset="100%" stop-color="#ffffff" stop-opacity="0"></stop></linearGradient><clipPath id="sdm-rainbow-clip-hdr4"><path d="M15 70 Q9 53 25 39 Q35 30 45 26 Q52 18 60 25 Q68 18 75 27 Q90 30 99 43 Q112 57 105 75 Q98 95 60 98 Q22 97 15 70Z"></path></clipPath></defs><circle class="sdm-special-halo" cx="60" cy="57" r="47" fill="#e3a0ff" opacity=".45"></circle><path d="M24 47 Q15 15 43 17" fill="none" stroke="#ff477e" stroke-width="8" stroke-linecap="round"></path><path d="M35 27 Q49 3 66 17" fill="none" stroke="#ffcf35" stroke-width="8" stroke-linecap="round"></path><path d="M59 18 Q83 8 92 34" fill="none" stroke="#42dba0" stroke-width="8" stroke-linecap="round"></path><path d="M15 70 Q9 53 25 39 Q35 30 45 26 Q52 18 60 25 Q68 18 75 27 Q90 30 99 43 Q112 57 105 75 Q98 95 60 98 Q22 97 15 70Z" fill="url(#sdm-rainbow-body-hdr4)" stroke="#6735db" stroke-width="4" stroke-linejoin="round"></path><g clip-path="url(#sdm-rainbow-clip-hdr4)"><path d="M5 47 L115 78" stroke="#ff477e" stroke-width="12" opacity=".85"></path><path d="M5 61 L115 92" stroke="#ffdc48" stroke-width="11" opacity=".9"></path><path d="M5 75 L100 102" stroke="#48e3a3" stroke-width="10" opacity=".9"></path><path d="M18 39 Q45 26 73 35" fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="round" opacity=".65"></path></g><path d="M29 43 Q39 32 47 32 M52 29 Q60 24 66 31 M74 32 Q84 34 91 45" fill="none" stroke="#fffaf0" stroke-width="4" stroke-linecap="round" opacity=".9"></path><path d="M32 51 L35 44 L38 51 L45 54 L38 57 L35 64 L32 57 L25 54Z" fill="#fffef0" stroke="#e7a5ff" stroke-width="1"></path><path d="M83 39 L86 32 L89 39 L96 42 L89 45 L86 52 L83 45 L76 42Z" fill="#fffef0" stroke="#e7a5ff" stroke-width="1"></path><circle cx="60" cy="51" r="3" fill="#ffffff"></circle><ellipse cx="44" cy="62" rx="3.7" ry="5" fill="#59464a"></ellipse><ellipse cx="76" cy="62" rx="3.7" ry="5" fill="#59464a"></ellipse><path d="M54 71 Q60 78 66 71" fill="none" stroke="#59464a" stroke-width="2.8" stroke-linecap="round"></path><ellipse cx="34" cy="70" rx="7" ry="4" fill="#f49ca8" opacity=".75"></ellipse><ellipse cx="86" cy="70" rx="7" ry="4" fill="#f49ca8" opacity=".75"></ellipse><path d="M28 53 Q31 49 35 52 M83 52 Q88 49 91 53" fill="none" stroke="#fffaf0" stroke-width="2.5" stroke-linecap="round"></path></svg>
+        <svg class="sdm-dumpling sdm-dumpling--small" viewBox="0 0 120 112" role="img" aria-label="Taro Bun"><defs><linearGradient id="sdm-taro-body-hdr5" x1="0" y1="0" x2="0.8" y2="1"><stop offset="0%" stop-color="#eadcff"></stop><stop offset="100%" stop-color="#bb9cec"></stop></linearGradient><linearGradient id="sdm-taro-shine-hdr5" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ffffff" stop-opacity=".85"></stop><stop offset="100%" stop-color="#ffffff" stop-opacity="0"></stop></linearGradient><clipPath id="sdm-taro-clip-hdr5"><path d="M15 70 Q9 53 25 39 Q35 30 45 26 Q52 18 60 25 Q68 18 75 27 Q90 30 99 43 Q112 57 105 75 Q98 95 60 98 Q22 97 15 70Z"></path></clipPath></defs><path d="M15 70 Q9 53 25 39 Q35 30 45 26 Q52 18 60 25 Q68 18 75 27 Q90 30 99 43 Q112 57 105 75 Q98 95 60 98 Q22 97 15 70Z" fill="url(#sdm-taro-body-hdr5)" stroke="#9a78d6" stroke-width="2.5" stroke-linejoin="round"></path><path d="M29 43 Q39 32 47 32 M52 29 Q60 24 66 31 M74 32 Q84 34 91 45" fill="none" stroke="#fffaf0" stroke-width="4" stroke-linecap="round" opacity=".9"></path><path d="M76 35 Q83 17 98 25 Q95 39 76 35Z" fill="#a98be0" stroke="#8a68c8" stroke-width="1.5"></path><ellipse cx="44" cy="62" rx="3.7" ry="5" fill="#59464a"></ellipse><ellipse cx="76" cy="62" rx="3.7" ry="5" fill="#59464a"></ellipse><path d="M54 71 Q60 78 66 71" fill="none" stroke="#59464a" stroke-width="2.8" stroke-linecap="round"></path><ellipse cx="34" cy="70" rx="7" ry="4" fill="#f49ca8" opacity=".75"></ellipse><ellipse cx="86" cy="70" rx="7" ry="4" fill="#f49ca8" opacity=".75"></ellipse><path d="M28 53 Q31 49 35 52 M83 52 Q88 49 91 53" fill="none" stroke="#fffaf0" stroke-width="2.5" stroke-linecap="round"></path></svg>
+      </div>
+      <h2>Squishy Dumpling Adventure</h2>
+      <p>Squish your way past the Moonlit Steamer, through the Soy Sauce Caves and up to the Dumpling Palace! How would you like to play?</p>
+      <div class="boardgame-player-counts boardgame-mode-buttons" id="boardgame-mode-btns">
+        <button type="button" class="boardgame-selected" data-mode="friends">Play with Friends</button>
+        <button type="button" data-mode="computer">Play Against the Computer</button>
+        <button type="button" data-mode="online">Play Online</button>
+      </div>
+      <div class="boardgame-online-panel" id="boardgame-online-panel">
+        <strong>Play with someone on another device</strong>
+        <label for="boardgame-online-name">Room name (only used when creating a room)</label>
+        <input id="boardgame-online-name" type="text" maxlength="24" placeholder="e.g. TEST room">
+        <div class="boardgame-online-actions">
+          <button type="button" class="boardgame-action-button boardgame-gold-button" id="boardgame-create-room">Create a room</button>
+        </div>
+        <label for="boardgame-online-pin-input">Or enter a six-digit room PIN</label>
+        <input id="boardgame-online-pin-input" type="text" inputmode="numeric" maxlength="6" placeholder="123456">
+        <div class="boardgame-online-actions">
+          <button type="button" class="boardgame-action-button" id="boardgame-join-room">Join room</button>
+        </div>
+        <div class="boardgame-online-status" id="boardgame-online-status" aria-live="polite">Choose a character below, then create or join a room.</div>
+        <div class="boardgame-online-pin" id="boardgame-online-pin" hidden></div>
+        <button type="button" class="boardgame-action-button boardgame-gold-button boardgame-online-start" id="boardgame-online-start">Start squishy online adventure</button>
+      </div>
+      <p id="boardgame-player-instruction">Select the number of players:</p>
+      <div class="boardgame-player-counts" id="boardgame-count-btns"></div>
+      <div id="boardgame-prows"></div>
+      <button type="button" class="boardgame-action-button boardgame-gold-button" id="boardgame-start-btn">Start Squishing!</button>
+    </div>
+  </div>
+
+  <!-- Message overlay -->
+  <div class="boardgame-overlay" id="boardgame-msg">
+    <div class="boardgame-modal-panel" id="boardgame-msg-body"></div>
+  </div>
+
+  <div id="boardgame-toast"></div>
+
+</div>
+
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
+import { getDatabase, ref, set, get, onValue, update, remove, push, onDisconnect, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-database.js";
+var firebaseConfig = {
+  apiKey: "AIzaSyDKR730iaG6o4QQv3QNpvKAQizNQIhPiNM",
+  authDomain: "woodlan-adventure.firebaseapp.com",
+  projectId: "woodlan-adventure",
+  storageBucket: "woodlan-adventure.firebasestorage.app",
+  messagingSenderId: "506412622035",
+  appId: "1:506412622035:web:3ef760034a3126f8d43426",
+  databaseURL: "https://woodlan-adventure-default-rtdb.europe-west1.firebasedatabase.app"
+};
+try {
+  var app = initializeApp(firebaseConfig, "dumplingAdventureMultiplayer");
+  var auth = getAuth(app);
+  var db = getDatabase(app);
+  window._FB = {
+    auth: auth, db: db, ref: ref, set: set, get: get, onValue: onValue,
+    update: update, remove: remove, push: push, onDisconnect: onDisconnect,
+    runTransaction: runTransaction, serverTimestamp: serverTimestamp,
+    signIn: function() { return auth.currentUser ? Promise.resolve(auth.currentUser) : signInAnonymously(auth).then(function(r){return r.user;}); }
+  };
+} catch (e) {
+  window._FB_ERROR = e;
+}
+</script>
+<script>
+(function() {
+  var gameRoot = document.getElementById("squishy-dumpling-game");
+
+  if (!gameRoot || gameRoot.getAttribute("data-boardgame-initialised") === "true") {
+    return;
+  }
+
+  gameRoot.setAttribute("data-boardgame-initialised", "true");
+
+    var boardgameCelebrationFrame = null;
+    var boardgameCelebrationTimer = null;
+    var boardgameCelebrationCanvas = null;
+    var boardgameCelebrationContext = null;
+    var boardgameCelebrationAudio = null;
+    var boardgameCelebrationAudioTimer = null;
+    var boardgameGameOver = false;
+    var boardgameSteamPuffs = [];
+    var boardgameFireworks = [];
+    var boardgameConfetti = [];
+
+  var CHARACTERS = {
+  fox: {
+    name: "Cloud Cream",
+    svg: '<svg class="sdm-dumpling sdm-dumpling--small" viewBox="0 0 120 112" role="img" aria-label="Cloud Cream"><defs><linearGradient id="sdm-classic-body" x1="0" y1="0" x2="0.8" y2="1"><stop offset="0%" stop-color="#fff0d8"></stop><stop offset="100%" stop-color="#f3d4ac"></stop></linearGradient><linearGradient id="sdm-classic-shine" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ffffff" stop-opacity=".85"></stop><stop offset="100%" stop-color="#ffffff" stop-opacity="0"></stop></linearGradient><clipPath id="sdm-classic-clip"><path d="M15 70 Q9 53 25 39 Q35 30 45 26 Q52 18 60 25 Q68 18 75 27 Q90 30 99 43 Q112 57 105 75 Q98 95 60 98 Q22 97 15 70Z"></path></clipPath></defs><path d="M15 70 Q9 53 25 39 Q35 30 45 26 Q52 18 60 25 Q68 18 75 27 Q90 30 99 43 Q112 57 105 75 Q98 95 60 98 Q22 97 15 70Z" fill="url(#sdm-classic-body)" stroke="#dba98a" stroke-width="2.5" stroke-linejoin="round"></path><path d="M29 43 Q39 32 47 32 M52 29 Q60 24 66 31 M74 32 Q84 34 91 45" fill="none" stroke="#fffaf0" stroke-width="4" stroke-linecap="round" opacity=".9"></path><ellipse cx="44" cy="62" rx="3.7" ry="5" fill="#59464a"></ellipse><ellipse cx="76" cy="62" rx="3.7" ry="5" fill="#59464a"></ellipse><path d="M54 71 Q60 78 66 71" fill="none" stroke="#59464a" stroke-width="2.8" stroke-linecap="round"></path><ellipse cx="34" cy="70" rx="7" ry="4" fill="#f49ca8" opacity=".75"></ellipse><ellipse cx="86" cy="70" rx="7" ry="4" fill="#f49ca8" opacity=".75"></ellipse><path d="M28 53 Q31 49 35 52 M83 52 Q88 49 91 53" fill="none" stroke="#fffaf0" stroke-width="2.5" stroke-linecap="round"></path></svg>'
+  },
+  hedgehog: {
+    name: "Strawberry Milk",
+    svg: '<svg class="sdm-dumpling sdm-dumpling--small" viewBox="0 0 120 112" role="img" aria-label="Strawberry Milk"><defs><linearGradient id="sdm-strawberry-body" x1="0" y1="0" x2="0.8" y2="1"><stop offset="0%" stop-color="#ffd8e5"></stop><stop offset="100%" stop-color="#f4aac3"></stop></linearGradient><linearGradient id="sdm-strawberry-shine" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ffffff" stop-opacity=".85"></stop><stop offset="100%" stop-color="#ffffff" stop-opacity="0"></stop></linearGradient><clipPath id="sdm-strawberry-clip"><path d="M15 70 Q9 53 25 39 Q35 30 45 26 Q52 18 60 25 Q68 18 75 27 Q90 30 99 43 Q112 57 105 75 Q98 95 60 98 Q22 97 15 70Z"></path></clipPath></defs><path d="M15 70 Q9 53 25 39 Q35 30 45 26 Q52 18 60 25 Q68 18 75 27 Q90 30 99 43 Q112 57 105 75 Q98 95 60 98 Q22 97 15 70Z" fill="url(#sdm-strawberry-body)" stroke="#e98cab" stroke-width="2.5" stroke-linejoin="round"></path><path d="M29 43 Q39 32 47 32 M52 29 Q60 24 66 31 M74 32 Q84 34 91 45" fill="none" stroke="#fffaf0" stroke-width="4" stroke-linecap="round" opacity=".9"></path><path d="M77 35 Q87 22 95 33 Q93 44 77 35Z" fill="#f18eae" stroke="#db7595" stroke-width="1.5"></path><ellipse cx="44" cy="62" rx="3.7" ry="5" fill="#59464a"></ellipse><ellipse cx="76" cy="62" rx="3.7" ry="5" fill="#59464a"></ellipse><path d="M54 71 Q60 78 66 71" fill="none" stroke="#59464a" stroke-width="2.8" stroke-linecap="round"></path><ellipse cx="34" cy="70" rx="7" ry="4" fill="#f49ca8" opacity=".75"></ellipse><ellipse cx="86" cy="70" rx="7" ry="4" fill="#f49ca8" opacity=".75"></ellipse><path d="M28 53 Q31 49 35 52 M83 52 Q88 49 91 53" fill="none" stroke="#fffaf0" stroke-width="2.5" stroke-linecap="round"></path></svg>'
+  },
+  robin: {
+    name: "Matcha Mochi",
+    svg: '<svg class="sdm-dumpling sdm-dumpling--small" viewBox="0 0 120 112" role="img" aria-label="Matcha Mochi"><defs><linearGradient id="sdm-matcha-body" x1="0" y1="0" x2="0.8" y2="1"><stop offset="0%" stop-color="#d7edb9"></stop><stop offset="100%" stop-color="#a9ce85"></stop></linearGradient><linearGradient id="sdm-matcha-shine" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ffffff" stop-opacity=".85"></stop><stop offset="100%" stop-color="#ffffff" stop-opacity="0"></stop></linearGradient><clipPath id="sdm-matcha-clip"><path d="M15 70 Q9 53 25 39 Q35 30 45 26 Q52 18 60 25 Q68 18 75 27 Q90 30 99 43 Q112 57 105 75 Q98 95 60 98 Q22 97 15 70Z"></path></clipPath></defs><path d="M15 70 Q9 53 25 39 Q35 30 45 26 Q52 18 60 25 Q68 18 75 27 Q90 30 99 43 Q112 57 105 75 Q98 95 60 98 Q22 97 15 70Z" fill="url(#sdm-matcha-body)" stroke="#7ca95e" stroke-width="2.5" stroke-linejoin="round"></path><path d="M29 43 Q39 32 47 32 M52 29 Q60 24 66 31 M74 32 Q84 34 91 45" fill="none" stroke="#fffaf0" stroke-width="4" stroke-linecap="round" opacity=".9"></path><path d="M76 35 Q83 17 98 25 Q95 39 76 35Z" fill="#7eae5c" stroke="#659449" stroke-width="1.5"></path><ellipse cx="44" cy="62" rx="3.7" ry="5" fill="#59464a"></ellipse><ellipse cx="76" cy="62" rx="3.7" ry="5" fill="#59464a"></ellipse><path d="M54 71 Q60 78 66 71" fill="none" stroke="#59464a" stroke-width="2.8" stroke-linecap="round"></path><ellipse cx="34" cy="70" rx="7" ry="4" fill="#f49ca8" opacity=".75"></ellipse><ellipse cx="86" cy="70" rx="7" ry="4" fill="#f49ca8" opacity=".75"></ellipse><path d="M28 53 Q31 49 35 52 M83 52 Q88 49 91 53" fill="none" stroke="#fffaf0" stroke-width="2.5" stroke-linecap="round"></path></svg>'
+  },
+  otter: {
+    name: "Honey Gold",
+    svg: '<svg class="sdm-dumpling sdm-dumpling--small sdm-dumpling--golden" viewBox="0 0 120 112" role="img" aria-label="Honey Gold"><defs><linearGradient id="sdm-golden-body" x1="0" y1="0" x2="0.8" y2="1"><stop offset="0%" stop-color="#fff064"></stop><stop offset="100%" stop-color="#ffad08"></stop></linearGradient><linearGradient id="sdm-golden-shine" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ffffff" stop-opacity=".85"></stop><stop offset="100%" stop-color="#ffffff" stop-opacity="0"></stop></linearGradient><clipPath id="sdm-golden-clip"><path d="M15 70 Q9 53 25 39 Q35 30 45 26 Q52 18 60 25 Q68 18 75 27 Q90 30 99 43 Q112 57 105 75 Q98 95 60 98 Q22 97 15 70Z"></path></clipPath></defs><circle class="sdm-special-halo" cx="60" cy="57" r="47" fill="#ffd43b" opacity=".45"></circle><path d="M16 46 L20 36 L24 46 L34 50 L24 54 L20 64 L16 54 L6 50Z" fill="#ffbd20"></path><path d="M96 53 L100 43 L104 53 L114 57 L104 61 L100 71 L96 61 L86 57Z" fill="#ffbd20"></path><path d="M15 70 Q9 53 25 39 Q35 30 45 26 Q52 18 60 25 Q68 18 75 27 Q90 30 99 43 Q112 57 105 75 Q98 95 60 98 Q22 97 15 70Z" fill="url(#sdm-golden-body)" stroke="#d97800" stroke-width="4" stroke-linejoin="round"></path><path d="M29 43 Q39 32 47 32 M52 29 Q60 24 66 31 M74 32 Q84 34 91 45" fill="none" stroke="#fffaf0" stroke-width="4" stroke-linecap="round" opacity=".9"></path><path d="M60 11 L67 23 L81 25 L71 35 L73 49 L60 42 L47 49 L49 35 L39 25 L53 23Z" fill="#fffef0" stroke="#e58b00" stroke-width="2.5" stroke-linejoin="round"></path><path d="M60 16 L64 26 L74 27 L66 34 L68 43 L60 38 L52 43 L54 34 L46 27 L56 26Z" fill="#ffbe19"></path><path d="M28 65 Q32 58 36 65 M84 65 Q88 58 92 65" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round"></path><ellipse cx="44" cy="62" rx="3.7" ry="5" fill="#59464a"></ellipse><ellipse cx="76" cy="62" rx="3.7" ry="5" fill="#59464a"></ellipse><path d="M54 71 Q60 78 66 71" fill="none" stroke="#59464a" stroke-width="2.8" stroke-linecap="round"></path><ellipse cx="34" cy="70" rx="7" ry="4" fill="#f49ca8" opacity=".75"></ellipse><ellipse cx="86" cy="70" rx="7" ry="4" fill="#f49ca8" opacity=".75"></ellipse><path d="M28 53 Q31 49 35 52 M83 52 Q88 49 91 53" fill="none" stroke="#fffaf0" stroke-width="2.5" stroke-linecap="round"></path></svg>'
+  },
+  sheep: {
+    name: "Rainbow Pop",
+    svg: '<svg class="sdm-dumpling sdm-dumpling--small sdm-dumpling--rainbow" viewBox="0 0 120 112" role="img" aria-label="Rainbow Pop"><defs><linearGradient id="sdm-rainbow-body" x1="0" y1="0" x2="0.8" y2="1"><stop offset="0%" stop-color="#ff78bb"></stop><stop offset="28%" stop-color="#ffad69"></stop><stop offset="50%" stop-color="#fff078"></stop><stop offset="70%" stop-color="#71edc2"></stop><stop offset="100%" stop-color="#8a70ff"></stop></linearGradient><linearGradient id="sdm-rainbow-shine" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ffffff" stop-opacity=".85"></stop><stop offset="100%" stop-color="#ffffff" stop-opacity="0"></stop></linearGradient><clipPath id="sdm-rainbow-clip"><path d="M15 70 Q9 53 25 39 Q35 30 45 26 Q52 18 60 25 Q68 18 75 27 Q90 30 99 43 Q112 57 105 75 Q98 95 60 98 Q22 97 15 70Z"></path></clipPath></defs><circle class="sdm-special-halo" cx="60" cy="57" r="47" fill="#e3a0ff" opacity=".45"></circle><path d="M24 47 Q15 15 43 17" fill="none" stroke="#ff477e" stroke-width="8" stroke-linecap="round"></path><path d="M35 27 Q49 3 66 17" fill="none" stroke="#ffcf35" stroke-width="8" stroke-linecap="round"></path><path d="M59 18 Q83 8 92 34" fill="none" stroke="#42dba0" stroke-width="8" stroke-linecap="round"></path><path d="M15 70 Q9 53 25 39 Q35 30 45 26 Q52 18 60 25 Q68 18 75 27 Q90 30 99 43 Q112 57 105 75 Q98 95 60 98 Q22 97 15 70Z" fill="url(#sdm-rainbow-body)" stroke="#6735db" stroke-width="4" stroke-linejoin="round"></path><g clip-path="url(#sdm-rainbow-clip)"><path d="M5 47 L115 78" stroke="#ff477e" stroke-width="12" opacity=".85"></path><path d="M5 61 L115 92" stroke="#ffdc48" stroke-width="11" opacity=".9"></path><path d="M5 75 L100 102" stroke="#48e3a3" stroke-width="10" opacity=".9"></path><path d="M18 39 Q45 26 73 35" fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="round" opacity=".65"></path></g><path d="M29 43 Q39 32 47 32 M52 29 Q60 24 66 31 M74 32 Q84 34 91 45" fill="none" stroke="#fffaf0" stroke-width="4" stroke-linecap="round" opacity=".9"></path><path d="M32 51 L35 44 L38 51 L45 54 L38 57 L35 64 L32 57 L25 54Z" fill="#fffef0" stroke="#e7a5ff" stroke-width="1"></path><path d="M83 39 L86 32 L89 39 L96 42 L89 45 L86 52 L83 45 L76 42Z" fill="#fffef0" stroke="#e7a5ff" stroke-width="1"></path><circle cx="60" cy="51" r="3" fill="#ffffff"></circle><ellipse cx="44" cy="62" rx="3.7" ry="5" fill="#59464a"></ellipse><ellipse cx="76" cy="62" rx="3.7" ry="5" fill="#59464a"></ellipse><path d="M54 71 Q60 78 66 71" fill="none" stroke="#59464a" stroke-width="2.8" stroke-linecap="round"></path><ellipse cx="34" cy="70" rx="7" ry="4" fill="#f49ca8" opacity=".75"></ellipse><ellipse cx="86" cy="70" rx="7" ry="4" fill="#f49ca8" opacity=".75"></ellipse><path d="M28 53 Q31 49 35 52 M83 52 Q88 49 91 53" fill="none" stroke="#fffaf0" stroke-width="2.5" stroke-linecap="round"></path></svg>'
+  },
+  bunny: {
+    name: "Taro Bun",
+    svg: '<svg class="sdm-dumpling sdm-dumpling--small" viewBox="0 0 120 112" role="img" aria-label="Taro Bun"><defs><linearGradient id="sdm-taro-body" x1="0" y1="0" x2="0.8" y2="1"><stop offset="0%" stop-color="#eadcff"></stop><stop offset="100%" stop-color="#bb9cec"></stop></linearGradient><linearGradient id="sdm-taro-shine" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ffffff" stop-opacity=".85"></stop><stop offset="100%" stop-color="#ffffff" stop-opacity="0"></stop></linearGradient><clipPath id="sdm-taro-clip"><path d="M15 70 Q9 53 25 39 Q35 30 45 26 Q52 18 60 25 Q68 18 75 27 Q90 30 99 43 Q112 57 105 75 Q98 95 60 98 Q22 97 15 70Z"></path></clipPath></defs><path d="M15 70 Q9 53 25 39 Q35 30 45 26 Q52 18 60 25 Q68 18 75 27 Q90 30 99 43 Q112 57 105 75 Q98 95 60 98 Q22 97 15 70Z" fill="url(#sdm-taro-body)" stroke="#9a78d6" stroke-width="2.5" stroke-linejoin="round"></path><path d="M29 43 Q39 32 47 32 M52 29 Q60 24 66 31 M74 32 Q84 34 91 45" fill="none" stroke="#fffaf0" stroke-width="4" stroke-linecap="round" opacity=".9"></path><path d="M76 35 Q83 17 98 25 Q95 39 76 35Z" fill="#a98be0" stroke="#8a68c8" stroke-width="1.5"></path><ellipse cx="44" cy="62" rx="3.7" ry="5" fill="#59464a"></ellipse><ellipse cx="76" cy="62" rx="3.7" ry="5" fill="#59464a"></ellipse><path d="M54 71 Q60 78 66 71" fill="none" stroke="#59464a" stroke-width="2.8" stroke-linecap="round"></path><ellipse cx="34" cy="70" rx="7" ry="4" fill="#f49ca8" opacity=".75"></ellipse><ellipse cx="86" cy="70" rx="7" ry="4" fill="#f49ca8" opacity=".75"></ellipse><path d="M28 53 Q31 49 35 52 M83 52 Q88 49 91 53" fill="none" stroke="#fffaf0" stroke-width="2.5" stroke-linecap="round"></path></svg>'
+  }
+};
+
+var characterSvgUid = 0;
+
+function characterImageHTML(charKey, extraClass) {
+  var character = CHARACTERS[charKey];
+
+  if (!character) return "";
+
+  characterSvgUid += 1;
+  var svg = character.svg.replace(/(id="|url\(#)(sdm-[\w-]+?)(["\)])/g, "$1$2-c" + characterSvgUid + "$3");
+
+  return '<div class="boardgame-character-image' +
+    (extraClass ? ' ' + extraClass : '') +
+    '">' + svg + '</div>';
+}
+
+  var WISDOM_CARDS = [
+    {
+      question: "What dark, salty sauce do people love to dip dumplings in?",
+      answer: "Soy sauce",
+      acceptedAnswers: ["soy sauce", "soy", "soysauce", "soya sauce"],
+      action: "Move 1 space",
+      fx: { type: "move", n: 1 }
+    },
+    {
+      question: "Are dumplings in a bamboo basket cooked with steam or ice?",
+      answer: "Steam",
+      acceptedAnswers: ["steam", "steaming", "steamed", "with steam"],
+      action: "Move 1 space",
+      fx: { type: "move", n: 1 }
+    },
+    {
+      question: "What two thin sticks do lots of people use to eat dumplings?",
+      answer: "Chopsticks",
+      acceptedAnswers: ["chopsticks", "chopstick", "chop sticks"],
+      action: "Move 1 space",
+      fx: { type: "move", n: 1 }
+    },
+    {
+      question: "What tall green plant are steamer baskets made from?",
+      answer: "Bamboo",
+      acceptedAnswers: ["bamboo"],
+      action: "Move 1 space",
+      fx: { type: "move", n: 1 }
+    },
+    {
+      question: "Which country do gyoza dumplings come from?",
+      answer: "Japan",
+      acceptedAnswers: ["japan"],
+      action: "Move 1 space",
+      fx: { type: "move", n: 1 }
+    },
+    {
+      question: "What are dumplings from Poland called? (Hint: starts with P)",
+      answer: "Pierogi",
+      acceptedAnswers: ["pierogi", "pierogis", "pierogies", "perogi", "perogies", "pierogy", "perogy"],
+      action: "Move 1 space",
+      fx: { type: "move", n: 1 }
+    },
+    {
+      question: "What are momos? (Hint: a squishy food from Nepal!)",
+      answer: "Dumplings",
+      acceptedAnswers: ["dumplings", "dumpling", "a dumpling"],
+      action: "Move 1 space",
+      fx: { type: "move", n: 1 }
+    },
+    {
+      question: "What colour is a matcha mochi?",
+      answer: "Green",
+      acceptedAnswers: ["green"],
+      action: "Move 1 space",
+      fx: { type: "move", n: 1 }
+    },
+    {
+      question: "What colour is a strawberry milk dumpling?",
+      answer: "Pink",
+      acceptedAnswers: ["pink"],
+      action: "Move 1 space",
+      fx: { type: "move", n: 1 }
+    },
+    {
+      question: "What do you call long, wiggly strands you slurp from a bowl?",
+      answer: "Noodles",
+      acceptedAnswers: ["noodles", "noodle"],
+      action: "Move 1 space",
+      fx: { type: "move", n: 1 }
+    },
+    {
+      question: "Is a dumpling's squishy outside made from dough or glass?",
+      answer: "Dough",
+      acceptedAnswers: ["dough", "the dough"],
+      action: "Move 1 space",
+      fx: { type: "move", n: 1 }
+    },
+    {
+      question: "Is a xiao long bao filled with soup or sand?",
+      answer: "Soup",
+      acceptedAnswers: ["soup", "hot soup"],
+      action: "Move 1 space",
+      fx: { type: "move", n: 1 }
+    },
+    {
+      question: "Does a perfect xiao long bao have 18 folds or 3 folds?",
+      answer: "18",
+      acceptedAnswers: ["18", "eighteen"],
+      action: "Move 1 space",
+      fx: { type: "move", n: 1 }
+    },
+    {
+      question: "What do you call a round, fluffy steamed bun? (Hint: starts with B)",
+      answer: "Bao",
+      acceptedAnswers: ["bao", "a bao", "bao bun", "bao buns", "bun", "a bun"],
+      action: "Move 1 space",
+      fx: { type: "move", n: 1 }
+    },
+    {
+      question: "If you have 3 dumplings and eat 1, how many are left?",
+      answer: "2",
+      acceptedAnswers: ["2", "two"],
+      action: "Move 1 space",
+      fx: { type: "move", n: 1 }
+    },
+    {
+      question: "If one steamer basket holds 4 dumplings, how many are in 2 baskets?",
+      answer: "8",
+      acceptedAnswers: ["8", "eight"],
+      action: "Move 1 space",
+      fx: { type: "move", n: 1 }
+    },
+    {
+      question: "What sweet treat has a little paper message hidden inside?",
+      answer: "A fortune cookie",
+      acceptedAnswers: ["fortune cookie", "a fortune cookie", "fortune cookies"],
+      action: "Move 1 space",
+      fx: { type: "move", n: 1 }
+    },
+    {
+      question: "Which spicy red oil makes dumplings extra hot?",
+      answer: "Chilli oil",
+      acceptedAnswers: ["chilli oil", "chili oil", "chilli", "chili", "chile oil", "chilly oil"],
+      action: "Move 1 space",
+      fx: { type: "move", n: 1 }
+    },
+    {
+      question: "What leafy green vegetable sits in the caves: bok choy or banana?",
+      answer: "Bok choy",
+      acceptedAnswers: ["bok choy", "bokchoy", "pak choi", "pak choy", "bok choi"],
+      action: "Move 1 space",
+      fx: { type: "move", n: 1 }
+    },
+    {
+      question: "What does the Dumpling King wear on his head?",
+      answer: "A crown",
+      acceptedAnswers: ["crown", "a crown"],
+      action: "Move 1 space",
+      fx: { type: "move", n: 1 }
+    },
+    {
+      question: "What sticky white food do you eat in a bowl with chopsticks?",
+      answer: "Rice",
+      acceptedAnswers: ["rice", "sticky rice"],
+      action: "Move 1 space",
+      fx: { type: "move", n: 1 }
+    },
+    {
+      question: "What sweet golden food do bees make? (Like our Honey Gold dumpling!)",
+      answer: "Honey",
+      acceptedAnswers: ["honey", "hunny"],
+      action: "Move 1 space",
+      fx: { type: "move", n: 1 }
+    }
+  ];
+
+  /* ======================================================================
+     BOARD SPACES
+     ====================================================================== */
+
+  var WIS = { t:"Pick up a Lucky Dumpling Card", fx:{type:"wisdom"} };
+
+  function wis(stage, x, y) {
+    return { stage: stage, x: x, y: y, t: WIS.t, fx: WIS.fx };
+  }
+
+  var MAIN = [
+    /* STAGE 0: MOONLIT STEAMER */
+    { stage: 0, x: 12.0, y: 11.5, kind:"start", t:"START", a:"" },
+    { stage: 0, x: 26.5, y: 6.3, t:"A steamy breeze lifts you", a:"Move to Bao Bun Bluff", fx:{type:"goto",to:"roost"} },
+    { stage: 0, x: 40.5, y: 9.3, t:"Puff your cheeks to", a:"Move 1 space", fx:{type:"move",n:1} },
+    { stage: 0, x: 48.0, y: 16.8, kind:"landmark", id:"roost", t:"Bao Bun Bluff" },
+    { stage: 0, x: 38.0, y: 25.2, t:"" },
+    { stage: 0, x: 25.5, y: 24.0, t:"Do your best dumpling wobble to", a:"Move 2 spaces", fx:{type:"move",n:2} },
+    { stage: 0, x: 14.5, y: 29.4, t:"You found a bamboo basket", a:"Move 1 space", fx:{type:"move",n:1} },
+    { stage: 0, x: 12.2, y: 38.4, t:"" },
+    { stage: 0, x: 28.5, y: 41.4, t:"You napped in a steamer", a:"Miss a turn", fx:{type:"miss"} },
+    { stage: 0, x: 44.0, y: 35.0, t:"" },
+    { stage: 0, x: 55.0, y: 32.4, t:"You slipped on soy sauce", a:"Move back 1 space", fx:{type:"move",n:-1} },
+    { stage: 0, x: 68.0, y: 32.0, t:"" },
+    { stage: 0, x: 81.0, y: 33.6, t:"Wiggle like squishy dough to", a:"Move 2 spaces", fx:{type:"move",n:2} },
+    { stage: 0, x: 88.5, y: 42.6, t:"", a:"Swap places with another player", fx:{type:"swap"} },
+    { stage: 0, x: 74.0, y: 45.6, t:"" },
+    { stage: 0, x: 67.5, y: 52.8, t:"You took a wrong turn", a:"Go back to Bao Bun Bluff", fx:{type:"goto",to:"roost"} },
+    { stage: 0, x: 51.5, y: 49.8, t:"" },
+    { stage: 0, x: 42.5, y: 54.0, t:"You follow a trail of sesame seeds", a:"Move to Gyoza Grove", fx:{type:"goto",to:"birch"} },
+    { stage: 0, x: 26.5, y: 53.4, t:"" },
+    { stage: 0, x: 17.5, y: 63.0, t:"You found a bamboo basket", a:"Move 1 space", fx:{type:"move",n:1} },
+    { stage: 0, x: 24.5, y: 72.0, t:"" },
+    { stage: 0, x: 28.5, y: 78.6, kind:"landmark", id:"birch", t:"Gyoza Grove" },
+    { stage: 0, x: 42.0, y: 82.5, t:"" },
+    { stage: 0, x: 50.0, y: 79.2, t:"Do 3 bouncy jumps to", a:"Move 2 spaces", fx:{type:"move",n:2} },
+    { stage: 0, x: 58.5, y: 72.6, t:"You dropped your chopsticks", a:"Move back 3 spaces", fx:{type:"move",n:-3} },
+
+    /* STAGE 1: SOY SAUCE CAVES - MAIN ROUTE */
+    { stage: 1, x: 8.0, y: 81.0, kind:"landmark", id:"foxhole", t:"Steamer Hollow" },
+    wis(1, 26.5, 91.7),
+    { stage: 1, x: 30.5, y: 82.0, t:"" },
+    { stage: 1, x: 35.1, y: 73.7, id:"lost", t:"You get lost & take the left tunnel", a:"Take the left tunnel", fx:{type:"leftTunnel"} },
+    { stage: 1, x: 36.6, y: 63.4, t:"You smell fresh noodles", a:"Move to Noodle Nook", fx:{type:"goto",to:"bella"} },
+    wis(1, 37.6, 54.8),
+    { stage: 1, x: 40.0, y: 46.1, t:"" },
+    { stage: 1, x: 39.4, y: 36.4, id:"nap", t:"You need a nap", a:"Move back to Steamer Hollow", fx:{type:"goto",to:"foxhole"} },
+    { stage: 1, x: 43.1, y: 28.5, t:"You found a sauce dish", a:"Move 1 space", fx:{type:"move",n:1} },
+    { stage: 1, x: 44.3, y: 18.8, kind:"landmark", id:"bella", t:"Noodle Nook" },
+    wis(1, 51.1, 9.2),
+    { stage: 1, x: 65.3, y: 9.6, t:"" },
+    { stage: 1, x: 76.0, y: 11.8, t:"Do a squishy dance to", a:"Move 2 spaces", fx:{type:"move",n:2} },
+    { stage: 1, x: 85.0, y: 19.3, t:"", a:"Choose any player to move back 2 spaces", fx:{type:"chooseBack",n:2} },
+    { stage: 1, x: 81.9, y: 27.2, t:"" },
+    wis(1, 76.7, 35.1),
+    { stage: 1, x: 69.5, y: 41.5, t:"" },
+    { stage: 1, x: 62.8, y: 48.2, t:"You forgot your chopsticks", a:"Move back to Noodle Nook", fx:{type:"goto",to:"bella"} },
+    wis(1, 74.8, 54.2),
+    { stage: 1, x: 82.5, y: 61.0, t:"" },
+    { stage: 1, x: 76.4, y: 67.5, t:"You found a sauce dish", a:"Move 1 space", fx:{type:"move",n:1} },
+    { stage: 1, x: 63.4, y: 71.0, t:"" },
+    wis(1, 55.4, 77.6),
+    { stage: 1, x: 64.0, y: 83.2, t:"" },
+    { stage: 1, x: 85.6, y: 82.0, kind:"landmark", id:"otter", t:"Well done! You found", a:"Soy Sauce Springs" },
+
+    /* STAGE 2: STEAM CLOUD KINGDOM */
+    { stage: 2, x: 25.9, y: 82.5, t:"" },
+    { stage: 2, x: 38.8, y: 87.7, t:"You found a golden dumpling", a:"Move 1 space", fx:{type:"move",n:1} },
+    { stage: 2, x: 53.0, y: 89.0, t:"" },
+    { stage: 2, x: 66.8, y: 88.6, t:"Run on the spot to", a:"Move to Spoon Slide", fx:{type:"goto",to:"sledge"} },
+    { stage: 2, x: 80.0, y: 86.0, t:"Oops, you slipped", a:"Move back 4 spaces", fx:{type:"move",n:-4} },
+    { stage: 2, x: 85.6, y: 76.3, t:"" },
+    { stage: 2, x: 83.1, y: 68.4, t:"Pretend to be a chef to", a:"Move 2 spaces", fx:{type:"move",n:2} },
+    { stage: 2, x: 72.0, y: 62.3, kind:"landmark", id:"sledge", t:"Spoon Slide" },
+    { stage: 2, x: 57.3, y: 60.5, t:"" },
+    { stage: 2, x: 44.3, y: 58.8, t:"Pull a silly face to", a:"Move forward 2 spaces", fx:{type:"move",n:2} },
+    { stage: 2, x: 30.5, y: 58.8, t:"", a:"Swap places with another player", fx:{type:"swap"} },
+    { stage: 2, x: 18.5, y: 57.0, t:"" },
+    { stage: 2, x: 14.8, y: 46.5, t:"You took a wrong turn", a:"Move back 1 space", fx:{type:"move",n:-1} },
+    { stage: 2, x: 29.3, y: 43.4, t:"You found a golden dumpling", a:"Move 1 space", fx:{type:"move",n:1} },
+    { stage: 2, x: 41.9, y: 43.0, t:"" },
+    { stage: 2, x: 55.7, y: 43.4, t:"Do a big steamy puff", a:"Move to Bamboo Basket Hut", fx:{type:"goto",to:"lamb"} },
+    { stage: 2, x: 69.3, y: 42.8, t:"You got stuck in sticky rice", a:"Miss a turn", fx:{type:"miss"} },
+    { stage: 2, x: 74.5, y: 33.8, t:"" },
+    { stage: 2, x: 63.7, y: 28.1, t:"Pat your head & rub your tummy to", a:"Move 1 space", fx:{type:"move",n:1} },
+    { stage: 2, x: 49.9, y: 26.8, t:"A cloud gives you a lift", a:"Move 2 spaces", fx:{type:"move",n:2} },
+    { stage: 2, x: 37.6, y: 25.9, t:"" },
+    { stage: 2, x: 34.8, y: 16.2, kind:"landmark", id:"lamb", t:"Bamboo Basket Hut" },
+    { stage: 2, x: 46.5, y: 10.5, t:"You took a wrong turn", a:"Move back 5 spaces", fx:{type:"move",n:-5} },
+    { stage: 2, x: 58.5, y: 7.9, t:"" },
+    { stage: 2, x: 73.3, y: 11.4, kind:"finish", id:"cottage", t:"Well done! You found", a:"Dumpling Palace!" }
+  ];
+
+  /* LEFT TUNNEL */
+  var LEFT = [
+    wis(1, 15.4, 65.8),
+    { stage: 1, x: 12.8, y: 58.0, t:"" },
+    { stage: 1, x: 14.2, y: 51.3, t:"A drop of chilli oil!", a:"Move back 3 spaces", fx:{type:"move",n:-3} },
+    { stage: 1, x: 14.2, y: 43.4, t:"Hop on one leg to", a:"Move 2 spaces", fx:{type:"move",n:2} },
+    { stage: 1, x: 16.0, y: 35.0, t:"" }
+  ];
+
+  var SPACES = MAIN.concat(LEFT);
+  var LANDMARK = {};
+
+  SPACES.forEach(function(s, idx) {
+    s.index = idx;
+    if (s.id) LANDMARK[s.id] = idx;
+  });
+
+  var LAST_INDEX = MAIN.length - 1;
+  var LEFT_START = MAIN.length;
+  var LEFT_END = SPACES.length - 1;
+
+  var players = [];
+  var turn = 0;
+  var busy = false;
+  var playerCount = 2;
+  var deck = [];
+  var botMode = false;
+  var botTurnTimer = null;
+  var onlineMode = false;
+  var onlineRoomId = null;
+  var onlinePin = null;
+  var onlineRoomName = "";
+  var onlineUid = null;
+  var onlineKnownHostUid = null;
+  var onlineIsHost = false;
+  var onlineRoomRef = null;
+  var onlineRoomListener = null;
+  var onlineCommandListener = null;
+  var onlineApplyingState = false;
+  var onlineConnectionRef = null;
+  var onlineMemberIds = {};
+  var onlineLastState = "";
+  var onlineLastFollowKey = "";
+  var onlineCommandBusy = false;
+  var onlineDisconnectTimers = {};
+
+  function $(id) {
+    return gameRoot.querySelector("#boardgame-" + id);
+  }
+
+  var scroller = $("scroller");
+
+    /* ----- Restore game position after wisdom card closes ----- */
+
+  function scrollGameToTop() {
+    // Close the mobile keyboard
+    if (document.activeElement && document.activeElement.blur) {
+      document.activeElement.blur();
+    }
+
+    // Wait for the keyboard and modal to finish closing
+    setTimeout(function() {
+      var header = document.querySelector(".js-mainHeader");
+      var headerHeight = header ? header.getBoundingClientRect().height : 0;
+
+      var gameTop = gameRoot.getBoundingClientRect().top + window.pageYOffset;
+
+      var targetTop = Math.max(0, gameTop - headerHeight - 80);
+
+      window.scrollTo({
+        top: targetTop,
+        behavior: "smooth"
+      });
+
+      // Recalculate after the mobile keyboard has fully disappeared
+      setTimeout(function() {
+        var updatedHeader = document.querySelector(".js-mainHeader");
+        var updatedHeaderHeight = updatedHeader ? updatedHeader.getBoundingClientRect().height : 0;
+        var updatedGameTop = gameRoot.getBoundingClientRect().top + window.pageYOffset;
+
+        window.scrollTo({
+          top: Math.max(0, updatedGameTop - updatedHeaderHeight - 80),
+          behavior: "smooth"
+        });
+      }, 500);
+
+    }, 300);
+  }
+
+  /* ----- Dynamic site header height ----- */
+
+function updateGameHeight() {
+  var header = document.querySelector(".js-mainHeader");
+  var headerHeight = header ? header.getBoundingClientRect().height : 0;
+
+  gameRoot.style.setProperty(
+    "--site-header-height",
+    headerHeight + "px"
+  );
+}
+
+updateGameHeight();
+
+window.addEventListener("resize", updateGameHeight);
+window.addEventListener("orientationchange", updateGameHeight);
+
+/* Watch for header height changes */
+
+if (window.ResizeObserver) {
+  var header = document.querySelector(".js-mainHeader");
+
+  if (header) {
+    var headerObserver = new ResizeObserver(function() {
+      updateGameHeight();
+    });
+
+    headerObserver.observe(header);
+  }
+}
+
+  /* ----- Route helpers ----- */
+
+  function nextPos(pl) {
+    var p = pl.pos;
+
+    if (p === LANDMARK.lost && pl.left) return LEFT_START;
+    if (p === LEFT_END) return LANDMARK.nap;
+
+    return p + 1;
+  }
+
+  function prevPos(pl) {
+    var p = pl.pos;
+    if (p === LEFT_START) return LANDMARK.lost;
+    return p - 1;
+  }
+
+  /* ======================================================================
+     GAME SETUP
+     ====================================================================== */
+
+  function initSetup() {
+    var countBtns = $("count-btns");
+    var modeBtns = $("mode-btns");
+
+    countBtns.innerHTML = "";
+
+    [2, 3, 4, 5, 6].forEach(function(n) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = n;
+
+      if (n === playerCount) btn.className = "boardgame-selected";
+
+      btn.onclick = function() {
+        playerCount = n;
+
+        Array.prototype.forEach.call(countBtns.children, function(b) {
+          b.className = "";
+        });
+
+        btn.className = "boardgame-selected";
+        renderPlayerInputs();
+      };
+
+      countBtns.appendChild(btn);
+    });
+
+    Array.prototype.forEach.call(modeBtns.children, function(btn) {
+      btn.onclick = function() {
+        var selectedMode = btn.getAttribute("data-mode");
+        botMode = selectedMode === "computer";
+        onlineMode = selectedMode === "online";
+        var onlinePanel = $("online-panel");
+        if (onlinePanel) onlinePanel.classList.toggle("boardgame-online-active", onlineMode);
+        $("start-btn").style.display = onlineMode ? "none" : "";
+
+        Array.prototype.forEach.call(modeBtns.children, function(b) {
+          b.classList.remove("boardgame-selected");
+        });
+        btn.classList.add("boardgame-selected");
+
+        countBtns.style.display = (botMode || onlineMode) ? "none" : "flex";
+        $("player-instruction").textContent = (botMode || onlineMode)
+          ? "Choose your character:"
+          : "Select the number of players:";
+
+        renderPlayerInputs();
+      };
+    });
+
+    countBtns.style.display = "flex";
+    var onlinePanel = $("online-panel");
+    if (onlinePanel) onlinePanel.classList.remove("boardgame-online-active");
+    renderPlayerInputs();
+  }
+
+  function renderPlayerInputs() {
+    var container = $("prows");
+    container.innerHTML = "";
+
+    var availableChars = Object.keys(CHARACTERS);
+    var setupCount = (botMode || onlineMode) ? 1 : playerCount;
+
+    for (var i = 0; i < setupCount; i++) {
+      var charKey = availableChars[i % availableChars.length];
+      var defaultName = "Player " + (i + 1);
+
+      var row = document.createElement("div");
+      row.className = "boardgame-player-row";
+      row.id = "boardgame-prow-" + i;
+      row.dataset.char = charKey;
+
+      var input = document.createElement("input");
+      input.type = "text";
+      input.value = defaultName;
+      input.placeholder = "Player Name";
+      input.id = "boardgame-pname-" + i;
+
+      var charsDiv = document.createElement("div");
+      charsDiv.className = "boardgame-character-picker";
+      charsDiv.id = "boardgame-pchars-" + i;
+
+      row.appendChild(input);
+      row.appendChild(charsDiv);
+      container.appendChild(row);
+    }
+
+    updateCharPickers();
+  }
+
+  function updateCharPickers() {
+    var selectedChars = [];
+    var setupCount = (botMode || onlineMode) ? 1 : playerCount;
+
+    for (var i = 0; i < setupCount; i++) {
+      var row = $("prow-" + i);
+      if (row) selectedChars.push(row.dataset.char);
+    }
+
+    for (var j = 0; j < setupCount; j++) {
+      var charsDiv = $("pchars-" + j);
+      if (!charsDiv) continue;
+
+      charsDiv.innerHTML = "";
+      var curChar = $("prow-" + j).dataset.char;
+
+      Object.keys(CHARACTERS).forEach(function(key) {
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.innerHTML = characterImageHTML(key);
+        btn.title = CHARACTERS[key].name;
+        btn.setAttribute("aria-label", CHARACTERS[key].name);
+
+        if (key === curChar) {
+          btn.className = "boardgame-selected";
+        } else if (selectedChars.indexOf(key) !== -1) {
+          btn.disabled = true;
+        }
+
+        btn.onclick = (function(pIdx, cKey) {
+          return function() {
+            $("prow-" + pIdx).dataset.char = cKey;
+            updateCharPickers();
+          };
+        })(j, key);
+
+        charsDiv.appendChild(btn);
+      });
+    }
+  }
+
+  $("start-btn").onclick = function() {
+    if (onlineMode) {
+      setOnlineStatus("Create or join a room first. The room host starts the adventure when everyone has joined.");
+      return;
+    }
+    players = [];
+
+    var usedColors = ["#ff8fab", "#ffb52e", "#8fcf6f", "#b48cf0", "#ff9f6b", "#ef6f8f"];
+    var humanCount = botMode ? 1 : playerCount;
+
+    for (var i = 0; i < humanCount; i++) {
+      var name = $("pname-" + i).value.trim() || ("Player " + (i + 1));
+      var charKey = $("prow-" + i).dataset.char;
+
+      players.push({
+        id: i,
+        name: name,
+        char: charKey,
+        color: usedColors[i % usedColors.length],
+        pos: 0,
+        miss: false,
+        left: false,
+        isBot: false
+      });
+    }
+
+    if (botMode) {
+      var availableChars = Object.keys(CHARACTERS);
+      var botChar = availableChars[0];
+
+      for (var c = 0; c < availableChars.length; c++) {
+        var alreadyUsed = false;
+
+        for (var pIdx = 0; pIdx < players.length; pIdx++) {
+          if (players[pIdx].char === availableChars[c]) {
+            alreadyUsed = true;
+            break;
+          }
+        }
+
+        if (!alreadyUsed) {
+          botChar = availableChars[c];
+          break;
+        }
+      }
+
+      players.push({
+        id: 1,
+        name: "Computer",
+        char: botChar,
+        color: usedColors[1],
+        pos: 0,
+        miss: false,
+        left: false,
+        isBot: true
+      });
+    }
+
+    $("setup").classList.remove("boardgame-visible");
+
+    turn = 0;
+    busy = false;
+    boardgameGameOver = false;
+
+    if (botTurnTimer) {
+      clearTimeout(botTurnTimer);
+      botTurnTimer = null;
+    }
+
+    renderBoardSpaces();
+    renderHud();
+    placeTokens(true);
+
+    setTimeout(function() {
+      scrollToPlayer(0);
+      scheduleBotTurn();
+    }, 300);
+  };
+
+  /* ======================================================================
+     ONLINE MULTIPLAYER — HOST AUTHORITATIVE ROOM SYNC
+     ====================================================================== */
+
+  function setOnlineStatus(message) {
+    var el = $("online-status");
+    if (el) el.textContent = message;
+  }
+
+  function onlinePlayerDetails() {
+    var nameInput = $("pname-0");
+    var row = $("prow-0");
+    var name = nameInput && nameInput.value ? nameInput.value.trim() : "";
+    return {
+      name: (name || "Player").substring(0, 24),
+      character: row ? row.dataset.char : "fox"
+    };
+  }
+
+  function isOnlineLocalTurn() {
+    var current = players[turn];
+    return !onlineMode || !onlineRoomId || !!(current && (current.controllerUid || current.uid) === onlineUid);
+  }
+
+  function rejectOnlineOutOfTurnAction() {
+    if (isOnlineLocalTurn()) return false;
+    toast("It's not your turn.");
+    return true;
+  }
+
+  function firebaseReady() {
+    return new Promise(function(resolve, reject) {
+      var tries = 0;
+      function check() {
+        if (window._FB && window._FB.signIn) {
+          window._FB.signIn().then(resolve).catch(reject);
+        } else if (window._FB_ERROR) {
+          reject(window._FB_ERROR);
+        } else if (++tries > 80) {
+          reject(new Error("Firebase did not initialise. Check the Firebase configuration and network connection."));
+        } else setTimeout(check, 100);
+      }
+      check();
+    });
+  }
+
+  function randomRoomPin() {
+    return String(Math.floor(100000 + Math.random() * 900000));
+  }
+
+  function registerPresence(uid) {
+    var FB = window._FB;
+    var memberRef = FB.ref(FB.db, "rooms/" + onlineRoomId + "/members/" + uid);
+    onlineConnectionRef = FB.ref(FB.db, "rooms/" + onlineRoomId + "/members/" + uid + "/connections/" + FB.push(FB.ref(FB.db, "rooms/" + onlineRoomId + "/members/" + uid + "/connections")).key);
+    FB.onValue(FB.ref(FB.db, ".info/connected"), function(snapshot) {
+      if (snapshot.val() === true) {
+        FB.onDisconnect(onlineConnectionRef).remove().then(function() {
+          FB.set(onlineConnectionRef, true).catch(function(e) { setOnlineStatus("Connection presence error: " + e.message); });
+        });
+      }
+    });
+    return memberRef;
+  }
+
+  function createOnlineRoom() {
+    if (!onlineMode) return;
+    setOnlineStatus("Connecting to Firebase...");
+    firebaseReady().then(function(user) {
+      var FB = window._FB;
+      onlineUid = user.uid;
+      var details = onlinePlayerDetails();
+      onlineRoomName = String($("online-name").value || "").trim().substring(0, 32) || "Dumpling Adventure";
+      var attempts = 0;
+      function reservePin() {
+        if (++attempts > 8) throw new Error("Couldn't find an available room PIN. Please try again.");
+        var pin = randomRoomPin();
+        return FB.get(FB.ref(FB.db, "roomCodes/" + pin)).then(function(existing) {
+          if (existing.exists()) return reservePin();
+          var roomRef = FB.push(FB.ref(FB.db, "rooms"));
+          onlineRoomId = roomRef.key;
+          onlinePin = pin;
+          var now = Date.now();
+          var room = {
+            hostUid: onlineUid,
+            createdAt: now,
+            lastActive: now,
+            status: "lobby",
+            roomName: onlineRoomName,
+            members: {},
+            gameState: null,
+            commands: {}
+          };
+          room.members[onlineUid] = { name: details.name, character: details.character, joinedAt: now, connections: {} };
+          return FB.set(roomRef, room).then(function() {
+            return FB.set(FB.ref(FB.db, "roomCodes/" + pin), { roomId: onlineRoomId, createdBy: onlineUid, roomName: onlineRoomName });
+          }).then(function() {
+            onlineIsHost = true;
+            registerPresence(onlineUid);
+            $("online-pin").hidden = false;
+            $("online-pin").textContent = onlineRoomName + " · ROOM PIN: " + pin;
+            $("create-room").disabled = true;
+            $("join-room").disabled = true;
+            $("online-start").style.display = "block";
+            setOnlineStatus("Room '" + onlineRoomName + "' created. Share PIN " + pin + " with the other players.");
+            subscribeOnlineRoom();
+          });
+        });
+      }
+      return reservePin();
+    }).catch(function(error) { setOnlineStatus("Unable to create room: " + error.message); });
+  }
+
+  function joinOnlineRoom() {
+    if (!onlineMode) return;
+    var pin = String($("online-pin-input").value || "").replace(/\D/g, "").substring(0, 6);
+    if (!/^\d{6}$/.test(pin)) { setOnlineStatus("Enter the six-digit room PIN."); return; }
+    setOnlineStatus("Finding room...");
+    firebaseReady().then(function(user) {
+      var FB = window._FB;
+      onlineUid = user.uid;
+      return FB.get(FB.ref(FB.db, "roomCodes/" + pin)).then(function(codeSnap) {
+        if (!codeSnap.exists()) throw new Error("That room PIN wasn't found. Check the number with the host.");
+        onlineRoomId = codeSnap.val().roomId;
+        onlinePin = pin;
+        var roomRef = FB.ref(FB.db, "rooms/" + onlineRoomId);
+        function finishJoin(room, isRejoin) {
+          onlineIsHost = room.hostUid === onlineUid;
+          onlineRoomName = room.roomName || codeSnap.val().roomName || "Dumpling Adventure";
+          registerPresence(onlineUid);
+          $("create-room").disabled = true;
+          $("join-room").disabled = true;
+          $("online-pin").hidden = false;
+          $("online-pin").textContent = onlineRoomName + " · ROOM PIN: " + pin;
+          setOnlineStatus(isRejoin ? "Reconnected to '" + onlineRoomName + "'." : "Joined '" + onlineRoomName + "'. Waiting for the host to start the adventure...");
+          subscribeOnlineRoom();
+        }
+        return FB.get(roomRef).then(function(roomSnap) {
+          if (!roomSnap.exists()) throw new Error("This room has expired or has been closed.");
+          var room = roomSnap.val();
+          var hasConnectedPlayers = Object.keys(room.members || {}).some(function(memberUid) {
+            var memberConnections = room.members[memberUid].connections || {};
+            return Object.keys(memberConnections).length > 0;
+          });
+          if (!hasConnectedPlayers && room.lastActive && Date.now() - room.lastActive > 86400000) {
+            return Promise.all([
+              FB.remove(roomRef),
+              FB.remove(FB.ref(FB.db, "roomCodes/" + pin))
+            ]).then(function() { throw new Error("This room expired after 24 hours of inactivity and has been cleaned up."); });
+          }
+          if (room.members && room.members[onlineUid]) {
+            finishJoin(room, true);
+            return;
+          }
+          if (room.status !== "lobby") throw new Error("This adventure has already started. Only a player reconnecting to their existing seat can rejoin.");
+          if (Object.keys(room.members || {}).length >= 6) throw new Error("This room is full (maximum 6 players).");
+          var details = onlinePlayerDetails();
+          var member = { name: details.name, character: details.character, joinedAt: Date.now(), connections: {} };
+          return FB.set(FB.ref(FB.db, "rooms/" + onlineRoomId + "/members/" + onlineUid), member).then(function() {
+            finishJoin(room, false);
+          });
+        }).catch(function(error) {
+          if (String(error.message || "").toLowerCase().indexOf("permission") === -1) throw error;
+          // New players cannot read a room until they have joined it; add their own member record, then read it.
+          var details = onlinePlayerDetails();
+          var member = { name: details.name, character: details.character, joinedAt: Date.now(), connections: {} };
+          return FB.set(FB.ref(FB.db, "rooms/" + onlineRoomId + "/members/" + onlineUid), member).then(function() {
+            return FB.get(roomRef);
+          }).then(function(roomSnap) {
+            if (!roomSnap.exists()) throw new Error("This room has expired or has been closed.");
+            var room = roomSnap.val();
+            if (room.status !== "lobby") throw new Error("This adventure has already started.");
+            if (Object.keys(room.members || {}).length > 6) throw new Error("This room is full (maximum 6 players).");
+            finishJoin(room, false);
+          }).catch(function(joinError) {
+            FB.remove(FB.ref(FB.db, "rooms/" + onlineRoomId + "/members/" + onlineUid));
+            throw joinError;
+          });
+        });
+      });
+    }).catch(function(error) { setOnlineStatus("Unable to join room: " + error.message); });
+  }
+
+  function subscribeOnlineRoom() {
+    var FB = window._FB;
+    onlineRoomRef = FB.ref(FB.db, "rooms/" + onlineRoomId);
+    if (onlineRoomListener) onlineRoomListener();
+    onlineRoomListener = FB.onValue(onlineRoomRef, function(snapshot) {
+      if (!snapshot.exists()) {
+        setOnlineStatus("This room has been closed. Returning to the start...");
+        toast("The online room has closed.");
+        if (!window._boardgameRoomCloseReload) {
+          window._boardgameRoomCloseReload = true;
+          setTimeout(function() { window.location.reload(); }, 1800);
+        }
+        return;
+      }
+      var room = snapshot.val();
+      onlineIsHost = room.hostUid === onlineUid;
+      onlineRoomName = room.roomName || onlineRoomName || "Dumpling Adventure";
+      if (onlineKnownHostUid && onlineKnownHostUid !== room.hostUid) {
+        var newHost = room.members && room.members[room.hostUid];
+        if (room.hostUid === onlineUid) {
+          var previousHost = room.members && room.members[onlineKnownHostUid];
+          setOnlineStatus("⚡ " + (previousHost ? previousHost.name : "The previous host") + " disconnected. You are now hosting '" + onlineRoomName + "'. You will be able to take over their character Their character will now play automatically as a computer player.");
+          toast("You are now hosting the game.");
+        } else if (newHost) {
+          setOnlineStatus("⚡ " + newHost.name + " is now hosting '" + onlineRoomName + "'.");
+          toast(newHost.name + " is now hosting the game.");
+        }
+      }
+      onlineKnownHostUid = room.hostUid;
+      var memberList = Object.keys(room.members || {}).map(function(uid) {
+        var m = room.members[uid];
+        return { uid: uid, name: m.name, character: m.character, joinedAt: m.joinedAt };
+      }).sort(function(a,b) { return a.joinedAt - b.joinedAt; });
+      if (room.status === "lobby") {
+        var names = memberList.map(function(m) { return m.name; }).join(", ");
+        setOnlineStatus("Room '" + onlineRoomName + "' — players: " + (names || "Nobody yet") + (onlineIsHost ? ". You are the host — start when everyone is ready." : ". Waiting for the host."));
+        $("online-start").style.display = onlineIsHost ? "block" : "none";
+      }
+      if (room.gameState && room.status === "playing" && (!onlineIsHost || !players.length)) {
+        applyOnlineGameState(room.gameState);
+      }
+      if (onlineIsHost) {
+        watchOnlineCommands();
+        scheduleDisconnectedMemberCleanup(room);
+      }
+      maybeMigrateHost(room);
+    });
+  }
+
+  function startOnlineGame() {
+    if (!onlineRoomId || !onlineIsHost) return;
+    var FB = window._FB;
+    FB.get(onlineRoomRef).then(function(snapshot) {
+      if (!snapshot.exists()) throw new Error("Room no longer exists.");
+      var room = snapshot.val();
+      var members = Object.keys(room.members || {}).map(function(uid) {
+        var m = room.members[uid];
+        return { uid: uid, name: m.name, char: m.character, color: ["#ff8fab", "#ffb52e", "#8fcf6f", "#b48cf0", "#ff9f6b", "#ef6f8f"][0], pos: 0, miss: false, left: false, isBot: false };
+      }).sort(function(a,b) { return (room.members[a.uid].joinedAt || 0) - (room.members[b.uid].joinedAt || 0); });
+      if (members.length < 2) throw new Error("At least two players are needed to start an online game.");
+      if (members.length > 6) throw new Error("A maximum of six players can join.");
+      var colors = ["#ff8fab", "#ffb52e", "#8fcf6f", "#b48cf0", "#ff9f6b", "#ef6f8f"];
+      members.forEach(function(pl,i) { pl.id = i; pl.color = colors[i % colors.length]; });
+      var state = { players: members, turn: 0, busy: false, gameOver: false, updatedAt: Date.now(), modalHtml: "" };
+      return FB.update(onlineRoomRef, { status: "playing", gameState: state, lastActive: Date.now() });
+    }).catch(function(error) { setOnlineStatus("Couldn't start: " + error.message); });
+  }
+
+  function publishOnlineState() {
+    if (!onlineRoomId || !onlineIsHost || onlineApplyingState || !players.length || !window._FB) return;
+    var state = {
+      players: players.map(function(pl) { return { uid: pl.uid || null, id: pl.id, name: pl.name, char: pl.char, color: pl.color, pos: pl.pos, miss: !!pl.miss, left: !!pl.left, isBot: !!pl.isBot }; }),
+      turn: turn, busy: !!busy, gameOver: !!boardgameGameOver,
+      updatedAt: Date.now(), modalHtml: onlineModalHtml || "",
+      wisdomCard: window._boardgameActiveWisdomCard || null
+    };
+    var serial = JSON.stringify(state);
+    if (serial === onlineLastState) return;
+    onlineLastState = serial;
+    window._FB.update(onlineRoomRef, { gameState: state, lastActive: Date.now() }).catch(function(e) { setOnlineStatus("Sync error: " + e.message); });
+  }
+
+  var onlineModalHtml = "";
+  function showOnlineModal(html) {
+    var source = document.createElement("div");
+    source.innerHTML = String(html || "");
+    var allowedTags = { DIV:1, H2:1, H3:1, P:1, SPAN:1, STRONG:1, EM:1, B:1, BUTTON:1, IMG:1, LABEL:1, INPUT:1 };
+    var nodes = source.querySelectorAll("*");
+    for (var i = nodes.length - 1; i >= 0; i--) {
+      var node = nodes[i];
+      if (!allowedTags[node.tagName]) {
+        node.parentNode.removeChild(node);
+        continue;
+      }
+      var attrs = Array.prototype.slice.call(node.attributes);
+      attrs.forEach(function(attr) {
+        var name = attr.name.toLowerCase();
+        if (name === "class" || name === "type" || name === "alt" || name === "placeholder" || name === "maxlength" || name === "value") return;
+        if (name === "id" && (attr.value === "boardgame-wisdom-answer" || attr.value === "boardgame-wisdom-feedback")) return;
+        if (name === "aria-live" && attr.value === "polite") return;
+        if (name === "src" && node.tagName === "IMG" && /^https:\/\/www\.thetoyshop\.com\/medias\//i.test(attr.value)) return;
+        if (name === "onclick" && node.tagName === "BUTTON" && /^(window\.(?:closeModal|nextTurn|pickPlayerTarget|applyEffect|checkWisdomAnswer|playAgain|continueOnlineAlone|endOnlineAloneGame)\([0-9, .A-Za-z_$]*\);?)+$/.test(attr.value)) return;
+        node.removeAttribute(attr.name);
+      });
+    }
+    var body = $("msg-body");
+    body.innerHTML = source.innerHTML;
+    body.classList.toggle("boardgame-wisdom-modal", body.innerHTML.indexOf("boardgame-wisdom-card") !== -1);
+    $("msg").classList.add("boardgame-visible");
+  }
+
+  function applyOnlineGameState(state) {
+    if (!state || !state.players) return;
+    onlineApplyingState = true;
+    players = state.players;
+    turn = Math.max(0, Math.min(Number(state.turn) || 0, players.length - 1));
+    busy = !!state.busy;
+    boardgameGameOver = !!state.gameOver;
+    if (state.wisdomCard) window._boardgameActiveWisdomCard = state.wisdomCard;
+    $("setup").classList.remove("boardgame-visible");
+    if (!$("tk-0")) renderBoardSpaces();
+    if (players.length) {
+      placeTokens(false);
+      renderHud();
+      if (state.modalHtml !== undefined && !onlineIsHost && state.modalHtml !== onlineModalHtml) {
+        onlineModalHtml = state.modalHtml || "";
+        if (onlineModalHtml) showOnlineModal(onlineModalHtml); else $("msg").classList.remove("boardgame-visible");
+      }
+
+      /* The joining device must follow the host's active player's movement. */
+      if (!onlineIsHost && players[turn]) {
+        var followPlayer = players[turn];
+        var followKey = String(followPlayer.uid || followPlayer.id) + ":" + String(followPlayer.pos) + ":" + String(turn);
+        if (followKey !== onlineLastFollowKey) {
+          onlineLastFollowKey = followKey;
+          setTimeout(function() {
+            if (onlineMode && onlineRoomId && !onlineIsHost && players[turn]) {
+              scrollToPlayer(turn);
+            }
+          }, 80);
+        }
+      }
+    }
+    onlineApplyingState = false;
+  }
+
+  function sendOnlineCommand(type, data) {
+    if (!onlineRoomId || !onlineUid || onlineIsHost) return false;
+    var current = players[turn];
+    if (!current || (current.controllerUid || current.uid) !== onlineUid) { toast("It's not your turn."); return true; }
+    var FB = window._FB;
+    var commandRef = FB.ref(FB.db, "rooms/" + onlineRoomId + "/commands/" + onlineUid);
+    var payload = data || {};
+    payload.type = type;
+    payload.uid = onlineUid;
+    payload.createdAt = Date.now();
+    FB.set(commandRef, payload).catch(function(e) { setOnlineStatus("Action couldn't be sent: " + e.message); });
+    return true;
+  }
+
+  function watchOnlineCommands() {
+    if (!onlineRoomId || !onlineIsHost || !window._FB) return;
+    if (onlineCommandListener) return;
+    var FB = window._FB;
+    onlineCommandListener = FB.onValue(FB.ref(FB.db, "rooms/" + onlineRoomId + "/commands"), function(snapshot) {
+      if (!onlineIsHost || !snapshot.exists() || onlineCommandBusy) return;
+      var commands = snapshot.val() || {};
+      Object.keys(commands).forEach(function(uid) {
+        var cmd = commands[uid];
+        if (!cmd || cmd.uid !== uid || cmd._handled) return;
+        var current = players[turn];
+        if (!current || (current.controllerUid || current.uid) !== uid || !cmd.type) return;
+        onlineCommandBusy = true;
+        var commandRef = FB.ref(FB.db, "rooms/" + onlineRoomId + "/commands/" + uid);
+        FB.remove(commandRef).then(function() {
+          if (cmd.type === "roll") rollDice(false);
+          else if (cmd.type === "next") { closeModal(); nextTurn(); }
+          else if (cmd.type === "target" && Number.isInteger(Number(cmd.target))) pickPlayerTarget(turn, Number(cmd.target));
+          else if (cmd.type === "effect") applyEffect(turn, cmd.effect || null);
+          else if (cmd.type === "wisdom") {
+            var answer = $("wisdom-answer");
+            if (answer) answer.value = String(cmd.answer || "").substring(0, 100);
+            checkWisdomAnswer(turn);
+          }
+          onlineCommandBusy = false;
+        }).catch(function() { onlineCommandBusy = false; });
+      });
+    });
+  }
+
+  function closeOnlineRoom(reason, refreshAfterClose) {
+    if (!onlineRoomId || !onlineIsHost || !window._FB) return;
+    var FB = window._FB;
+    var roomId = onlineRoomId;
+    var pin = onlinePin;
+    if (reason) setOnlineStatus(reason);
+    Promise.all([
+      FB.remove(FB.ref(FB.db, "rooms/" + roomId)),
+      FB.remove(FB.ref(FB.db, "roomCodes/" + pin))
+    ]).then(function() {
+      setOnlineStatus(reason || "The game has ended and the room has been closed.");
+      toast("The online room has been closed.");
+      onlineRoomId = null;
+      onlinePin = null;
+      onlineIsHost = false;
+      if (onlineRoomListener) { onlineRoomListener(); onlineRoomListener = null; }
+      if (onlineCommandListener) { onlineCommandListener(); onlineCommandListener = null; }
+      if (refreshAfterClose) {
+        setOnlineStatus("The room has been deleted. Returning to the start...");
+        setTimeout(function() { window.location.reload(); }, 900);
+      }
+    }).catch(function(error) {
+      setOnlineStatus("Couldn't close the room: " + error.message);
+    });
+  }
+
+  function scheduleDisconnectedMemberCleanup(room) {
+    if (!onlineIsHost || !room || !room.members) return;
+    var ids = Object.keys(room.members);
+    ids.forEach(function(uid) {
+      var connections = room.members[uid].connections || {};
+      if (Object.keys(connections).length) {
+        if (onlineDisconnectTimers[uid]) {
+          clearTimeout(onlineDisconnectTimers[uid]);
+          delete onlineDisconnectTimers[uid];
+        }
+        return;
+      }
+      if (onlineDisconnectTimers[uid]) return;
+      onlineDisconnectTimers[uid] = setTimeout(function() {
+        delete onlineDisconnectTimers[uid];
+        if (!onlineIsHost || !window._FB) return;
+        var FB = window._FB;
+        FB.get(onlineRoomRef).then(function(latestSnap) {
+          if (!latestSnap.exists()) return;
+          var latest = latestSnap.val();
+          var member = latest.members && latest.members[uid];
+          if (!member || Object.keys(member.connections || {}).length) return;
+          if (latest.hostUid !== onlineUid) return;
+
+          var departedName = member.name || "A player";
+          var state = latest.gameState;
+          var updates = {};
+          updates["members/" + uid] = null;
+
+          if (!state || !state.players) {
+            return FB.update(onlineRoomRef, updates).then(function() {
+              setOnlineStatus(departedName + " has left the room.");
+              toast(departedName + " has left the room.");
+            });
+          }
+
+          var departedPlayer = null;
+          state.players.forEach(function(pl) {
+            if (pl.uid === uid) {
+              departedPlayer = pl;
+              pl.isBot = true;
+              pl.disconnected = true;
+              pl.controllerUid = null;
+              pl.controllerName = "Computer";
+            }
+          });
+
+          state.busy = false;
+          state.updatedAt = Date.now();
+          updates.gameState = state;
+          updates.lastActive = Date.now();
+
+          return FB.update(onlineRoomRef, updates).then(function() {
+            onlineApplyingState = true;
+            players = state.players;
+            turn = Math.max(0, Math.min(Number(state.turn) || 0, players.length - 1));
+            busy = false;
+            renderBoardSpaces();
+            placeTokens(false);
+            renderHud();
+            onlineApplyingState = false;
+
+            var message = departedName + " has left. Their character is now a computer player.";
+            setOnlineStatus(message);
+            toast(message);
+            scheduleBotTurn();
+
+            var activeMembers = Object.keys(latest.members || {}).filter(function(memberUid) {
+              if (memberUid === uid) return false;
+              var c = latest.members[memberUid].connections || {};
+              return Object.keys(c).length > 0;
+            });
+
+            if (activeMembers.length === 0) {
+              closeOnlineRoom("All human players have left. The online room and PIN are being deleted.");
+              return;
+            }
+
+            if (activeMembers.length === 1 && latest.singlePlayerChoiceForUid !== onlineUid) {
+              var choiceUpdate = { singlePlayerChoiceForUid: onlineUid };
+              return FB.update(onlineRoomRef, choiceUpdate).then(function() {
+                if (!onlineIsHost) return;
+                showModal(
+                  '<div class="boardgame-big-emoji">🌲</div>' +
+                  '<h2>You are the last player!</h2>' +
+                  '<p>' + esc(departedName) + ' has left the adventure. You can keep playing with the other characters controlled by the computer, or end the game and remove this room.</p>' +
+                  '<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:18px;">' +
+                  '<button type="button" class="boardgame-action-button boardgame-gold-button" onclick="window.continueOnlineAlone()">Continue playing</button>' +
+                  '<button type="button" class="boardgame-action-button" onclick="window.endOnlineAloneGame()">End game</button>' +
+                  '</div>'
+                );
+              });
+            }
+          });
+        }).catch(function(error) {
+          setOnlineStatus("Couldn't update the departed player: " + error.message);
+        });
+      }, 8000);
+    });
+  }
+
+  function maybeMigrateHost(room) {
+    if (!onlineRoomId || !room || !room.members) return;
+    var ids = Object.keys(room.members);
+    var active = ids.filter(function(uid) {
+      var con = room.members[uid].connections || {};
+      return Object.keys(con).length > 0;
+    }).sort(function(a,b) { return (room.members[a].joinedAt || 0) - (room.members[b].joinedAt || 0); });
+    if (!active.length) return;
+    if (room.hostUid && active.indexOf(room.hostUid) !== -1) return;
+    var candidate = active[0];
+    window._FB.runTransaction(window._FB.ref(window._FB.db, "rooms/" + onlineRoomId + "/hostUid"), function(current) {
+      if (current === room.hostUid || !current || active.indexOf(current) === -1) return candidate;
+      return;
+    }).then(function(result) {
+      if (result.committed && candidate === onlineUid) {
+        setOnlineStatus("The previous host disconnected. You are now hosting the adventure. Their character will be transferred to you Their character will now play automatically as a computer player.");
+        toast("You are now hosting the adventure.");
+      }
+    }).catch(function() {});
+  }
+
+  window.continueOnlineAlone = function() {
+    closeModal();
+    setOnlineStatus("You are continuing alone. Disconnected players are now computer-controlled.");
+    toast("Continuing solo — computer players will take their turns automatically.");
+    scheduleBotTurn();
+  };
+
+  window.endOnlineAloneGame = function() {
+    closeModal();
+    closeOnlineRoom("You chose to end the game. The room and PIN are being deleted.", true);
+  };
+
+  $("create-room").onclick = createOnlineRoom;
+  $("join-room").onclick = joinOnlineRoom;
+  $("online-start").onclick = startOnlineGame;
+
+  /* ======================================================================
+     RENDER TOKENS
+     ====================================================================== */
+
+  function renderBoardSpaces() {
+    for (var i = 0; i < 3; i++) {
+      var layer = $("spaces-" + i);
+      if (layer) layer.innerHTML = "";
+    }
+
+    players.forEach(function(pl, i) {
+      var tk = document.createElement("div");
+      tk.className = "boardgame-token";
+      tk.id = "boardgame-tk-" + i;
+      tk.style.borderColor = pl.color;
+      tk.innerHTML = characterImageHTML(pl.char);
+
+      var layer0 = $("spaces-0");
+      if (layer0) layer0.appendChild(tk);
+    });
+  }
+
+  function placeTokens(immediate) {
+    var groups = {};
+
+    players.forEach(function(pl, i) {
+      (groups[pl.pos] = groups[pl.pos] || []).push(i);
+    });
+
+    Object.keys(groups).forEach(function(posStr) {
+      var pos = parseInt(posStr, 10);
+      var list = groups[posStr];
+      var s = SPACES[pos] || SPACES[0];
+      var targetLayer = $("spaces-" + s.stage);
+
+      list.forEach(function(pIdx, k) {
+        var n = list.length;
+        var offsetX = n > 1 ? (k - (n - 1) / 2) * 1.8 : 0;
+        var offsetY = n > 1 ? ((k % 2 === 0) ? -0.8 : 0.8) : 0;
+
+        var tk = $("tk-" + pIdx);
+        if (!tk || !targetLayer) return;
+
+        if (tk.parentElement !== targetLayer) {
+          targetLayer.appendChild(tk);
+        }
+
+        if (immediate) {
+          tk.style.transition = "none";
+        } else {
+          tk.style.transition = "left 0.3s cubic-bezier(0.25, 1, 0.5, 1), top 0.3s cubic-bezier(0.25, 1, 0.5, 1)";
+        }
+
+        tk.style.left = (s.x + offsetX) + "%";
+        tk.style.top = (s.y + offsetY) + "%";
+        tk.classList.toggle("boardgame-current", pIdx === turn);
+
+        if (immediate) {
+          setTimeout(function() {
+            tk.style.transition = "";
+          }, 50);
+        }
+      });
+    });
+  }
+
+  /* ---------- Camera tracking ---------- */
+
+  function scrollToPlayer(pIdx) {
+    var pl = players[pIdx];
+    if (!pl || !scroller) return;
+
+    var s = SPACES[pl.pos] || SPACES[0];
+    var panel = $("panel-" + s.stage);
+    if (!panel) return;
+
+    /*
+      Use the real screen positions rather than offsetLeft/offsetTop.
+      This includes the board viewport's padding and the extra top padding
+      used on mobile to keep the board clear of the fixed HUD.
+    */
+    var scrollerRect = scroller.getBoundingClientRect();
+    var panelRect = panel.getBoundingClientRect();
+    var targetX = panelRect.left - scrollerRect.left + scroller.scrollLeft + (s.x / 100) * panelRect.width;
+    var targetY = panelRect.top - scrollerRect.top + scroller.scrollTop + (s.y / 100) * panelRect.height;
+
+    var computedStyle = window.getComputedStyle ? window.getComputedStyle(scroller) : null;
+    var topInset = computedStyle ? (parseFloat(computedStyle.paddingTop) || 0) : 0;
+    var visibleHeight = Math.max(1, scroller.clientHeight - topInset);
+    var targetViewY = topInset + (visibleHeight / 2);
+
+    var maxScrollLeft = Math.max(0, scroller.scrollWidth - scroller.clientWidth);
+    var maxScrollTop = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
+    var scrollLeft = Math.max(0, Math.min(maxScrollLeft, targetX - (scroller.clientWidth / 2)));
+    var scrollTop = Math.max(0, Math.min(maxScrollTop, targetY - targetViewY));
+
+    try {
+      scroller.scrollTo({
+        left: scrollLeft,
+        top: scrollTop,
+        behavior: "smooth"
+      });
+    } catch (scrollError) {
+      scroller.scrollLeft = scrollLeft;
+      scroller.scrollTop = scrollTop;
+    }
+  }
+
+  /* ======================================================================
+     COMPUTER PLAYER
+     ====================================================================== */
+
+  function isBotTurn() {
+    return (botMode || (onlineMode && onlineRoomId && onlineIsHost)) && players[turn] && players[turn].isBot === true;
+  }
+
+  function scheduleBotAction(callback, delay) {
+    if (!isBotTurn() || boardgameGameOver) return;
+
+    setTimeout(function() {
+      if (!boardgameGameOver && isBotTurn()) {
+        callback();
+      }
+    }, delay || 900);
+  }
+
+  function scheduleBotTurn() {
+    if (!(botMode || (onlineMode && onlineRoomId && onlineIsHost)) || boardgameGameOver || !players.length) return;
+    if (!isBotTurn() || busy) return;
+
+    if (botTurnTimer) {
+      clearTimeout(botTurnTimer);
+    }
+
+    botTurnTimer = setTimeout(function() {
+      botTurnTimer = null;
+      if (!boardgameGameOver && isBotTurn() && !busy) {
+        rollDice(true);
+      }
+    }, 1200);
+  }
+
+  function botChooseTarget(pIdx) {
+    for (var i = 0; i < players.length; i++) {
+      if (i !== pIdx && !players[i].isBot) {
+        pickPlayerTarget(pIdx, i);
+        return;
+      }
+    }
+
+    closeModal();
+    nextTurn();
+  }
+
+  function botAnswerWisdom(pIdx) {
+    var card = window._boardgameActiveWisdomCard;
+    var answerInput = $("wisdom-answer");
+
+    if (!card || !answerInput) return;
+
+    var accepted = card.acceptedAnswers || [card.answer];
+    var getsItRight = Math.random() < 0.8;
+
+    if (getsItRight) {
+      answerInput.value = accepted[Math.floor(Math.random() * accepted.length)];
+    } else {
+      answerInput.value = "I don't know";
+    }
+
+    checkWisdomAnswer(pIdx);
+  }
+
+  /* ======================================================================
+     HUD AND DICE
+     ====================================================================== */
+
+  var faceRotations = {
+    1: { x: 0, y: 0 },
+    2: { x: -90, y: 0 },
+    3: { x: 0, y: -90 },
+    4: { x: 0, y: 90 },
+    5: { x: 90, y: 0 },
+    6: { x: 0, y: 180 }
+  };
+
+  function renderHud() {
+    var hudPlayers = $("players");
+
+    hudPlayers.innerHTML = players.map(function(pl, i) {
+      return '<div class="boardgame-player-chip' +
+        (i === turn ? ' boardgame-active' : '') +
+        (pl.miss ? ' boardgame-missed' : '') +
+        '" style="' + (i === turn ? '' : 'border-color:' + pl.color + '55') + '">' +
+        '<span class="boardgame-avatar" style="box-shadow:0 0 0 2px ' + pl.color + '">' +
+        characterImageHTML(pl.char) +
+        '</span>' +
+        esc(pl.name) + (pl.miss ? ' 💤' : '') +
+        '</div>';
+    }).join("");
+
+    var cur = players[turn];
+
+    $("turn-label").textContent = cur
+      ? (cur.isBot ? "Computer's Turn..." : cur.name + "'s Turn")
+      : "";
+    $("roll-btn").disabled = busy || (cur && cur.isBot) || (onlineMode && !!onlineRoomId && (!cur || (cur.controllerUid || cur.uid) !== onlineUid));
+    publishOnlineState();
+  }
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function(c) {
+      return {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }[c];
+    });
+  }
+
+  function rollDice(isComputer) {
+    if (busy || !players.length) return;
+    if (isBotTurn() && !isComputer) return;
+
+    busy = true;
+    renderHud();
+
+    var diceEl = $("toy-dice");
+    var val = Math.floor(Math.random() * 6) + 1;
+    var extraX = (Math.floor(Math.random() * 3) + 3) * 360;
+    var extraY = (Math.floor(Math.random() * 3) + 3) * 360;
+
+    var targetX = faceRotations[val].x + extraX;
+    var targetY = faceRotations[val].y + extraY;
+
+    diceEl.style.transform = "rotateX(" + targetX + "deg) rotateY(" + targetY + "deg)";
+
+    toast(players[turn].name + " is rolling...");
+
+    setTimeout(function() {
+      toast(players[turn].name + " rolled a " + val );
+
+      stepMove(turn, val, function() {
+        landSpace(turn);
+      });
+    }, 850);
+  }
+
+  /* ======================================================================
+     MOVEMENT
+     ====================================================================== */
+
+  function stepMove(pIdx, steps, callback) {
+    var pl = players[pIdx];
+    var forward = steps > 0;
+    var left = Math.abs(steps);
+
+    scrollToPlayer(pIdx);
+
+    function step() {
+      if (left <= 0 || (forward && pl.pos === LAST_INDEX) || (!forward && pl.pos === 0)) {
+        setTimeout(callback, 250);
+        return;
+      }
+
+      pl.pos = forward ? nextPos(pl) : prevPos(pl);
+      left--;
+      publishOnlineState();
+
+      if (pl.pos === LANDMARK.nap) {
+        pl.left = false;
+      }
+
+      var tk = $("tk-" + pIdx);
+      if (tk) tk.classList.add("boardgame-hop");
+
+      placeTokens(false);
+      scrollToPlayer(pIdx);
+
+      setTimeout(function() {
+        if (tk) tk.classList.remove("boardgame-hop");
+      }, 180);
+
+      setTimeout(step, 280);
+    }
+
+    step();
+  }
+
+  function jumpTo(pIdx, targetIndex, callback) {
+    var pl = players[pIdx];
+    var onMain = pl.pos <= LAST_INDEX && targetIndex <= LAST_INDEX && !pl.left;
+
+    if (onMain) {
+      var diff = targetIndex - pl.pos;
+
+      if (pl.pos < LANDMARK.lost && targetIndex > LANDMARK.lost) {
+        pl.left = false;
+      }
+
+      stepMove(pIdx, diff, callback);
+      return;
+    }
+
+    pl.pos = targetIndex;
+    pl.left = false;
+
+    var tk = $("tk-" + pIdx);
+    if (tk) tk.classList.add("boardgame-hop");
+
+    placeTokens(false);
+    scrollToPlayer(pIdx);
+
+    setTimeout(function() {
+      if (tk) tk.classList.remove("boardgame-hop");
+    }, 250);
+
+    setTimeout(callback, 800);
+  }
+
+  /* ======================================================================
+     LANDING ON SPACES
+     ====================================================================== */
+
+  function landSpace(pIdx) {
+    var pl = players[pIdx];
+    var s = SPACES[pl.pos];
+
+    scrollToPlayer(pIdx);
+
+    if (pl.pos === LAST_INDEX) {
+      return handleWin(pIdx);
+    }
+
+    if (!s.fx) {
+      if (s.kind === "landmark") {
+        showModal(
+          '<div class="boardgame-big-emoji"><div class="boardgame-css-dumpling boardgame-css-dumpling--golden"><span class="boardgame-css-dumpling-eye boardgame-css-dumpling-eye--left"></span><span class="boardgame-css-dumpling-eye boardgame-css-dumpling-eye--right"></span><span class="boardgame-css-dumpling-mouth"></span></div></div>' +
+          '<h2>' + esc(s.a || s.t) + '</h2>' +
+          '<p><b>' + esc(pl.name) + '</b> squished their way to this cosy spot!</p>' +
+          '<button type="button" class="boardgame-action-button boardgame-gold-button" onclick="window.closeModal();window.nextTurn()">Next Player</button>'
+        );
+
+        if (pl.isBot) {
+          scheduleBotAction(function() {
+            closeModal();
+            nextTurn();
+          }, 4000);
+        }
+      } else {
+        nextTurn();
+      }
+
+      return;
+    }
+
+    var fx = s.fx;
+
+    if (fx.type === "wisdom") {
+      return drawWisdom(pIdx);
+    }
+
+    var title = esc(pl.name) + " landed on...";
+
+    var body = '<div class="boardgame-character-landing">' +
+      characterImageHTML(pl.char) +
+      '</div>' +
+      '<h2>' + title + '</h2>' +
+      '<p>' + (s.t ? esc(s.t) + "<br>" : "") +
+      '<b>' + esc((s.a || "").toUpperCase()) + '</b></p>';
+
+    if (fx.type === "swap" || fx.type === "chooseBack") {
+      var others = players.map(function(p, i) {
+        return i;
+      }).filter(function(i) {
+        return i !== pIdx;
+      });
+
+      if (!others.length) {
+        showModal(
+          body +
+          '<p>No other players to target!</p>' +
+          '<button type="button" class="boardgame-action-button boardgame-gold-button" onclick="window.closeModal();window.nextTurn()">OK</button>'
+        );
+        return;
+      }
+
+      body += '<p>Choose a player:</p><div class="boardgame-choice">' +
+        others.map(function(i) {
+          return '<button type="button" class="boardgame-action-button boardgame-target-button" onclick="window.pickPlayerTarget(' +
+            pIdx + ',' + i + ')">' +
+            characterImageHTML(players[i].char) + ' ' + esc(players[i].name) +
+            '</button>';
+        }).join("") +
+        '</div>';
+
+      showModal(body);
+
+      if (pl.isBot) {
+        scheduleBotAction(function() {
+          botChooseTarget(pIdx);
+        }, 4000);
+      }
+
+      return;
+    }
+
+    showModal(
+      body +
+      '<button type="button" class="boardgame-action-button boardgame-gold-button" onclick="window.applyEffect(' +
+      pIdx + ')">OK!</button>'
+    );
+
+    if (pl.isBot) {
+      scheduleBotAction(function() {
+        applyEffect(pIdx);
+      }, 4000);
+    }
+  }
+
+  function applyEffect(pIdx, fxOverride) {
+    closeModal();
+
+    var pl = players[pIdx];
+    var fx = fxOverride || SPACES[pl.pos].fx;
+
+    if (fx.type === "move") {
+      return stepMove(pIdx, fx.n, afterEffect(pIdx));
+    }
+
+    if (fx.type === "goto") {
+      return jumpTo(pIdx, LANDMARK[fx.to], afterEffect(pIdx));
+    }
+
+    if (fx.type === "leftTunnel") {
+      pl.left = true;
+      toast(pl.name + " takes the left tunnel next!");
+      return nextTurn();
+    }
+
+    if (fx.type === "miss") {
+      pl.miss = true;
+      return nextTurn();
+    }
+
+    if (fx.type === "again") {
+      busy = false;
+      renderHud();
+      toast(pl.name + " gets to roll again!");
+      scheduleBotTurn();
+      return;
+    }
+
+    nextTurn();
+  }
+
+  function afterEffect(pIdx) {
+    return function() {
+      if (players[pIdx].pos === LAST_INDEX) {
+        handleWin(pIdx);
+      } else {
+        nextTurn();
+      }
+    };
+  }
+
+  function pickPlayerTarget(pIdx, targetIdx) {
+    closeModal();
+
+    var fx = SPACES[players[pIdx].pos].fx;
+
+    if (fx.type === "swap") {
+      var a = players[pIdx];
+      var b = players[targetIdx];
+      var aStart = a.pos;
+      var bStart = b.pos;
+      var aLeft = a.left;
+      var bLeft = b.left;
+      var aSteps = Math.abs(bStart - aStart);
+      var bSteps = Math.abs(aStart - bStart);
+      var maxSteps = Math.max(aSteps, bSteps);
+      var stepNo = 0;
+
+      busy = true;
+      renderHud();
+      toast(a.name + " and " + b.name + " are swapping places!");
+
+      /*
+       * Move both pieces one board space at a time. Keeping the original
+       * positions until the animation starts makes the swap clear, and
+       * updating each position on every beat makes both journeys visible.
+       */
+      function animateSwapStep() {
+        if (stepNo >= maxSteps) {
+          a.pos = bStart;
+          b.pos = aStart;
+          a.left = bLeft;
+          b.left = aLeft;
+
+          placeTokens(false);
+          scrollToPlayer(pIdx);
+
+          setTimeout(function() {
+            busy = false;
+            nextTurn();
+          }, 450);
+          return;
+        }
+
+        if (a.pos !== bStart) {
+          a.pos += (bStart > aStart ? 1 : -1);
+        }
+
+        if (b.pos !== aStart) {
+          b.pos += (aStart > bStart ? 1 : -1);
+        }
+
+        stepNo++;
+        publishOnlineState();
+
+        var tokenA = $("tk-" + pIdx);
+        var tokenB = $("tk-" + targetIdx);
+
+        if (tokenA) tokenA.classList.add("boardgame-hop");
+        if (tokenB) tokenB.classList.add("boardgame-hop");
+
+        placeTokens(false);
+
+        setTimeout(function() {
+          if (tokenA) tokenA.classList.remove("boardgame-hop");
+          if (tokenB) tokenB.classList.remove("boardgame-hop");
+          animateSwapStep();
+        }, 300);
+      }
+
+      animateSwapStep();
+
+    } else if (fx.type === "chooseBack") {
+      toast(players[targetIdx].name + " moves back " + fx.n + " spaces!");
+
+      stepMove(targetIdx, -fx.n, function() {
+        nextTurn();
+      });
+    }
+  }
+
+  /* ======================================================================
+     LUCKY DUMPLING CARDS
+     ====================================================================== */
+
+  function drawWisdom(pIdx) {
+    if (!deck.length) {
+      deck = WISDOM_CARDS.map(function(_, i) {
+        return i;
+      });
+      shuffle(deck);
+    }
+
+    var card = WISDOM_CARDS[deck.pop()];
+    window._boardgameActiveWisdomCard = card;
+    window._boardgameWisdomPlayer = pIdx;
+
+    showModal(
+      '<div class="boardgame-wisdom-card">' +
+        '<div class="boardgame-wisdom-card-header">Lucky Dumpling Card</div>' +
+        '<div class="boardgame-wisdom-card-inner">' +
+          '<span class="boardgame-wisdom-card-question-label">Question:</span>' +
+          '<p class="boardgame-wisdom-card-question">' + esc(card.question) + '</p>' +
+          '<span class="boardgame-wisdom-card-answer-label">Answer:</span>' +
+          '<input type="text" class="boardgame-wisdom-card-answer-input" id="boardgame-wisdom-answer" ' +
+            'maxlength="60" autocomplete="off" placeholder="Your answer">' +
+          '<p class="boardgame-wisdom-card-feedback" id="boardgame-wisdom-feedback" aria-live="polite"></p>' +
+          '<p class="boardgame-wisdom-card-footer">If you get it right,<br>MOVE 1 SPACE!</p>' +
+        '</div>' +
+      '</div>' +
+      '<button type="button" class="boardgame-action-button boardgame-gold-button" ' +
+        'onclick="window.checkWisdomAnswer(' + pIdx + ')">Check Answer</button>'
+    );
+
+    if (players[pIdx].isBot) {
+      scheduleBotAction(function() {
+        botAnswerWisdom(pIdx);
+      }, 4000);
+    } else {
+      setTimeout(function() {
+        var answerInput = $("wisdom-answer");
+        if (answerInput) answerInput.focus();
+      }, 100);
+    }
+  }
+
+  function checkWisdomAnswer(pIdx) {
+    var card = window._boardgameActiveWisdomCard;
+    var answerInput = $("wisdom-answer");
+    var feedback = $("wisdom-feedback");
+
+    if (!card || !answerInput || !feedback) return;
+
+    var userAnswer = answerInput.value
+      .toLowerCase()
+      .replace(/[^a-z0-9 ]/g, "")
+      .replace(/\s+/g, " ")
+      .replace(/^\s+|\s+$/g, "");
+
+    if (!userAnswer) {
+      feedback.textContent = "Have a guess before checking!";
+      answerInput.focus();
+      return;
+    }
+
+    var accepted = (card.acceptedAnswers || [card.answer]).map(function(answer) {
+      return String(answer)
+        .toLowerCase()
+        .replace(/[^a-z0-9 ]/g, "")
+        .replace(/\s+/g, " ")
+        .replace(/^\s+|\s+$/g, "");
+    });
+
+    var isCorrect = accepted.indexOf(userAnswer) !== -1;
+
+    scrollGameToTop();
+
+    if (isCorrect) {
+      showModal(
+        '<div class="boardgame-wisdom-card">' +
+          '<div class="boardgame-wisdom-card-header">Lucky Dumpling Card</div>' +
+          '<div class="boardgame-wisdom-card-inner">' +
+            '<p class="boardgame-wisdom-card-question">That is correct!</p>' +
+            '<span class="boardgame-wisdom-card-answer-label">Answer:</span>' +
+            '<p class="boardgame-wisdom-card-question">' + esc(card.answer) + '</p>' +
+            '<p class="boardgame-wisdom-card-footer">Move forward 1 space!</p>' +
+          '</div>' +
+        '</div>' +
+        '<button type="button" class="boardgame-action-button boardgame-gold-button" ' +
+          'onclick="window.applyEffect(' + pIdx + ', window._boardgameActiveWisdomCard.fx)">Move 1 Space!</button>'
+      );
+
+      if (players[pIdx].isBot) {
+        scheduleBotAction(function() {
+          applyEffect(pIdx, window._boardgameActiveWisdomCard.fx);
+        }, 4000);
+      }
+    } else {
+      showModal(
+        '<div class="boardgame-wisdom-card">' +
+          '<div class="boardgame-wisdom-card-header">Lucky Dumpling Card</div>' +
+          '<div class="boardgame-wisdom-card-inner">' +
+            '<p class="boardgame-wisdom-card-question">Not quite this time!</p>' +
+            '<span class="boardgame-wisdom-card-answer-label">The answer was:</span>' +
+            '<p class="boardgame-wisdom-card-question">' + esc(card.answer) + '</p>' +
+            '<p class="boardgame-wisdom-card-footer">No move this time.<br>Better luck next turn!</p>' +
+          '</div>' +
+        '</div>' +
+        '<button type="button" class="boardgame-action-button boardgame-gold-button" ' +
+          'onclick="window.closeModal();window.nextTurn()">Next Player</button>'
+      );
+
+      if (players[pIdx].isBot) {
+        scheduleBotAction(function() {
+          closeModal();
+          nextTurn();
+        }, 4000);
+      }
+    }
+  }
+
+  function shuffle(array) {
+    for (var i = array.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var temp = array[i];
+      array[i] = array[j];
+      array[j] = temp;
+    }
+  }
+
+  /* ======================================================================
+     TURNS AND WINNING
+     ====================================================================== */
+
+  function nextTurn() {
+    var guard = 0;
+
+    do {
+      turn = (turn + 1) % players.length;
+
+      if (players[turn].miss) {
+        players[turn].miss = false;
+        toast(players[turn].name + " misses a turn!");
+      } else {
+        break;
+      }
+    } while (++guard < players.length);
+
+    busy = false;
+    renderHud();
+    publishOnlineState();
+    placeTokens(false);
+    scrollToPlayer(turn);
+    scheduleBotTurn();
+  }
+
+    /* ======================================================================
+     WINNER CELEBRATION
+     ====================================================================== */
+
+  function startWinnerCelebration() {
+    if (boardgameGameOver) return;
+
+    boardgameGameOver = true;
+
+    gameRoot.classList.add("boardgame-celebrating");
+
+    boardgameCelebrationCanvas = document.createElement("canvas");
+    boardgameCelebrationCanvas.className = "boardgame-winner-celebration";
+    boardgameCelebrationCanvas.setAttribute("aria-hidden", "true");
+
+    gameRoot.appendChild(boardgameCelebrationCanvas);
+
+    boardgameCelebrationContext = boardgameCelebrationCanvas.getContext("2d");
+
+    if (!boardgameCelebrationContext) return;
+
+    function resizeCelebrationCanvas() {
+      var rect = gameRoot.getBoundingClientRect();
+      var ratio = Math.min(window.devicePixelRatio || 1, 2);
+
+      boardgameCelebrationCanvas.width = rect.width * ratio;
+      boardgameCelebrationCanvas.height = rect.height * ratio;
+
+      boardgameCelebrationCanvas.style.width = rect.width + "px";
+      boardgameCelebrationCanvas.style.height = rect.height + "px";
+
+      boardgameCelebrationContext.setTransform(
+        ratio, 0, 0, ratio, 0, 0
+      );
+    }
+
+    resizeCelebrationCanvas();
+
+    var width = function() {
+      return gameRoot.clientWidth;
+    };
+
+    var height = function() {
+      return gameRoot.clientHeight;
+    };
+
+    var colours = [
+      "#ff8fab",
+      "#ffc24d",
+      "#ffffff",
+      "#ffd6e0",
+      "#9fd27f",
+      "#ffb38a",
+      "#c9a2ff"
+    ];
+
+    /* Create the rising steam puffs */
+    for (var i = 0; i < 60; i++) {
+      boardgameSteamPuffs.push({
+        x: Math.random() * width(),
+        y: Math.random() * height(),
+        size: Math.random() * 7 + 3,
+        speed: Math.random() * 1.1 + 0.4,
+        drift: Math.random() * 0.8 - 0.4,
+        opacity: Math.random() * 0.45 + 0.25,
+        pink: Math.random() < 0.35
+      });
+    }
+
+    /* Firework burst */
+    function createFirework() {
+      var x = Math.random() * width();
+      var y = Math.random() * (height() * 0.55) + 30;
+      var colour = colours[Math.floor(Math.random() * colours.length)];
+
+      for (var i = 0; i < 38; i++) {
+        var angle = (Math.PI * 2 * i) / 38;
+        var speed = Math.random() * 3 + 1.5;
+
+        boardgameFireworks.push({
+          x: x,
+          y: y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          life: 1,
+          decay: Math.random() * 0.012 + 0.009,
+          size: Math.random() * 2.5 + 1,
+          colour: colour
+        });
+      }
+    }
+
+    /* Confetti burst */
+    function createConfetti() {
+      for (var i = 0; i < 16; i++) {
+        boardgameConfetti.push({
+          x: Math.random() * width(),
+          y: -20,
+          vx: Math.random() * 4 - 2,
+          vy: Math.random() * 2 + 1,
+          rotation: Math.random() * 360,
+          spin: Math.random() * 8 - 4,
+          size: Math.random() * 7 + 4,
+          colour: colours[Math.floor(Math.random() * colours.length)]
+        });
+      }
+    }
+
+    createFirework();
+    createFirework();
+    createConfetti();
+
+    boardgameCelebrationTimer = setInterval(function() {
+      createFirework();
+      createConfetti();
+    }, 650);
+
+    function animateCelebration() {
+      if (!boardgameCelebrationContext || boardgameGameOver !== true) {
+        return;
+      }
+
+      var ctx = boardgameCelebrationContext;
+      var w = width();
+      var h = height();
+
+      ctx.clearRect(0, 0, w, h);
+
+      /* Rising steam puffs */
+      boardgameSteamPuffs.forEach(function(puff) {
+        puff.y -= puff.speed;
+        puff.x += puff.drift + Math.sin(puff.y / 40) * 0.3;
+
+        if (puff.y < -15) {
+          puff.y = h + 15;
+          puff.x = Math.random() * w;
+        }
+
+        if (puff.x > w + 15) puff.x = -15;
+        if (puff.x < -15) puff.x = w + 15;
+
+        ctx.beginPath();
+        ctx.arc(puff.x, puff.y, puff.size, 0, Math.PI * 2);
+        ctx.fillStyle = puff.pink
+          ? "rgba(255,170,190," + puff.opacity + ")"
+          : "rgba(255,255,255," + puff.opacity + ")";
+        ctx.fill();
+      });
+
+      /* Fireworks */
+      for (var i = boardgameFireworks.length - 1; i >= 0; i--) {
+        var particle = boardgameFireworks[i];
+
+        particle.x += particle.vx;
+        particle.y += particle.vy;
+        particle.vy += 0.025;
+        particle.life -= particle.decay;
+
+        if (particle.life <= 0) {
+          boardgameFireworks.splice(i, 1);
+          continue;
+        }
+
+        ctx.globalAlpha = particle.life;
+        ctx.beginPath();
+        ctx.arc(
+          particle.x,
+          particle.y,
+          particle.size,
+          0,
+          Math.PI * 2
+        );
+        ctx.fillStyle = particle.colour;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = particle.colour;
+        ctx.fill();
+      }
+
+      ctx.globalAlpha = 1;
+      ctx.shadowBlur = 0;
+
+      /* Falling confetti */
+      for (var j = boardgameConfetti.length - 1; j >= 0; j--) {
+        var piece = boardgameConfetti[j];
+
+        piece.x += piece.vx;
+        piece.y += piece.vy;
+        piece.rotation += piece.spin;
+        piece.vy += 0.035;
+
+        if (piece.y > h + 30) {
+          boardgameConfetti.splice(j, 1);
+          continue;
+        }
+
+        ctx.save();
+        ctx.translate(piece.x, piece.y);
+        ctx.rotate(piece.rotation * Math.PI / 180);
+        ctx.fillStyle = piece.colour;
+        ctx.fillRect(
+          -piece.size / 2,
+          -piece.size / 2,
+          piece.size,
+          piece.size * 0.65
+        );
+        ctx.restore();
+      }
+
+      boardgameCelebrationFrame = window.requestAnimationFrame(
+        animateCelebration
+      );
+    }
+
+    animateCelebration();
+
+    window.addEventListener("resize", resizeCelebrationCanvas);
+
+    boardgameCelebrationResizeHandler = resizeCelebrationCanvas;
+
+    playWinnerFanfare();
+  }
+
+  var boardgameCelebrationResizeHandler = null;
+
+  function playWinnerFanfare() {
+    var AudioContextClass =
+      window.AudioContext || window.webkitAudioContext;
+
+    if (!AudioContextClass) return;
+
+    try {
+      boardgameCelebrationAudio = new AudioContextClass();
+
+      if (boardgameCelebrationAudio.state === "suspended") {
+        boardgameCelebrationAudio.resume();
+      }
+
+      var audio = boardgameCelebrationAudio;
+      var notes = [
+        { note: 523.25, time: 0, duration: 0.2 },
+        { note: 659.25, time: 0.2, duration: 0.2 },
+        { note: 783.99, time: 0.4, duration: 0.2 },
+        { note: 1046.5, time: 0.65, duration: 0.55 },
+        { note: 783.99, time: 0.85, duration: 0.2 },
+        { note: 1046.5, time: 1.05, duration: 0.7 }
+      ];
+
+      notes.forEach(function(item) {
+        var oscillator = audio.createOscillator();
+        var gain = audio.createGain();
+
+        oscillator.type = "triangle";
+        oscillator.frequency.value = item.note;
+
+        gain.gain.setValueAtTime(0, audio.currentTime + item.time);
+        gain.gain.linearRampToValueAtTime(
+          0.16,
+          audio.currentTime + item.time + 0.03
+        );
+        gain.gain.exponentialRampToValueAtTime(
+          0.001,
+          audio.currentTime + item.time + item.duration
+        );
+
+        oscillator.connect(gain);
+        gain.connect(audio.destination);
+
+        oscillator.start(audio.currentTime + item.time);
+        oscillator.stop(audio.currentTime + item.time + item.duration);
+      });
+
+      boardgameCelebrationAudioTimer = setTimeout(function() {
+        if (boardgameCelebrationAudio) {
+          boardgameCelebrationAudio.close();
+          boardgameCelebrationAudio = null;
+        }
+      }, 3000);
+
+    } catch (error) {
+      /* Sound is optional; the visual celebration still works. */
+    }
+  }
+
+  function stopWinnerCelebration() {
+    boardgameGameOver = false;
+
+    if (boardgameCelebrationFrame !== null) {
+      window.cancelAnimationFrame(boardgameCelebrationFrame);
+      boardgameCelebrationFrame = null;
+    }
+
+    if (boardgameCelebrationTimer !== null) {
+      clearInterval(boardgameCelebrationTimer);
+      boardgameCelebrationTimer = null;
+    }
+
+    if (boardgameCelebrationAudioTimer !== null) {
+      clearTimeout(boardgameCelebrationAudioTimer);
+      boardgameCelebrationAudioTimer = null;
+    }
+
+    if (boardgameCelebrationAudio) {
+      try {
+        boardgameCelebrationAudio.close();
+      } catch (error) {}
+
+      boardgameCelebrationAudio = null;
+    }
+
+    if (boardgameCelebrationResizeHandler) {
+      window.removeEventListener(
+        "resize",
+        boardgameCelebrationResizeHandler
+      );
+
+      boardgameCelebrationResizeHandler = null;
+    }
+
+    if (boardgameCelebrationCanvas && boardgameCelebrationCanvas.parentNode) {
+      boardgameCelebrationCanvas.parentNode.removeChild(
+        boardgameCelebrationCanvas
+      );
+    }
+
+    boardgameCelebrationCanvas = null;
+    boardgameCelebrationContext = null;
+
+    boardgameSteamPuffs = [];
+    boardgameFireworks = [];
+    boardgameConfetti = [];
+
+    gameRoot.classList.remove("boardgame-celebrating");
+  }
+
+  function playAgain() {
+    stopWinnerCelebration();
+    window.location.reload();
+  }
+
+    function handleWin(pIdx) {
+    if (boardgameGameOver) return;
+
+    if (botTurnTimer) {
+      clearTimeout(botTurnTimer);
+      botTurnTimer = null;
+    }
+
+    var pl = players[pIdx];
+
+    startWinnerCelebration();
+
+    showModal(
+      '<div class="boardgame-big-emoji"><div class="boardgame-css-dumpling boardgame-css-dumpling--golden"><span class="boardgame-css-dumpling-crown"></span><span class="boardgame-css-dumpling-eye boardgame-css-dumpling-eye--left"></span><span class="boardgame-css-dumpling-eye boardgame-css-dumpling-eye--right"></span><span class="boardgame-css-dumpling-mouth"></span></div></div>' +
+      '<h2>' + esc(pl.name) + ' is the Dumpling Champion!</h2>' +
+      '<p>Squish-tastic! You bounced all the way to the Dumpling Palace, and the Dumpling King crowns you the squishiest dumpling of them all!</p>' +
+      '<p class="boardgame-celebrate-line">🥟 👑 💖 👑 🥟</p>' +
+      '<button type="button" class="boardgame-action-button boardgame-gold-button" onclick="window.playAgain()">Play Again</button>'
+    );
+  }
+
+  /* ======================================================================
+     OVERLAY AND TOAST UTILITIES
+     ====================================================================== */
+
+  function showModal(html) {
+  var modalBody = $("msg-body");
+  onlineModalHtml = html;
+  publishOnlineState();
+
+  modalBody.innerHTML = html;
+
+  modalBody.classList.toggle(
+    "boardgame-wisdom-modal",
+    html.indexOf("boardgame-wisdom-card") !== -1
+  );
+
+  $("msg").classList.add("boardgame-visible");
+}
+
+    function closeModal() {
+      var wasWisdomCard = $("msg-body").classList.contains("boardgame-wisdom-modal");
+
+      $("msg").classList.remove("boardgame-visible");
+      onlineModalHtml = "";
+      publishOnlineState();
+
+      $("msg-body").classList.remove("boardgame-wisdom-modal");
+
+      if (wasWisdomCard) {
+        scrollGameToTop();
+      }
+    }
+
+  function toast(msg) {
+    var t = $("toast");
+
+    t.textContent = msg;
+    t.classList.add("boardgame-toast-visible");
+
+    setTimeout(function() {
+      t.classList.remove("boardgame-toast-visible");
+    }, 2200);
+  }
+
+  /* ======================================================================
+     PANEL OVERLAP
+     ====================================================================== */
+
+  function applyPanelOverlap() {
+    [1, 2].forEach(function(i) {
+      var p = $("panel-" + i);
+
+      if (p && p.clientWidth) {
+        p.style.marginLeft = (-p.clientWidth * 0.01) + "px";
+      }
+    });
+  }
+
+  Array.prototype.forEach.call(
+    gameRoot.querySelectorAll(".boardgame-artwork-stage"),
+    function(img) {
+      img.addEventListener("load", applyPanelOverlap);
+    }
+  );
+
+  window.addEventListener("resize", applyPanelOverlap);
+
+  /* ======================================================================
+     EXPOSE FUNCTIONS FOR SMARTEDIT INLINE HANDLERS
+     ====================================================================== */
+
+  window.rollDice = function(isComputer) {
+    if (onlineMode && onlineRoomId) {
+      if (rejectOnlineOutOfTurnAction()) return;
+      if (!onlineIsHost) { sendOnlineCommand("roll"); return; }
+    }
+    rollDice(isComputer);
+  };
+  window.closeModal = closeModal;
+  window.nextTurn = function() {
+    if (onlineMode && onlineRoomId) {
+      if (rejectOnlineOutOfTurnAction()) return;
+      if (!onlineIsHost) { sendOnlineCommand("next"); return; }
+    }
+    nextTurn();
+  };
+  window.pickPlayerTarget = function(pIdx, targetIdx) {
+    if (onlineMode && onlineRoomId) {
+      if (rejectOnlineOutOfTurnAction()) return;
+      if (!onlineIsHost) { sendOnlineCommand("target", { target: targetIdx }); return; }
+    }
+    pickPlayerTarget(pIdx, targetIdx);
+  };
+  window.applyEffect = function(pIdx, effect) {
+    if (onlineMode && onlineRoomId) {
+      if (rejectOnlineOutOfTurnAction()) return;
+      if (!onlineIsHost) { sendOnlineCommand("effect", { effect: effect || null }); return; }
+    }
+    applyEffect(pIdx, effect);
+  };
+  window.checkWisdomAnswer = function(pIdx) {
+    if (onlineMode && onlineRoomId) {
+      if (rejectOnlineOutOfTurnAction()) return;
+      if (!onlineIsHost) {
+        var answerInput = $("wisdom-answer");
+        sendOnlineCommand("wisdom", { answer: answerInput ? answerInput.value : "" });
+        return;
+      }
+    }
+    checkWisdomAnswer(pIdx);
+  };
+  window.playAgain = playAgain;
+
+  /* ======================================================================
+     INITIALISE
+     ====================================================================== */
+
+  function initDumplingGame() {
+    initSetup();
+    applyPanelOverlap();
+  }
+
+  initDumplingGame();
+
+  window.addEventListener("pagehide", function() {
+    if (onlineConnectionRef && window._FB) {
+      // Firebase onDisconnect removes this connection even if the tab is closed abruptly.
+    }
+  });
+
+})();
+</script>
