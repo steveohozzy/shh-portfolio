@@ -58,6 +58,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'weekly',
       priority: 0.9,
     },
+
+    {
+      url: `${baseUrl}/squishy-dumpling-board-game`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.9,
+    },
     
     {
       url: `${baseUrl}/squishy-dumpling-match/endless`,
