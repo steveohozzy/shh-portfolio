@@ -3472,35 +3472,80 @@ if (window.ResizeObserver) {
   }
 
   function jumpTo(pIdx, targetIndex, callback) {
-    var pl = players[pIdx];
-    var onMain = pl.pos <= LAST_INDEX && targetIndex <= LAST_INDEX && !pl.left;
+  var pl = players[pIdx];
 
-    if (onMain) {
-      var diff = targetIndex - pl.pos;
+  if (typeof targetIndex !== "number" || !SPACES[targetIndex]) {
+    if (callback) callback();
+    return;
+  }
 
-      if (pl.pos < LANDMARK.lost && targetIndex > LANDMARK.lost) {
+  var onMain = pl.pos <= LAST_INDEX &&
+    targetIndex <= LAST_INDEX &&
+    !pl.left;
+
+  if (onMain) {
+    var direction = targetIndex > pl.pos ? 1 : -1;
+
+    scrollToPlayer(pIdx);
+
+    function stepTowardTarget() {
+      // Stop only when the player is actually on the destination.
+      if (pl.pos === targetIndex) {
+        setTimeout(callback, 250);
+        return;
+      }
+
+      pl.pos = direction > 0 ? nextPos(pl) : prevPos(pl);
+
+      publishOnlineState();
+
+      if (pl.pos === LANDMARK.nap) {
         pl.left = false;
       }
 
-      stepMove(pIdx, diff, callback);
-      return;
+      var tk = $("tk-" + pIdx);
+
+      if (tk) {
+        tk.classList.add("boardgame-hop");
+      }
+
+      placeTokens(false);
+      scrollToPlayer(pIdx);
+
+      setTimeout(function() {
+        if (tk) {
+          tk.classList.remove("boardgame-hop");
+        }
+      }, 180);
+
+      setTimeout(stepTowardTarget, 280);
     }
 
-    pl.pos = targetIndex;
-    pl.left = false;
-
-    var tk = $("tk-" + pIdx);
-    if (tk) tk.classList.add("boardgame-hop");
-
-    placeTokens(false);
-    scrollToPlayer(pIdx);
-
-    setTimeout(function() {
-      if (tk) tk.classList.remove("boardgame-hop");
-    }, 250);
-
-    setTimeout(callback, 800);
+    stepTowardTarget();
+    return;
   }
+
+  // Keep the existing direct movement for players on the alternate route.
+  pl.pos = targetIndex;
+  pl.left = false;
+
+  var tk = $("tk-" + pIdx);
+
+  if (tk) {
+    tk.classList.add("boardgame-hop");
+  }
+
+  placeTokens(false);
+  scrollToPlayer(pIdx);
+
+  setTimeout(function() {
+    if (tk) {
+      tk.classList.remove("boardgame-hop");
+    }
+  }, 250);
+
+  setTimeout(callback, 800);
+}
 
   /* ======================================================================
      LANDING ON SPACES
