@@ -4506,14 +4506,19 @@ if (window.ResizeObserver) {
 
   window.addEventListener("resize", applyPanelOverlap);
 
-  /* ======================================================================
-     EXPOSE FUNCTIONS FOR SMARTEDIT INLINE HANDLERS
-     ====================================================================== */
-
   window.rollDice = function(isComputer) {
     if (onlineMode && onlineRoomId) {
       if (rejectOnlineOutOfTurnAction()) return;
-      if (!onlineIsHost) { sendOnlineCommand("roll"); return; }
+      
+      // Trigger the local dice animation and movement immediately for whoever's turn it is
+      rollDice(isComputer);
+
+      // If this client is not the host, also notify the host to handle the official board state update
+      if (!onlineIsHost) {
+        sendOnlineCommand("roll");
+        return;
+      }
+      return;
     }
     rollDice(isComputer);
   };
