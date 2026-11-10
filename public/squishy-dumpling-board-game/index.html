@@ -1993,7 +1993,6 @@
 
 </div>
 
-
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
@@ -2375,7 +2374,8 @@ function characterImageHTML(charKey, extraClass) {
   var onlineApplyingState = false;
   var onlineConnectionRef = null;
   var onlineMemberIds = {};
-  var onlineLastState = "";
+var onlineLastState = "";
+  var onlineLastDiceRollId = "";
   var onlineLastFollowKey = "";
   var onlineCommandBusy = false;
   var onlineDisconnectTimers = {};
@@ -3040,7 +3040,8 @@ if (window.ResizeObserver) {
     var state = {
       players: players.map(function(pl) { return { uid: pl.uid || null, id: pl.id, name: pl.name, char: pl.char, color: pl.color, pos: pl.pos, miss: !!pl.miss, left: !!pl.left, isBot: !!pl.isBot }; }),
       turn: turn, busy: !!busy, gameOver: !!boardgameGameOver,
-      updatedAt: Date.now(), modalHtml: onlineModalHtml || "",
+updatedAt: Date.now(), modalHtml: onlineModalHtml || "",
+      diceRoll: window._boardgameDiceRoll || null,
       wisdomCard: window._boardgameActiveWisdomCard || null
     };
     var serial = JSON.stringify(state);
@@ -3085,6 +3086,10 @@ if (window.ResizeObserver) {
     turn = Math.max(0, Math.min(Number(state.turn) || 0, players.length - 1));
     busy = !!state.busy;
     boardgameGameOver = !!state.gameOver;
+    if (state.diceRoll && state.diceRoll.id && state.diceRoll.id !== onlineLastDiceRollId) {
+      onlineLastDiceRollId = state.diceRoll.id;
+      animateDiceRoll(Number(state.diceRoll.value), state.diceRoll.playerName || "");
+    }
     if (state.wisdomCard) window._boardgameActiveWisdomCard = state.wisdomCard;
     $("setup").classList.remove("boardgame-visible");
     if (!$("tk-0")) renderBoardSpaces();
@@ -3266,6 +3271,7 @@ if (window.ResizeObserver) {
               return FB.update(onlineRoomRef, choiceUpdate).then(function() {
                 if (!onlineIsHost) return;
                 showModal(
+                  '<div class="boardgame-big-emoji">🌲</div>' +
                   '<h2>You are the last player!</h2>' +
                   '<p>' + esc(departedName) + ' has left the adventure. You can keep playing with the other characters controlled by the computer, or end the game and remove this room.</p>' +
                   '<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:18px;">' +
@@ -3552,28 +3558,31 @@ if (window.ResizeObserver) {
     });
   }
 
+  function animateDiceRoll(val, playerName) {
+    val = Math.max(1, Math.min(6, Number(val) || 1));
+    var diceEl = $("toy-dice");
+    if (!diceEl) return;
+    var extraX = (Math.floor(Math.random() * 3) + 3) * 360;
+    var extraY = (Math.floor(Math.random() * 3) + 3) * 360;
+    diceEl.style.transform = "rotateX(" + (faceRotations[val].x + extraX) + "deg) rotateY(" + (faceRotations[val].y + extraY) + "deg)";
+    toast((playerName || (players[turn] && players[turn].name) || "Player") + " is rolling...");
+    setTimeout(function() { toast((playerName || "Player") + " rolled a " + val); }, 850);
+  }
+
   function rollDice(isComputer) {
     if (busy || !players.length) return;
     if (isBotTurn() && !isComputer) return;
 
     busy = true;
-    renderHud();
-
-    var diceEl = $("toy-dice");
     var val = Math.floor(Math.random() * 6) + 1;
-    var extraX = (Math.floor(Math.random() * 3) + 3) * 360;
-    var extraY = (Math.floor(Math.random() * 3) + 3) * 360;
-
-    var targetX = faceRotations[val].x + extraX;
-    var targetY = faceRotations[val].y + extraY;
-
-    diceEl.style.transform = "rotateX(" + targetX + "deg) rotateY(" + targetY + "deg)";
-
-    toast(players[turn].name + " is rolling...");
+    var playerName = players[turn].name;
+    if (onlineMode && onlineIsHost) {
+      window._boardgameDiceRoll = { id: String(Date.now()) + "-" + Math.random().toString(36).slice(2), value: val, playerName: playerName };
+    }
+    renderHud();
+    animateDiceRoll(val, playerName);
 
     setTimeout(function() {
-      toast(players[turn].name + " rolled a " + val );
-
       stepMove(turn, val, function() {
         landSpace(turn);
       });
@@ -4508,7 +4517,16 @@ if (window.ResizeObserver) {
   window.rollDice = function(isComputer) {
     if (onlineMode && onlineRoomId) {
       if (rejectOnlineOutOfTurnAction()) return;
-      if (!onlineIsHost) { sendOnlineCommand("roll"); return; }
+      
+      // Trigger the local dice animation and movement immediately for whoever's turn it is
+      rollDice(isComputer);
+
+      // If this client is not the host, also notify the host to handle the official board state update
+      if (!onlineIsHost) {
+        sendOnlineCommand("roll");
+        return;
+      }
+      return;
     }
     rollDice(isComputer);
   };
