@@ -3447,19 +3447,25 @@ updatedAt: Date.now(), modalHtml: onlineModalHtml || "",
   }
 
   function scheduleBotAction(callback, delay) {
-    if (!isBotTurn() || boardgameGameOver || busy) return;
+    if (!isBotTurn() || boardgameGameOver) return;
 
     var botPlayerIndex = turn;
+    var modalEl = $("msg");
+    var modalWasOpen = !!(modalEl && modalEl.classList.contains("boardgame-visible"));
+    var modalHtmlAtStart = onlineModalHtml;
 
     setTimeout(function() {
-      if (
-        !boardgameGameOver &&
-        !busy &&
-        turn === botPlayerIndex &&
-        isBotTurn()
-      ) {
-        callback();
+      if (boardgameGameOver || turn !== botPlayerIndex || !isBotTurn()) return;
+
+      if (modalWasOpen) {
+        // Only act if the same pop-up is still showing (nobody clicked it already)
+        var stillOpen = modalEl && modalEl.classList.contains("boardgame-visible");
+        if (!stillOpen || onlineModalHtml !== modalHtmlAtStart) return;
+      } else if (busy) {
+        return;
       }
+
+      callback();
     }, delay || 900);
   }
 
