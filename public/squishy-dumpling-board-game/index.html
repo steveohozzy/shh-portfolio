@@ -3266,7 +3266,6 @@ if (window.ResizeObserver) {
               return FB.update(onlineRoomRef, choiceUpdate).then(function() {
                 if (!onlineIsHost) return;
                 showModal(
-                  '<div class="boardgame-big-emoji">🌲</div>' +
                   '<h2>You are the last player!</h2>' +
                   '<p>' + esc(departedName) + ' has left the adventure. You can keep playing with the other characters controlled by the computer, or end the game and remove this room.</p>' +
                   '<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:18px;">' +
