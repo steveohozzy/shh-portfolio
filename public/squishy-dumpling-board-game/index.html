@@ -1853,6 +1853,29 @@
   }
 }
 
+#woodland-christmas-game .boardgame-online-share {
+  margin: 12px 0;
+  padding: 12px;
+  border-radius: 12px;
+  background: #e7eef8;
+  text-align: center;
+}
+
+#woodland-christmas-game .boardgame-online-share p {
+  margin: 0 0 10px;
+  color: #173263;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+#woodland-christmas-game .boardgame-online-share .boardgame-online-actions {
+  gap: 8px;
+}
+
+#woodland-christmas-game .boardgame-online-share button {
+  flex: 1 1 120px;
+}
+
 </style>
 <div id="squishy-dumpling-game">
 
@@ -1935,6 +1958,23 @@
         </div>
         <div class="boardgame-online-status" id="boardgame-online-status" aria-live="polite">Choose a character below, then create or join a room.</div>
         <div class="boardgame-online-pin" id="boardgame-online-pin" hidden></div>
+        <div class="boardgame-online-share" id="boardgame-online-share" hidden>
+          <p>Invite your friends to join your adventure!</p>
+          <div class="boardgame-online-actions">
+            <button type="button" class="boardgame-action-button boardgame-gold-button" id="boardgame-share-invite">
+              Share invite
+            </button>
+            <button type="button" class="boardgame-action-button" id="boardgame-share-whatsapp">
+              WhatsApp
+            </button>
+            <button type="button" class="boardgame-action-button" id="boardgame-share-facebook">
+              Facebook
+            </button>
+            <button type="button" class="boardgame-action-button" id="boardgame-copy-invite">
+              Copy invite
+            </button>
+          </div>
+        </div>
         <button type="button" class="boardgame-action-button boardgame-gold-button boardgame-online-start" id="boardgame-online-start">Start squishy online adventure</button>
       </div>
       <p id="boardgame-player-instruction">Select the number of players:</p>
@@ -2709,6 +2749,105 @@ if (window.ResizeObserver) {
     return memberRef;
   }
 
+  function getOnlineInviteUrl() {
+    var url = window.location.href.split("#")[0];
+
+    // Remove an existing room parameter if there is one.
+    url = url.replace(/([?&])room=\d{6}/, "$1");
+    url = url.replace(/[?&]$/, "");
+
+    return url + (url.indexOf("?") === -1 ? "?" : "&") + "room=" + onlinePin;
+  }
+
+  function getOnlineInviteText() {
+    var url = getOnlineInviteUrl();
+
+    return "You're invited to play Squishy Dumpling Adventure!\n\n" +
+      "Join my Squishy Dumpling adventure and let's journey through the lands to Dumpling Palace!\n\n" +
+      "Room: " + onlineRoomName + "\n" +
+      "Room PIN: " + onlinePin + "\n\n" +
+      "Click here to join:\n" + url;
+  }
+
+  function showOnlineShareOptions() {
+    var sharePanel = $("online-share");
+
+    if (sharePanel && onlinePin) {
+      sharePanel.hidden = false;
+    }
+  }
+
+  function copyOnlineInvite() {
+    var inviteText = getOnlineInviteText();
+
+    function fallbackCopy() {
+      var textarea = document.createElement("textarea");
+
+      textarea.value = inviteText;
+      textarea.style.position = "fixed";
+      textarea.style.left = "-9999px";
+
+      document.body.appendChild(textarea);
+      textarea.select();
+
+      var copied = false;
+
+      try {
+        copied = document.execCommand("copy");
+      } catch (e) {}
+
+      document.body.removeChild(textarea);
+
+      if (copied) {
+        setOnlineStatus("Invitation copied! Send it to your friends.");
+      } else {
+        window.prompt("Copy your invitation:", inviteText);
+      }
+    }
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(inviteText).then(function() {
+        setOnlineStatus("Invitation copied! Send it to your friends.");
+      }).catch(function() {
+        fallbackCopy();
+      });
+    } else {
+      fallbackCopy();
+    }
+  }
+
+  function shareOnlineInvite() {
+    var inviteUrl = getOnlineInviteUrl();
+    var inviteText = getOnlineInviteText();
+
+    if (navigator.share) {
+      navigator.share({
+        title: "Woodland Christmas Adventure",
+        text: "Join my Woodland Christmas Adventure!",
+        url: inviteUrl
+      }).catch(function(error) {
+        if (error.name !== "AbortError") {
+          copyOnlineInvite();
+        }
+      });
+    } else {
+      copyOnlineInvite();
+    }
+  }
+
+  function shareOnlineWhatsApp() {
+    var url = "https://wa.me/?text=" + encodeURIComponent(getOnlineInviteText());
+
+    window.open(url, "_blank");
+  }
+
+  function shareOnlineFacebook() {
+    var url = "https://www.facebook.com/sharer/sharer.php?u=" +
+      encodeURIComponent(getOnlineInviteUrl());
+
+    window.open(url, "_blank");
+  }
+
   function createOnlineRoom() {
     if (!onlineMode) return;
     setOnlineStatus("Connecting to Firebase...");
@@ -2746,6 +2885,7 @@ if (window.ResizeObserver) {
             $("online-pin").hidden = false;
             $("online-pin").textContent = onlineRoomName + " · ROOM PIN: " + pin;
             $("create-room").disabled = true;
+            showOnlineShareOptions();
             $("join-room").disabled = true;
             $("online-start").style.display = "block";
             setOnlineStatus("Room '" + onlineRoomName + "' created. Share PIN " + pin + " with the other players.");
@@ -3180,6 +3320,10 @@ if (window.ResizeObserver) {
   $("create-room").onclick = createOnlineRoom;
   $("join-room").onclick = joinOnlineRoom;
   $("online-start").onclick = startOnlineGame;
+  $("share-invite").onclick = shareOnlineInvite;
+  $("share-whatsapp").onclick = shareOnlineWhatsApp;
+  $("share-facebook").onclick = shareOnlineFacebook;
+  $("copy-invite").onclick = copyOnlineInvite;
 
   /* ======================================================================
      RENDER TOKENS
@@ -3298,10 +3442,17 @@ if (window.ResizeObserver) {
   }
 
   function scheduleBotAction(callback, delay) {
-    if (!isBotTurn() || boardgameGameOver) return;
+    if (!isBotTurn() || boardgameGameOver || busy) return;
+
+    var botPlayerIndex = turn;
 
     setTimeout(function() {
-      if (!boardgameGameOver && isBotTurn()) {
+      if (
+        !boardgameGameOver &&
+        !busy &&
+        turn === botPlayerIndex &&
+        isBotTurn()
+      ) {
         callback();
       }
     }, delay || 900);
@@ -4401,12 +4552,33 @@ if (window.ResizeObserver) {
   };
   window.playAgain = playAgain;
 
-  /* ======================================================================
-     INITIALISE
-     ====================================================================== */
+  function checkOnlineInviteLink() {
+    var match = window.location.search.match(/[?&]room=(\d{6})(?:&|$)/);
+
+    if (!match) return;
+
+    var pin = match[1];
+    var onlineButton = document.querySelector(
+      '#boardgame-mode-btns [data-mode="online"]'
+    );
+
+    if (!onlineButton) return;
+
+    // Select Play Online using the existing mode selection handler.
+    onlineButton.click();
+
+    // Fill in the room PIN, but don't automatically join.
+    $("online-pin-input").value = pin;
+
+    setOnlineStatus(
+      "You've been invited to join a Woodland Christmas Adventure! " +
+      "Choose your character and press Join room."
+    );
+  }
 
   function initDumplingGame() {
     initSetup();
+    checkOnlineInviteLink();
     applyPanelOverlap();
   }
 
