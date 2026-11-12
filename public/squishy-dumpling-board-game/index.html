@@ -1878,6 +1878,10 @@
   flex: 1 1 120px;
 }
 
+
+/* Computer opponent thinking / typing feedback */
+#squishy-dumpling-game .boardgame-bot-typing { caret-color:#ff8fab; animation:sdg-bot-pulse 1.1s ease-in-out infinite; }
+@keyframes sdg-bot-pulse { 0%,100% { box-shadow:0 0 0 2px rgba(255,143,171,.14); } 50% { box-shadow:0 0 0 4px rgba(255,143,171,.32); } }
 </style>
 <div id="squishy-dumpling-game">
 
@@ -2038,7 +2042,6 @@ try {
     var boardgameCelebrationContext = null;
     var boardgameCelebrationAudio = null;
     var boardgameCelebrationAudioTimer = null;
-    var boardgameSfxAudio = null;
     var boardgameGameOver = false;
     var boardgameSteamPuffs = [];
     var boardgameFireworks = [];
@@ -3500,89 +3503,144 @@ updatedAt: Date.now(), modalHtml: onlineModalHtml || "",
     nextTurn();
   }
 
+  function normaliseBotGuess(text) {
+    return String(text || "").toLowerCase()
+      .replace(/[^a-z0-9 ]/g, "").replace(/\s+/g, " ")
+      .replace(/^\s+|\s+$/g, "");
+  }
+
   function botAnswerWisdom(pIdx) {
     var card = window._boardgameActiveWisdomCard;
     var answerInput = $("wisdom-answer");
-
     if (!card || !answerInput) return;
 
     var accepted = card.acceptedAnswers || [card.answer];
-    var getsItRight = Math.random() < 0.6;
+    var answer = String(card.answer || accepted[0] || "");
+    var key = normaliseBotGuess(answer);
+    var related = {
+      "soy sauce": ["oyster sauce", "teriyaki sauce", "hoisin sauce"],
+      "steam": ["boiling", "boiling water", "boil it"],
+      "chopsticks": ["wooden sticks", "bamboo sticks", "a fork"],
+      "bamboo": ["sugar cane", "wood", "a palm tree"],
+      "japan": ["china", "south korea", "thailand"],
+      "pierogi": ["ravioli", "wontons", "gnocchi"],
+      "dumplings": ["bao buns", "wontons", "little steamed buns"],
+      "noodles": ["ramen", "rice noodles", "udon"],
+      "dough": ["pastry", "flour", "rice paper"],
+      "soup": ["broth", "ramen broth", "stock"],
+      "bao": ["mantou", "a steamed bun", "a bread roll"],
+      "fortune cookie": ["a lucky cookie", "a biscuit", "a mooncake"],
+      "chilli oil": ["sriracha", "chilli sauce", "sesame oil"],
+      "bok choy": ["Chinese cabbage", "pak choi", "spinach"],
+      "rice": ["sticky rice", "fried rice", "porridge"],
+      "honey": ["maple syrup", "golden syrup", "sugar"]
+    };
 
-    if (getsItRight) {
-      answerInput.value = accepted[Math.floor(Math.random() * accepted.length)];
-    } else {
-      answerInput.value = "I don't know";
+    var pool = related[key] ? related[key].slice(0) : [];
+    // Reuse other answers from this game's own question bank as plausible guesses.
+    if (typeof WISDOM_CARDS !== "undefined") {
+      for (var i = 0; i < WISDOM_CARDS.length; i++) {
+        var candidate = String(WISDOM_CARDS[i].answer || "");
+        var candidateKey = normaliseBotGuess(candidate);
+        if (candidate && candidateKey !== key &&
+            accepted.map(normaliseBotGuess).indexOf(candidateKey) === -1 &&
+            pool.map(normaliseBotGuess).indexOf(candidateKey) === -1) {
+          pool.push(candidate);
+        }
+      }
     }
 
-    checkWisdomAnswer(pIdx);
+    // More capable on familiar/simple questions, but deliberately not perfect.
+    var difficulty = card.difficulty === "hard" ? 0.48 :
+      (card.difficulty === "easy" ? 0.78 : 0.64);
+    var getsItRight = Math.random() < difficulty;
+    var botAnswer = getsItRight
+      ? accepted[Math.floor(Math.random() * accepted.length)]
+      : (pool.length ? pool[Math.floor(Math.random() * Math.min(pool.length, 5))] : "I think it's " + answer);
+
+    var feedback = $("wisdom-feedback");
+    var cardElement = answerInput.closest(".boardgame-wisdom-card");
+    var checkBtn = cardElement && cardElement.parentNode
+      ? cardElement.parentNode.querySelector(".boardgame-action-button") : null;
+    answerInput.value = "";
+    answerInput.readOnly = true;
+    answerInput.classList.add("boardgame-bot-typing");
+    if (checkBtn) checkBtn.disabled = true;
+    if (feedback) feedback.textContent = "Computer is thinking...";
+
+    var typed = 0;
+    function stillOnCard() {
+      return !boardgameGameOver && turn === pIdx &&
+        window._boardgameActiveWisdomCard === card && $("wisdom-answer") === answerInput;
+    }
+    function typeNext() {
+      if (!stillOnCard()) return;
+      if (typed < botAnswer.length) {
+        if (feedback) feedback.textContent = "Computer is typing...";
+        typed++;
+        answerInput.value = botAnswer.slice(0, typed);
+        var delay = 65 + Math.random() * 115;
+        if (botAnswer.charAt(typed - 1) === " ") delay += 100;
+        if (Math.random() < 0.07) delay += 180;
+        setTimeout(typeNext, delay);
+        return;
+      }
+      answerInput.classList.remove("boardgame-bot-typing");
+      if (feedback) feedback.textContent = "";
+      setTimeout(function() {
+        if (!stillOnCard()) return;
+        answerInput.readOnly = false;
+        if (checkBtn) checkBtn.disabled = false;
+        checkWisdomAnswer(pIdx);
+      }, 650);
+    }
+    setTimeout(typeNext, 800 + Math.random() * 700);
   }
 
-  /* ======================================================================
-     KAWAII DUMPLING SOUND EFFECTS
-     Soft wooden taps, warm plucks and little bell-like pops.
-     Audio is created on demand so it works with browser autoplay rules.
-     ====================================================================== */
-
+  /* Kawaii dumpling audio: generated locally with Web Audio (no asset files). */
+  var boardgameSfxAudio = null;
   function getDumplingAudio() {
     var AudioContextClass = window.AudioContext || window.webkitAudioContext;
     if (!AudioContextClass) return null;
-
     try {
-      if (!boardgameSfxAudio || boardgameSfxAudio.state === "closed") {
-        boardgameSfxAudio = new AudioContextClass();
-      }
-
-      if (boardgameSfxAudio.state === "suspended") {
-        boardgameSfxAudio.resume();
-      }
-
+      if (!boardgameSfxAudio || boardgameSfxAudio.state === "closed") boardgameSfxAudio = new AudioContextClass();
+      if (boardgameSfxAudio.state === "suspended") boardgameSfxAudio.resume();
       return boardgameSfxAudio;
-    } catch (error) {
-      return null;
-    }
+    } catch (error) { return null; }
   }
-
-  function playDumplingTone(audio, frequency, startTime, duration, volume, type) {
+  function playDumplingTone(audio, frequency, delay, duration, volume, type) {
     if (!audio) return;
-
     try {
-      var oscillator = audio.createOscillator();
-      var gain = audio.createGain();
-      var now = audio.currentTime + (startTime || 0);
-
-      oscillator.type = type || "sine";
-      oscillator.frequency.setValueAtTime(frequency, now);
-      gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.exponentialRampToValueAtTime(volume || 0.06, now + 0.012);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + (duration || 0.12));
-
-      oscillator.connect(gain);
-      gain.connect(audio.destination);
-      oscillator.start(now);
-      oscillator.stop(now + (duration || 0.12) + 0.02);
+      var osc = audio.createOscillator(), gain = audio.createGain();
+      var at = audio.currentTime + (delay || 0);
+      osc.type = type || "sine";
+      osc.frequency.setValueAtTime(frequency, at);
+      gain.gain.setValueAtTime(0.0001, at);
+      gain.gain.exponentialRampToValueAtTime(volume || 0.04, at + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, at + (duration || 0.12));
+      osc.connect(gain); gain.connect(audio.destination);
+      osc.start(at); osc.stop(at + (duration || 0.12) + 0.02);
     } catch (error) {}
   }
-
   function playDumplingSound(kind) {
     var audio = getDumplingAudio();
     if (!audio) return;
-
     if (kind === "roll") {
-      /* A quick, soft wooden clatter as the dumpling die tumbles. */
       for (var i = 0; i < 7; i++) {
-        var delay = i * 0.085;
-        var pitch = 420 + Math.floor(Math.random() * 260);
-        playDumplingTone(audio, pitch, delay, 0.075, 0.035, "triangle");
-        if (i % 2 === 0) {
-          playDumplingTone(audio, pitch * 1.48, delay + 0.025, 0.055, 0.012, "sine");
-        }
+        var delay = i * 0.085, pitch = 420 + Math.floor(Math.random() * 260);
+        playDumplingTone(audio, pitch, delay, 0.075, 0.032, "triangle");
+        if (i % 2 === 0) playDumplingTone(audio, pitch * 1.48, delay + 0.02, 0.055, 0.012, "sine");
       }
-      playDumplingTone(audio, 880, 0.66, 0.16, 0.045, "sine");
+      playDumplingTone(audio, 880, 0.66, 0.16, 0.04, "sine");
     } else if (kind === "step") {
-      /* Tiny bouncy mochi-like plop, with a warm upper note. */
-      playDumplingTone(audio, 245 + Math.floor(Math.random() * 45), 0, 0.11, 0.045, "sine");
-      playDumplingTone(audio, 620 + Math.floor(Math.random() * 100), 0.025, 0.085, 0.018, "triangle");
+      playDumplingTone(audio, 255 + Math.floor(Math.random() * 35), 0, 0.11, 0.045, "sine");
+      playDumplingTone(audio, 660 + Math.floor(Math.random() * 90), 0.025, 0.08, 0.018, "triangle");
+    } else if (kind === "correct") {
+      playDumplingTone(audio, 659.25, 0, 0.16, 0.045, "sine");
+      playDumplingTone(audio, 783.99, 0.12, 0.2, 0.04, "sine");
+    } else if (kind === "wrong") {
+      playDumplingTone(audio, 330, 0, 0.18, 0.035, "triangle");
+      playDumplingTone(audio, 277, 0.14, 0.2, 0.03, "triangle");
     }
   }
 
@@ -3636,13 +3694,13 @@ updatedAt: Date.now(), modalHtml: onlineModalHtml || "",
   }
 
   function animateDiceRoll(val, playerName) {
+    playDumplingSound("roll");
     val = Math.max(1, Math.min(6, Number(val) || 1));
     var diceEl = $("toy-dice");
     if (!diceEl) return;
     var extraX = (Math.floor(Math.random() * 3) + 3) * 360;
     var extraY = (Math.floor(Math.random() * 3) + 3) * 360;
     diceEl.style.transform = "rotateX(" + (faceRotations[val].x + extraX) + "deg) rotateY(" + (faceRotations[val].y + extraY) + "deg)";
-    playDumplingSound("roll");
     toast((playerName || (players[turn] && players[turn].name) || "Player") + " is rolling...");
     setTimeout(function() { toast((playerName || "Player") + " rolled a " + val); }, 850);
   }
@@ -3734,6 +3792,7 @@ updatedAt: Date.now(), modalHtml: onlineModalHtml || "",
       }
 
       pl.pos = direction > 0 ? nextPos(pl) : prevPos(pl);
+      playDumplingSound("step");
 
       publishOnlineState();
 
@@ -3983,6 +4042,7 @@ updatedAt: Date.now(), modalHtml: onlineModalHtml || "",
         }
 
         stepNo++;
+        playDumplingSound("step");
         publishOnlineState();
 
         var tokenA = $("tk-" + pIdx);
@@ -4084,6 +4144,7 @@ updatedAt: Date.now(), modalHtml: onlineModalHtml || "",
     });
 
     var isCorrect = accepted.indexOf(userAnswer) !== -1;
+    playDumplingSound(isCorrect ? "correct" : "wrong");
 
     scrollGameToTop();
 
@@ -4393,67 +4454,30 @@ updatedAt: Date.now(), modalHtml: onlineModalHtml || "",
   function playWinnerFanfare() {
     var AudioContextClass = window.AudioContext || window.webkitAudioContext;
     if (!AudioContextClass) return;
-
     try {
       boardgameCelebrationAudio = new AudioContextClass();
-      if (boardgameCelebrationAudio.state === "suspended") {
-        boardgameCelebrationAudio.resume();
+      if (boardgameCelebrationAudio.state === "suspended") boardgameCelebrationAudio.resume();
+      var audio = boardgameCelebrationAudio, startAt = audio.currentTime + 0.08;
+      var melody = [[659.25,0,.25],[783.99,.28,.22],[987.77,.54,.34],[783.99,.94,.22],[880,1.2,.25],[987.77,1.48,.42],[1174.66,2,.32],[987.77,2.38,.22],[880,2.66,.25],[783.99,2.94,.42],[659.25,3.46,.24],[783.99,3.74,.24],[880,4.02,.32],[987.77,4.4,.52],[1174.66,5.02,.3],[1318.51,5.38,.62]];
+      function pluck(freq, offset, duration, volume, wave) {
+        var osc = audio.createOscillator(), gain = audio.createGain(), at = startAt + offset;
+        osc.type = wave || "triangle"; osc.frequency.setValueAtTime(freq, at);
+        gain.gain.setValueAtTime(.0001, at); gain.gain.exponentialRampToValueAtTime(volume, at + .018);
+        gain.gain.exponentialRampToValueAtTime(.0001, at + duration);
+        osc.connect(gain); gain.connect(audio.destination); osc.start(at); osc.stop(at + duration + .03);
       }
-
-      var audio = boardgameCelebrationAudio;
-      var startAt = audio.currentTime + 0.08;
-
-      /* Original kawaii celebration tune: bright pentatonic plucks,
-         delicate bell harmonics and a warm, gentle accompaniment. */
-      var melody = [
-        [659.25,0.00,0.25],[783.99,0.28,0.22],[987.77,0.54,0.34],
-        [783.99,0.94,0.22],[880.00,1.20,0.25],[987.77,1.48,0.42],
-        [1174.66,2.00,0.32],[987.77,2.38,0.22],[880.00,2.66,0.25],
-        [783.99,2.94,0.42],[659.25,3.46,0.24],[783.99,3.74,0.24],
-        [880.00,4.02,0.32],[987.77,4.40,0.52],[1174.66,5.02,0.30],
-        [1318.51,5.38,0.62]
-      ];
-
-      function pluck(frequency, at, duration, volume, wave) {
-        var oscillator = audio.createOscillator();
-        var gain = audio.createGain();
-        var when = startAt + at;
-        oscillator.type = wave || "triangle";
-        oscillator.frequency.setValueAtTime(frequency, when);
-        oscillator.frequency.exponentialRampToValueAtTime(frequency * 0.985, when + duration);
-        gain.gain.setValueAtTime(0.0001, when);
-        gain.gain.exponentialRampToValueAtTime(volume, when + 0.018);
-        gain.gain.exponentialRampToValueAtTime(0.0001, when + duration);
-        oscillator.connect(gain);
-        gain.connect(audio.destination);
-        oscillator.start(when);
-        oscillator.stop(when + duration + 0.03);
-      }
-
       for (var repeat = 0; repeat < 2; repeat++) {
         var offset = repeat * 6.15;
-        melody.forEach(function(item) {
-          pluck(item[0], offset + item[1], item[2], 0.075, "triangle");
-          if (item[1] === 0 || item[1] === 0.54 || item[1] === 2.00 ||
-              item[1] === 4.40 || item[1] === 5.38) {
-            pluck(item[0] * 2, offset + item[1] + 0.035,
-              Math.min(item[2], 0.38), 0.022, "sine");
-          }
+        melody.forEach(function(n) {
+          pluck(n[0], offset+n[1], n[2], .075, "triangle");
+          if (n[1] === 0 || n[1] === .54 || n[1] === 2 || n[1] === 4.4 || n[1] === 5.38) pluck(n[0]*2, offset+n[1]+.035, Math.min(n[2],.38), .022, "sine");
         });
-        [329.63,392.00,440.00,392.00,293.66,392.00].forEach(function(note, i) {
-          pluck(note, offset + i, 0.42, 0.035, "sine");
-        });
+        [329.63,392,440,392,293.66,392].forEach(function(n,i) { pluck(n,offset+i,.42,.035,"sine"); });
       }
-
       boardgameCelebrationAudioTimer = setTimeout(function() {
-        if (boardgameCelebrationAudio) {
-          boardgameCelebrationAudio.close();
-          boardgameCelebrationAudio = null;
-        }
+        if (boardgameCelebrationAudio) { boardgameCelebrationAudio.close(); boardgameCelebrationAudio = null; }
       }, 13000);
-    } catch (error) {
-      /* Sound is optional; the visual celebration still works. */
-    }
+    } catch (error) { /* Visual celebration remains available if audio is blocked. */ }
   }
 
   function stopWinnerCelebration() {
@@ -4684,13 +4708,7 @@ updatedAt: Date.now(), modalHtml: onlineModalHtml || "",
   initDumplingGame();
 
   window.addEventListener("pagehide", function() {
-    if (boardgameSfxAudio) {
-      try {
-        boardgameSfxAudio.close();
-      } catch (error) {}
-      boardgameSfxAudio = null;
-    }
-
+    if (boardgameSfxAudio) { try { boardgameSfxAudio.close(); } catch (error) {} boardgameSfxAudio = null; }
     if (onlineConnectionRef && window._FB) {
       // Firebase onDisconnect removes this connection even if the tab is closed abruptly.
     }
