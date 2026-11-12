@@ -2038,6 +2038,7 @@ try {
     var boardgameCelebrationContext = null;
     var boardgameCelebrationAudio = null;
     var boardgameCelebrationAudioTimer = null;
+    var boardgameSfxAudio = null;
     var boardgameGameOver = false;
     var boardgameSteamPuffs = [];
     var boardgameFireworks = [];
@@ -3518,6 +3519,74 @@ updatedAt: Date.now(), modalHtml: onlineModalHtml || "",
   }
 
   /* ======================================================================
+     KAWAII DUMPLING SOUND EFFECTS
+     Soft wooden taps, warm plucks and little bell-like pops.
+     Audio is created on demand so it works with browser autoplay rules.
+     ====================================================================== */
+
+  function getDumplingAudio() {
+    var AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return null;
+
+    try {
+      if (!boardgameSfxAudio || boardgameSfxAudio.state === "closed") {
+        boardgameSfxAudio = new AudioContextClass();
+      }
+
+      if (boardgameSfxAudio.state === "suspended") {
+        boardgameSfxAudio.resume();
+      }
+
+      return boardgameSfxAudio;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function playDumplingTone(audio, frequency, startTime, duration, volume, type) {
+    if (!audio) return;
+
+    try {
+      var oscillator = audio.createOscillator();
+      var gain = audio.createGain();
+      var now = audio.currentTime + (startTime || 0);
+
+      oscillator.type = type || "sine";
+      oscillator.frequency.setValueAtTime(frequency, now);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(volume || 0.06, now + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + (duration || 0.12));
+
+      oscillator.connect(gain);
+      gain.connect(audio.destination);
+      oscillator.start(now);
+      oscillator.stop(now + (duration || 0.12) + 0.02);
+    } catch (error) {}
+  }
+
+  function playDumplingSound(kind) {
+    var audio = getDumplingAudio();
+    if (!audio) return;
+
+    if (kind === "roll") {
+      /* A quick, soft wooden clatter as the dumpling die tumbles. */
+      for (var i = 0; i < 7; i++) {
+        var delay = i * 0.085;
+        var pitch = 420 + Math.floor(Math.random() * 260);
+        playDumplingTone(audio, pitch, delay, 0.075, 0.035, "triangle");
+        if (i % 2 === 0) {
+          playDumplingTone(audio, pitch * 1.48, delay + 0.025, 0.055, 0.012, "sine");
+        }
+      }
+      playDumplingTone(audio, 880, 0.66, 0.16, 0.045, "sine");
+    } else if (kind === "step") {
+      /* Tiny bouncy mochi-like plop, with a warm upper note. */
+      playDumplingTone(audio, 245 + Math.floor(Math.random() * 45), 0, 0.11, 0.045, "sine");
+      playDumplingTone(audio, 620 + Math.floor(Math.random() * 100), 0.025, 0.085, 0.018, "triangle");
+    }
+  }
+
+  /* ======================================================================
      HUD AND DICE
      ====================================================================== */
 
@@ -3573,6 +3642,7 @@ updatedAt: Date.now(), modalHtml: onlineModalHtml || "",
     var extraX = (Math.floor(Math.random() * 3) + 3) * 360;
     var extraY = (Math.floor(Math.random() * 3) + 3) * 360;
     diceEl.style.transform = "rotateX(" + (faceRotations[val].x + extraX) + "deg) rotateY(" + (faceRotations[val].y + extraY) + "deg)";
+    playDumplingSound("roll");
     toast((playerName || (players[turn] && players[turn].name) || "Player") + " is rolling...");
     setTimeout(function() { toast((playerName || "Player") + " rolled a " + val); }, 850);
   }
@@ -3616,6 +3686,7 @@ updatedAt: Date.now(), modalHtml: onlineModalHtml || "",
 
       pl.pos = forward ? nextPos(pl) : prevPos(pl);
       left--;
+      playDumplingSound("step");
       publishOnlineState();
 
       if (pl.pos === LANDMARK.nap) {
@@ -4320,59 +4391,66 @@ updatedAt: Date.now(), modalHtml: onlineModalHtml || "",
   var boardgameCelebrationResizeHandler = null;
 
   function playWinnerFanfare() {
-    var AudioContextClass =
-      window.AudioContext || window.webkitAudioContext;
-
+    var AudioContextClass = window.AudioContext || window.webkitAudioContext;
     if (!AudioContextClass) return;
 
     try {
       boardgameCelebrationAudio = new AudioContextClass();
-
       if (boardgameCelebrationAudio.state === "suspended") {
         boardgameCelebrationAudio.resume();
       }
 
       var audio = boardgameCelebrationAudio;
-      var notes = [
-        { note: 523.25, time: 0, duration: 0.2 },
-        { note: 659.25, time: 0.2, duration: 0.2 },
-        { note: 783.99, time: 0.4, duration: 0.2 },
-        { note: 1046.5, time: 0.65, duration: 0.55 },
-        { note: 783.99, time: 0.85, duration: 0.2 },
-        { note: 1046.5, time: 1.05, duration: 0.7 }
+      var startAt = audio.currentTime + 0.08;
+
+      /* Original kawaii celebration tune: bright pentatonic plucks,
+         delicate bell harmonics and a warm, gentle accompaniment. */
+      var melody = [
+        [659.25,0.00,0.25],[783.99,0.28,0.22],[987.77,0.54,0.34],
+        [783.99,0.94,0.22],[880.00,1.20,0.25],[987.77,1.48,0.42],
+        [1174.66,2.00,0.32],[987.77,2.38,0.22],[880.00,2.66,0.25],
+        [783.99,2.94,0.42],[659.25,3.46,0.24],[783.99,3.74,0.24],
+        [880.00,4.02,0.32],[987.77,4.40,0.52],[1174.66,5.02,0.30],
+        [1318.51,5.38,0.62]
       ];
 
-      notes.forEach(function(item) {
+      function pluck(frequency, at, duration, volume, wave) {
         var oscillator = audio.createOscillator();
         var gain = audio.createGain();
-
-        oscillator.type = "triangle";
-        oscillator.frequency.value = item.note;
-
-        gain.gain.setValueAtTime(0, audio.currentTime + item.time);
-        gain.gain.linearRampToValueAtTime(
-          0.16,
-          audio.currentTime + item.time + 0.03
-        );
-        gain.gain.exponentialRampToValueAtTime(
-          0.001,
-          audio.currentTime + item.time + item.duration
-        );
-
+        var when = startAt + at;
+        oscillator.type = wave || "triangle";
+        oscillator.frequency.setValueAtTime(frequency, when);
+        oscillator.frequency.exponentialRampToValueAtTime(frequency * 0.985, when + duration);
+        gain.gain.setValueAtTime(0.0001, when);
+        gain.gain.exponentialRampToValueAtTime(volume, when + 0.018);
+        gain.gain.exponentialRampToValueAtTime(0.0001, when + duration);
         oscillator.connect(gain);
         gain.connect(audio.destination);
+        oscillator.start(when);
+        oscillator.stop(when + duration + 0.03);
+      }
 
-        oscillator.start(audio.currentTime + item.time);
-        oscillator.stop(audio.currentTime + item.time + item.duration);
-      });
+      for (var repeat = 0; repeat < 2; repeat++) {
+        var offset = repeat * 6.15;
+        melody.forEach(function(item) {
+          pluck(item[0], offset + item[1], item[2], 0.075, "triangle");
+          if (item[1] === 0 || item[1] === 0.54 || item[1] === 2.00 ||
+              item[1] === 4.40 || item[1] === 5.38) {
+            pluck(item[0] * 2, offset + item[1] + 0.035,
+              Math.min(item[2], 0.38), 0.022, "sine");
+          }
+        });
+        [329.63,392.00,440.00,392.00,293.66,392.00].forEach(function(note, i) {
+          pluck(note, offset + i, 0.42, 0.035, "sine");
+        });
+      }
 
       boardgameCelebrationAudioTimer = setTimeout(function() {
         if (boardgameCelebrationAudio) {
           boardgameCelebrationAudio.close();
           boardgameCelebrationAudio = null;
         }
-      }, 3000);
-
+      }, 13000);
     } catch (error) {
       /* Sound is optional; the visual celebration still works. */
     }
@@ -4606,6 +4684,13 @@ updatedAt: Date.now(), modalHtml: onlineModalHtml || "",
   initDumplingGame();
 
   window.addEventListener("pagehide", function() {
+    if (boardgameSfxAudio) {
+      try {
+        boardgameSfxAudio.close();
+      } catch (error) {}
+      boardgameSfxAudio = null;
+    }
+
     if (onlineConnectionRef && window._FB) {
       // Firebase onDisconnect removes this connection even if the tab is closed abruptly.
     }
