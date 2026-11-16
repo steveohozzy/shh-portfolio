@@ -2,8 +2,8 @@
   "name": "Squishy Dumpling Board Game",
   "short_name": "Squishy Dumpling",
   "description": "Play the Squishy Dumpling multiplayer board game.",
-  "start_url": "/squishy-dumpling-board-game/",
-  "scope": "/squishy-dumpling-board-game/",
+  "start_url": "/squishy-dumpling-board-game",
+  "scope": "/squishy-dumpling-board-game",
   "display": "standalone",
   "display_override": [
     "standalone"
