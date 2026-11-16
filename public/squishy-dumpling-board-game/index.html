@@ -4726,7 +4726,7 @@ updatedAt: Date.now(), modalHtml: onlineModalHtml || "",
   if (!("serviceWorker" in navigator)) return;
   window.addEventListener("load", function() {
     navigator.serviceWorker.register("/squishy-dumpling-board-game/sw.js", {
-      scope: "/squishy-dumpling-board-game/"
+      scope: "/squishy-dumpling-board-game"
     }).catch(function() {
       // The game remains playable if service-worker registration is unavailable.
     });
