@@ -3,7 +3,7 @@
 
 var CACHE_PREFIX = "squishy-dumpling-";
 var CACHE_NAME = CACHE_PREFIX + "v1";
-var APP_ROOT = new URL("./", self.registration.scope).href;
+var APP_ROOT = new URL("/squishy-dumpling-board-game", self.location.origin).href;
 
 self.addEventListener("install", function(event) {
   event.waitUntil(
