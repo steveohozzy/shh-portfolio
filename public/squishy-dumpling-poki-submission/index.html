@@ -3209,9 +3209,13 @@ updatedAt: Date.now(), modalHtml: onlineModalHtml || "",
     closeOnlineRoom("You chose to end the game. The room and PIN are being deleted.", true);
   };
 
-  $("create-room").onclick = createOnlineRoom;
-  $("join-room").onclick = joinOnlineRoom;
-  $("online-start").onclick = startOnlineGame;
+  /* Online room controls are intentionally absent from the Poki build. */
+  var createRoomButton = $("create-room");
+  var joinRoomButton = $("join-room");
+  var onlineStartButton = $("online-start");
+  if (createRoomButton) createRoomButton.onclick = createOnlineRoom;
+  if (joinRoomButton) joinRoomButton.onclick = joinOnlineRoom;
+  if (onlineStartButton) onlineStartButton.onclick = startOnlineGame;
 
   /* ======================================================================
      RENDER TOKENS
