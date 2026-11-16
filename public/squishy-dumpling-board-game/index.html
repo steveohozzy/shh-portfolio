@@ -34,6 +34,11 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Squishy Dumpling">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="/squishy-dumpling-board-game/manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="/squishy-dumpling-board-game/icon.svg">
+  <link rel="apple-touch-icon" href="/squishy-dumpling-board-game/icon.svg">
+
 
 </head>
 
@@ -4713,5 +4718,18 @@ updatedAt: Date.now(), modalHtml: onlineModalHtml || "",
     }
   });
 
+})();
+</script>
+
+<script>
+(function() {
+  if (!("serviceWorker" in navigator)) return;
+  window.addEventListener("load", function() {
+    navigator.serviceWorker.register("/squishy-dumpling-board-game/sw.js", {
+      scope: "/squishy-dumpling-board-game/"
+    }).catch(function() {
+      // The game remains playable if service-worker registration is unavailable.
+    });
+  });
 })();
 </script>
