@@ -157,7 +157,7 @@ export function HeroSection() {
               >
                 <div className="h-px flex-1 max-w-20 bg-gradient-to-r from-primary to-transparent" />
                 <h2 className="text-muted-foreground font-mono text-sm">
-                  Frontend Developer
+                  Senior Frontend Developer · SHH Design
                 </h2>
               </div>
             </div>
@@ -169,13 +169,7 @@ export function HeroSection() {
                   : "opacity-0 translate-y-4"
               }`}
             >
-              I craft elegant digital experiences with a focus on{" "}
-              <span className="text-foreground font-medium">performance</span>,{" "}
-              <span className="text-foreground font-medium">accessibility</span>, and{" "}
-              <span className="text-foreground font-medium">
-                delightful interactions
-              </span>
-              .
+              SHH Design is the portfolio of Steven Hoskins, a UK-based Senior Frontend Developer with over 20 years of experience creating high-performance websites, e-commerce experiences and modern web applications. I focus on clean, accessible code and thoughtful digital experiences.
             </p>
 
             <div
