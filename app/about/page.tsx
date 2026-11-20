@@ -18,7 +18,7 @@ const experience = getYearsExperience(2006, 5);
 
 export const metadata: Metadata = {
   title: "About Steven Hoskins | SHH Design – Senior Frontend Developer",
-  description: `Meet Steven Hoskins, the developer behind SHH Design. Discover his 20+ years of frontend development experience across React, Next.js, e-commerce, accessibility and performance.`,
+  description: `Meet Steven Hoskins, the developer behind SHH Design. Discover his ${experience} years of frontend development experience across React, Next.js, e-commerce, accessibility and performance.`,
   alternates: {
     canonical: "/about",
   },
