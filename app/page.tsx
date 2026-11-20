@@ -7,16 +7,16 @@ import { ContactSection } from "@/components/contact-section"
 import { Footer } from "@/components/footer"
 
 export const metadata: Metadata = {
-  title: "Steven Hoskins | Senior Frontend Developer",
+  title: "SHH Design | Steven Hoskins – Senior Frontend Developer",
   description:
-    "Steven Hoskins is a Senior Frontend Developer specialising in React, Next.js, TypeScript, and modern web applications. Explore his portfolio and projects.",
+    "SHH Design is the portfolio of Steven Hoskins, a UK-based Senior Frontend Developer specialising in React, Next.js, TypeScript, accessible websites and high-performance e-commerce experiences.",
   alternates: {
     canonical: '/',
   },
   openGraph: {
-    title: "Steven Hoskins | Senior Frontend Developer",
+    title: "SHH Design | Steven Hoskins – Senior Frontend Developer",
     description:
-      "Portfolio of Steven Hoskins – Senior Frontend Developer specialising in React, Next.js, TypeScript, and modern web applications.",
+      "Explore SHH Design, the portfolio of Steven Hoskins – Senior Frontend Developer specialising in React, Next.js, TypeScript and high-performance web experiences.",
     url: "/",
     siteName: "SHH Design",
     type: "website",
@@ -31,9 +31,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Steven Hoskins | Senior Frontend Developer",
+    title: "SHH Design | Steven Hoskins – Senior Frontend Developer",
     description:
-      "Portfolio of Steven Hoskins – Senior Frontend Developer specialising in React, Next.js, TypeScript, and modern web applications.",
+      "SHH Design showcases the frontend development work and projects of Steven Hoskins, specialising in React, Next.js and modern web applications.",
     images: ["/og-image.jpeg"],
   },
 }
