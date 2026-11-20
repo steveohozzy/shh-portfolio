@@ -16,8 +16,8 @@ const yearsOfExperience =
   new Date().getFullYear() - 2006 - (new Date().getMonth() < 5 ? 1 : 0)
 
 export const metadata: Metadata = {
-  title: "SHH Design | Steven Hoskins | Frontend Developer",
-  description: `SHH Design is the portfolio site of Steven Hoskins, an experienced Frontend Developer with over ${yearsOfExperience} years of experience building performant, accessible, and visually stunning web experiences.`,
+  title: "SHH Design | Steven Hoskins – Senior Frontend Developer",
+  description: `SHH Design is the portfolio of Steven Hoskins, a UK-based Senior Frontend Developer with ${yearsOfExperience}+ years of experience creating accessible, high-performance websites, e-commerce experiences and modern web applications.` ,
   metadataBase: new URL("https://www.shhdesign.co.uk"),
 }
 
