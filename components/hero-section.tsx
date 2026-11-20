@@ -169,7 +169,7 @@ export function HeroSection() {
                   : "opacity-0 translate-y-4"
               }`}
             >
-              SHH Design is the portfolio of Steven Hoskins, a UK-based Senior Frontend Developer with over 20 years of experience creating high-performance websites, e-commerce experiences and modern web applications. I focus on clean, accessible code and thoughtful digital experiences.
+              I'm a UK-based Senior Frontend Developer with over 20 years of experience creating high-performance websites, e-commerce experiences and modern web applications. SHH Design showcases my work, with a focus on clean, accessible code and thoughtful digital experiences.
             </p>
 
             <div
