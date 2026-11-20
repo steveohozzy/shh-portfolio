@@ -41,9 +41,13 @@ export const metadata: Metadata = {
 export default function Home() {
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "Person",
+    "@graph": [
+      {
+        "@type": "Person",
     "@id": "https://www.shhdesign.co.uk/#person",
     "name": "Steven Hoskins",
+    "description": "Steven Hoskins is a UK-based Senior Frontend Developer and the person behind SHH Design.",
+    "mainEntityOfPage": "https://www.shhdesign.co.uk/",
     "jobTitle": "Senior Frontend Developer",
     "url": "https://www.shhdesign.co.uk/",
     "sameAs": [
@@ -67,9 +71,30 @@ export default function Home() {
       "Accessibility"
     ],
     "worksFor": {
-      "@type": "Organization",
-      "name": "SHH Design"
+      "@id": "https://www.shhdesign.co.uk/#organization"
     }
+      },
+      {
+        "@type": "Organization",
+        "@id": "https://www.shhdesign.co.uk/#organization",
+        "name": "SHH Design",
+        "url": "https://www.shhdesign.co.uk/",
+        "description": "SHH Design is the portfolio and professional website of Steven Hoskins, showcasing frontend development, e-commerce and web application projects."
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://www.shhdesign.co.uk/#website",
+        "name": "SHH Design",
+        "alternateName": "SHH Design by Steven Hoskins",
+        "url": "https://www.shhdesign.co.uk/",
+        "publisher": {
+          "@id": "https://www.shhdesign.co.uk/#organization"
+        },
+        "creator": {
+          "@id": "https://www.shhdesign.co.uk/#person"
+        }
+      }
+    ]
   }
 
   return (
