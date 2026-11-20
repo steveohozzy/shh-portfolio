@@ -17,13 +17,13 @@ const getYearsExperience = (startYear: number, startMonth: number): string => {
 const experience = getYearsExperience(2006, 5);
 
 export const metadata: Metadata = {
-  title: "Steven Hoskins | About | Senior Frontend Developer",
-  description: `Learn about Steven Hoskins, a Senior Frontend Developer with ${experience} years of experience building performant, accessible web applications using React, Next.js, and TypeScript.`,
+  title: "About Steven Hoskins | SHH Design – Senior Frontend Developer",
+  description: `Meet Steven Hoskins, the developer behind SHH Design. Discover his 20+ years of frontend development experience across React, Next.js, e-commerce, accessibility and performance.`,
   alternates: {
     canonical: "/about",
   },
   openGraph: {
-    title: "Steven Hoskins | About | Senior Frontend Developer",
+    title: "About Steven Hoskins | SHH Design – Senior Frontend Developer",
     description: `Learn about Steven Hoskins, a Senior Frontend Developer with ${experience} years of experience specialising in React, Next.js, and modern UI engineering.`,
     url: "/about",
     siteName: "SHH Design",
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Steven Hoskins | About | Senior Frontend Developer",
+    title: "About Steven Hoskins | SHH Design – Senior Frontend Developer",
     description: `Learn about Steven Hoskins, a Senior Frontend Developer with ${experience} years of experience specialising in React, Next.js, and modern UI engineering.`,
   },
   robots: {
