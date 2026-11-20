@@ -70,9 +70,6 @@ export default function Home() {
       "Web Performance",
       "Accessibility"
     ],
-    "worksFor": {
-      "@id": "https://www.shhdesign.co.uk/#organization"
-    }
       },
       {
         "@type": "Organization",
