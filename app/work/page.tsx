@@ -4,9 +4,9 @@ import { Footer } from "@/components/footer"
 import { WorkPageContent } from "@/components/work-page-content"
 
 export const metadata: Metadata = {
-  title: "Work & Portfolio | Steven Hoskins | Senior Frontend Developer",
+  title: "Portfolio & Projects | SHH Design by Steven Hoskins",
   description:
-    "Explore the web development portfolio of Steven Hoskins featuring e-commerce builds, headless CMS implementations, React/Next.js web apps, and interactive components.",
+    "Explore SHH Design projects by Steven Hoskins, including e-commerce development, Salesforce Commerce Cloud, SAP, React, Next.js and custom web applications.",
   keywords: [
     "frontend developer portfolio",
     "steven hoskins work",
@@ -19,18 +19,18 @@ export const metadata: Metadata = {
     canonical: "/work",
   },
   openGraph: {
-    title: "Work & Portfolio | Steven Hoskins | Senior Frontend Developer",
+    title: "Portfolio & Projects | SHH Design by Steven Hoskins",
     description:
-      "Explore high-performance web applications, e-commerce features, and custom CMS implementations built by Steven Hoskins.",
+      "Discover frontend development projects by Steven Hoskins, from enterprise e-commerce experiences to React applications and custom CMS builds.",
     url: "/work",
     siteName: "SHH Design",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Work & Portfolio | Steven Hoskins | Senior Frontend Developer",
+    title: "Portfolio & Projects | SHH Design by Steven Hoskins",
     description:
-      "Explore high-performance web applications, e-commerce features, and custom CMS implementations built by Steven Hoskins.",
+      "Explore SHH Design work by Steven Hoskins, including high-performance websites, e-commerce experiences and modern web applications.",
   },
   robots: {
     index: true,
