@@ -10,14 +10,14 @@ type Level = { name: string; pattern: string[]; minimumJumpSpeed: number; loopSp
 type GameEvent = { type: GameState; level: number; speed: number; coins: number; flips: number; score: number; carts: number; goldCarts: number; bonusCarts: number };
 
 const LEVELS: Level[] = [
-  { name: "First Run", pattern: ["hill", "dip", "jump", "hill", "loop", "jump"], minimumJumpSpeed: 220, loopSpeed: 160 },
-  { name: "Loop the Loop", pattern: ["loop", "hill", "jump", "dip", "hill", "loop", "jump"], minimumJumpSpeed: 230, loopSpeed: 175 },
-  { name: "Coin Chaser", pattern: ["jump", "hill", "loop", "dip", "jump", "hill", "loop"], minimumJumpSpeed: 240, loopSpeed: 185 },
-  { name: "Double Trouble", pattern: ["loop", "jump", "loop", "hill", "dip", "jump", "loop"], minimumJumpSpeed: 250, loopSpeed: 195 },
-  { name: "Big Air", pattern: ["hill", "jump", "jump", "dip", "loop", "hill", "jump", "loop"], minimumJumpSpeed: 260, loopSpeed: 200 },
+  { name: "First Run", pattern: ["hill", "bump", "dip", "jump", "hill", "loop", "jump"], minimumJumpSpeed: 220, loopSpeed: 160 },
+  { name: "Loop the Loop", pattern: ["loop", "hill", "bump", "jump", "dip", "hill", "loop", "jump"], minimumJumpSpeed: 230, loopSpeed: 175 },
+  { name: "Coin Chaser", pattern: ["jump", "hill", "loop", "bump", "dip", "jump", "hill", "loop"], minimumJumpSpeed: 240, loopSpeed: 185 },
+  { name: "Double Trouble", pattern: ["loop", "jump", "loop", "hill", "bump", "dip", "jump", "loop"], minimumJumpSpeed: 250, loopSpeed: 195 },
+  { name: "Big Air", pattern: ["hill", "jump", "jump", "bump", "dip", "loop", "hill", "jump", "loop"], minimumJumpSpeed: 260, loopSpeed: 200 },
   { name: "The Corkscrew", pattern: ["loop", "hill", "loop", "jump", "dip", "hill", "loop", "jump"], minimumJumpSpeed: 270, loopSpeed: 210 },
   { name: "High Voltage", pattern: ["jump", "loop", "jump", "hill", "dip", "loop", "hill", "jump"], minimumJumpSpeed: 280, loopSpeed: 220 },
-  { name: "Double Drop", pattern: ["dip", "jump", "loop", "jump", "hill", "dip", "loop", "jump"], minimumJumpSpeed: 290, loopSpeed: 230 },
+  { name: "Double Drop", pattern: ["dip", "jump", "loop", "bump", "jump", "hill", "dip", "loop", "jump"], minimumJumpSpeed: 290, loopSpeed: 230 },
   { name: "Loop Fever", pattern: ["loop", "loop", "hill", "jump", "dip", "loop", "hill", "jump"], minimumJumpSpeed: 300, loopSpeed: 240 },
   { name: "Sky Spinner", pattern: ["jump", "loop", "jump", "loop", "jump", "hill", "dip", "loop"], minimumJumpSpeed: 310, loopSpeed: 250 },
   { name: "Full Throttle", pattern: ["dip", "loop", "jump", "loop", "jump", "hill", "dip", "loop", "jump"], minimumJumpSpeed: 320, loopSpeed: 260 },
@@ -126,7 +126,7 @@ class LoopRushScene extends Phaser.Scene {
     }
   }
 
-  private addHill(x: number, baseY: number, width: number, height: number) {
+  private addHill(x: number, baseY: number, width: number, height: number, flightLength = 420) {
     // Ride up the hill, launch from its crest, then travel through a proper
     // airborne arc before touching down on the following straight.
     const launchX = x + width / 2;
@@ -137,7 +137,7 @@ class LoopRushScene extends Phaser.Scene {
       this.addPoint(x + (width / 2) * t, baseY - Math.sin(t * Math.PI / 2) * height);
     }
 
-    const landingX = launchX + 420;
+    const landingX = launchX + flightLength;
     const flightWidth = landingX - launchX;
     const flightSteps = Math.ceil(flightWidth / 5);
     for (let i = 1; i <= flightSteps; i++) {
@@ -242,6 +242,10 @@ class LoopRushScene extends Phaser.Scene {
         x = this.addDip(x, y, 270, 105 + (index % 3) * 12);
         this.addLine(x, y, x + 100, y);
         x += 100;
+      } else if (feature === "bump") {
+        x = this.addHill(x, y, 110, 48, 220);
+        this.addLine(x, y, x + 75, y);
+        x += 75;
       } else {
         x = this.addJump(x, y, 420 + (index % 3) * 35, 125 + (index % 4) * 15);
       }
