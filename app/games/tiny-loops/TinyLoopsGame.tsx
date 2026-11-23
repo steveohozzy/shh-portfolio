@@ -115,7 +115,13 @@ class LoopRushScene extends Phaser.Scene {
   private sample(position: number) {
     const i = Phaser.Math.Clamp(Math.floor(position), 0, this.points.length - 2);
     const t = Phaser.Math.Clamp(position - i, 0, 1);
-    return Phaser.Math.Vector2.Lerp(this.points[i], this.points[i + 1], t);
+    const from = this.points[i];
+    const to = this.points[i + 1];
+
+    return new Phaser.Math.Vector2(
+      Phaser.Math.Linear(from.x, to.x, t),
+      Phaser.Math.Linear(from.y, to.y, t)
+    );
   }
 
   private drawScene() {
