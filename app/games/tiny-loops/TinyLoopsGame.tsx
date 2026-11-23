@@ -238,7 +238,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     coins.push({ mesh: coin, distance: d, collected: false });
   }
 
-  const state = { status: "ready" as GameStatus, distance: 0, speed: 0, holding: false, flips: 0, spin: 0, coins: 0, airborne: false, airHeight: 0, verticalVelocity: 0, airElapsed: 0, elapsed: 0, lastTime: performance.now(), raf: 0 };
+  const state = { status: "ready" as GameStatus, distance: 0, speed: 0, holding: false, flips: 0, spin: 0, coins: 0, airborne: false, airHeight: 0, verticalVelocity: 0, airElapsed: 0, activeJumpEnd: 0, elapsed: 0, lastTime: performance.now(), raf: 0 };
   const resize = () => {
     const w = Math.max(1, mount.clientWidth), h = Math.max(1, mount.clientHeight);
     camera.aspect = w / h;
@@ -266,6 +266,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
           state.airHeight = 0;
           state.verticalVelocity = 13.5;
           state.airElapsed = 0;
+          state.activeJumpEnd = launch[1];
           state.spin = 0;
         }
       }
@@ -285,6 +286,10 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
         state.airHeight = 0;
         state.airborne = false;
         state.verticalVelocity = 0;
+        if (state.distance < state.activeJumpEnd - 1.5) {
+          state.status = "crashed";
+          state.speed = 0;
+        }
         const completed = Math.floor(state.spin / (Math.PI * 2));
         if (completed > state.flips) {
           state.coins += (completed - state.flips) * 2;
