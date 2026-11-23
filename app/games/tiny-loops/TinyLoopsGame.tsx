@@ -329,9 +329,9 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     // Keep the complete, enlarged cart visible in a stable third-person chase view.
     const cameraTarget = cart.position.clone();
     cameraTarget.y += 0.25;
-    const cameraPosition = cart.position.clone().addScaledVector(frame.tangent, -14);
-    cameraPosition.y += 7.5;
-    cameraPosition.addScaledVector(frame.side, 1.0);
+    const cameraPosition = cart.position.clone()
+      .addScaledVector(frame.tangent, -14)
+      .addScaledVector(frame.normal, 7.5);
     camera.position.lerp(cameraPosition, 1 - Math.exp(-dt * 5.5));
     camera.up.copy(frame.normal);
     camera.lookAt(cameraTarget);
