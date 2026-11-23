@@ -501,6 +501,20 @@ class LoopRushScene extends Phaser.Scene {
           flag.rewarded = true;
           this.coinCount += 5;
           this.score += 250;
+          const coinPopup = this.add.text(
+            this.scale.width * 0.24,
+            this.scale.height * 0.36,
+            "+5 COINS",
+            { fontFamily: "Arial, sans-serif", fontSize: "18px", fontStyle: "bold", color: "#fff2a8", stroke: "#72501a", strokeThickness: 4 }
+          ).setOrigin(0.5).setDepth(20);
+          this.tweens.add({
+            targets: coinPopup,
+            y: coinPopup.y - 48,
+            alpha: 0,
+            duration: 850,
+            ease: "Cubic.Out",
+            onComplete: () => coinPopup.destroy(),
+          });
         }
       });
 
