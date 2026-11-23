@@ -7,7 +7,7 @@ declare global {
 }
 
 type GameStatus = "ready" | "playing" | "crashed" | "won";
-const THREE_CDN = "https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.min.js";
+const THREE_CDN = "https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.1/three.min.js";
 
 function loadThree() {
   return new Promise<any>((resolve, reject) => {
