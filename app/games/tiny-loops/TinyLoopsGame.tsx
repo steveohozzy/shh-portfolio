@@ -36,16 +36,15 @@ function makeCourse(T: any) {
     const from = points[points.length - 1];
     for (let i = 1; i <= steps; i++) add(from.clone().lerp(to, i / steps));
   };
-  const hill = (to: any, height: number, steps = 60, launchable = true) => {
+  const hill = (to: any, height: number, steps = 64, launchable = true) => {
     const from = points[points.length - 1];
     for (let i = 1; i <= steps; i++) {
       const t = i / steps;
-      const hillPoint = from.clone().lerp(to, t).add(new T.Vector3(0, Math.sin(Math.PI * t) * height, 0));
-      add(hillPoint);
+      add(from.clone().lerp(to, t).add(new T.Vector3(0, Math.sin(Math.PI * t) * height, 0)));
       if (launchable && i === Math.round(steps / 2)) hillCrestIndices.push(points.length - 1);
     }
   };
-  const bend = (control: any, to: any, steps = 48) => {
+  const bend = (control: any, to: any, steps = 56) => {
     const from = points[points.length - 1];
     for (let i = 1; i <= steps; i++) {
       const t = i / steps, u = 1 - t;
@@ -53,65 +52,44 @@ function makeCourse(T: any) {
     }
   };
 
-  add(new T.Vector3(0, 0, 8));
-  // Gentle opening roller: visible rise, but deliberately not a jump trigger.
-  hill(new T.Vector3(0, 0, -35), 6, 70, false);
-  bend(new T.Vector3(1, 0, -55), new T.Vector3(16, 0, -68));
-  line(new T.Vector3(18, 0, -82), 20);
+  // A deliberately simple, continuous coaster: gentle opening, clear ramps,
+  // broad turns and small changes in height. No vertical loops or corkscrews
+  // that can make the cart or chase camera appear to flip by themselves.
+  add(new T.Vector3(0, 0, 12));
+  hill(new T.Vector3(0, 0, -42), 3, 70, false);
+  bend(new T.Vector3(2, 0, -62), new T.Vector3(15, 0, -78));
+  line(new T.Vector3(18, 0, -94), 22);
 
-  // A full vertical loop, entered and exited in the direction of travel.
-  const loopStart = points[points.length - 1].clone();
-  const radius = 8;
-  for (let i = 1; i <= 150; i++) {
-    const a = (Math.PI * 2 * i) / 150;
-    add(new T.Vector3(loopStart.x, radius * (1 - Math.cos(a)), loopStart.z - radius * Math.sin(a)));
-  }
-  hill(new T.Vector3(18, 0, -112), 5, 55);
-  bend(new T.Vector3(34, 0, -130), new T.Vector3(42, 0, -151), 55);
-  line(new T.Vector3(42, 0, -174), 28);
+  // First proper jump: one clear, rounded ramp.
+  hill(new T.Vector3(28, 0, -145), 7, 76, true);
+  bend(new T.Vector3(42, 2, -166), new T.Vector3(48, 3, -190));
+  line(new T.Vector3(48, 3, -212), 28);
 
-  // A wide banked turn around the outside of a floating platform.
-  for (let i = 1; i <= 100; i++) {
-    const a = (Math.PI / 2) * (i / 100);
-    add(new T.Vector3(42 + 19 * Math.sin(a), 1.5 * Math.sin(a * 2), -174 - 19 * (1 - Math.cos(a))));
-  }
-  hill(new T.Vector3(61, 0, -225), 7, 80);
-  bend(new T.Vector3(62, 9, -244), new T.Vector3(45, 12, -257), 55);
-  line(new T.Vector3(25, 12, -257), 30);
+  // A broad sweeping turn and a second, slightly larger jump.
+  bend(new T.Vector3(68, 4, -235), new T.Vector3(64, 5, -260), 72);
+  hill(new T.Vector3(38, 5, -302), 9, 84, true);
+  bend(new T.Vector3(16, 8, -326), new T.Vector3(8, 8, -350), 64);
+  line(new T.Vector3(8, 8, -374), 30);
 
-  // A second, horizontal corkscrew/spiral section.
-  const spiralStart = points[points.length - 1].clone();
-  for (let i = 1; i <= 180; i++) {
-    const a = (Math.PI * 2 * i) / 180;
-    add(new T.Vector3(spiralStart.x + 10 * Math.sin(a), 12 + 2.2 * Math.sin(a * 2), spiralStart.z - 10 * (1 - Math.cos(a))));
-  }
-  line(new T.Vector3(5, 12, -300), 45);
-  bend(new T.Vector3(-10, 18, -320), new T.Vector3(-22, 18, -339), 55);
-  hill(new T.Vector3(-22, 18, -370), 5, 55);
-  bend(new T.Vector3(-22, 4, -395), new T.Vector3(0, 0, -414), 70);
-  line(new T.Vector3(0, 0, -460), 65);
-  bend(new T.Vector3(18, 0, -485), new T.Vector3(35, 0, -500), 60);
-  line(new T.Vector3(35, 0, -555), 75);
+  // Final downhill section with a smaller jump before the finish.
+  bend(new T.Vector3(-10, 5, -396), new T.Vector3(-18, 3, -420), 64);
+  hill(new T.Vector3(-12, 0, -468), 5, 72, true);
+  bend(new T.Vector3(4, 0, -492), new T.Vector3(18, 0, -516), 64);
+  line(new T.Vector3(18, 0, -555), 55);
 
   const curve = new T.CatmullRomCurve3(points, false, "centripetal", 0.15);
   curve.arcLengthDivisions = 3000;
   curve.updateArcLengths();
-  const courseLength = curve.getLength();
   const sampledLengths = curve.getLengths(curve.arcLengthDivisions);
   (curve as any).hillCrestDistances = hillCrestIndices.map((pointIndex) => {
-    // Convert the hill's curve parameter into its real travelled distance. getUtoTmapping()
-    // works in the opposite direction (distance fraction -> curve parameter), so using it
-    // here shifts launch triggers far away from their actual hilltops.
-    const curveParameter = (pointIndex / (points.length - 1)) * curve.arcLengthDivisions;
-    const lowerIndex = Math.floor(curveParameter);
-    const upperIndex = Math.min(curve.arcLengthDivisions, lowerIndex + 1);
-    const blend = curveParameter - lowerIndex;
-    return sampledLengths[lowerIndex] +
-      (sampledLengths[upperIndex] - sampledLengths[lowerIndex]) * blend;
+    const parameter = (pointIndex / (points.length - 1)) * curve.arcLengthDivisions;
+    const lower = Math.floor(parameter);
+    const upper = Math.min(curve.arcLengthDivisions, lower + 1);
+    const fraction = parameter - lower;
+    return sampledLengths[lower] + (sampledLengths[upper] - sampledLengths[lower]) * fraction;
   });
   return curve;
 }
-
 function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; coins: number; flips: number; status: GameStatus; airborne?: boolean; holding?: boolean }) => void) {
   const scene = new T.Scene();
   scene.background = new T.Color(0xe9e9e9);
@@ -143,11 +121,15 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   const trackGroup = new T.Group();
   scene.add(trackGroup);
 
-  const frameAt = (index: number) => ({
-    tangent: frames.tangents[index].clone().normalize(),
-    normal: frames.normals[index].clone().normalize(),
-    side: frames.binormals[index].clone().normalize(),
-  });
+  const frameAt = (index: number) => {
+    const tangent = frames.tangents[index].clone().normalize();
+    const worldUp = new T.Vector3(0, 1, 0);
+    let side = new T.Vector3().crossVectors(tangent, worldUp);
+    if (side.lengthSq() < 0.0001) side.set(1, 0, 0);
+    side.normalize();
+    const normal = new T.Vector3().crossVectors(side, tangent).normalize();
+    return { tangent, normal, side };
+  };
 
   // Only the four deliberately modelled hill crests can launch the cart.
   const jumpTriggers: number[] = (course as any).hillCrestDistances;
@@ -267,7 +249,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     coins.push({ mesh: coin, distance: d, collected: false });
   }
 
-  const state = { status: "ready" as GameStatus, distance: 0, speed: 0, holding: false, flips: 0, spin: 0, coins: 0, airborne: false, airHeight: 0, verticalVelocity: 0, airElapsed: 0, activeJumpEnd: 0, elapsed: 0, lastTime: performance.now(), raf: 0 };
+  const state = { status: "ready" as GameStatus, distance: 0, speed: 0, holding: false, flips: 0, spin: 0, coins: 0, airborne: false, airHeight: 0, verticalVelocity: 0, airElapsed: 0, activeJumpEnd: 0, jumpDuration: 0.9, jumpHeight: 5, elapsed: 0, lastTime: performance.now(), raf: 0 };
   const resize = () => {
     const w = Math.max(1, mount.clientWidth), h = Math.max(1, mount.clientHeight);
     camera.aspect = w / h;
@@ -293,9 +275,10 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
         if (launch !== undefined) {
           state.airborne = true;
           state.airHeight = 0;
-          state.verticalVelocity = Math.min(19, 7 + state.speed * 0.38);
           state.airElapsed = 0;
-          state.activeJumpEnd = launch + Math.max(15, state.speed * 1.05);
+          state.jumpDuration = Math.min(1.3, 0.78 + (state.speed - 16) * 0.018);
+          state.jumpHeight = 4 + state.speed * 0.13;
+          state.activeJumpEnd = launch + state.speed * state.jumpDuration;
           state.spin = 0;
         }
       }
@@ -305,20 +288,19 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
       }
     }
 
-    // Ballistic flight: gravity controls the arc; holding only controls the backflip.
+    // A predictable jump arc: the cart follows the track and rises above it.
+    // Holding during the arc rotates the cart; releasing immediately stops the flip.
     if (state.airborne) {
       state.airElapsed += dt;
-      state.verticalVelocity -= 22 * dt;
-      state.airHeight += state.verticalVelocity * dt;
+      const progress = Math.min(1, state.airElapsed / state.jumpDuration);
+      state.airHeight = Math.sin(progress * Math.PI) * state.jumpHeight;
       if (state.holding) state.spin += dt * Math.PI * 2 * 1.65;
-      if (state.airHeight <= 0 && state.airElapsed > 0.16) {
+      if (progress >= 1) {
         state.airHeight = 0;
         state.airborne = false;
-        state.verticalVelocity = 0;
         const completed = Math.floor(state.spin / (Math.PI * 2));
         const landingAngle = Math.abs(Math.atan2(Math.sin(state.spin), Math.cos(state.spin)));
         if (landingAngle > 0.7) {
-          // Landing part-way through a rotation leaves the rider upside down: wipe out.
           state.status = "crashed";
           state.speed = 0;
         } else if (completed > 0) {
@@ -352,7 +334,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
       .addScaledVector(frame.tangent, -14)
       .addScaledVector(frame.normal, 7.5);
     camera.position.lerp(cameraPosition, 1 - Math.exp(-dt * 5.5));
-    camera.up.copy(frame.normal);
+    camera.up.set(0, 1, 0);
     camera.lookAt(cameraTarget);
 
     coins.forEach((coin) => {
