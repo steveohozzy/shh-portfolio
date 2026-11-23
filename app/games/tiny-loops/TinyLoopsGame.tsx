@@ -30,7 +30,7 @@ function loadThree() {
 
 function makeCourse(T: any) {
   const points: any[] = [];
-  const hillCrestPoints: any[] = [];
+  const hillCrestIndices: number[] = [];
   const add = (p: any) => points.push(p.clone());
   const line = (to: any, steps = 24) => {
     const from = points[points.length - 1];
@@ -42,7 +42,7 @@ function makeCourse(T: any) {
       const t = i / steps;
       const hillPoint = from.clone().lerp(to, t).add(new T.Vector3(0, Math.sin(Math.PI * t) * height, 0));
       add(hillPoint);
-      if (launchable && i === Math.round(steps / 2)) hillCrestPoints.push(hillPoint.clone());
+      if (launchable && i === Math.round(steps / 2)) hillCrestIndices.push(points.length - 1);
     }
   };
   const bend = (control: any, to: any, steps = 48) => {
@@ -97,15 +97,11 @@ function makeCourse(T: any) {
   curve.arcLengthDivisions = 3000;
   curve.updateArcLengths();
   const courseLength = curve.getLength();
-  (curve as any).hillCrestDistances = hillCrestPoints.map((crest) => {
-    let closestU = 0;
-    let closestDistance = Infinity;
-    for (let i = 0; i <= 2000; i++) {
-      const u = i / 2000;
-      const distance = curve.getPointAt(u).distanceToSquared(crest);
-      if (distance < closestDistance) { closestDistance = distance; closestU = u; }
-    }
-    return closestU * courseLength;
+  (curve as any).hillCrestDistances = hillCrestIndices.map((pointIndex) => {
+    // Map the exact authored hill point to its distance along the curve. A nearest-point
+    // search is ambiguous on loops where separate track sections pass close together.
+    const curveParameter = pointIndex / (points.length - 1);
+    return curve.getUtoTmapping(curveParameter) * courseLength;
   });
   return curve;
 }
