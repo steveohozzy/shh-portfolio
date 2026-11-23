@@ -136,15 +136,15 @@ class LoopRushScene extends Phaser.Scene {
     return x + width;
   }
 
-  private addLoop(startX: number, y: number, radius: number) {
-    const centerX = startX + radius;
+  private addLoop(entryX: number, y: number, radius: number) {
+    const centerX = entryX;
     const centerY = y - radius;
     const steps = 180;
     for (let i = 1; i <= steps; i++) {
       const angle = Math.PI / 2 - (Math.PI * 2 * i) / steps;
       this.addPoint(centerX + Math.cos(angle) * radius, centerY + Math.sin(angle) * radius);
     }
-    return startX + radius * 2;
+    return entryX;
   }
 
   private addJump(x: number, y: number, width: number, height: number) {
@@ -157,7 +157,7 @@ class LoopRushScene extends Phaser.Scene {
     for (let i = 1; i <= steps; i++) {
       const t = i / steps;
       const arc = Math.sin(t * Math.PI);
-      this.addPoint(launchX + flightWidth * t, y - 28 - arc * height, true);
+      this.addPoint(launchX + flightWidth * t, y - 28 * (1 - t) - arc * height, true);
     }
     this.addLine(landingX, y, landingX + 110, y);
     return landingX + 110;
@@ -375,7 +375,7 @@ class LoopRushScene extends Phaser.Scene {
       const width = this.scale.width;
       const height = this.scale.height;
       const scale = Math.min(width / 960, height / 540, 1.25);
-      this.cameraX = Math.max(0, position.x - 300);
+      this.cameraX = Math.max(0, position.x);
       this.cart.setPosition(width * 0.24, height * 0.56 + (position.y - 365) * scale);
       this.cart.setScale(scale);
       this.cart.setRotation(isAirborne ? angle + this.airSpin : angle);
@@ -388,9 +388,9 @@ class LoopRushScene extends Phaser.Scene {
       });
 
       const levelConfig = LEVELS[this.level % LEVELS.length];
-      if (!isAirborne && this.progress > 30 && this.speed < 70) this.emit("crashed");
-      if (!isAirborne && this.speed < levelConfig.loopSpeed && position.y < 270 && this.progress > 40) this.emit("crashed");
-      if (this.progress >= this.points.length - 3) this.emit("won");
+      if (this.state === "playing" && !isAirborne && this.progress > 30 && this.speed < 70) this.emit("crashed");
+      if (this.state === "playing" && !isAirborne && this.speed < levelConfig.loopSpeed && position.y < 270 && this.progress > 40) this.emit("crashed");
+      if (this.state === "playing" && this.progress >= this.points.length - 3) this.emit("won");
 
       if (this.state === "playing" && time - this.lastEvent > 100) {
         this.lastEvent = time;
