@@ -92,8 +92,8 @@ function makeCourse(T: any) {
 }
 function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; coins: number; flips: number; status: GameStatus; airborne?: boolean; holding?: boolean }) => void) {
   const scene = new T.Scene();
-  scene.background = new T.Color(0xe9e9e9);
-  scene.fog = new T.Fog(0xe9e9e9, 65, 190);
+  scene.background = new T.Color(0x9cddff);
+  scene.fog = new T.Fog(0xb8e7ff, 95, 260);
   const camera = new T.PerspectiveCamera(56, 1, 0.1, 500);
   const renderer = new T.WebGLRenderer({ antialias: true, alpha: false });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -102,8 +102,8 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   renderer.outputColorSpace = T.SRGBColorSpace;
   mount.appendChild(renderer.domElement);
 
-  scene.add(new T.HemisphereLight(0xffffff, 0x9b9b9b, 2.0));
-  const sun = new T.DirectionalLight(0xffffff, 2.1);
+  scene.add(new T.HemisphereLight(0xffffff, 0x9ab5c9, 2.25));
+  const sun = new T.DirectionalLight(0xfff3d5, 2.4);
   sun.position.set(-35, 65, 30);
   sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048);
@@ -113,10 +113,10 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   const length = course.getLength();
   const segments = 1800;
   const frames = course.computeFrenetFrames(segments, false);
-  const railMaterial = new T.MeshStandardMaterial({ color: 0xffd83d, metalness: 0.32, roughness: 0.42 });
+  const railMaterial = new T.MeshStandardMaterial({ color: 0xffc928, metalness: 0.05, roughness: 0.72 });
   const sleeperMaterials = [
-    new T.MeshStandardMaterial({ color: 0xf4c62e, roughness: 0.75 }),
-    new T.MeshStandardMaterial({ color: 0x424242, roughness: 0.85 }),
+    new T.MeshStandardMaterial({ color: 0xffe36a, roughness: 0.9 }),
+    new T.MeshStandardMaterial({ color: 0x343b4b, roughness: 0.95 }),
   ];
   const trackGroup = new T.Group();
   scene.add(trackGroup);
@@ -147,14 +147,14 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
         pts.push(p.addScaledVector(f.side, offset).addScaledVector(f.normal, 0.12));
       }
       const railCurve = new T.CatmullRomCurve3(pts, false, "centripetal");
-      const mesh = new T.Mesh(new T.TubeGeometry(railCurve, Math.max(40, count), 0.105, 8, false), railMaterial);
+      const mesh = new T.Mesh(new T.TubeGeometry(railCurve, Math.max(40, count), 0.16, 8, false), railMaterial);
       mesh.castShadow = true;
       mesh.receiveShadow = true;
       trackGroup.add(mesh);
     });
   });
 
-  const sleeperGeo = new T.BoxGeometry(1.95, 0.16, 0.34);
+  const sleeperGeo = new T.BoxGeometry(2.05, 0.2, 0.42);
   const sleeperDummy = new T.Object3D();
   const sleeperMesh = new T.InstancedMesh(sleeperGeo, sleeperMaterials[0], 760);
   const sleeperDark = new T.InstancedMesh(sleeperGeo, sleeperMaterials[1], 760);
@@ -178,8 +178,8 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   trackGroup.add(sleeperMesh, sleeperDark);
 
   // Floating low-poly rock shelves and cliff faces beneath the course.
-  const rockMat = new T.MeshStandardMaterial({ color: 0xf8f8f8, roughness: 1 });
-  const cliffMat = new T.MeshStandardMaterial({ color: 0xbdbdbd, roughness: 1 });
+  const rockMat = new T.MeshStandardMaterial({ color: 0xffffff, roughness: 1, flatShading: true });
+  const cliffMat = new T.MeshStandardMaterial({ color: 0xa9c5d8, roughness: 1, flatShading: true });
   const platformGeo = new T.BoxGeometry(1, 1, 1);
   const platformData = [
     [0, -5, -22, 17, 3, 25], [16, -8, -73, 23, 5, 24],
@@ -204,30 +204,30 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
 
   // Small yellow cart and rider, matching the tiny silhouette in the reference.
   const cart = new T.Group();
-  const chassis = new T.Mesh(new T.BoxGeometry(1.55, 0.24, 1.85), new T.MeshStandardMaterial({ color: 0x30343b, roughness: 0.82 }));
+  const chassis = new T.Mesh(new T.BoxGeometry(1.65, 0.28, 1.95), new T.MeshStandardMaterial({ color: 0x343b4b, roughness: 0.95 }));
   chassis.position.y = 0.12;
   chassis.castShadow = true;
   cart.add(chassis);
-  const body = new T.Mesh(new T.BoxGeometry(1.25, 0.42, 1.45), new T.MeshStandardMaterial({ color: 0xffc928, roughness: 0.42 }));
-  body.position.y = 0.23;
+  const body = new T.Mesh(new T.BoxGeometry(1.42, 0.55, 1.58), new T.MeshStandardMaterial({ color: 0xffa928, roughness: 0.78 }));
+  body.position.y = 0.28;
   body.castShadow = true;
   cart.add(body);
   const seat = new T.Mesh(new T.BoxGeometry(0.72, 0.48, 0.48), new T.MeshStandardMaterial({ color: 0x343b48, roughness: 0.85 }));
   seat.position.set(0, 0.53, 0.25);
   seat.castShadow = true;
   cart.add(seat);
-  const head = new T.Mesh(new T.SphereGeometry(0.34, 16, 14), new T.MeshStandardMaterial({ color: 0xffd84c, roughness: 0.7 }));
-  head.position.set(0, 0.76, -0.12);
+  const head = new T.Mesh(new T.SphereGeometry(0.4, 16, 12), new T.MeshStandardMaterial({ color: 0xffd65a, roughness: 0.9, flatShading: true }));
+  head.position.set(0, 0.84, -0.18);
   head.castShadow = true;
   cart.add(head);
-  const riderBody = new T.Mesh(new T.CapsuleGeometry(0.23, 0.52, 4, 10), new T.MeshStandardMaterial({ color: 0x25364a, roughness: 0.8 }));
+  const riderBody = new T.Mesh(new T.CapsuleGeometry(0.25, 0.48, 4, 8), new T.MeshStandardMaterial({ color: 0x2e6ec8, roughness: 0.95 }));
   riderBody.position.set(0, 0.55, 0.03);
   riderBody.castShadow = true;
   cart.add(riderBody);
   [-0.48, 0.48].forEach((x) => [-0.42, 0.42].forEach((z) => {
-    const wheel = new T.Mesh(new T.CylinderGeometry(0.2, 0.2, 0.13, 12), new T.MeshStandardMaterial({ color: 0x444444, roughness: 0.9 }));
+    const wheel = new T.Mesh(new T.CylinderGeometry(0.24, 0.24, 0.16, 12), new T.MeshStandardMaterial({ color: 0x303747, roughness: 1 }));
     wheel.rotation.z = Math.PI / 2;
-    wheel.position.set(x, 0.12, z);
+    wheel.position.set(x, 0.14, z);
     cart.add(wheel);
   }));
   cart.scale.setScalar(1.15);
@@ -353,20 +353,29 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   };
   state.raf = requestAnimationFrame(animate);
 
+  const resetRun = () => {
+    state.status = "playing";
+    state.distance = 0;
+    state.speed = 12;
+    state.holding = false;
+    state.flips = 0;
+    state.spin = 0;
+    state.coins = 0;
+    state.airborne = false;
+    state.airHeight = 0;
+    state.verticalVelocity = 0;
+    state.airElapsed = 0;
+    state.activeJumpEnd = 0;
+    state.jumpDuration = 0.9;
+    state.jumpHeight = 5;
+    state.lastTime = performance.now();
+    coins.forEach((coin) => { coin.collected = false; coin.mesh.visible = true; });
+    onHud({ speed: state.speed, coins: 0, flips: 0, status: "playing", airborne: false, holding: false });
+  };
+
   return {
-    start() {
-      state.status = "playing"; state.distance = 0; state.speed = 12; state.holding = false;
-      state.flips = 0; state.spin = 0; state.coins = 0; state.airborne = false;
-      state.airHeight = 0; state.verticalVelocity = 0; state.airElapsed = 0; state.activeJumpEnd = 0;
-      coins.forEach((c) => { c.collected = false; c.mesh.visible = true; });
-      onHud({ speed: state.speed, coins: 0, flips: 0, status: state.status });
-    },
-    restart() {
-      state.status = "playing"; state.distance = 0; state.speed = 12; state.holding = false;
-      state.flips = 0; state.spin = 0; state.coins = 0; state.airborne = false; state.airHeight = 0; state.verticalVelocity = 0; state.airElapsed = 0;
-      coins.forEach((c) => { c.collected = false; c.mesh.visible = true; });
-      onHud({ speed: state.speed, coins: 0, flips: 0, status: state.status });
-    },
+    start: resetRun,
+    restart: resetRun,
     setHolding(value: boolean) { state.holding = value; },
     destroy() {
       cancelAnimationFrame(state.raf);
@@ -443,8 +452,8 @@ export default function TinyLoopsGame() {
           <div className="loop-rush-hud"><span>⚡ {speed} SPEED</span><span>🟡 {coins} COINS</span><span>↻ {flips} FLIPS</span><strong className="loop-rush-air-status">{airborne ? "AIRBORNE — HOLD TO FLIP!" : "HOLD TO ACCELERATE"}</strong></div>
           {error && <div className="loop-rush-overlay"><h2>3D ENGINE ERROR</h2><p>{error}</p></div>}
           {status === "ready" && !error && <div className="loop-rush-overlay"><span className="loop-rush-pill">{engineReady ? "READY?" : "LOADING"}</span><h2>TINY LOOPS</h2><p>{engineReady ? "Hold START to launch and accelerate. Keep holding to build speed and flip from hilltops." : "Loading the 3D track…"}</p><button disabled={!engineReady} onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); start(); gameRef.current?.setHolding(true); const frame = e.currentTarget.closest(".loop-rush-game-frame") as HTMLDivElement | null; frame?.setPointerCapture(e.pointerId); }}>{engineReady ? "HOLD TO START →" : "LOADING…"}</button></div>}
-          {status === "crashed" && <div className="loop-rush-overlay"><span className="loop-rush-pill">WIPEOUT</span><h2>YOU MISSED THE LANDING</h2><p>Hold to build speed and try the jump again.</p><button onClick={(e) => { e.stopPropagation(); start(); }}>TRY AGAIN ↻</button></div>}
-          {status === "won" && <div className="loop-rush-overlay"><span className="loop-rush-pill">TRACK CLEARED</span><h2>NICE RIDE!</h2><p>{coins} coins · {flips} flips</p><button onClick={(e) => { e.stopPropagation(); start(); }}>RIDE AGAIN ↻</button></div>}
+          {status === "crashed" && <div className="loop-rush-overlay" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}><span className="loop-rush-pill">WIPEOUT</span><h2>YOU MISSED THE LANDING</h2><p>Hold to build speed and try the jump again.</p><button onClick={(e) => { e.stopPropagation(); gameRef.current?.restart(); }}>TRY AGAIN ↻</button></div>}
+          {status === "won" && <div className="loop-rush-overlay" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}><span className="loop-rush-pill">TRACK CLEARED</span><h2>NICE RIDE!</h2><p>{coins} coins · {flips} flips</p><button onClick={(e) => { e.stopPropagation(); gameRef.current?.restart(); }}>RIDE AGAIN ↻</button></div>}
         </div>
         <div className="loop-rush-controls"><span><i className="loop-rush-dot" /> HOLD TO ACCELERATE / FLIP</span><span>RELEASE TO STOP FLIPPING</span></div>
       </section>
