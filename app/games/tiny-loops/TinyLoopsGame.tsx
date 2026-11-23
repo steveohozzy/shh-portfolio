@@ -124,6 +124,9 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     normal: frames.normals[index].clone().normalize(),
     side: frames.binormals[index].clone().normalize(),
   });
+
+  const jumpZones = [[43, 51], [113, 123], [204, 214], [326, 336]]; // distances along the course
+
   // Build separate rail meshes around the jump gaps so the cart visibly leaves the track.
   const railSections: [number, number][] = [];
   let sectionStart = 0;
