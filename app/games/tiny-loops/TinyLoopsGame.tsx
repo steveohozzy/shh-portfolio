@@ -124,20 +124,31 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     normal: frames.normals[index].clone().normalize(),
     side: frames.binormals[index].clone().normalize(),
   });
-  const railCurves = [-0.72, 0.72].map((offset) => {
-    const pts: any[] = [];
-    for (let i = 0; i <= segments; i += 2) {
-      const p = course.getPointAt(i / segments);
-      const f = frameAt(i);
-      pts.push(p.addScaledVector(f.side, offset).addScaledVector(f.normal, 0.12));
-    }
-    return new T.CatmullRomCurve3(pts, false, "centripetal");
+  // Build separate rail meshes around the jump gaps so the cart visibly leaves the track.
+  const railSections: [number, number][] = [];
+  let sectionStart = 0;
+  jumpZones.forEach(([a, b]) => {
+    if (a > sectionStart) railSections.push([sectionStart, a]);
+    sectionStart = b;
   });
-  railCurves.forEach((railCurve: any) => {
-    const mesh = new T.Mesh(new T.TubeGeometry(railCurve, 2600, 0.105, 8, false), railMaterial);
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
-    trackGroup.add(mesh);
+  if (sectionStart < length) railSections.push([sectionStart, length]);
+  [-0.72, 0.72].forEach((offset) => {
+    railSections.forEach(([from, to]) => {
+      const pts: any[] = [];
+      const count = Math.max(8, Math.ceil((to - from) * 5));
+      for (let j = 0; j <= count; j++) {
+        const d = from + ((to - from) * j) / count;
+        const u = course.getUtoTmapping(0, d);
+        const p = course.getPointAt(u);
+        const f = frameAt(Math.min(segments, Math.round(u * segments)));
+        pts.push(p.addScaledVector(f.side, offset).addScaledVector(f.normal, 0.12));
+      }
+      const railCurve = new T.CatmullRomCurve3(pts, false, "centripetal");
+      const mesh = new T.Mesh(new T.TubeGeometry(railCurve, Math.max(40, count), 0.105, 8, false), railMaterial);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      trackGroup.add(mesh);
+    });
   });
 
   const sleeperGeo = new T.BoxGeometry(1.95, 0.16, 0.34);
