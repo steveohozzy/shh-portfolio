@@ -42,17 +42,16 @@ function makeCourse(T: any) {
     let crestIndex = -1;
     for (let i = 1; i <= steps; i++) {
       const t = i / steps;
-      // Make a recognisable take-off ramp: a long climb followed by a short
-      // brow and a steeper drop. The launch point is the actual high point.
-      // A straight, clearly visible incline to a defined brow, followed
-      // by a steep drop into the section hidden by the jump gap.
+      // Build a long, unmistakable climb with a short kicker at the end.
+      // The lip is deliberately late in the hill so the cart has a visible
+      // rising run-up before the track disappears into the jump.
       const rampProfile = launchable
-        ? (t <= 0.46 ? t / 0.46 : Math.max(0, 1 - (t - 0.46) / 0.54))
+        ? (t <= 0.72 ? t / 0.72 : Math.max(0, 1 - (t - 0.72) / 0.28))
         : Math.sin(Math.PI * t);
       // Exaggerate the actual path elevation so the take-off face is steep
       // and unmistakable in the chase camera, with a real downhill landing.
       add(from.clone().lerp(to, t).add(new T.Vector3(0, rampProfile * (launchable ? Math.max(height, 17) : height), 0)));
-      if (launchable && i === Math.round(steps * 0.46)) crestIndex = points.length - 1;
+      if (launchable && i === Math.round(steps * 0.72)) crestIndex = points.length - 1;
     }
     if (launchable && crestIndex >= 0) hillSections.push({ start: startIndex, crest: crestIndex, end: points.length - 1 });
   };
@@ -366,7 +365,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     coins.push({ mesh: coin, distance: d, collected: false });
   }
 
-  const state = { status: "ready" as GameStatus, distance: 0, speed: 0, holding: false, flips: 0, spin: 0, coins: 0, airborne: false, airHeight: 0, takeoffY: 0, airElapsed: 0, activeJumpEnd: 0, jumpDuration: 0.9, jumpHeight: 5, landedUntil: 0, landedFlips: 0, elapsed: 0, lastTime: performance.now(), raf: 0 };
+  const state = { status: "ready" as GameStatus, distance: 0, speed: 0, holding: false, flips: 0, spin: 0, coins: 0, airborne: false, falling: false, airHeight: 0, takeoffY: 0, airElapsed: 0, activeJumpEnd: 0, jumpDuration: 0.9, jumpHeight: 5, landedUntil: 0, landedFlips: 0, elapsed: 0, lastTime: performance.now(), raf: 0 };
   const resize = () => {
     const w = Math.max(1, mount.clientWidth), h = Math.max(1, mount.clientHeight);
     camera.aspect = w / h;
@@ -397,11 +396,16 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
         if (launch !== undefined) {
           state.distance = launch;
           if (state.speed < 24) {
-            state.status = "crashed";
+            // Don't freeze at the lip: lose the track and fall below it.
+            state.airborne = true;
+            state.falling = true;
+            state.airElapsed = 0;
+            state.takeoffY = course.getPointAt(course.getUtoTmapping(0, launch)).y;
             state.speed = 0;
             state.holding = false;
           } else {
             state.airborne = true;
+            state.falling = false;
             state.airHeight = 0;
             state.airElapsed = 0;
             state.activeJumpEnd = Math.min(length - 2, launch + jumpGapLength);
@@ -409,7 +413,9 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
             // approaches cover the same gap in less time; there is no free
             // minimum airtime that lets a slow cart magically clear it.
             state.jumpDuration = jumpGapLength / Math.max(1, state.speed);
-            state.jumpHeight = 7 + state.speed * 0.12;
+            // A higher approach gives a longer, higher arc, but the cart still
+            // has to cover the real gap before the landing section.
+            state.jumpHeight = 8 + state.speed * 0.24;
             const takeoffPoint = course.getPointAt(course.getUtoTmapping(0, launch));
             state.takeoffY = takeoffPoint.y;
             state.spin = 0;
@@ -426,14 +432,25 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     // Holding during the arc rotates the cart; releasing immediately stops the flip.
     if (state.airborne) {
       state.airElapsed += dt;
-      const progress = Math.min(1, state.airElapsed / state.jumpDuration);
-      // Fly from the exact hilltop take-off point to the landing point.
-      // Do not let the descending track pull the cart down before its jump arc ends.
-      state.airHeight = Math.sin(progress * Math.PI) * state.jumpHeight;
-      if (state.holding) state.spin += dt * Math.PI * 2 * (2.5 + state.speed / 30);
-      if (progress >= 1) {
-        state.airHeight = 0;
-        state.airborne = false;
+      if (state.falling) {
+        // A slow cart simply drops off the end of the ramp under gravity.
+        state.airHeight = -0.5 * 28 * state.airElapsed * state.airElapsed;
+        if (state.airElapsed >= 0.85) {
+          state.airborne = false;
+          state.falling = false;
+          state.status = "crashed";
+        }
+      } else {
+        const progress = Math.min(1, state.airElapsed / state.jumpDuration);
+        // A parabolic flight arc (rather than a sine-wave bounce) gives the
+        // cart a slower, more readable hang-time before it meets the landing.
+        state.airHeight = 4 * progress * (1 - progress) * state.jumpHeight;
+        // Tiny Loops flips are deliberate: holding rotates steadily, not at
+        // several full spins per second. Release freezes the current rotation.
+        if (state.holding) state.spin += dt * Math.PI * 2 * (0.65 + state.speed / 110);
+        if (progress >= 1) {
+          state.airHeight = 0;
+          state.airborne = false;
         // Snap to the far-side landing track, not an arbitrary point on the
         // middle of the hill. The gap ends exactly at activeJumpEnd.
         state.distance = state.activeJumpEnd;
@@ -441,7 +458,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
         const landingAngle = Math.abs(Math.atan2(Math.sin(state.spin), Math.cos(state.spin)));
         // Count complete rotations and allow a broad landing window. A clean
         // touchdown is shown explicitly instead of silently returning to play.
-        if (landingAngle > 2.35) {
+        if (landingAngle > 0.9) {
           state.status = "crashed";
           state.speed = 0;
         } else {
@@ -452,7 +469,8 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
             state.flips += completed;
           }
         }
-        state.spin = 0;
+          state.spin = 0;
+        }
       }
     }
 
@@ -462,10 +480,13 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     const index = Math.min(segments, Math.round(u * segments));
     const frame = frameAt(index);
     if (state.airborne) {
-      const progress = Math.min(1, state.airElapsed / state.jumpDuration);
-      // Blend towards the track's actual height at the current distance so
-      // the wheels meet the landing track exactly as the jump finishes.
-      point.y = state.takeoffY + (point.y - state.takeoffY) * progress + Math.sin(progress * Math.PI) * state.jumpHeight;
+      if (state.falling) {
+        point.y = state.takeoffY + state.airHeight;
+      } else {
+        const progress = Math.min(1, state.airElapsed / state.jumpDuration);
+        // Blend to the far-side track height while following a parabolic arc.
+        point.y = state.takeoffY + (point.y - state.takeoffY) * progress + state.airHeight;
+      }
     }
     cart.position.copy(point).addScaledVector(frame.normal, 0.25);
     const basis = new T.Matrix4().makeBasis(frame.side.clone().negate(), frame.normal, frame.forward);
@@ -525,12 +546,14 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     state.spin = 0;
     state.coins = 0;
     state.airborne = false;
+    state.falling = false;
     state.airHeight = 0;
     state.takeoffY = 0;
     state.airElapsed = 0;
     state.activeJumpEnd = 0;
     state.jumpDuration = 1.0;
     state.jumpHeight = 9;
+    state.falling = false;
     state.lastTime = performance.now();
     coins.forEach((coin) => { coin.collected = false; coin.mesh.visible = true; });
     onHud({ speed: state.speed, coins: 0, flips: 0, status: "playing", airborne: false, holding: false, level: 1 });
