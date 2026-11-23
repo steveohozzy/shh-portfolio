@@ -150,19 +150,27 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   const frameAt = (index: number) => {
     const tangent = frames.tangents[index].clone().normalize();
     const worldUp = new T.Vector3(0, 1, 0);
-    let side = new T.Vector3().crossVectors(tangent, worldUp);
-    if (side.lengthSq() < 0.0001) side.set(1, 0, 0);
-    side.normalize();
-    const normal = new T.Vector3().crossVectors(side, tangent).normalize();
-    return { tangent, normal, side };
+    // Keep the cart upright through bends. Frenet normals can roll around a
+    // twisting curve and look exactly like an unrequested backflip.
+    const forward = new T.Vector3(tangent.x, 0, tangent.z).normalize();
+    if (forward.lengthSq() < 0.0001) forward.set(0, 0, -1);
+    const side = new T.Vector3().crossVectors(forward, worldUp).normalize();
+    return { tangent, normal: worldUp, side, forward };
   };
 
-  // Only the four deliberately modelled hill crests can launch the cart.
+  // Every launch has a visible rising ramp, a real rail/sleeper gap, and a
+  // separate landing section. Only these exact ramp brows can trigger flight.
   const jumpTriggers: number[] = (course as any).hillCrestDistances;
-
-  // Keep the rails continuous: the raised track itself forms the take-off
-  // ramp. The cart follows its arc above the track, then returns to it.
-  const railRanges: number[][] = [[0, length]];
+  const jumpGapLength = 34;
+  const jumpGaps = jumpTriggers.map((crest) => [crest, Math.min(length - 3, crest + jumpGapLength)]);
+  const isInJumpGap = (distance: number) => jumpGaps.some(([from, to]) => distance >= from && distance <= to);
+  const railRanges: number[][] = [];
+  let railCursor = 0;
+  jumpGaps.forEach(([from, to]) => {
+    if (from > railCursor) railRanges.push([railCursor, from]);
+    railCursor = Math.max(railCursor, to);
+  });
+  if (railCursor < length) railRanges.push([railCursor, length]);
   [-0.72, 0.72].forEach((offset) => {
     railRanges.forEach(([from, to]) => {
       const pts: any[] = [];
@@ -189,6 +197,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   let lightCount = 0, darkCount = 0;
   for (let i = 0; i < 760; i++) {
     const d = (length * i) / 759;
+    if (isInJumpGap(d)) continue;
     const u = course.getUtoTmapping(0, d);
     const p = course.getPointAt(u);
     const f = frameAt(Math.min(segments, Math.round(u * segments)));
@@ -202,6 +211,22 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   sleeperMesh.count = lightCount;
   sleeperDark.count = darkCount;
   trackGroup.add(sleeperMesh, sleeperDark);
+
+  // Solid landing pads make the far side of each jump visibly readable.
+  const landingMat = new T.MeshStandardMaterial({ color: 0xffc928, roughness: 0.82 });
+  jumpGaps.forEach(([, landingDistance]) => {
+    const u = course.getUtoTmapping(0, landingDistance + 1.5);
+    const landingPoint = course.getPointAt(u);
+    const landingFrame = frameAt(Math.min(segments, Math.round(u * segments)));
+    const pad = new T.Mesh(new T.BoxGeometry(3.2, 0.34, 5.5), landingMat);
+    pad.position.copy(landingPoint).addScaledVector(landingFrame.normal, -0.04);
+    pad.quaternion.setFromRotationMatrix(new T.Matrix4().makeBasis(
+      landingFrame.side.clone().negate(), landingFrame.normal, landingFrame.forward
+    ));
+    pad.castShadow = true;
+    pad.receiveShadow = true;
+    trackGroup.add(pad);
+  });
 
   // Floating low-poly rock shelves and cliff faces beneath the course.
   const rockMat = new T.MeshStandardMaterial({ color: 0xffffff, roughness: 1, flatShading: true });
@@ -331,11 +356,12 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
           state.airborne = true;
           state.airHeight = 0;
           state.airElapsed = 0;
-          // Give the cart enough airtime to visibly clear the downslope.
-          // Faster approaches travel further and get a slightly higher arc.
-          state.jumpDuration = Math.min(1.25, Math.max(0.95, 48 / state.speed));
-          state.jumpHeight = 7 + state.speed * 0.16;
-          state.activeJumpEnd = Math.min(length - 2, launch + state.speed * state.jumpDuration);
+          // Land at the far side of the actual visible track gap.
+          // The gap is fixed in course distance so the cart cannot land short
+          // or keep flying over the landing section at higher speeds.
+          state.activeJumpEnd = Math.min(length - 2, launch + jumpGapLength);
+          state.jumpDuration = jumpGapLength / Math.max(1, state.speed);
+          state.jumpHeight = 7 + state.speed * 0.12;
           const takeoffPoint = course.getPointAt(course.getUtoTmapping(0, launch));
           state.takeoffY = takeoffPoint.y;
           state.spin = 0;
@@ -359,6 +385,9 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
       if (progress >= 1) {
         state.airHeight = 0;
         state.airborne = false;
+        // Snap to the far-side landing track, not an arbitrary point on the
+        // middle of the hill. The gap ends exactly at activeJumpEnd.
+        state.distance = state.activeJumpEnd;
         const completed = Math.round(state.spin / (Math.PI * 2));
         const landingAngle = Math.abs(Math.atan2(Math.sin(state.spin), Math.cos(state.spin)));
         // Give the player a forgiving landing window, then settle the cart
@@ -387,7 +416,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
       point.y = state.takeoffY + (point.y - state.takeoffY) * progress + Math.sin(progress * Math.PI) * state.jumpHeight;
     }
     cart.position.copy(point).addScaledVector(frame.normal, 0.25);
-    const basis = new T.Matrix4().makeBasis(frame.side.clone().negate(), frame.normal, frame.tangent);
+    const basis = new T.Matrix4().makeBasis(frame.side.clone().negate(), frame.normal, frame.forward);
     baseCartQuaternion.setFromRotationMatrix(basis);
     cart.quaternion.copy(baseCartQuaternion);
     if (state.airborne) {
