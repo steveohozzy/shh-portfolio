@@ -151,15 +151,9 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   // Only the four deliberately modelled hill crests can launch the cart.
   const jumpTriggers: number[] = (course as any).hillCrestDistances;
 
-  // Leave a visible gap after each hilltop so the cart genuinely leaves the track.
-  const jumpGaps = jumpTriggers.map((crest) => [Math.max(0, crest - 1.5), Math.min(length, crest + 25)]);
-  const railRanges: number[][] = [];
-  let railStart = 0;
-  jumpGaps.forEach(([gapStart, gapEnd]) => {
-    if (gapStart > railStart) railRanges.push([railStart, gapStart]);
-    railStart = Math.max(railStart, gapEnd);
-  });
-  if (railStart < length) railRanges.push([railStart, length]);
+  // Keep the rails continuous: the raised track itself forms the take-off
+  // ramp. The cart follows its arc above the track, then returns to it.
+  const railRanges: number[][] = [[0, length]];
   [-0.72, 0.72].forEach((offset) => {
     railRanges.forEach(([from, to]) => {
       const pts: any[] = [];
@@ -184,10 +178,8 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   const sleeperMesh = new T.InstancedMesh(sleeperGeo, sleeperMaterials[0], 760);
   const sleeperDark = new T.InstancedMesh(sleeperGeo, sleeperMaterials[1], 760);
   let lightCount = 0, darkCount = 0;
-  const inJump = (d: number) => jumpGaps.some(([from, to]) => d >= from && d <= to);
   for (let i = 0; i < 760; i++) {
     const d = (length * i) / 759;
-    if (inJump(d)) continue;
     const u = course.getUtoTmapping(0, d);
     const p = course.getPointAt(u);
     const f = frameAt(Math.min(segments, Math.round(u * segments)));
@@ -358,9 +350,12 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
       if (progress >= 1) {
         state.airHeight = 0;
         state.airborne = false;
-        const completed = Math.floor(state.spin / (Math.PI * 2));
+        const completed = Math.round(state.spin / (Math.PI * 2));
         const landingAngle = Math.abs(Math.atan2(Math.sin(state.spin), Math.cos(state.spin)));
-        if (landingAngle > 0.7) {
+        // Give the player a forgiving landing window, then settle the cart
+        // squarely onto the rails instead of treating a small angle error as
+        // an automatic wipeout.
+        if (landingAngle > 1.2) {
           state.status = "crashed";
           state.speed = 0;
         } else if (completed > 0) {
@@ -442,7 +437,6 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     state.airborne = false;
     state.airHeight = 0;
     state.takeoffY = 0;
-    state.verticalVelocity = 0;
     state.airElapsed = 0;
     state.activeJumpEnd = 0;
     state.jumpDuration = 0.9;
