@@ -262,7 +262,7 @@ export default function TinyLoopsGame() {
   return (
     <main className="loop-rush-page">
       <header className="loop-rush-header">
-        <a href="/games" className="loop-rush-back">← All games</a>
+        <a href="/" className="loop-rush-back">← SHH Design</a>
         <span className="loop-rush-brand">SHH <b>ARCADE</b></span>
       </header>
       <section className="loop-rush-shell">
