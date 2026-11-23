@@ -380,7 +380,7 @@ class LoopRushScene extends Phaser.Scene {
         // Releasing freezes rotation immediately so the player can prepare to land.
         if (this.holding) this.airSpin -= Math.PI * 2 * 2.0 * dt;
       } else if (wasAirborne) {
-        const completedFlips = Math.floor(this.airSpin / (Math.PI * 2));
+        const completedFlips = Math.floor(Math.abs(this.airSpin) / (Math.PI * 2));
         const landingError = Math.atan2(
           Math.sin(this.airBaseAngle + this.airSpin - trackAngle),
           Math.cos(this.airBaseAngle + this.airSpin - trackAngle)
