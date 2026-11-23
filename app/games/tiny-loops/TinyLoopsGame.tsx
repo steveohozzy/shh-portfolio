@@ -530,7 +530,9 @@ export default function TinyLoopsGame() {
   const [speed, setSpeed] = useState(0);
   const [coins, setCoins] = useState(0);
   const [flips, setFlips] = useState(0);
-  const [airborne, setAirborne] = useState(false);\n  const [landed, setLanded] = useState(false);\n  const [landedFlips, setLandedFlips] = useState(0);
+  const [airborne, setAirborne] = useState(false);
+  const [landed, setLanded] = useState(false);
+  const [landedFlips, setLandedFlips] = useState(0);
   const [level, setLevel] = useState(1);
   const [error, setError] = useState("");
   const [engineReady, setEngineReady] = useState(false);
@@ -543,7 +545,9 @@ export default function TinyLoopsGame() {
         setSpeed(Math.round(v.speed * 4));
         setCoins(v.coins);
         setFlips(v.flips);
-        setAirborne(Boolean(v.airborne));\n        setLanded(Boolean(v.landed));\n        setLandedFlips(v.landedFlips || 0);
+        setAirborne(Boolean(v.airborne));
+        setLanded(Boolean(v.landed));
+        setLandedFlips(v.landedFlips || 0);
         setLevel(v.level || 1);
         setStatus(v.status);
       });
