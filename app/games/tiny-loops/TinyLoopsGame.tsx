@@ -11,7 +11,7 @@ type Level = { name: string; pattern: string[]; minimumJumpSpeed: number; loopSp
 type GameEvent = { type: GameState; level: number; speed: number; coins: number; flips: number; score: number; carts: number; goldCarts: number; bonusCarts: number };
 
 const LEVELS: Level[] = [
-  { name: "First Run", pattern: ["hill", "bump", "dip", "smallJump", "turnLeft", "loop", "jump", "hill", "bigJump", "bump"], minimumJumpSpeed: 220, loopSpeed: 160 },
+  { name: "First Run", pattern: ["hill", "smallJump", "dip", "jump", "turnLeft", "loop", "bigJump", "hill", "bump", "jump", "turnRight", "bigJump", "smallJump", "dip"], minimumJumpSpeed: 175, loopSpeed: 135 },
   { name: "Loop the Loop", pattern: ["loop", "hill", "bump", "jump", "turnRight", "dip", "hill", "loop", "bigJump", "jump", "smallJump"], minimumJumpSpeed: 230, loopSpeed: 175 },
   { name: "Coin Chaser", pattern: ["jump", "hill", "loop", "bump", "dip", "jump", "turnLeft", "hill", "loop", "corkscrew", "bigJump"], minimumJumpSpeed: 240, loopSpeed: 185 },
   { name: "Double Trouble", pattern: ["loop", "smallJump", "jump", "loop", "hill", "bump", "dip", "jump", "turnRight", "loop", "bigJump"], minimumJumpSpeed: 250, loopSpeed: 195 },
@@ -130,7 +130,7 @@ class LoopRushScene extends Phaser.Scene {
     }
   }
 
-  private addHill(x: number, baseY: number, width: number, height: number, flightLength = 420) {
+  private addHill(x: number, baseY: number, width: number, height: number, flightLength = 560) {
     // Ride up the hill, launch from its crest, then travel through a proper
     // airborne arc before touching down on the following straight.
     const launchX = x + width / 2;
@@ -147,7 +147,7 @@ class LoopRushScene extends Phaser.Scene {
     for (let i = 1; i <= flightSteps; i++) {
       const t = i / flightSteps;
       const smooth = t * t * (3 - 2 * t);
-      const airtimeArc = Math.pow(Math.sin(Math.PI * t), 2) * height * 0.8;
+      const airtimeArc = Math.pow(Math.sin(Math.PI * t), 0.72) * height * 1.75;
       this.addPoint(launchX + flightWidth * t, launchY + height * smooth - airtimeArc, true);
     }
     return landingX;
@@ -158,7 +158,7 @@ class LoopRushScene extends Phaser.Scene {
     for (let i = 1; i <= steps; i++) {
       const t = i / steps;
       const sweep = Math.sin(Math.PI * t);
-      this.addPoint(x + width * t, baseY - 24 * sweep + Math.sin(t * Math.PI * 2) * 12, false, direction * 250 * sweep);
+      this.addPoint(x + width * t, baseY - 38 * sweep + Math.sin(t * Math.PI * 2) * 18, false, direction * 620 * sweep);
     }
     return x + width;
   }
@@ -168,7 +168,7 @@ class LoopRushScene extends Phaser.Scene {
     for (let i = 1; i <= steps; i++) {
       const t = i / steps;
       const angle = t * Math.PI * 2;
-      this.addPoint(x + width * t, baseY - Math.sin(angle) * 78, false, direction * Math.sin(angle) * 210);
+      this.addPoint(x + width * t, baseY - Math.sin(angle) * 105, false, direction * Math.sin(angle) * 430);
     }
     return x + width;
   }
@@ -259,7 +259,7 @@ class LoopRushScene extends Phaser.Scene {
         this.addLine(x, y, x + 130, y);
         x += 130;
       } else if (feature === "hill") {
-        x = this.addHill(x, y, 280, 105 + (index % 3) * 12);
+        x = this.addHill(x, y, 300, 145 + (index % 3) * 18, 650);
         this.addLine(x, y, x + 100, y);
         x += 100;
       } else if (feature === "dip") {
@@ -267,13 +267,13 @@ class LoopRushScene extends Phaser.Scene {
         this.addLine(x, y, x + 100, y);
         x += 100;
       } else if (feature === "bump") {
-        x = this.addHill(x, y, 110, 48, 150);
+        x = this.addHill(x, y, 125, 62, 235);
         this.addLine(x, y, x + 75, y);
         x += 75;
       } else if (feature === "smallJump") {
-        x = this.addJump(x, y, 250 + (index % 2) * 35, 72 + (index % 2) * 12, 72);
+        x = this.addJump(x, y, 310 + (index % 2) * 45, 125 + (index % 2) * 22, 92);
       } else if (feature === "bigJump") {
-        x = this.addJump(x, y, 820 + (index % 2) * 100, 255 + (index % 2) * 35, 155);
+        x = this.addJump(x, y, 980 + (index % 2) * 140, 360 + (index % 2) * 45, 190);
       } else if (feature === "turnLeft") {
         x = this.addTurn(x, y, 420, -1);
         this.addLine(x, y, x + 90, y); x += 90;
@@ -284,7 +284,7 @@ class LoopRushScene extends Phaser.Scene {
         x = this.addCorkscrew(x, y, 480, index % 2 === 0 ? 1 : -1);
         this.addLine(x, y, x + 100, y); x += 100;
       } else {
-        x = this.addJump(x, y, 390 + (index % 3) * 55, 115 + (index % 4) * 22, 105);
+        x = this.addJump(x, y, 510 + (index % 3) * 70, 190 + (index % 4) * 28, 135);
       }
       this.addCoins(start, this.points.length - 1, feature === "loop" || feature === "corkscrew" ? 8 : 5, feature === "jump" || feature === "bigJump" ? 92 : 48);
     }
@@ -298,7 +298,7 @@ class LoopRushScene extends Phaser.Scene {
 
   private startRun() {
     this.progress = 0;
-    this.speed = 85;
+    this.speed = 18;
     this.emit("playing");
   }
 
@@ -444,9 +444,9 @@ class LoopRushScene extends Phaser.Scene {
       const wasAirborne = this.lastAirborne;
       // Slow rolling start. Holding is the deliberate burst of acceleration.
       // Releasing removes power and lets the cart slow down rather than race away.
-      this.speed += (this.holding ? 620 : -235) * dt;
+      this.speed += (this.holding ? 900 : -82) * dt;
       if (!current.airborne) this.speed += (tangentY / tangentLength) * 190 * dt;
-      this.speed = Phaser.Math.Clamp(this.speed, 0, 560);
+      this.speed = Phaser.Math.Clamp(this.speed, 0, 590);
       this.progress += (this.speed * dt) / 5;
 
       const position = this.sample(this.progress);
@@ -474,7 +474,7 @@ class LoopRushScene extends Phaser.Scene {
         const tier = Math.floor(this.level / LEVELS.length);
         const levelConfig = LEVELS[this.level % LEVELS.length];
         const minimumLandingSpeed = (levelConfig.minimumJumpSpeed + tier * 20) * 0.48;
-        if (this.speed < minimumLandingSpeed || Math.abs(landingError) > 0.9) {
+        if (this.speed < minimumLandingSpeed * 0.72 || Math.abs(landingError) > 1.15) {
           this.emit("crashed");
         } else {
           this.flips += completedFlips;
@@ -496,8 +496,8 @@ class LoopRushScene extends Phaser.Scene {
       this.cart.setRotation(angle);
 
       this.flags.forEach((flag) => {
-        if (flag.triggeredAt === null && this.cameraX >= flag.x - 105) flag.triggeredAt = time;
-        if (!flag.rewarded && this.cameraX >= flag.x) {
+        if (flag.triggeredAt === null && this.cameraX >= flag.x) flag.triggeredAt = time;
+        if (!flag.rewarded && this.cameraX >= flag.x + 38) {
           flag.rewarded = true;
           this.coinCount += 5;
           this.score += 250;
