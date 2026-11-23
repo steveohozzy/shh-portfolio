@@ -118,7 +118,7 @@ function makeCourse(T: any) {
   });
   return curve;
 }
-function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; coins: number; flips: number; status: GameStatus; airborne?: boolean; holding?: boolean; level?: number }) => void) {
+function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; coins: number; flips: number; status: GameStatus; airborne?: boolean; holding?: boolean; level?: number; landed?: boolean; landedFlips?: number }) => void) {
   const scene = new T.Scene();
   scene.background = new T.Color(0x9cddff);
   scene.fog = new T.Fog(0xb8e7ff, 95, 260);
@@ -165,50 +165,39 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   const jumpTriggers: number[] = (course as any).hillCrestDistances;
   // Keep the missing section short enough that the cart lands on the
   // descending face of the hill, not on a flat section beyond it.
-  const jumpGapLength = 22;
+  const jumpGapLength = 16;
   const jumpGaps = jumpTriggers.map((crest) => [crest, Math.min(length - 3, crest + jumpGapLength)]);
 
-  // Build solid, wide track decks over the take-off and landing slopes.
-  // These are real meshes (not just rails and crossbars), so each jump reads
-  // clearly as an up-ramp, open gap, then a down-ramp.
-  const rampTop = new T.MeshStandardMaterial({ color: 0xffc51e, roughness: 0.72, side: T.DoubleSide });
-  const rampSide = new T.MeshStandardMaterial({ color: 0xd68b12, roughness: 0.88 });
+  // Build the take-off and landing ramps from solid, individually aligned
+  // track sections. The open space between them is deliberately left empty.
+  const rampMaterial = new T.MeshStandardMaterial({ color: 0xffc51e, roughness: 0.72 });
+  const rampSideMaterial = new T.MeshStandardMaterial({ color: 0xd68b12, roughness: 0.88 });
+  const rampGeometry = new T.BoxGeometry(2.65, 0.42, 2.15);
   const addRampDeck = (from: number, to: number) => {
-    const steps = Math.max(12, Math.ceil((to - from) * 2));
-    const vertices: number[] = [];
-    const indices: number[] = [];
-    for (let i = 0; i <= steps; i++) {
-      const d = from + ((to - from) * i) / steps;
-      const u = course.getUtoTmapping(0, d);
+    const count = Math.max(4, Math.ceil((to - from) / 1.8));
+    for (let i = 0; i < count; i++) {
+      const d0 = from + ((to - from) * i) / count;
+      const d1 = from + ((to - from) * (i + 1)) / count;
+      const mid = (d0 + d1) / 2;
+      const u = course.getUtoTmapping(0, mid);
       const p = course.getPointAt(u);
       const f = frameAt(Math.min(segments, Math.round(u * segments)));
-      const centre = p.clone().addScaledVector(f.normal, 0.1);
-      const left = centre.clone().addScaledVector(f.side, -1.28);
-      const right = centre.clone().addScaledVector(f.side, 1.28);
-      const underside = centre.clone().addScaledVector(f.normal, -0.42);
-      vertices.push(left.x, left.y, left.z, right.x, right.y, right.z,
-        left.x, underside.y, left.z, right.x, underside.y, right.z);
-      if (i < steps) {
-        const a = i * 4;
-        indices.push(a, a + 4, a + 1, a + 1, a + 4, a + 5);
-        indices.push(a + 2, a + 3, a + 6, a + 3, a + 7, a + 6);
-        indices.push(a, a + 2, a + 4, a + 2, a + 6, a + 4);
-        indices.push(a + 1, a + 5, a + 3, a + 3, a + 5, a + 7);
-      }
+      const deck = new T.Mesh(rampGeometry, rampMaterial);
+      deck.position.copy(p).addScaledVector(f.normal, 0.04);
+      deck.quaternion.setFromRotationMatrix(new T.Matrix4().makeBasis(
+        f.side.clone().negate(), f.normal, f.forward
+      ));
+      deck.scale.z = Math.max(1, d1 - d0 + 0.35);
+      deck.castShadow = true;
+      deck.receiveShadow = true;
+      trackGroup.add(deck);
     }
-    const geometry = new T.BufferGeometry();
-    geometry.setAttribute("position", new T.Float32BufferAttribute(vertices, 3));
-    geometry.setIndex(indices);
-    geometry.computeVertexNormals();
-    const deck = new T.Mesh(geometry, [rampTop, rampSide]);
-    deck.material = rampTop;
-    deck.castShadow = true;
-    deck.receiveShadow = true;
-    trackGroup.add(deck);
   };
   jumpGaps.forEach(([crest, landing]) => {
-    addRampDeck(Math.max(0, crest - 24), crest);
-    addRampDeck(landing, Math.min(length - 1, landing + 12));
+    // The last part of the climb forms the launch lip; the downhill side
+    // starts again immediately after the gap and is visibly sloped.
+    addRampDeck(Math.max(0, crest - 18), crest);
+    addRampDeck(landing, Math.min(length - 1, landing + 18));
   });
   const isInJumpGap = (distance: number) => jumpGaps.some(([from, to]) => distance >= from && distance <= to);
   const railRanges: number[][] = [];
@@ -357,7 +346,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     coins.push({ mesh: coin, distance: d, collected: false });
   }
 
-  const state = { status: "ready" as GameStatus, distance: 0, speed: 0, holding: false, flips: 0, spin: 0, coins: 0, airborne: false, airHeight: 0, takeoffY: 0, airElapsed: 0, activeJumpEnd: 0, jumpDuration: 0.9, jumpHeight: 5, elapsed: 0, lastTime: performance.now(), raf: 0 };
+  const state = { status: "ready" as GameStatus, distance: 0, speed: 0, holding: false, flips: 0, spin: 0, coins: 0, airborne: false, airHeight: 0, takeoffY: 0, airElapsed: 0, activeJumpEnd: 0, jumpDuration: 0.9, jumpHeight: 5, landedUntil: 0, landedFlips: 0, elapsed: 0, lastTime: performance.now(), raf: 0 };
   const resize = () => {
     const w = Math.max(1, mount.clientWidth), h = Math.max(1, mount.clientHeight);
     camera.aspect = w / h;
@@ -391,7 +380,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
           // The gap is fixed in course distance so the cart cannot land short
           // or keep flying over the landing section at higher speeds.
           state.activeJumpEnd = Math.min(length - 2, launch + jumpGapLength);
-          state.jumpDuration = jumpGapLength / Math.max(1, state.speed);
+          state.jumpDuration = Math.max(0.48, jumpGapLength / Math.max(1, state.speed));
           state.jumpHeight = 7 + state.speed * 0.12;
           const takeoffPoint = course.getPointAt(course.getUtoTmapping(0, launch));
           state.takeoffY = takeoffPoint.y;
@@ -412,24 +401,27 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
       // Fly from the exact hilltop take-off point to the landing point.
       // Do not let the descending track pull the cart down before its jump arc ends.
       state.airHeight = Math.sin(progress * Math.PI) * state.jumpHeight;
-      if (state.holding) state.spin += dt * Math.PI * 2 * 1.65;
+      if (state.holding) state.spin += dt * Math.PI * 2 * (2.5 + state.speed / 30);
       if (progress >= 1) {
         state.airHeight = 0;
         state.airborne = false;
         // Snap to the far-side landing track, not an arbitrary point on the
         // middle of the hill. The gap ends exactly at activeJumpEnd.
         state.distance = state.activeJumpEnd;
-        const completed = Math.round(state.spin / (Math.PI * 2));
+        const completed = Math.floor(state.spin / (Math.PI * 2));
         const landingAngle = Math.abs(Math.atan2(Math.sin(state.spin), Math.cos(state.spin)));
-        // Give the player a forgiving landing window, then settle the cart
-        // squarely onto the rails instead of treating a small angle error as
-        // an automatic wipeout.
-        if (landingAngle > 1.2) {
+        // Count complete rotations and allow a broad landing window. A clean
+        // touchdown is shown explicitly instead of silently returning to play.
+        if (landingAngle > 2.35) {
           state.status = "crashed";
           state.speed = 0;
-        } else if (completed > 0) {
-          state.coins += completed * 2;
-          state.flips += completed;
+        } else {
+          state.landedUntil = now + 1100;
+          state.landedFlips = completed;
+          if (completed > 0) {
+            state.coins += completed * 2;
+            state.flips += completed;
+          }
         }
         state.spin = 0;
       }
@@ -490,7 +482,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     if (now - state.elapsed > 120) {
       state.elapsed = now;
       const level = state.distance < length / 3 ? 1 : state.distance < (length * 2) / 3 ? 2 : 3;
-      onHud({ speed: state.speed, coins: state.coins, flips: state.flips, status: state.status, airborne: state.airborne, holding: state.holding, level });
+      onHud({ speed: state.speed, coins: state.coins, flips: state.flips, status: state.status, airborne: state.airborne, holding: state.holding, level, landed: now < state.landedUntil, landedFlips: state.landedFlips });
     }
   };
   state.raf = requestAnimationFrame(animate);
@@ -539,7 +531,7 @@ export default function TinyLoopsGame() {
   const [speed, setSpeed] = useState(0);
   const [coins, setCoins] = useState(0);
   const [flips, setFlips] = useState(0);
-  const [airborne, setAirborne] = useState(false);
+  const [airborne, setAirborne] = useState(false);\n  const [landed, setLanded] = useState(false);\n  const [landedFlips, setLandedFlips] = useState(0);
   const [level, setLevel] = useState(1);
   const [error, setError] = useState("");
   const [engineReady, setEngineReady] = useState(false);
@@ -552,7 +544,7 @@ export default function TinyLoopsGame() {
         setSpeed(Math.round(v.speed * 4));
         setCoins(v.coins);
         setFlips(v.flips);
-        setAirborne(Boolean(v.airborne));
+        setAirborne(Boolean(v.airborne));\n        setLanded(Boolean(v.landed));\n        setLandedFlips(v.landedFlips || 0);
         setLevel(v.level || 1);
         setStatus(v.status);
       });
@@ -593,7 +585,7 @@ export default function TinyLoopsGame() {
         </div>
         <div className="loop-rush-game-frame" onPointerDown={holdStart} onPointerUp={holdEnd} onPointerCancel={holdEnd} onLostPointerCapture={holdEnd} onContextMenu={(e) => e.preventDefault()}>
           <div ref={mountRef} className="loop-rush-canvas" />
-          <div className="loop-rush-hud"><span>⚡ {speed} SPEED</span><span>🟡 {coins} COINS</span><span>↻ {flips} FLIPS</span><strong className="loop-rush-air-status">{airborne ? "AIRBORNE — HOLD TO FLIP!" : "HOLD TO ACCELERATE"}</strong></div>
+          <div className="loop-rush-hud"><span>⚡ {speed} SPEED</span><span>🟡 {coins} COINS</span><span>↻ {flips} FLIPS</span><strong className="loop-rush-air-status">{airborne ? "AIRBORNE — HOLD TO FLIP!" : landed ? (landedFlips > 0 ? `LANDED! +${landedFlips} FLIPS` : "LANDED!") : "HOLD TO ACCELERATE"}</strong></div>
           {error && <div className="loop-rush-overlay"><h2>3D ENGINE ERROR</h2><p>{error}</p></div>}
           {status === "ready" && !error && <div className="loop-rush-overlay"><span className="loop-rush-pill">{engineReady ? "READY?" : "LOADING"}</span><h2>TINY LOOPS</h2><p>{engineReady ? "Hold START to launch and accelerate. Keep holding to build speed and flip from hilltops." : "Loading the 3D track…"}</p><button disabled={!engineReady} onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); start(); gameRef.current?.setHolding(true); const frame = e.currentTarget.closest(".loop-rush-game-frame") as HTMLDivElement | null; frame?.setPointerCapture(e.pointerId); }}>{engineReady ? "HOLD TO START →" : "LOADING…"}</button></div>}
           {status === "crashed" && <div className="loop-rush-overlay" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}><span className="loop-rush-pill">WIPEOUT</span><h2>YOU MISSED THE LANDING</h2><p>Hold to build speed and try the jump again.</p><button onClick={(e) => { e.stopPropagation(); gameRef.current?.restart(); }}>TRY AGAIN ↻</button></div>}
