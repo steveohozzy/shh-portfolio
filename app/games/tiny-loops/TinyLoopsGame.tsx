@@ -126,7 +126,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   });
   const railCurves = [-0.72, 0.72].map((offset) => {
     const pts: any[] = [];
-    for ((let i = 0); i <= segments; i += 2) {
+    for (let i = 0; i <= segments; i += 2) {
       const p = course.getPointAt(i / segments);
       const f = frameAt(i);
       pts.push(p.addScaledVector(f.side, offset).addScaledVector(f.normal, 0.12));
