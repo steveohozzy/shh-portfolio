@@ -348,9 +348,20 @@ class LoopRushScene extends Phaser.Scene {
     const width = this.scale.width;
     const height = this.scale.height;
     const scale = Math.min(width / 960, height / 540, 1.25);
-    const baseY = height * 0.56;
-    const screenX = (worldX: number, z = 0) => (worldX - this.cameraX) * scale + width * 0.24 + z * 0.55 * scale;
-    const screenY = (worldY: number, z = 0) => baseY + (worldY - 365) * scale - z * 0.18 * scale;
+    // Camera sits behind the cart and looks forward along the rails.
+    // Track distance is projected into the screen so it visibly recedes
+    // towards a vanishing point; z moves the rails across the scene.
+    const project = (worldX: number, worldY: number, z = 0) => {
+      const depth = worldX - this.cameraX;
+      const perspective = 900 / Math.max(260, 900 + depth);
+      return {
+        x: width * 0.5 + z * 0.78 * perspective * scale,
+        y: height * 0.76 - depth * 0.42 * perspective * scale - (worldY - 365) * 0.82 * perspective * scale,
+        scale: perspective * scale,
+      };
+    };
+    const screenX = (worldX: number, z = 0) => project(worldX, 365, z).x;
+    const screenY = (worldY: number, z = 0, worldX = this.cameraX) => project(worldX, worldY, z).y;
     this.drawBackground(width, height);
 
     this.track.clear();
@@ -366,7 +377,7 @@ class LoopRushScene extends Phaser.Scene {
         continue;
       }
       const px = screenX(point.x, point.z);
-      const py = screenY(point.y, point.z);
+      const py = screenY(point.y, point.z, point.x);
       if (!drawing) { this.track.moveTo(px, py); drawing = true; }
       else this.track.lineTo(px, py);
     }
@@ -384,14 +395,14 @@ class LoopRushScene extends Phaser.Scene {
         const previous = this.points[Math.max(start, i - 1)];
         const next = this.points[Math.min(end, i + 1)];
         const ax = screenX(previous.x, previous.z);
-        const ay = screenY(previous.y, previous.z);
+        const ay = screenY(previous.y, previous.z, previous.x);
         const bx = screenX(next.x, next.z);
-        const by = screenY(next.y, next.z);
+        const by = screenY(next.y, next.z, next.x);
         const length = Math.max(1, Math.hypot(bx - ax, by - ay));
         const nx = -(by - ay) / length;
         const ny = (bx - ax) / length;
         const px = screenX(point.x, point.z) + nx * 10 * scale * side;
-        const py = screenY(point.y, point.z) + ny * 10 * scale * side;
+        const py = screenY(point.y, point.z, point.x) + ny * 10 * project(point.x, point.y, point.z).scale * side;
         if (!drawing) { this.track.moveTo(px, py); drawing = true; }
         else this.track.lineTo(px, py);
       }
@@ -405,15 +416,16 @@ class LoopRushScene extends Phaser.Scene {
       const next = this.points[Math.min(end, i + 1)];
       if (!point || point.airborne || !previous || !next) continue;
       const ax = screenX(previous.x, previous.z);
-      const ay = screenY(previous.y, previous.z);
+      const ay = screenY(previous.y, previous.z, previous.x);
       const bx = screenX(next.x, next.z);
-      const by = screenY(next.y, next.z);
+      const by = screenY(next.y, next.z, next.x);
       const length = Math.max(1, Math.hypot(bx - ax, by - ay));
       const nx = -(by - ay) / length;
       const ny = (bx - ax) / length;
       const cx = screenX(point.x, point.z);
-      const cy = screenY(point.y, point.z);
-      this.track.lineBetween(cx - nx * 16 * scale, cy - ny * 16 * scale, cx + nx * 16 * scale, cy + ny * 16 * scale);
+      const cy = screenY(point.y, point.z, point.x);
+      const tieScale = project(point.x, point.y, point.z).scale;
+      this.track.lineBetween(cx - nx * 16 * tieScale, cy - ny * 16 * tieScale, cx + nx * 16 * tieScale, cy + ny * 16 * tieScale);
     }
 
     drawing = false;
@@ -423,7 +435,7 @@ class LoopRushScene extends Phaser.Scene {
       const point = this.points[i];
       if (point.airborne) { drawing = false; continue; }
       const px = screenX(point.x, point.z);
-      const py = screenY(point.y, point.z);
+      const py = screenY(point.y, point.z, point.x);
       if (!drawing) { this.track.moveTo(px, py); drawing = true; }
       else this.track.lineTo(px, py);
     }
@@ -436,7 +448,7 @@ class LoopRushScene extends Phaser.Scene {
       const point = this.points[i];
       if (point.airborne) { drawing = false; continue; }
       const px = screenX(point.x, point.z);
-      const py = screenY(point.y, point.z) - 5 * scale;
+      const py = screenY(point.y, point.z, point.x) - 5 * project(point.x, point.y, point.z).scale;
       if (!drawing) { this.track.moveTo(px, py); drawing = true; }
       else this.track.lineTo(px, py);
     }
@@ -447,7 +459,7 @@ class LoopRushScene extends Phaser.Scene {
       if (coin.collected || coin.x < this.cameraX - 40 || coin.x > this.cameraX + width / scale + 80) return;
       const coinPoint = this.points[coin.pointIndex];
       const cx = screenX(coin.x, coinPoint?.z || 0);
-      const cy = screenY(coin.y, coinPoint?.z || 0);
+      const cy = screenY(coin.y, coinPoint?.z || 0, coinPoint?.x || coin.x);
       this.coinGraphics.fillStyle(0xb87819, 1);
       this.coinGraphics.fillCircle(cx, cy, 10 * scale);
       this.coinGraphics.fillStyle(0xffd84e, 1);
@@ -469,7 +481,7 @@ class LoopRushScene extends Phaser.Scene {
       if (flag.triggeredAt === null || flag.x < this.cameraX - 180 || flag.x > this.cameraX + width / scale + 180) return;
       const rise = Phaser.Math.Clamp((this.sceneTime - flag.triggeredAt) / 260, 0, 1);
       const flagX = screenX(flag.x);
-      const baseFlagY = screenY(365);
+      const baseFlagY = screenY(365, 0, flag.x);
       const flagY = baseFlagY - 72 * scale * rise;
       this.flagGraphics.lineStyle(4 * scale, 0x35445a, 1);
       this.flagGraphics.lineBetween(flagX, baseFlagY, flagX, flagY);
@@ -543,8 +555,12 @@ class LoopRushScene extends Phaser.Scene {
       const height = this.scale.height;
       const scale = Math.min(width / 960, height / 540, 1.25);
       this.cameraX = Math.max(0, position.x);
-      this.cart.setPosition(width * 0.24 + position.z * 0.55 * scale, height * 0.56 + (position.y - 365) * scale - position.z * 0.18 * scale);
-      this.cart.setScale(scale);
+      const cartDepth = 900 / Math.max(260, 900 + position.x - this.cameraX);
+      this.cart.setPosition(
+        width * 0.5 + position.z * 0.78 * cartDepth * scale,
+        height * 0.76 - (position.y - 365) * 0.82 * cartDepth * scale
+      );
+      this.cart.setScale(cartDepth * scale);
       this.cart.setRotation(angle);
 
       this.flags.forEach((flag) => {
@@ -601,7 +617,7 @@ class LoopRushScene extends Phaser.Scene {
     } else if (this.state === "ready") {
       const point = this.sample(0);
       const scale = Math.min(this.scale.width / 960, this.scale.height / 540, 1.25);
-      this.cart.setPosition(this.scale.width * 0.24 + point.z * 0.55 * scale, this.scale.height * 0.56 + (point.y - 365) * scale - point.z * 0.18 * scale);
+      this.cart.setPosition(this.scale.width * 0.5, this.scale.height * 0.76 - (point.y - 365) * 0.82 * scale);
       this.cart.setScale(scale);
       this.cart.setRotation(0);
     } else if (this.state === "crashed") {
