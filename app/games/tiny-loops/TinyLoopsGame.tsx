@@ -127,13 +127,26 @@ class LoopRushScene extends Phaser.Scene {
   }
 
   private addHill(x: number, baseY: number, width: number, height: number) {
-    const steps = Math.ceil(width / 5);
-    for (let i = 1; i <= steps; i++) {
-      const t = i / steps;
-      const crestJump = t >= 0.47 && t <= 0.76;
-      this.addPoint(x + width * t, baseY - Math.sin(t * Math.PI) * height, crestJump);
+    // Ride up the hill, launch from its crest, then travel through a proper
+    // airborne arc before touching down on the following straight.
+    const launchX = x + width / 2;
+    const launchY = baseY - height;
+    const climbSteps = Math.ceil((width / 2) / 5);
+    for (let i = 1; i <= climbSteps; i++) {
+      const t = i / climbSteps;
+      this.addPoint(x + (width / 2) * t, baseY - Math.sin(t * Math.PI / 2) * height);
     }
-    return x + width;
+
+    const landingX = launchX + 420;
+    const flightWidth = landingX - launchX;
+    const flightSteps = Math.ceil(flightWidth / 5);
+    for (let i = 1; i <= flightSteps; i++) {
+      const t = i / flightSteps;
+      const smooth = t * t * (3 - 2 * t);
+      const airtimeArc = Math.pow(Math.sin(Math.PI * t), 2) * height * 0.8;
+      this.addPoint(launchX + flightWidth * t, launchY + height * smooth - airtimeArc, true);
+    }
+    return landingX;
   }
 
   private addDip(x: number, baseY: number, width: number, depth: number) {
@@ -446,7 +459,7 @@ class LoopRushScene extends Phaser.Scene {
           this.score += 50;
         }
       });
-      this.score += Math.max(0, this.speed * dt) * (1 + (this.runCarts + this.bonusCarts) * 0.12);
+      this.score += Math.max(0, this.speed * dt) * (1 + (this.runCarts + this.bonusCarts + this.goldCarts * 2) * 0.12);
 
       const tier = Math.floor(this.level / LEVELS.length);
       const levelConfig = LEVELS[this.level % LEVELS.length];
