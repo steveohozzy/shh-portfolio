@@ -284,9 +284,6 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   cart.scale.setScalar(1.15);
   scene.add(cart);
   const baseCartQuaternion = new T.Quaternion();
-  // Arm pivots are animated during flight for the exaggerated Tiny Loops pose.
-  const leftArm = cart.children.find((child: any) => child !== chassis && child !== body && child !== seat && child !== head && child !== riderBody && child.position?.x < 0 && child.type === "Group");
-  const rightArm = cart.children.find((child: any) => child !== chassis && child !== body && child !== seat && child !== head && child !== riderBody && child.position?.x > 0 && child.type === "Group");
   const flipQuaternion = new T.Quaternion();
   const flipAxis = new T.Vector3(1, 0, 0);
 
