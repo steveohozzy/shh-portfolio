@@ -42,7 +42,6 @@ class LoopRushScene extends Phaser.Scene {
   private cameraX = 0;
   private flags: FinishFlag[] = [];
   private sceneTime = 0;
-  private flagCoins = 0;
   private airSpin = 0;
   private airBaseAngle = 0;
   private flips = 0;
@@ -51,7 +50,6 @@ class LoopRushScene extends Phaser.Scene {
   private runCarts = 0;
   private goldCarts = 0;
   private bonusCarts = 0;
-  private finishX = 0;
   private finishPointIndex = 0;
   private milestoneAwarded = false;
   private lastEvent = 0;
@@ -239,7 +237,6 @@ class LoopRushScene extends Phaser.Scene {
     this.score = 0;
     this.runCarts = 0;
     this.goldCarts = 0;
-    this.flagCoins = 0;
     this.flags = [];
     this.milestoneAwarded = false;
     this.progress = 0;
@@ -292,7 +289,6 @@ class LoopRushScene extends Phaser.Scene {
       this.addCoins(start, this.points.length - 1, feature === "loop" || feature === "corkscrew" ? 8 : 5, feature === "jump" || feature === "bigJump" ? 92 : 48);
     }
     this.addLine(x, y, x + 850, y);
-    this.finishX = x + 150;
     this.finishPointIndex = this.points.length - 1;
     this.flags = [190, 340, 490, 640].map((offset) => ({ x: x + offset, triggeredAt: null, rewarded: false }));
     this.addCoins(this.points.length - 250, this.points.length - 8, 14, 50);
@@ -443,12 +439,9 @@ class LoopRushScene extends Phaser.Scene {
       const tangentX = ahead.x - current.x;
       const tangentY = ahead.y - current.y;
       const tangentLength = Math.max(0.001, Math.hypot(tangentX, tangentY));
-      const tangentAngle = Math.atan2(tangentY, tangentX);
       const previousSpeed = this.speed;
 
       const wasAirborne = this.lastAirborne;
-      // The original has a punchy hold-to-accelerate feel; releasing stops adding power,
-      // but the cart keeps its momentum and naturally rolls down the track.
       // Slow rolling start. Holding is the deliberate burst of acceleration.
       // Releasing removes power and lets the cart slow down rather than race away.
       this.speed += (this.holding ? 620 : -235) * dt;
@@ -463,7 +456,7 @@ class LoopRushScene extends Phaser.Scene {
       const trackAngle = Math.atan2((next.y - position.y) - (next.z - position.z) * 0.18, (next.x - position.x) + (next.z - position.z) * 0.55);
 
       if (isAirborne && !wasAirborne) {
-        const launchTangent = Math.atan2(position.y - previous.y, position.x - previous.x);
+        const launchTangent = Math.atan2(position.y - previous.y - (position.z - previous.z) * 0.18, position.x - previous.x + (position.z - previous.z) * 0.55);
         this.airBaseAngle = launchTangent;
         this.airSpin = 0;
       }
@@ -507,7 +500,6 @@ class LoopRushScene extends Phaser.Scene {
         if (!flag.rewarded && this.cameraX >= flag.x) {
           flag.rewarded = true;
           this.coinCount += 5;
-          this.flagCoins += 5;
           this.score += 250;
         }
       });
