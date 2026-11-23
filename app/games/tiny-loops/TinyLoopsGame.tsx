@@ -284,12 +284,20 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     cart.position.copy(point).addScaledVector(frame.normal, 0.32);
     const basis = new T.Matrix4().makeBasis(frame.side, frame.normal, frame.tangent);
     cart.quaternion.setFromRotationMatrix(basis);
-    if (jump) cart.rotateZ(state.spin);
+    if (jump) {
+      // Rotate around the direction of travel so the complete cart and rider visibly flip.
+      cart.rotateZ(state.spin);
+    }
 
-    const cameraTarget = point.clone().addScaledVector(frame.tangent, 7).addScaledVector(frame.normal, 1.4);
-    const cameraPosition = point.clone().addScaledVector(frame.tangent, -11).addScaledVector(frame.normal, 5.5).addScaledVector(frame.side, 0.5);
-    camera.position.lerp(cameraPosition, 1 - Math.exp(-dt * 4.5));
-    camera.up.copy(frame.normal);
+    // Keep the rider in view from a stable third-person chase camera.
+    // The reference game shows the whole cart against the track, not a first-person ride.
+    const cameraTarget = point.clone().addScaledVector(frame.tangent, 3.5);
+    cameraTarget.y += 1.1;
+    const cameraPosition = point.clone().addScaledVector(frame.tangent, -19);
+    cameraPosition.y += 10.5;
+    cameraPosition.addScaledVector(frame.side, 1.2);
+    camera.position.lerp(cameraPosition, 1 - Math.exp(-dt * 3.2));
+    camera.up.set(0, 1, 0);
     camera.lookAt(cameraTarget);
 
     coins.forEach((coin) => {
