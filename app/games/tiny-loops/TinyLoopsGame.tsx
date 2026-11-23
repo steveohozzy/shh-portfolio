@@ -220,6 +220,12 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   head.position.set(0, 0.84, -0.18);
   head.castShadow = true;
   cart.add(head);
+  const eyeMaterial = new T.MeshStandardMaterial({ color: 0x263247, roughness: 1 });
+  [-0.13, 0.13].forEach((x) => {
+    const eye = new T.Mesh(new T.SphereGeometry(0.045, 8, 8), eyeMaterial);
+    eye.position.set(x, 0.88, -0.535);
+    cart.add(eye);
+  });
   const riderBody = new T.Mesh(new T.CapsuleGeometry(0.25, 0.48, 4, 8), new T.MeshStandardMaterial({ color: 0x2e6ec8, roughness: 0.95 }));
   riderBody.position.set(0, 0.55, 0.03);
   riderBody.castShadow = true;
