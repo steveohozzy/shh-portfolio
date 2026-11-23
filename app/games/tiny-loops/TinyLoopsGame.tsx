@@ -35,6 +35,13 @@ function makeCourse(T: any) {
     const from = points[points.length - 1];
     for (let i = 1; i <= steps; i++) add(from.clone().lerp(to, i / steps));
   };
+  const hill = (to: any, height: number, steps = 60) => {
+    const from = points[points.length - 1];
+    for (let i = 1; i <= steps; i++) {
+      const t = i / steps;
+      add(from.clone().lerp(to, t).add(new T.Vector3(0, Math.sin(Math.PI * t) * height, 0)));
+    }
+  };
   const bend = (control: any, to: any, steps = 48) => {
     const from = points[points.length - 1];
     for (let i = 1; i <= steps; i++) {
@@ -44,7 +51,7 @@ function makeCourse(T: any) {
   };
 
   add(new T.Vector3(0, 0, 8));
-  line(new T.Vector3(0, 0, -35), 55);
+  hill(new T.Vector3(0, 0, -35), 6, 70);
   bend(new T.Vector3(1, 0, -55), new T.Vector3(16, 0, -68));
   line(new T.Vector3(18, 0, -82), 20);
 
@@ -55,7 +62,7 @@ function makeCourse(T: any) {
     const a = (Math.PI * 2 * i) / 150;
     add(new T.Vector3(loopStart.x, radius * (1 - Math.cos(a)), loopStart.z - radius * Math.sin(a)));
   }
-  line(new T.Vector3(18, 0, -112), 30);
+  hill(new T.Vector3(18, 0, -112), 5, 55);
   bend(new T.Vector3(34, 0, -130), new T.Vector3(42, 0, -151), 55);
   line(new T.Vector3(42, 0, -174), 28);
 
@@ -64,7 +71,7 @@ function makeCourse(T: any) {
     const a = (Math.PI / 2) * (i / 100);
     add(new T.Vector3(42 + 19 * Math.sin(a), 1.5 * Math.sin(a * 2), -174 - 19 * (1 - Math.cos(a))));
   }
-  line(new T.Vector3(61, 0, -225), 60);
+  hill(new T.Vector3(61, 0, -225), 7, 80);
   bend(new T.Vector3(62, 9, -244), new T.Vector3(45, 12, -257), 55);
   line(new T.Vector3(25, 12, -257), 30);
 
@@ -76,7 +83,7 @@ function makeCourse(T: any) {
   }
   line(new T.Vector3(5, 12, -300), 45);
   bend(new T.Vector3(-10, 18, -320), new T.Vector3(-22, 18, -339), 55);
-  line(new T.Vector3(-22, 18, -370), 40);
+  hill(new T.Vector3(-22, 18, -370), 5, 55);
   bend(new T.Vector3(-22, 4, -395), new T.Vector3(0, 0, -414), 70);
   line(new T.Vector3(0, 0, -460), 65);
   bend(new T.Vector3(18, 0, -485), new T.Vector3(35, 0, -500), 60);
@@ -125,18 +132,23 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     side: frames.binormals[index].clone().normalize(),
   });
 
-  const jumpZones = [[43, 72], [140, 169], [255, 284], [390, 419]]; // longer, visible flight gaps
+  const jumpTriggers: number[] = [];
+  let previousSlope = course.getTangentAt(0).y;
+  for (let d = 1; d < length - 2; d += 0.5) {
+    const u = course.getUtoTmapping(0, d);
+    const tangent = course.getTangentAt(u);
+    const previousU = course.getUtoTmapping(0, Math.max(0, d - 0.5));
+    const previousPoint = course.getPointAt(previousU);
+    const currentPoint = course.getPointAt(u);
+    if (previousSlope > 0.09 && tangent.y <= 0.09 && tangent.z < -0.65 && currentPoint.y > previousPoint.y - 0.05) {
+      jumpTriggers.push(d);
+    }
+    previousSlope = tangent.y;
+  }
 
-  // Build separate rail meshes around the jump gaps so the cart visibly leaves the track.
-  const railSections: [number, number][] = [];
-  let sectionStart = 0;
-  jumpZones.forEach(([a, b]) => {
-    if (a > sectionStart) railSections.push([sectionStart, a]);
-    sectionStart = b;
-  });
-  if (sectionStart < length) railSections.push([sectionStart, length]);
+  // The rails stay continuous: the cart launches from raised hill crests, not missing track.
   [-0.72, 0.72].forEach((offset) => {
-    railSections.forEach(([from, to]) => {
+    [[0, length]].forEach(([from, to]) => {
       const pts: any[] = [];
       const count = Math.max(8, Math.ceil((to - from) * 5));
       for (let j = 0; j <= count; j++) {
@@ -159,7 +171,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   const sleeperMesh = new T.InstancedMesh(sleeperGeo, sleeperMaterials[0], 760);
   const sleeperDark = new T.InstancedMesh(sleeperGeo, sleeperMaterials[1], 760);
   let lightCount = 0, darkCount = 0;
-  const inJump = (d: number) => jumpZones.some(([a, b]) => d > a && d < b);
+  const inJump = (_d: number) => false;
   for (let i = 0; i < 760; i++) {
     const d = (length * i) / 759;
     if (inJump(d)) continue;
@@ -267,17 +279,17 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     const previousDistance = state.distance;
     if (state.status === "playing") {
       // The ride only advances while the player is holding. Releasing brakes the cart.
-      state.speed = Math.min(34, state.speed + (state.holding ? 30 : -7) * dt);
+      state.speed = Math.min(38, state.speed + (state.holding ? 26 : -12) * dt);
       state.speed = Math.max(0, state.speed);
       state.distance += state.speed * dt;
-      if (!state.airborne) {
-        const launch = jumpZones.find(([a]) => previousDistance < a && state.distance >= a);
-        if (launch) {
+      if (!state.airborne && state.speed >= 16) {
+        const launch = jumpTriggers.find((crest) => previousDistance < crest && state.distance >= crest);
+        if (launch !== undefined) {
           state.airborne = true;
           state.airHeight = 0;
-          state.verticalVelocity = 13.5;
+          state.verticalVelocity = Math.min(19, 7 + state.speed * 0.38);
           state.airElapsed = 0;
-          state.activeJumpEnd = launch[1];
+          state.activeJumpEnd = launch + Math.max(15, state.speed * 1.05);
           state.spin = 0;
         }
       }
@@ -297,10 +309,6 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
         state.airHeight = 0;
         state.airborne = false;
         state.verticalVelocity = 0;
-        if (state.distance < state.activeJumpEnd - 1.5) {
-          state.status = "crashed";
-          state.speed = 0;
-        }
         const completed = Math.floor(state.spin / (Math.PI * 2));
         if (completed > 0) {
           state.coins += completed * 2;
@@ -441,7 +449,7 @@ export default function TinyLoopsGame() {
           <div ref={mountRef} className="loop-rush-canvas" />
           <div className="loop-rush-hud"><span>⚡ {speed} SPEED</span><span>🟡 {coins} COINS</span><span>↻ {flips} FLIPS</span><strong className="loop-rush-air-status">{airborne ? "AIRBORNE — HOLD TO FLIP!" : "HOLD TO ACCELERATE"}</strong></div>
           {error && <div className="loop-rush-overlay"><h2>3D ENGINE ERROR</h2><p>{error}</p></div>}
-          {status === "ready" && !error && <div className="loop-rush-overlay"><span className="loop-rush-pill">{engineReady ? "READY?" : "LOADING"}</span><h2>TINY LOOPS</h2><p>{engineReady ? "Press START to begin. Hold anywhere on the ride to accelerate; keep holding in the air to backflip." : "Loading the 3D track…"}</p><button disabled={!engineReady} onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); start(); gameRef.current?.setHolding(true); e.currentTarget.setPointerCapture(e.pointerId); }} onPointerUp={(e) => { e.stopPropagation(); gameRef.current?.setHolding(false); }} onPointerCancel={(e) => { e.stopPropagation(); gameRef.current?.setHolding(false); }} onClick={(e) => { e.stopPropagation(); if (status === "ready") start(); }}>{engineReady ? "HOLD TO START →" : "LOADING…"}</button></div>}
+          {status === "ready" && !error && <div className="loop-rush-overlay"><span className="loop-rush-pill">{engineReady ? "READY?" : "LOADING"}</span><h2>TINY LOOPS</h2><p>{engineReady ? "Hold START to launch and accelerate. Keep holding to build speed and flip from hilltops." : "Loading the 3D track…"}</p><button disabled={!engineReady} onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); start(); gameRef.current?.setHolding(true); const frame = e.currentTarget.closest(".loop-rush-game-frame") as HTMLDivElement | null; frame?.setPointerCapture(e.pointerId); }}>{engineReady ? "HOLD TO START →" : "LOADING…"}</button></div>}
           {status === "crashed" && <div className="loop-rush-overlay"><span className="loop-rush-pill">WIPEOUT</span><h2>YOU MISSED THE LANDING</h2><p>Hold to build speed and try the jump again.</p><button onClick={(e) => { e.stopPropagation(); start(); }}>TRY AGAIN ↻</button></div>}
           {status === "won" && <div className="loop-rush-overlay"><span className="loop-rush-pill">TRACK CLEARED</span><h2>NICE RIDE!</h2><p>{coins} coins · {flips} flips</p><button onClick={(e) => { e.stopPropagation(); start(); }}>RIDE AGAIN ↻</button></div>}
         </div>
