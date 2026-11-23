@@ -259,22 +259,6 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   sleeperDark.count = darkCount;
   trackGroup.add(sleeperMesh, sleeperDark);
 
-  // Solid landing pads make the far side of each jump visibly readable.
-  const landingMat = new T.MeshStandardMaterial({ color: 0xffc928, roughness: 0.82 });
-  jumpGaps.forEach(([, landingDistance]) => {
-    const u = course.getUtoTmapping(0, landingDistance + 1.5);
-    const landingPoint = course.getPointAt(u);
-    const landingFrame = frameAt(Math.min(segments, Math.round(u * segments)));
-    const pad = new T.Mesh(new T.BoxGeometry(3.2, 0.34, 5.5), landingMat);
-    pad.position.copy(landingPoint).addScaledVector(landingFrame.normal, -0.04);
-    pad.quaternion.setFromRotationMatrix(new T.Matrix4().makeBasis(
-      landingFrame.side.clone().negate(), landingFrame.normal, landingFrame.forward
-    ));
-    pad.castShadow = true;
-    pad.receiveShadow = true;
-    trackGroup.add(pad);
-  });
-
   // Floating low-poly rock shelves and cliff faces beneath the course.
   const rockMat = new T.MeshStandardMaterial({ color: 0xffffff, roughness: 1, flatShading: true });
   const cliffMat = new T.MeshStandardMaterial({ color: 0xa9c5d8, roughness: 1, flatShading: true });
