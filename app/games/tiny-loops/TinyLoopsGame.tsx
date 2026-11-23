@@ -303,7 +303,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     coins.push({ mesh: coin, distance: d, collected: false });
   }
 
-  const state = { status: "ready" as GameStatus, distance: 0, speed: 0, holding: false, flips: 0, spin: 0, coins: 0, airborne: false, airHeight: 0, takeoffY: 0, landingY: 0, airElapsed: 0, activeJumpEnd: 0, jumpDuration: 0.9, jumpHeight: 5, elapsed: 0, lastTime: performance.now(), raf: 0 };
+  const state = { status: "ready" as GameStatus, distance: 0, speed: 0, holding: false, flips: 0, spin: 0, coins: 0, airborne: false, airHeight: 0, takeoffY: 0, airElapsed: 0, activeJumpEnd: 0, jumpDuration: 0.9, jumpHeight: 5, elapsed: 0, lastTime: performance.now(), raf: 0 };
   const resize = () => {
     const w = Math.max(1, mount.clientWidth), h = Math.max(1, mount.clientHeight);
     camera.aspect = w / h;
