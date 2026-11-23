@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import TinyLoopsGame from "./TinyLoopsGame";
+import TinyLoopsClient from "./TinyLoopsClient";
 import "./tiny-loops.css";
 
 export const metadata: Metadata = {
@@ -8,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function TinyLoopsPage() {
-  return <TinyLoopsGame />;
+  return <TinyLoopsClient />;
 }
