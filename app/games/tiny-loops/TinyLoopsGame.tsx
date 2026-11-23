@@ -360,7 +360,7 @@ class LoopRushScene extends Phaser.Scene {
       const wasAirborne = this.lastAirborne;
       this.speed += (this.holding ? 430 : -115) * dt;
       if (!current.airborne) this.speed += (tangentY / tangentLength) * 250 * dt;
-      this.speed = Phaser.Math.Clamp(this.speed, 0, 900);
+      this.speed = Phaser.Math.Clamp(this.speed, 0, 620);
       this.progress += (this.speed * dt) / 5;
 
       const position = this.sample(this.progress);
@@ -378,7 +378,7 @@ class LoopRushScene extends Phaser.Scene {
       if (isAirborne) {
         // Tiny Loops uses one action in the air: keep holding to backflip.
         // Releasing freezes rotation immediately so the player can prepare to land.
-        if (this.holding) this.airSpin += Math.PI * 2 * 1.22 * dt;
+        if (this.holding) this.airSpin -= Math.PI * 2 * 2.0 * dt;
       } else if (wasAirborne) {
         const completedFlips = Math.floor(this.airSpin / (Math.PI * 2));
         const landingError = Math.atan2(
