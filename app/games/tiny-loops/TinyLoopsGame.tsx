@@ -30,6 +30,7 @@ function loadThree() {
 
 function makeCourse(T: any) {
   const points: any[] = [];
+  const hillCrestPoints: any[] = [];
   const add = (p: any) => points.push(p.clone());
   const line = (to: any, steps = 24) => {
     const from = points[points.length - 1];
@@ -39,7 +40,9 @@ function makeCourse(T: any) {
     const from = points[points.length - 1];
     for (let i = 1; i <= steps; i++) {
       const t = i / steps;
-      add(from.clone().lerp(to, t).add(new T.Vector3(0, Math.sin(Math.PI * t) * height, 0)));
+      const hillPoint = from.clone().lerp(to, t).add(new T.Vector3(0, Math.sin(Math.PI * t) * height, 0));
+      add(hillPoint);
+      if (i === Math.round(steps / 2)) hillCrestPoints.push(hillPoint.clone());
     }
   };
   const bend = (control: any, to: any, steps = 48) => {
@@ -92,6 +95,17 @@ function makeCourse(T: any) {
   const curve = new T.CatmullRomCurve3(points, false, "centripetal", 0.15);
   curve.arcLengthDivisions = 3000;
   curve.updateArcLengths();
+  const courseLength = curve.getLength();
+  (curve as any).hillCrestDistances = hillCrestPoints.map((crest) => {
+    let closestU = 0;
+    let closestDistance = Infinity;
+    for (let i = 0; i <= 2000; i++) {
+      const u = i / 2000;
+      const distance = curve.getPointAt(u).distanceToSquared(crest);
+      if (distance < closestDistance) { closestDistance = distance; closestU = u; }
+    }
+    return closestU * courseLength;
+  });
   return curve;
 }
 
@@ -132,19 +146,8 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     side: frames.binormals[index].clone().normalize(),
   });
 
-  const jumpTriggers: number[] = [];
-  let previousSlope = course.getTangentAt(0).y;
-  for (let d = 1; d < length - 2; d += 0.5) {
-    const u = course.getUtoTmapping(0, d);
-    const tangent = course.getTangentAt(u);
-    const previousU = course.getUtoTmapping(0, Math.max(0, d - 0.5));
-    const previousPoint = course.getPointAt(previousU);
-    const currentPoint = course.getPointAt(u);
-    if (previousSlope > 0.09 && tangent.y <= 0.09 && tangent.z < -0.65 && currentPoint.y > previousPoint.y - 0.05) {
-      jumpTriggers.push(d);
-    }
-    previousSlope = tangent.y;
-  }
+  // Only the four deliberately modelled hill crests can launch the cart.
+  const jumpTriggers: number[] = (course as any).hillCrestDistances;
 
   // The rails stay continuous: the cart launches from raised hill crests, not missing track.
   [-0.72, 0.72].forEach((offset) => {
@@ -310,7 +313,12 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
         state.airborne = false;
         state.verticalVelocity = 0;
         const completed = Math.floor(state.spin / (Math.PI * 2));
-        if (completed > 0) {
+        const landingAngle = Math.abs(Math.atan2(Math.sin(state.spin), Math.cos(state.spin)));
+        if (landingAngle > 0.7) {
+          // Landing part-way through a rotation leaves the rider upside down: wipe out.
+          state.status = "crashed";
+          state.speed = 0;
+        } else if (completed > 0) {
           state.coins += completed * 2;
           state.flips += completed;
         }
