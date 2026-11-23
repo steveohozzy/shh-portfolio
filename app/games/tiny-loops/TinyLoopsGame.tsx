@@ -244,10 +244,10 @@ export default function TinyLoopsGame() {
       setSpeed(event.speed);
     });
     const game = new Phaser.Game({
-      type: Phaser.AUTO,
+      type: Phaser.CANVAS,
       parent: mountRef.current,
       backgroundColor: "#bdeaff",
-      scale: { mode: Phaser.Scale.RESIZE, width: "100%", height: "100%" },
+      scale: { mode: Phaser.Scale.RESIZE, width: 960, height: 540, autoCenter: Phaser.Scale.CENTER_BOTH },
       render: { antialias: true, pixelArt: false },
       scene: [scene],
     });
