@@ -39,7 +39,7 @@ class LoopRushScene extends Phaser.Scene {
   private progressGraphics!: Phaser.GameObjects.Graphics;
   private cameraX = 0;
   private airSpin = 0;
-  private airSpinVelocity = 0;
+  private airBaseAngle = 0;
   private flips = 0;
   private coinCount = 0;
   private lastEvent = 0;
@@ -148,8 +148,9 @@ class LoopRushScene extends Phaser.Scene {
   }
 
   private addJump(x: number, y: number, width: number, height: number) {
-    const rampLength = 75;
-    this.addLine(x, y, x + rampLength, y - 28);
+    const rampLength = 105;
+    const launchRise = 58;
+    this.addLine(x, y, x + rampLength, y - launchRise);
     const launchX = x + rampLength;
     const landingX = x + width;
     const flightWidth = landingX - launchX;
@@ -157,10 +158,15 @@ class LoopRushScene extends Phaser.Scene {
     for (let i = 1; i <= steps; i++) {
       const t = i / steps;
       const arc = Math.sin(t * Math.PI);
-      this.addPoint(launchX + flightWidth * t, y - 28 * (1 - t) - arc * height, true);
+      const ballisticDrop = 34 * t * t;
+      this.addPoint(
+        launchX + flightWidth * t,
+        y - launchRise * (1 - t) - arc * height - ballisticDrop,
+        true
+      );
     }
-    this.addLine(landingX, y, landingX + 110, y);
-    return landingX + 110;
+    this.addLine(landingX, y, landingX + 145, y);
+    return landingX + 145;
   }
 
   private addCoins(start: number, end: number, count: number, lift = 52) {
@@ -187,7 +193,7 @@ class LoopRushScene extends Phaser.Scene {
     this.progress = 0;
     this.speed = 0;
     this.airSpin = 0;
-    this.airSpinVelocity = 0;
+    this.airBaseAngle = 0;
     this.lastAirborne = false;
 
     let x = 0;
@@ -352,41 +358,54 @@ class LoopRushScene extends Phaser.Scene {
       const tangentAngle = Math.atan2(tangentY, tangentX);
       const previousSpeed = this.speed;
 
-      this.speed += (this.holding ? 300 : -82) * dt;
-      this.speed += (tangentY / tangentLength) * 390 * dt;
-      this.speed = Phaser.Math.Clamp(this.speed, 0, 790);
+      const wasAirborne = this.lastAirborne;
+      this.speed += (this.holding ? 430 : -115) * dt;
+      this.speed += (tangentY / tangentLength) * 250 * dt;
+      this.speed = Phaser.Math.Clamp(this.speed, 0, 900);
       this.progress += (this.speed * dt) / 5;
 
       const position = this.sample(this.progress);
       const next = this.sample(Math.min(this.points.length - 2, this.progress + 1));
       const isAirborne = position.airborne;
+      const previous = this.sample(Math.max(0, this.progress - 1));
+      const trackAngle = Math.atan2(next.y - position.y, next.x - position.x);
+
+      if (isAirborne && !wasAirborne) {
+        const launchTangent = Math.atan2(position.y - previous.y, position.x - previous.x);
+        this.airBaseAngle = launchTangent;
+        this.airSpin = 0;
+      }
+
       if (isAirborne) {
-        this.airSpinVelocity += (this.holding ? 8.2 : -5.5) * dt;
-        this.airSpinVelocity = Phaser.Math.Clamp(this.airSpinVelocity, -7, 9);
-        this.airSpin += this.airSpinVelocity * dt;
-      } else if (this.lastAirborne) {
-        const completedFlips = Math.floor(Math.abs(this.airSpin) / (Math.PI * 2));
-        const remainder = Math.atan2(Math.sin(this.airSpin), Math.cos(this.airSpin));
+        // Tiny Loops uses one action in the air: keep holding to backflip.
+        // Releasing freezes rotation immediately so the player can prepare to land.
+        if (this.holding) this.airSpin += Math.PI * 2 * 1.22 * dt;
+      } else if (wasAirborne) {
+        const completedFlips = Math.floor(this.airSpin / (Math.PI * 2));
+        const landingError = Math.atan2(
+          Math.sin(this.airBaseAngle + this.airSpin - trackAngle),
+          Math.cos(this.airBaseAngle + this.airSpin - trackAngle)
+        );
         const tier = Math.floor(this.level / LEVELS.length);
         const levelConfig = LEVELS[this.level % LEVELS.length];
-        if (this.speed < (levelConfig.minimumJumpSpeed + tier * 20) * 0.62 || Math.abs(remainder) > 1.12) {
+        const minimumLandingSpeed = (levelConfig.minimumJumpSpeed + tier * 20) * 0.48;
+        if (this.speed < minimumLandingSpeed || Math.abs(landingError) > 0.9) {
           this.emit("crashed");
         } else {
           this.flips += completedFlips;
           this.airSpin = 0;
-          this.airSpinVelocity = 0;
         }
       }
       this.lastAirborne = isAirborne;
 
-      const angle = Math.atan2(next.y - position.y, next.x - position.x);
+      const angle = isAirborne ? this.airBaseAngle + this.airSpin : trackAngle;
       const width = this.scale.width;
       const height = this.scale.height;
       const scale = Math.min(width / 960, height / 540, 1.25);
       this.cameraX = Math.max(0, position.x);
       this.cart.setPosition(width * 0.24, height * 0.56 + (position.y - 365) * scale);
       this.cart.setScale(scale);
-      this.cart.setRotation(isAirborne ? angle + this.airSpin : angle);
+      this.cart.setRotation(angle);
 
       this.coins.forEach((coin) => {
         if (!coin.collected && Math.abs(coin.pointIndex - this.progress) < 3) {
