@@ -36,13 +36,13 @@ function makeCourse(T: any) {
     const from = points[points.length - 1];
     for (let i = 1; i <= steps; i++) add(from.clone().lerp(to, i / steps));
   };
-  const hill = (to: any, height: number, steps = 60) => {
+  const hill = (to: any, height: number, steps = 60, launchable = true) => {
     const from = points[points.length - 1];
     for (let i = 1; i <= steps; i++) {
       const t = i / steps;
       const hillPoint = from.clone().lerp(to, t).add(new T.Vector3(0, Math.sin(Math.PI * t) * height, 0));
       add(hillPoint);
-      if (i === Math.round(steps / 2)) hillCrestPoints.push(hillPoint.clone());
+      if (launchable && i === Math.round(steps / 2)) hillCrestPoints.push(hillPoint.clone());
     }
   };
   const bend = (control: any, to: any, steps = 48) => {
@@ -54,7 +54,8 @@ function makeCourse(T: any) {
   };
 
   add(new T.Vector3(0, 0, 8));
-  hill(new T.Vector3(0, 0, -35), 6, 70);
+  // Gentle opening roller: visible rise, but deliberately not a jump trigger.
+  hill(new T.Vector3(0, 0, -35), 6, 70, false);
   bend(new T.Vector3(1, 0, -55), new T.Vector3(16, 0, -68));
   line(new T.Vector3(18, 0, -82), 20);
 
