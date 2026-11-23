@@ -333,7 +333,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     cameraPosition.y += 7.5;
     cameraPosition.addScaledVector(frame.side, 1.0);
     camera.position.lerp(cameraPosition, 1 - Math.exp(-dt * 5.5));
-    camera.up.set(0, 1, 0);
+    camera.up.copy(frame.normal);
     camera.lookAt(cameraTarget);
 
     coins.forEach((coin) => {
@@ -354,14 +354,14 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
 
   return {
     start() {
-      state.status = "playing"; state.distance = 0; state.speed = 8; state.holding = false;
+      state.status = "playing"; state.distance = 0; state.speed = 12; state.holding = false;
       state.flips = 0; state.spin = 0; state.coins = 0; state.airborne = false;
       state.airHeight = 0; state.verticalVelocity = 0; state.airElapsed = 0; state.activeJumpEnd = 0;
       coins.forEach((c) => { c.collected = false; c.mesh.visible = true; });
       onHud({ speed: state.speed, coins: 0, flips: 0, status: state.status });
     },
     restart() {
-      state.status = "playing"; state.distance = 0; state.speed = 8; state.holding = false;
+      state.status = "playing"; state.distance = 0; state.speed = 12; state.holding = false;
       state.flips = 0; state.spin = 0; state.coins = 0; state.airborne = false; state.airHeight = 0; state.verticalVelocity = 0; state.airElapsed = 0;
       coins.forEach((c) => { c.collected = false; c.mesh.visible = true; });
       onHud({ speed: state.speed, coins: 0, flips: 0, status: state.status });
@@ -389,6 +389,7 @@ export default function TinyLoopsGame() {
   const [flips, setFlips] = useState(0);
   const [airborne, setAirborne] = useState(false);
   const [error, setError] = useState("");
+  const [engineReady, setEngineReady] = useState(false);
   useEffect(() => {
     let cancelled = false;
     let world: ReturnType<typeof createWorld> | null = null;
@@ -402,6 +403,7 @@ export default function TinyLoopsGame() {
         setStatus(v.status);
       });
       gameRef.current = world;
+      setEngineReady(true);
     }).catch((e) => setError(e instanceof Error ? e.message : "Unable to start the 3D game"));
     return () => {
       cancelled = true;
@@ -410,7 +412,10 @@ export default function TinyLoopsGame() {
     };
   }, []);
 
-  const start = () => gameRef.current?.start();
+  const start = () => {
+    if (!gameRef.current) return;
+    gameRef.current.start();
+  };
   const holdStart = (e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault();
     if (e.currentTarget.setPointerCapture) e.currentTarget.setPointerCapture(e.pointerId);
@@ -436,7 +441,7 @@ export default function TinyLoopsGame() {
           <div ref={mountRef} className="loop-rush-canvas" />
           <div className="loop-rush-hud"><span>⚡ {speed} SPEED</span><span>🟡 {coins} COINS</span><span>↻ {flips} FLIPS</span><strong className="loop-rush-air-status">{airborne ? "AIRBORNE — HOLD TO FLIP!" : "HOLD TO ACCELERATE"}</strong></div>
           {error && <div className="loop-rush-overlay"><h2>3D ENGINE ERROR</h2><p>{error}</p></div>}
-          {status === "ready" && !error && <div className="loop-rush-overlay"><span className="loop-rush-pill">READY?</span><h2>TINY LOOPS</h2><p>Press and hold START, then keep holding to accelerate. Release to brake; hold in the air to backflip.</p><button onClick={(e) => { e.stopPropagation(); start(); }}>START RIDE →</button></div>}
+          {status === "ready" && !error && <div className="loop-rush-overlay"><span className="loop-rush-pill">{engineReady ? "READY?" : "LOADING"}</span><h2>TINY LOOPS</h2><p>{engineReady ? "Press START to begin. Hold anywhere on the ride to accelerate; keep holding in the air to backflip." : "Loading the 3D track…"}</p><button disabled={!engineReady} onClick={(e) => { e.stopPropagation(); start(); }}>{engineReady ? "START RIDE →" : "LOADING…"}</button></div>}
           {status === "crashed" && <div className="loop-rush-overlay"><span className="loop-rush-pill">WIPEOUT</span><h2>YOU MISSED THE LANDING</h2><p>Hold to build speed and try the jump again.</p><button onClick={(e) => { e.stopPropagation(); start(); }}>TRY AGAIN ↻</button></div>}
           {status === "won" && <div className="loop-rush-overlay"><span className="loop-rush-pill">TRACK CLEARED</span><h2>NICE RIDE!</h2><p>{coins} coins · {flips} flips</p><button onClick={(e) => { e.stopPropagation(); start(); }}>RIDE AGAIN ↻</button></div>}
         </div>
