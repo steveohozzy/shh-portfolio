@@ -356,7 +356,7 @@ class LoopRushScene extends Phaser.Scene {
       const perspective = 900 / Math.max(260, 900 + depth);
       return {
         x: width * 0.5 + z * 0.78 * perspective * scale,
-        y: height * 0.76 - depth * 0.42 * perspective * scale - (worldY - 365) * 0.82 * perspective * scale,
+        y: height * 0.76 - depth * 0.42 * perspective * scale + (worldY - 365) * 0.82 * perspective * scale,
         scale: perspective * scale,
       };
     };
@@ -558,7 +558,7 @@ class LoopRushScene extends Phaser.Scene {
       const cartDepth = 900 / Math.max(260, 900 + position.x - this.cameraX);
       this.cart.setPosition(
         width * 0.5 + position.z * 0.78 * cartDepth * scale,
-        height * 0.76 - (position.y - 365) * 0.82 * cartDepth * scale
+        height * 0.76 + (position.y - 365) * 0.82 * cartDepth * scale
       );
       this.cart.setScale(cartDepth * scale);
       this.cart.setRotation(angle);
@@ -617,7 +617,7 @@ class LoopRushScene extends Phaser.Scene {
     } else if (this.state === "ready") {
       const point = this.sample(0);
       const scale = Math.min(this.scale.width / 960, this.scale.height / 540, 1.25);
-      this.cart.setPosition(this.scale.width * 0.5, this.scale.height * 0.76 - (point.y - 365) * 0.82 * scale);
+      this.cart.setPosition(this.scale.width * 0.5, this.scale.height * 0.76 + (point.y - 365) * 0.82 * scale);
       this.cart.setScale(scale);
       this.cart.setRotation(0);
     } else if (this.state === "crashed") {
