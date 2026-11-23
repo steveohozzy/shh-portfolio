@@ -7,21 +7,21 @@ type GameState = "ready" | "playing" | "crashed" | "won";
 type TrackPoint = { x: number; y: number; airborne: boolean };
 type Coin = { x: number; y: number; pointIndex: number; collected: boolean };
 type Level = { name: string; pattern: string[]; minimumJumpSpeed: number; loopSpeed: number };
-type GameEvent = { type: GameState; level: number; speed: number; coins: number; flips: number };
+type GameEvent = { type: GameState; level: number; speed: number; coins: number; flips: number; score: number; carts: number; goldCarts: number; bonusCarts: number };
 
 const LEVELS: Level[] = [
-  { name: "First Run", pattern: ["hill", "jump"], minimumJumpSpeed: 250, loopSpeed: 180 },
-  { name: "Loop the Loop", pattern: ["loop", "hill", "jump"], minimumJumpSpeed: 270, loopSpeed: 205 },
-  { name: "Coin Chaser", pattern: ["jump", "hill", "loop"], minimumJumpSpeed: 285, loopSpeed: 210 },
-  { name: "Double Trouble", pattern: ["loop", "jump", "loop"], minimumJumpSpeed: 300, loopSpeed: 225 },
-  { name: "Big Air", pattern: ["hill", "jump", "jump"], minimumJumpSpeed: 315, loopSpeed: 225 },
-  { name: "The Corkscrew", pattern: ["loop", "hill", "loop", "jump"], minimumJumpSpeed: 330, loopSpeed: 240 },
-  { name: "High Voltage", pattern: ["jump", "loop", "jump", "hill"], minimumJumpSpeed: 345, loopSpeed: 250 },
-  { name: "Double Drop", pattern: ["dip", "jump", "loop", "jump"], minimumJumpSpeed: 360, loopSpeed: 260 },
-  { name: "Loop Fever", pattern: ["loop", "loop", "hill", "jump"], minimumJumpSpeed: 375, loopSpeed: 270 },
-  { name: "Sky Spinner", pattern: ["jump", "loop", "jump", "loop", "jump"], minimumJumpSpeed: 390, loopSpeed: 280 },
-  { name: "Full Throttle", pattern: ["dip", "loop", "jump", "loop", "jump"], minimumJumpSpeed: 405, loopSpeed: 290 },
-  { name: "Tiny Loops", pattern: ["loop", "jump", "loop", "dip", "jump", "loop"], minimumJumpSpeed: 420, loopSpeed: 300 },
+  { name: "First Run", pattern: ["hill", "dip", "jump", "hill", "loop", "jump"], minimumJumpSpeed: 220, loopSpeed: 160 },
+  { name: "Loop the Loop", pattern: ["loop", "hill", "jump", "dip", "hill", "loop", "jump"], minimumJumpSpeed: 230, loopSpeed: 175 },
+  { name: "Coin Chaser", pattern: ["jump", "hill", "loop", "dip", "jump", "hill", "loop"], minimumJumpSpeed: 240, loopSpeed: 185 },
+  { name: "Double Trouble", pattern: ["loop", "jump", "loop", "hill", "dip", "jump", "loop"], minimumJumpSpeed: 250, loopSpeed: 195 },
+  { name: "Big Air", pattern: ["hill", "jump", "jump", "dip", "loop", "hill", "jump", "loop"], minimumJumpSpeed: 260, loopSpeed: 200 },
+  { name: "The Corkscrew", pattern: ["loop", "hill", "loop", "jump", "dip", "hill", "loop", "jump"], minimumJumpSpeed: 270, loopSpeed: 210 },
+  { name: "High Voltage", pattern: ["jump", "loop", "jump", "hill", "dip", "loop", "hill", "jump"], minimumJumpSpeed: 280, loopSpeed: 220 },
+  { name: "Double Drop", pattern: ["dip", "jump", "loop", "jump", "hill", "dip", "loop", "jump"], minimumJumpSpeed: 290, loopSpeed: 230 },
+  { name: "Loop Fever", pattern: ["loop", "loop", "hill", "jump", "dip", "loop", "hill", "jump"], minimumJumpSpeed: 300, loopSpeed: 240 },
+  { name: "Sky Spinner", pattern: ["jump", "loop", "jump", "loop", "jump", "hill", "dip", "loop"], minimumJumpSpeed: 310, loopSpeed: 250 },
+  { name: "Full Throttle", pattern: ["dip", "loop", "jump", "loop", "jump", "hill", "dip", "loop", "jump"], minimumJumpSpeed: 320, loopSpeed: 260 },
+  { name: "Tiny Loops", pattern: ["loop", "jump", "loop", "dip", "jump", "loop", "hill", "jump", "dip", "loop"], minimumJumpSpeed: 330, loopSpeed: 270 },
 ];
 
 class LoopRushScene extends Phaser.Scene {
@@ -42,13 +42,21 @@ class LoopRushScene extends Phaser.Scene {
   private airBaseAngle = 0;
   private flips = 0;
   private coinCount = 0;
+  private score = 0;
+  private runCarts = 0;
+  private goldCarts = 0;
+  private bonusCarts = 0;
+  private finishX = 0;
+  private finishPointIndex = 0;
+  private milestoneAwarded = false;
   private lastEvent = 0;
   private lastAirborne = false;
   private onEvent: (event: GameEvent) => void;
 
-  constructor(onEvent: (event: GameEvent) => void) {
+  constructor(onEvent: (event: GameEvent) => void, bonusCarts = 0) {
     super("LoopRush");
     this.onEvent = onEvent;
+    this.bonusCarts = bonusCarts;
   }
 
   create() {
@@ -102,7 +110,7 @@ class LoopRushScene extends Phaser.Scene {
 
   private emit(type: GameState) {
     this.state = type;
-    this.onEvent({ type, level: this.level, speed: this.speed, coins: this.coinCount, flips: this.flips });
+    this.onEvent({ type, level: this.level, speed: this.speed, coins: this.coinCount, flips: this.flips, score: this.score, carts: this.runCarts + this.bonusCarts, goldCarts: this.goldCarts, bonusCarts: this.bonusCarts });
   }
 
   private addPoint(x: number, y: number, airborne = false) {
@@ -122,7 +130,8 @@ class LoopRushScene extends Phaser.Scene {
     const steps = Math.ceil(width / 5);
     for (let i = 1; i <= steps; i++) {
       const t = i / steps;
-      this.addPoint(x + width * t, baseY - Math.sin(t * Math.PI) * height);
+      const crestJump = t >= 0.47 && t <= 0.76;
+      this.addPoint(x + width * t, baseY - Math.sin(t * Math.PI) * height, crestJump);
     }
     return x + width;
   }
@@ -189,6 +198,10 @@ class LoopRushScene extends Phaser.Scene {
     this.coins = [];
     this.coinCount = 0;
     this.flips = 0;
+    this.score = 0;
+    this.runCarts = 0;
+    this.goldCarts = 0;
+    this.milestoneAwarded = false;
     this.progress = 0;
     this.speed = 0;
     this.airSpin = 0;
@@ -221,15 +234,17 @@ class LoopRushScene extends Phaser.Scene {
       }
       this.addCoins(start, this.points.length - 1, feature === "loop" ? 7 : 5, feature === "jump" ? 78 : 48);
     }
-    this.addLine(x, y, x + 520, y);
-    this.addCoins(this.points.length - 170, this.points.length - 5, 9, 50);
+    this.addLine(x, y, x + 620, y);
+    this.finishX = x + 470;
+    this.finishPointIndex = this.points.length - 1;
+    this.addCoins(this.points.length - 210, this.points.length - 8, 12, 50);
     this.cameraX = 0;
     this.drawScene();
   }
 
   private startRun() {
     this.progress = 0;
-    this.speed = 190;
+    this.speed = 260;
     this.emit("playing");
   }
 
@@ -344,6 +359,19 @@ class LoopRushScene extends Phaser.Scene {
     this.progressGraphics.fillStyle(0xffc64d, 1);
     const ratio = this.progress / Math.max(1, this.points.length - 1);
     this.progressGraphics.fillRoundedRect(width * 0.34, 18, width * 0.32 * ratio, 7, 4);
+
+    // Four finish flags rise into view as the cart approaches the end of the course.
+    if (this.cameraX > this.finishX - 720) {
+      for (let i = 0; i < 4; i++) {
+        const flagX = (this.finishX + i * 42 - this.cameraX) * scale + screenX;
+        const flagY = screenY(365) - 68 * scale;
+        if (flagX < -30 || flagX > width + 30) continue;
+        this.track.lineStyle(4 * scale, 0x35445a, 1);
+        this.track.lineBetween(flagX, flagY, flagX, flagY + 68 * scale);
+        this.track.fillStyle(i % 2 === 0 ? 0xffc64d : 0xf05d45, 1);
+        this.track.fillTriangle(flagX, flagY, flagX + 27 * scale, flagY + 9 * scale, flagX, flagY + 19 * scale);
+      }
+    }
   }
 
   update(time: number, delta: number) {
@@ -358,9 +386,11 @@ class LoopRushScene extends Phaser.Scene {
       const previousSpeed = this.speed;
 
       const wasAirborne = this.lastAirborne;
-      this.speed += (this.holding ? 430 : -115) * dt;
-      if (!current.airborne) this.speed += (tangentY / tangentLength) * 250 * dt;
-      this.speed = Phaser.Math.Clamp(this.speed, 0, 620);
+      // The original has a punchy hold-to-accelerate feel; releasing stops adding power,
+      // but the cart keeps its momentum and naturally rolls down the track.
+      this.speed += (this.holding ? 1050 : -82) * dt;
+      if (!current.airborne) this.speed += (tangentY / tangentLength) * 330 * dt;
+      this.speed = Phaser.Math.Clamp(this.speed, 0, 900);
       this.progress += (this.speed * dt) / 5;
 
       const position = this.sample(this.progress);
@@ -378,7 +408,7 @@ class LoopRushScene extends Phaser.Scene {
       if (isAirborne) {
         // Tiny Loops uses one action in the air: keep holding to backflip.
         // Releasing freezes rotation immediately so the player can prepare to land.
-        if (this.holding) this.airSpin -= Math.PI * 2 * 2.0 * dt;
+        if (this.holding) this.airSpin -= Math.PI * 2 * 2.35 * dt;
       } else if (wasAirborne) {
         const completedFlips = Math.floor(Math.abs(this.airSpin) / (Math.PI * 2));
         const landingError = Math.atan2(
@@ -392,6 +422,9 @@ class LoopRushScene extends Phaser.Scene {
           this.emit("crashed");
         } else {
           this.flips += completedFlips;
+          if (completedFlips > 0) this.runCarts += completedFlips;
+          if (completedFlips >= 2) this.goldCarts += 1;
+          this.score += completedFlips * 150 + (completedFlips >= 2 ? 350 : 0);
           this.airSpin = 0;
         }
       }
@@ -410,18 +443,27 @@ class LoopRushScene extends Phaser.Scene {
         if (!coin.collected && Math.abs(coin.pointIndex - this.progress) < 3) {
           coin.collected = true;
           this.coinCount += 1;
+          this.score += 50;
         }
       });
+      this.score += Math.max(0, this.speed * dt) * (1 + (this.runCarts + this.bonusCarts) * 0.12);
 
       const tier = Math.floor(this.level / LEVELS.length);
       const levelConfig = LEVELS[this.level % LEVELS.length];
       if (this.state === "playing" && !isAirborne && this.progress > 30 && this.speed < 70) this.emit("crashed");
       if (this.state === "playing" && !isAirborne && this.speed < levelConfig.loopSpeed + tier * 14 && position.y < 270 && this.progress > 40) this.emit("crashed");
-      if (this.state === "playing" && this.progress >= this.points.length - 3) this.emit("won");
+      if (this.state === "playing" && this.progress >= this.finishPointIndex - 3) {
+        if ((this.level + 1) % 5 === 0 && !this.milestoneAwarded) {
+          this.bonusCarts += 1;
+          this.milestoneAwarded = true;
+          try { window.localStorage.setItem("loop-rush-bonus-carts", String(this.bonusCarts)); } catch { /* storage may be unavailable */ }
+        }
+        this.emit("won");
+      }
 
       if (this.state === "playing" && time - this.lastEvent > 100) {
         this.lastEvent = time;
-        this.onEvent({ type: "playing", level: this.level, speed: this.speed, coins: this.coinCount, flips: this.flips });
+        this.onEvent({ type: "playing", level: this.level, speed: this.speed, coins: this.coinCount, flips: this.flips, score: this.score, carts: this.runCarts + this.bonusCarts, goldCarts: this.goldCarts, bonusCarts: this.bonusCarts });
       }
       if (this.state === "playing" && previousSpeed > 0) this.drawScene();
     } else if (this.state === "ready") {
@@ -459,16 +501,26 @@ export default function TinyLoopsGame() {
   const [speed, setSpeed] = useState(0);
   const [coins, setCoins] = useState(0);
   const [flips, setFlips] = useState(0);
+  const [score, setScore] = useState(0);
+  const [carts, setCarts] = useState(0);
+  const [goldCarts, setGoldCarts] = useState(0);
+  const [bonusCarts, setBonusCarts] = useState(0);
 
   useEffect(() => {
     if (!mountRef.current) return;
+    let savedBonusCarts = 0;
+    try { savedBonusCarts = Number(window.localStorage.getItem("loop-rush-bonus-carts") || 0); } catch { /* storage may be unavailable */ }
     const scene = new LoopRushScene((event) => {
       setGameState(event.type);
       setLevel(event.level);
       setSpeed(event.speed);
       setCoins(event.coins);
       setFlips(event.flips);
-    });
+      setScore(Math.floor(event.score));
+      setCarts(event.carts);
+      setGoldCarts(event.goldCarts);
+      setBonusCarts(event.bonusCarts);
+    }, savedBonusCarts);
     const game = new Phaser.Game({
       type: Phaser.CANVAS,
       parent: mountRef.current,
@@ -502,12 +554,15 @@ export default function TinyLoopsGame() {
             <span>⚡ {Math.round(speed)} SPEED</span>
             <span>🟡 {coins} COINS</span>
             <span>↻ {flips} FLIPS</span>
+            <span>⭐ {score.toLocaleString()} PTS</span>
+            <span>🛒 {carts} CARTS{goldCarts > 0 ? ` + ${goldCarts} GOLD` : ""}</span>
           </div>
           {gameState === "ready" && <div className="loop-rush-overlay"><span className="loop-rush-pill">READY?</span><h2>LET'S RIDE</h2><p>Press and hold to accelerate. Release to coast and control your flips.</p><button onClick={start}>START RIDE <span>→</span></button></div>}
-          {gameState === "crashed" && <div className="loop-rush-overlay"><span className="loop-rush-pill">WIPEOUT</span><h2>TRY AGAIN</h2><p>Build enough speed and time your release to land safely.</p><button onClick={start}>RETRY LEVEL <span>↻</span></button></div>}
-          {gameState === "won" && <div className="loop-rush-overlay"><span className="loop-rush-pill">TRACK CLEARED</span><h2>NICE FLIGHT!</h2><p>You collected {coins} coins and landed {flips} flips.</p><button onClick={next}>NEXT LEVEL <span>→</span></button></div>}
+          {gameState === "crashed" && <div className="loop-rush-overlay"><span className="loop-rush-pill">WIPEOUT</span><h2>TRY AGAIN</h2><p>Build enough speed and time your release to land safely. Your run carts are lost on a crash; permanent carts stay.</p><button onClick={start}>RETRY LEVEL <span>↻</span></button></div>}
+          {gameState === "won" && <div className="loop-rush-overlay"><span className="loop-rush-pill">TRACK CLEARED</span><h2>NICE FLIGHT!</h2><p>{coins} coins · {flips} flips · {score.toLocaleString()} points</p>{(level + 1) % 5 === 0 && <p className="loop-rush-reward">PERMANENT CART UNLOCKED — your score boost is now {bonusCarts}!</p>}<button onClick={next}>NEXT LEVEL <span>→</span></button></div>}
         </div>
-        <div className="loop-rush-controls"><span><i className="loop-rush-dot" /> PRESS & HOLD TO ACCELERATE</span><span>RELEASE TO BRAKE THE SPIN</span><span>LAND UPRIGHT TO SURVIVE</span></div>
+        <div className="loop-rush-controls"><span><i className="loop-rush-dot" /> PRESS & HOLD TO ACCELERATE / FLIP</span><span>RELEASE TO STOP FLIPPING</span><span>LAND UPRIGHT TO KEEP YOUR CARTS</span></div>
+        <div className="loop-rush-progression">PERMANENT CART BOOSTS: <b>{bonusCarts}</b> <span>·</span> SCORE MULTIPLIER IMPROVES WITH EVERY CART</div>
       </section>
       <footer className="loop-rush-footer">A LITTLE ARCADE FUN BY <b>SHH DESIGN</b></footer>
     </main>
