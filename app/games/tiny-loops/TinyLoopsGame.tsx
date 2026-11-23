@@ -88,7 +88,7 @@ function makeCourse(T: any) {
   return curve;
 }
 
-function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; coins: number; flips: number; status: GameStatus }) => void) {
+function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; coins: number; flips: number; status: GameStatus; airborne?: boolean; holding?: boolean }) => void) {
   const scene = new T.Scene();
   scene.background = new T.Color(0xe9e9e9);
   scene.fog = new T.Fog(0xe9e9e9, 65, 190);
@@ -125,7 +125,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     side: frames.binormals[index].clone().normalize(),
   });
 
-  const jumpZones = [[43, 51], [113, 123], [204, 214], [326, 336]]; // distances along the course
+  const jumpZones = [[43, 72], [140, 169], [255, 284], [390, 419]]; // longer, visible flight gaps
 
   // Build separate rail meshes around the jump gaps so the cart visibly leaves the track.
   const railSections: [number, number][] = [];
@@ -222,6 +222,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     wheel.position.set(x, 0.12, z);
     cart.add(wheel);
   }));
+  cart.scale.setScalar(1.85);
   scene.add(cart);
 
   const coinMat = new T.MeshStandardMaterial({ color: 0xffd52f, metalness: 0.75, roughness: 0.25, emissive: 0x6b4d00 });
@@ -237,7 +238,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     coins.push({ mesh: coin, distance: d, collected: false });
   }
 
-  const state = { status: "ready" as GameStatus, distance: 0, speed: 0, holding: false, flips: 0, spin: 0, coins: 0, elapsed: 0, lastTime: performance.now(), raf: 0 };
+  const state = { status: "ready" as GameStatus, distance: 0, speed: 0, holding: false, flips: 0, spin: 0, coins: 0, airborne: false, airHeight: 0, verticalVelocity: 0, airElapsed: 0, elapsed: 0, lastTime: performance.now(), raf: 0 };
   const resize = () => {
     const w = Math.max(1, mount.clientWidth), h = Math.max(1, mount.clientHeight);
     camera.aspect = w / h;
@@ -252,13 +253,44 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     state.raf = requestAnimationFrame(animate);
     const dt = Math.min((now - state.lastTime) / 1000, 0.035);
     state.lastTime = now;
+    const previousDistance = state.distance;
     if (state.status === "playing") {
-      state.speed = Math.min(28, state.speed + (state.holding ? 15 : -4.5) * dt);
-      state.speed = Math.max(5, state.speed);
+      // The ride only advances while the player is holding. Releasing brakes the cart.
+      state.speed = Math.min(28, state.speed + (state.holding ? 20 : -12) * dt);
+      state.speed = Math.max(0, state.speed);
       state.distance += state.speed * dt;
+      if (!state.airborne) {
+        const launch = jumpZones.find(([a]) => previousDistance < a && state.distance >= a);
+        if (launch) {
+          state.airborne = true;
+          state.airHeight = 0;
+          state.verticalVelocity = 13.5;
+          state.airElapsed = 0;
+          state.spin = 0;
+        }
+      }
       if (state.distance >= length - 3) {
         state.status = "won";
         onHud({ speed: state.speed, coins: state.coins, flips: state.flips, status: state.status });
+      }
+    }
+
+    // Ballistic flight: gravity controls the arc; holding only controls the backflip.
+    if (state.airborne) {
+      state.airElapsed += dt;
+      state.verticalVelocity -= 22 * dt;
+      state.airHeight += state.verticalVelocity * dt;
+      if (state.holding) state.spin += dt * Math.PI * 2 * 1.65;
+      if (state.airHeight <= 0 && state.airElapsed > 0.16) {
+        state.airHeight = 0;
+        state.airborne = false;
+        state.verticalVelocity = 0;
+        const completed = Math.floor(state.spin / (Math.PI * 2));
+        if (completed > state.flips) {
+          state.coins += (completed - state.flips) * 2;
+          state.flips = completed;
+        }
+        state.spin = 0;
       }
     }
 
@@ -267,32 +299,18 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     const point = course.getPointAt(u);
     const index = Math.min(segments, Math.round(u * segments));
     const frame = frameAt(index);
-    const jump = jumpZones.find(([a, b]) => distance >= a && distance <= b);
-    let flight = 0;
-    if (jump) {
-      flight = Math.sin(Math.PI * (distance - jump[0]) / (jump[1] - jump[0]));
-      point.addScaledVector(frame.normal, Math.max(0, flight) * 3.4);
-      if (state.holding) state.spin += dt * Math.PI * 2 * 1.15;
-    } else if (state.spin) {
-      const completed = Math.floor(state.spin / (Math.PI * 2));
-      if (completed > state.flips) {
-        state.coins += (completed - state.flips) * 2;
-        state.flips = completed;
-      }
-      state.spin = 0;
-    }
+    point.addScaledVector(frame.normal, state.airHeight);
     cart.position.copy(point).addScaledVector(frame.normal, 0.32);
     const basis = new T.Matrix4().makeBasis(frame.side, frame.normal, frame.tangent);
     cart.quaternion.setFromRotationMatrix(basis);
-    if (jump) {
-      // Rotate around the direction of travel so the complete cart and rider visibly flip.
+    if (state.airborne) {
+      // The entire cart and rider rotate together around the direction of travel.
       cart.rotateZ(state.spin);
     }
 
-    // Keep the rider in view from a stable third-person chase camera.
-    // The reference game shows the whole cart against the track, not a first-person ride.
-    const cameraTarget = point.clone().addScaledVector(frame.tangent, 3.5);
-    cameraTarget.y += 1.1;
+    // Keep the complete, enlarged cart visible in a stable third-person chase view.
+    const cameraTarget = point.clone().addScaledVector(frame.tangent, 2.2);
+    cameraTarget.y += 1.5;
     const cameraPosition = point.clone().addScaledVector(frame.tangent, -19);
     cameraPosition.y += 10.5;
     cameraPosition.addScaledVector(frame.side, 1.2);
@@ -311,16 +329,16 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     renderer.render(scene, camera);
     if (now - state.elapsed > 120) {
       state.elapsed = now;
-      onHud({ speed: state.speed, coins: state.coins, flips: state.flips, status: state.status });
+      onHud({ speed: state.speed, coins: state.coins, flips: state.flips, status: state.status, airborne: state.airborne, holding: state.holding });
     }
   };
   state.raf = requestAnimationFrame(animate);
 
   return {
-    start() { state.status = "playing"; state.speed = 6; onHud({ speed: state.speed, coins: state.coins, flips: state.flips, status: state.status }); },
+    start() { state.status = "playing"; state.speed = 0; state.distance = 0; state.holding = false; state.airborne = false; state.airHeight = 0; state.verticalVelocity = 0; state.spin = 0; onHud({ speed: state.speed, coins: state.coins, flips: state.flips, status: state.status }); },
     restart() {
-      state.status = "playing"; state.distance = 0; state.speed = 6; state.holding = false;
-      state.flips = 0; state.spin = 0; state.coins = 0;
+      state.status = "playing"; state.distance = 0; state.speed = 0; state.holding = false;
+      state.flips = 0; state.spin = 0; state.coins = 0; state.airborne = false; state.airHeight = 0; state.verticalVelocity = 0; state.airElapsed = 0;
       coins.forEach((c) => { c.collected = false; c.mesh.visible = true; });
       onHud({ speed: state.speed, coins: 0, flips: 0, status: state.status });
     },
@@ -345,6 +363,7 @@ export default function TinyLoopsGame() {
   const [speed, setSpeed] = useState(0);
   const [coins, setCoins] = useState(0);
   const [flips, setFlips] = useState(0);
+  const [airborne, setAirborne] = useState(false);
   const [error, setError] = useState("");
   useEffect(() => {
     let cancelled = false;
@@ -355,6 +374,7 @@ export default function TinyLoopsGame() {
         setSpeed(Math.round(v.speed * 4));
         setCoins(v.coins);
         setFlips(v.flips);
+        setAirborne(Boolean(v.airborne));
         setStatus(v.status);
       });
       gameRef.current = world;
@@ -383,9 +403,10 @@ export default function TinyLoopsGame() {
         </div>
         <div className="loop-rush-game-frame" onPointerDown={holdStart} onPointerUp={holdEnd} onPointerLeave={holdEnd} onContextMenu={(e) => e.preventDefault()}>
           <div ref={mountRef} className="loop-rush-canvas" />
-          <div className="loop-rush-hud"><span>⚡ {speed} SPEED</span><span>🟡 {coins} COINS</span><span>↻ {flips} FLIPS</span></div>
+          <div className="loop-rush-hud"><span>⚡ {speed} SPEED</span><span>🟡 {coins} COINS</span><span>↻ {flips} FLIPS</span>{airborne && <strong className="loop-rush-air-status">AIRBORNE — HOLD TO FLIP!</strong>}</div>
           {error && <div className="loop-rush-overlay"><h2>3D ENGINE ERROR</h2><p>{error}</p></div>}
-          {status === "ready" && !error && <div className="loop-rush-overlay"><span className="loop-rush-pill">READY?</span><h2>TINY LOOPS</h2><p>Hold the screen or mouse to ride and build speed.</p><button onClick={(e) => { e.stopPropagation(); start(); }}>START RIDE →</button></div>}
+          {status === "ready" && !error && <div className="loop-rush-overlay"><span className="loop-rush-pill">READY?</span><h2>TINY LOOPS</h2><p>Press and hold START, then keep holding to accelerate. Release to brake; hold in the air to backflip.</p><button onClick={(e) => { e.stopPropagation(); start(); }}>START RIDE →</button></div>}
+          {status === "crashed" && <div className="loop-rush-overlay"><span className="loop-rush-pill">WIPEOUT</span><h2>YOU MISSED THE LANDING</h2><p>Hold to build speed and try the jump again.</p><button onClick={(e) => { e.stopPropagation(); start(); }}>TRY AGAIN ↻</button></div>}
           {status === "won" && <div className="loop-rush-overlay"><span className="loop-rush-pill">TRACK CLEARED</span><h2>NICE RIDE!</h2><p>{coins} coins · {flips} flips</p><button onClick={(e) => { e.stopPropagation(); start(); }}>RIDE AGAIN ↻</button></div>}
         </div>
         <div className="loop-rush-controls"><span><i className="loop-rush-dot" /> HOLD TO ACCELERATE / FLIP</span><span>RELEASE TO STOP FLIPPING</span></div>
