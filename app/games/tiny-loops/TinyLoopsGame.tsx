@@ -157,11 +157,10 @@ class LoopRushScene extends Phaser.Scene {
     const steps = Math.ceil(flightWidth / 5);
     for (let i = 1; i <= steps; i++) {
       const t = i / steps;
-      const arc = Math.sin(t * Math.PI);
-      const ballisticDrop = 34 * t * t;
+      const arc = 4 * t * (1 - t);
       this.addPoint(
         launchX + flightWidth * t,
-        y - launchRise * (1 - t) - arc * height - ballisticDrop,
+        y - launchRise * (1 - t) - arc * height,
         true
       );
     }
@@ -360,7 +359,7 @@ class LoopRushScene extends Phaser.Scene {
 
       const wasAirborne = this.lastAirborne;
       this.speed += (this.holding ? 430 : -115) * dt;
-      this.speed += (tangentY / tangentLength) * 250 * dt;
+      if (!current.airborne) this.speed += (tangentY / tangentLength) * 250 * dt;
       this.speed = Phaser.Math.Clamp(this.speed, 0, 900);
       this.progress += (this.speed * dt) / 5;
 
