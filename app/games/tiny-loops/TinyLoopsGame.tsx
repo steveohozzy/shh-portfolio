@@ -71,11 +71,28 @@ function makeCourse(T: any) {
   bend(new T.Vector3(16, 8, -326), new T.Vector3(8, 8, -350), 64);
   line(new T.Vector3(8, 8, -374), 30);
 
-  // Final downhill section with a smaller jump before the finish.
+  // Level 1 finish section.
   bend(new T.Vector3(-10, 5, -396), new T.Vector3(-18, 3, -420), 64);
   hill(new T.Vector3(-12, 0, -468), 5, 72, true);
   bend(new T.Vector3(4, 0, -492), new T.Vector3(18, 0, -516), 64);
   line(new T.Vector3(18, 0, -555), 55);
+
+  // Level 2: a longer twisting section with two sharper take-off hills.
+  bend(new T.Vector3(42, 2, -590), new T.Vector3(55, 5, -625), 72);
+  hill(new T.Vector3(30, 5, -685), 10, 84, true);
+  bend(new T.Vector3(-2, 8, -712), new T.Vector3(-28, 8, -748), 72);
+  hill(new T.Vector3(-48, 3, -812), 8, 80, true);
+  bend(new T.Vector3(-12, 1, -845), new T.Vector3(22, 1, -875), 72);
+  line(new T.Vector3(35, 1, -910), 42);
+
+  // Level 3: bigger hills, a fast S-bend and a final long jump.
+  bend(new T.Vector3(70, 4, -945), new T.Vector3(72, 8, -985), 76);
+  hill(new T.Vector3(22, 8, -1055), 12, 90, true);
+  bend(new T.Vector3(-18, 11, -1080), new T.Vector3(-42, 6, -1120), 76);
+  hill(new T.Vector3(-12, 2, -1190), 11, 90, true);
+  bend(new T.Vector3(35, 4, -1220), new T.Vector3(52, 4, -1260), 76);
+  hill(new T.Vector3(0, 0, -1335), 13, 96, true);
+  line(new T.Vector3(0, 0, -1400), 64);
 
   const curve = new T.CatmullRomCurve3(points, false, "centripetal", 0.15);
   curve.arcLengthDivisions = 3000;
@@ -90,7 +107,7 @@ function makeCourse(T: any) {
   });
   return curve;
 }
-function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; coins: number; flips: number; status: GameStatus; airborne?: boolean; holding?: boolean }) => void) {
+function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; coins: number; flips: number; status: GameStatus; airborne?: boolean; holding?: boolean; level?: number }) => void) {
   const scene = new T.Scene();
   scene.background = new T.Color(0x9cddff);
   scene.fog = new T.Fog(0xb8e7ff, 95, 260);
@@ -186,6 +203,9 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     [43, -7, -171, 26, 5, 34], [55, -9, -208, 28, 5, 24],
     [20, 4, -260, 33, 5, 24], [-18, 9, -343, 27, 5, 29],
     [3, -8, -448, 31, 5, 30], [34, -8, -520, 29, 5, 42],
+    [42, -8, -650, 35, 5, 38], [-45, -8, -790, 34, 5, 42],
+    [20, -9, -900, 38, 5, 42], [65, -8, -980, 40, 5, 44],
+    [-42, -8, -1110, 38, 5, 44], [0, -9, -1300, 42, 5, 48],
   ];
   platformData.forEach(([x, y, z, sx, sy, sz], i) => {
     const platform = new T.Mesh(platformGeo, rockMat);
@@ -230,6 +250,23 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   riderBody.position.set(0, 0.55, 0.03);
   riderBody.castShadow = true;
   cart.add(riderBody);
+
+  // Long, visible cartoon arms on pivots so they can flap independently.
+  const armMaterial = new T.MeshStandardMaterial({ color: 0x2e6ec8, roughness: 0.95 });
+  const leftArm = new T.Group();
+  const rightArm = new T.Group();
+  [-1, 1].forEach((side) => {
+    const pivot = side < 0 ? leftArm : rightArm;
+    pivot.position.set(side * 0.24, 0.68, -0.02);
+    const upperArm = new T.Mesh(new T.CapsuleGeometry(0.105, 0.48, 4, 8), armMaterial);
+    upperArm.position.set(side * 0.23, -0.23, 0);
+    upperArm.rotation.z = side * -0.35;
+    pivot.add(upperArm);
+    const hand = new T.Mesh(new T.SphereGeometry(0.13, 10, 8), new T.MeshStandardMaterial({ color: 0xffd65a, roughness: 0.9 }));
+    hand.position.set(side * 0.34, -0.48, 0);
+    pivot.add(hand);
+    cart.add(pivot);
+  });
   [-0.48, 0.48].forEach((x) => [-0.42, 0.42].forEach((z) => {
     const wheel = new T.Mesh(new T.CylinderGeometry(0.24, 0.24, 0.16, 12), new T.MeshStandardMaterial({ color: 0x303747, roughness: 1 }));
     wheel.rotation.z = Math.PI / 2;
@@ -239,6 +276,9 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   cart.scale.setScalar(1.15);
   scene.add(cart);
   const baseCartQuaternion = new T.Quaternion();
+  // Arm pivots are animated during flight for the exaggerated Tiny Loops pose.
+  const leftArm = cart.children.find((child: any) => child !== chassis && child !== body && child !== seat && child !== head && child !== riderBody && child.position?.x < 0 && child.type === "Group");
+  const rightArm = cart.children.find((child: any) => child !== chassis && child !== body && child !== seat && child !== head && child !== riderBody && child.position?.x > 0 && child.type === "Group");
   const flipQuaternion = new T.Quaternion();
   const flipAxis = new T.Vector3(1, 0, 0);
 
@@ -255,7 +295,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     coins.push({ mesh: coin, distance: d, collected: false });
   }
 
-  const state = { status: "ready" as GameStatus, distance: 0, speed: 0, holding: false, flips: 0, spin: 0, coins: 0, airborne: false, airHeight: 0, verticalVelocity: 0, airElapsed: 0, activeJumpEnd: 0, jumpDuration: 0.9, jumpHeight: 5, elapsed: 0, lastTime: performance.now(), raf: 0 };
+  const state = { status: "ready" as GameStatus, distance: 0, speed: 0, holding: false, flips: 0, spin: 0, coins: 0, airborne: false, airHeight: 0, takeoffY: 0, landingY: 0, airElapsed: 0, activeJumpEnd: 0, jumpDuration: 0.9, jumpHeight: 5, elapsed: 0, lastTime: performance.now(), raf: 0 };
   const resize = () => {
     const w = Math.max(1, mount.clientWidth), h = Math.max(1, mount.clientHeight);
     camera.aspect = w / h;
@@ -282,15 +322,19 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
           state.airborne = true;
           state.airHeight = 0;
           state.airElapsed = 0;
-          state.jumpDuration = Math.min(1.3, 0.78 + (state.speed - 16) * 0.018);
-          state.jumpHeight = 4 + state.speed * 0.13;
-          state.activeJumpEnd = launch + state.speed * state.jumpDuration;
+          state.jumpDuration = Math.min(1.55, 0.95 + (state.speed - 16) * 0.022);
+          state.jumpHeight = 5 + state.speed * 0.19;
+          state.activeJumpEnd = Math.min(length - 2, launch + state.speed * state.jumpDuration);
+          const takeoffPoint = course.getPointAt(course.getUtoTmapping(0, launch));
+          const landingPoint = course.getPointAt(course.getUtoTmapping(0, state.activeJumpEnd));
+          state.takeoffY = takeoffPoint.y;
+          state.landingY = landingPoint.y;
           state.spin = 0;
         }
       }
       if (state.distance >= length - 3) {
         state.status = "won";
-        onHud({ speed: state.speed, coins: state.coins, flips: state.flips, status: state.status });
+        onHud({ speed: state.speed, coins: state.coins, flips: state.flips, status: state.status, level: 3 });
       }
     }
 
@@ -299,7 +343,11 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     if (state.airborne) {
       state.airElapsed += dt;
       const progress = Math.min(1, state.airElapsed / state.jumpDuration);
+      // Fly from the exact hilltop take-off point to the landing point.
+      // Do not let the descending track pull the cart down before its jump arc ends.
+      const flightBaseY = state.takeoffY + (state.landingY - state.takeoffY) * progress;
       state.airHeight = Math.sin(progress * Math.PI) * state.jumpHeight;
+      const flightY = flightBaseY + state.airHeight;
       if (state.holding) state.spin += dt * Math.PI * 2 * 1.65;
       if (progress >= 1) {
         state.airHeight = 0;
@@ -322,7 +370,10 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     const point = course.getPointAt(u);
     const index = Math.min(segments, Math.round(u * segments));
     const frame = frameAt(index);
-    point.y += state.airHeight;
+    if (state.airborne) {
+      const progress = Math.min(1, state.airElapsed / state.jumpDuration);
+      point.y = state.takeoffY + (state.landingY - state.takeoffY) * progress + Math.sin(progress * Math.PI) * state.jumpHeight;
+    }
     cart.position.copy(point).addScaledVector(frame.normal, 0.25);
     const basis = new T.Matrix4().makeBasis(frame.side.clone().negate(), frame.normal, frame.tangent);
     baseCartQuaternion.setFromRotationMatrix(basis);
@@ -343,6 +394,18 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     camera.up.set(0, 1, 0);
     camera.lookAt(cameraTarget);
 
+    // The rider throws both arms around in the air, with extra frantic movement
+    // while the player is holding to perform flips.
+    if (leftArm && rightArm) {
+      const armSwing = state.airborne
+        ? Math.sin(state.airElapsed * 17) * (state.holding ? 1.05 : 0.72)
+        : Math.sin(now * 0.004) * 0.06;
+      leftArm.rotation.z = -0.25 - armSwing;
+      rightArm.rotation.z = 0.25 + armSwing;
+      leftArm.rotation.x = state.airborne ? Math.sin(state.airElapsed * 13) * 0.28 : 0;
+      rightArm.rotation.x = state.airborne ? -Math.sin(state.airElapsed * 13) * 0.28 : 0;
+    }
+
     coins.forEach((coin) => {
       coin.mesh.rotation.y += dt * 2;
       if (!coin.collected && Math.abs(coin.distance - distance) < 1.5) {
@@ -354,7 +417,8 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     renderer.render(scene, camera);
     if (now - state.elapsed > 120) {
       state.elapsed = now;
-      onHud({ speed: state.speed, coins: state.coins, flips: state.flips, status: state.status, airborne: state.airborne, holding: state.holding });
+      const level = state.distance < length / 3 ? 1 : state.distance < (length * 2) / 3 ? 2 : 3;
+      onHud({ speed: state.speed, coins: state.coins, flips: state.flips, status: state.status, airborne: state.airborne, holding: state.holding, level });
     }
   };
   state.raf = requestAnimationFrame(animate);
@@ -369,6 +433,8 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     state.coins = 0;
     state.airborne = false;
     state.airHeight = 0;
+    state.takeoffY = 0;
+    state.landingY = 0;
     state.verticalVelocity = 0;
     state.airElapsed = 0;
     state.activeJumpEnd = 0;
@@ -376,7 +442,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     state.jumpHeight = 5;
     state.lastTime = performance.now();
     coins.forEach((coin) => { coin.collected = false; coin.mesh.visible = true; });
-    onHud({ speed: state.speed, coins: 0, flips: 0, status: "playing", airborne: false, holding: false });
+    onHud({ speed: state.speed, coins: 0, flips: 0, status: "playing", airborne: false, holding: false, level: 1 });
   };
 
   return {
@@ -404,6 +470,7 @@ export default function TinyLoopsGame() {
   const [coins, setCoins] = useState(0);
   const [flips, setFlips] = useState(0);
   const [airborne, setAirborne] = useState(false);
+  const [level, setLevel] = useState(1);
   const [error, setError] = useState("");
   const [engineReady, setEngineReady] = useState(false);
   useEffect(() => {
@@ -416,6 +483,7 @@ export default function TinyLoopsGame() {
         setCoins(v.coins);
         setFlips(v.flips);
         setAirborne(Boolean(v.airborne));
+        setLevel(v.level || 1);
         setStatus(v.status);
       });
       gameRef.current = world;
@@ -451,7 +519,7 @@ export default function TinyLoopsGame() {
       <section className="loop-rush-shell">
         <div className="loop-rush-heading">
           <div><span className="loop-rush-kicker">THE ORIGINAL-STYLE 3D RIDE</span><h1>TINY LOOPS</h1><p>Hold to accelerate and flip through the air. Release to coast.</p></div>
-          <div className="loop-rush-level"><span>LEVEL 01</span><b>First Run</b></div>
+          <div className="loop-rush-level"><span>LEVEL 01–03</span><b>Three-stage coaster</b></div>
         </div>
         <div className="loop-rush-game-frame" onPointerDown={holdStart} onPointerUp={holdEnd} onPointerCancel={holdEnd} onLostPointerCapture={holdEnd} onContextMenu={(e) => e.preventDefault()}>
           <div ref={mountRef} className="loop-rush-canvas" />
