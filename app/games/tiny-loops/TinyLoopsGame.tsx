@@ -204,15 +204,23 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
 
   // Small yellow cart and rider, matching the tiny silhouette in the reference.
   const cart = new T.Group();
-  const body = new T.Mesh(new T.BoxGeometry(1.05, 0.34, 1.35), new T.MeshStandardMaterial({ color: 0xffc928, roughness: 0.42 }));
+  const chassis = new T.Mesh(new T.BoxGeometry(1.55, 0.24, 1.85), new T.MeshStandardMaterial({ color: 0x30343b, roughness: 0.82 }));
+  chassis.position.y = 0.12;
+  chassis.castShadow = true;
+  cart.add(chassis);
+  const body = new T.Mesh(new T.BoxGeometry(1.25, 0.42, 1.45), new T.MeshStandardMaterial({ color: 0xffc928, roughness: 0.42 }));
   body.position.y = 0.23;
   body.castShadow = true;
   cart.add(body);
-  const head = new T.Mesh(new T.SphereGeometry(0.27, 14, 12), new T.MeshStandardMaterial({ color: 0xffd84c, roughness: 0.7 }));
+  const seat = new T.Mesh(new T.BoxGeometry(0.72, 0.48, 0.48), new T.MeshStandardMaterial({ color: 0x343b48, roughness: 0.85 }));
+  seat.position.set(0, 0.53, 0.25);
+  seat.castShadow = true;
+  cart.add(seat);
+  const head = new T.Mesh(new T.SphereGeometry(0.34, 16, 14), new T.MeshStandardMaterial({ color: 0xffd84c, roughness: 0.7 }));
   head.position.set(0, 0.76, -0.12);
   head.castShadow = true;
   cart.add(head);
-  const riderBody = new T.Mesh(new T.CapsuleGeometry(0.18, 0.48, 4, 8), new T.MeshStandardMaterial({ color: 0xffc928, roughness: 0.8 }));
+  const riderBody = new T.Mesh(new T.CapsuleGeometry(0.23, 0.52, 4, 10), new T.MeshStandardMaterial({ color: 0x25364a, roughness: 0.8 }));
   riderBody.position.set(0, 0.55, 0.03);
   riderBody.castShadow = true;
   cart.add(riderBody);
@@ -222,7 +230,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     wheel.position.set(x, 0.12, z);
     cart.add(wheel);
   }));
-  cart.scale.setScalar(1.85);
+  cart.scale.setScalar(3.1);
   scene.add(cart);
 
   const coinMat = new T.MeshStandardMaterial({ color: 0xffd52f, metalness: 0.75, roughness: 0.25, emissive: 0x6b4d00 });
@@ -256,7 +264,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     const previousDistance = state.distance;
     if (state.status === "playing") {
       // The ride only advances while the player is holding. Releasing brakes the cart.
-      state.speed = Math.min(28, state.speed + (state.holding ? 20 : -12) * dt);
+      state.speed = Math.min(34, state.speed + (state.holding ? 30 : -7) * dt);
       state.speed = Math.max(0, state.speed);
       state.distance += state.speed * dt;
       if (!state.airborne) {
@@ -304,8 +312,8 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     const point = course.getPointAt(u);
     const index = Math.min(segments, Math.round(u * segments));
     const frame = frameAt(index);
-    point.addScaledVector(frame.normal, state.airHeight);
-    cart.position.copy(point).addScaledVector(frame.normal, 0.32);
+    point.y += state.airHeight;
+    cart.position.copy(point).add(new T.Vector3(0, 0.72, 0));
     const basis = new T.Matrix4().makeBasis(frame.side, frame.normal, frame.tangent);
     cart.quaternion.setFromRotationMatrix(basis);
     if (state.airborne) {
@@ -314,12 +322,12 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     }
 
     // Keep the complete, enlarged cart visible in a stable third-person chase view.
-    const cameraTarget = point.clone().addScaledVector(frame.tangent, 2.2);
-    cameraTarget.y += 1.5;
-    const cameraPosition = point.clone().addScaledVector(frame.tangent, -19);
-    cameraPosition.y += 10.5;
-    cameraPosition.addScaledVector(frame.side, 1.2);
-    camera.position.lerp(cameraPosition, 1 - Math.exp(-dt * 3.2));
+    const cameraTarget = cart.position.clone();
+    cameraTarget.y += 0.25;
+    const cameraPosition = cart.position.clone().addScaledVector(frame.tangent, -14);
+    cameraPosition.y += 7.5;
+    cameraPosition.addScaledVector(frame.side, 1.0);
+    camera.position.lerp(cameraPosition, 1 - Math.exp(-dt * 5.5));
     camera.up.set(0, 1, 0);
     camera.lookAt(cameraTarget);
 
@@ -392,8 +400,15 @@ export default function TinyLoopsGame() {
   }, []);
 
   const start = () => gameRef.current?.restart();
-  const holdStart = () => gameRef.current?.setHolding(true);
-  const holdEnd = () => gameRef.current?.setHolding(false);
+  const holdStart = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (e.currentTarget.setPointerCapture) e.currentTarget.setPointerCapture(e.pointerId);
+    gameRef.current?.setHolding(true);
+  };
+  const holdEnd = (e?: React.PointerEvent<HTMLDivElement>) => {
+    if (e) e.preventDefault();
+    gameRef.current?.setHolding(false);
+  };
 
   return (
     <main className="loop-rush-page">
@@ -406,9 +421,9 @@ export default function TinyLoopsGame() {
           <div><span className="loop-rush-kicker">THE ORIGINAL-STYLE 3D RIDE</span><h1>TINY LOOPS</h1><p>Hold to accelerate and flip through the air. Release to coast.</p></div>
           <div className="loop-rush-level"><span>LEVEL 01</span><b>First Run</b></div>
         </div>
-        <div className="loop-rush-game-frame" onPointerDown={holdStart} onPointerUp={holdEnd} onPointerLeave={holdEnd} onContextMenu={(e) => e.preventDefault()}>
+        <div className="loop-rush-game-frame" onPointerDown={holdStart} onPointerUp={holdEnd} onPointerCancel={holdEnd} onLostPointerCapture={holdEnd} onContextMenu={(e) => e.preventDefault()}>
           <div ref={mountRef} className="loop-rush-canvas" />
-          <div className="loop-rush-hud"><span>⚡ {speed} SPEED</span><span>🟡 {coins} COINS</span><span>↻ {flips} FLIPS</span>{airborne && <strong className="loop-rush-air-status">AIRBORNE — HOLD TO FLIP!</strong>}</div>
+          <div className="loop-rush-hud"><span>⚡ {speed} SPEED</span><span>🟡 {coins} COINS</span><span>↻ {flips} FLIPS</span><strong className="loop-rush-air-status">{airborne ? "AIRBORNE — HOLD TO FLIP!" : "HOLD TO ACCELERATE"}</strong></div>
           {error && <div className="loop-rush-overlay"><h2>3D ENGINE ERROR</h2><p>{error}</p></div>}
           {status === "ready" && !error && <div className="loop-rush-overlay"><span className="loop-rush-pill">READY?</span><h2>TINY LOOPS</h2><p>Press and hold START, then keep holding to accelerate. Release to brake; hold in the air to backflip.</p><button onClick={(e) => { e.stopPropagation(); start(); }}>START RIDE →</button></div>}
           {status === "crashed" && <div className="loop-rush-overlay"><span className="loop-rush-pill">WIPEOUT</span><h2>YOU MISSED THE LANDING</h2><p>Hold to build speed and try the jump again.</p><button onClick={(e) => { e.stopPropagation(); start(); }}>TRY AGAIN ↻</button></div>}
