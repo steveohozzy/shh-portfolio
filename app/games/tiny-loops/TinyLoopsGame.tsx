@@ -525,7 +525,7 @@ export default function TinyLoopsGame() {
       <section className="loop-rush-shell">
         <div className="loop-rush-heading">
           <div><span className="loop-rush-kicker">THE ORIGINAL-STYLE 3D RIDE</span><h1>TINY LOOPS</h1><p>Hold to accelerate and flip through the air. Release to coast.</p></div>
-          <div className="loop-rush-level"><span>LEVEL 01–03</span><b>Three-stage coaster</b></div>
+          <div className="loop-rush-level"><span>LEVEL 0{level}</span><b>{level === 1 ? "First Run" : level === 2 ? "Twisting Heights" : "Big Air Finale"}</b></div>
         </div>
         <div className="loop-rush-game-frame" onPointerDown={holdStart} onPointerUp={holdEnd} onPointerCancel={holdEnd} onLostPointerCapture={holdEnd} onContextMenu={(e) => e.preventDefault()}>
           <div ref={mountRef} className="loop-rush-canvas" />
