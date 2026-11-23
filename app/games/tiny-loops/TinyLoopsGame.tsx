@@ -367,8 +367,9 @@ class LoopRushScene extends Phaser.Scene {
       } else if (this.lastAirborne) {
         const completedFlips = Math.floor(Math.abs(this.airSpin) / (Math.PI * 2));
         const remainder = Math.atan2(Math.sin(this.airSpin), Math.cos(this.airSpin));
+        const tier = Math.floor(this.level / LEVELS.length);
         const levelConfig = LEVELS[this.level % LEVELS.length];
-        if (this.speed < levelConfig.minimumJumpSpeed * 0.62 || Math.abs(remainder) > 1.12) {
+        if (this.speed < (levelConfig.minimumJumpSpeed + tier * 20) * 0.62 || Math.abs(remainder) > 1.12) {
           this.emit("crashed");
         } else {
           this.flips += completedFlips;
@@ -394,9 +395,10 @@ class LoopRushScene extends Phaser.Scene {
         }
       });
 
+      const tier = Math.floor(this.level / LEVELS.length);
       const levelConfig = LEVELS[this.level % LEVELS.length];
       if (this.state === "playing" && !isAirborne && this.progress > 30 && this.speed < 70) this.emit("crashed");
-      if (this.state === "playing" && !isAirborne && this.speed < levelConfig.loopSpeed && position.y < 270 && this.progress > 40) this.emit("crashed");
+      if (this.state === "playing" && !isAirborne && this.speed < levelConfig.loopSpeed + tier * 14 && position.y < 270 && this.progress > 40) this.emit("crashed");
       if (this.state === "playing" && this.progress >= this.points.length - 3) this.emit("won");
 
       if (this.state === "playing" && time - this.lastEvent > 100) {
