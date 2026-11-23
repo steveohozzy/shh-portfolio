@@ -318,7 +318,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     cart.quaternion.setFromRotationMatrix(basis);
     if (state.airborne) {
       // The entire cart and rider rotate together around the direction of travel.
-      cart.rotateZ(state.spin);
+      cart.rotateX(state.spin);
     }
 
     // Keep the complete, enlarged cart visible in a stable third-person chase view.
@@ -348,7 +348,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   state.raf = requestAnimationFrame(animate);
 
   return {
-    start() { state.status = "playing"; state.speed = 0; state.distance = 0; state.holding = false; state.airborne = false; state.airHeight = 0; state.verticalVelocity = 0; state.spin = 0; onHud({ speed: state.speed, coins: state.coins, flips: state.flips, status: state.status }); },
+    start() { state.status = "playing"; state.speed = 0; state.distance = 0; state.airborne = false; state.airHeight = 0; state.verticalVelocity = 0; state.spin = 0; onHud({ speed: state.speed, coins: state.coins, flips: state.flips, status: state.status }); },
     restart() {
       state.status = "playing"; state.distance = 0; state.speed = 0; state.holding = false;
       state.flips = 0; state.spin = 0; state.coins = 0; state.airborne = false; state.airHeight = 0; state.verticalVelocity = 0; state.airElapsed = 0;
