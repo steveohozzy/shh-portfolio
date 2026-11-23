@@ -151,9 +151,17 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   // Only the four deliberately modelled hill crests can launch the cart.
   const jumpTriggers: number[] = (course as any).hillCrestDistances;
 
-  // The rails stay continuous: the cart launches from raised hill crests, not missing track.
+  // Leave a visible gap after each hilltop so the cart genuinely leaves the track.
+  const jumpGaps = jumpTriggers.map((crest) => [Math.max(0, crest - 1.5), Math.min(length, crest + 25)]);
+  const railRanges: number[][] = [];
+  let railStart = 0;
+  jumpGaps.forEach(([gapStart, gapEnd]) => {
+    if (gapStart > railStart) railRanges.push([railStart, gapStart]);
+    railStart = Math.max(railStart, gapEnd);
+  });
+  if (railStart < length) railRanges.push([railStart, length]);
   [-0.72, 0.72].forEach((offset) => {
-    [[0, length]].forEach(([from, to]) => {
+    railRanges.forEach(([from, to]) => {
       const pts: any[] = [];
       const count = Math.max(8, Math.ceil((to - from) * 5));
       for (let j = 0; j <= count; j++) {
@@ -176,7 +184,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   const sleeperMesh = new T.InstancedMesh(sleeperGeo, sleeperMaterials[0], 760);
   const sleeperDark = new T.InstancedMesh(sleeperGeo, sleeperMaterials[1], 760);
   let lightCount = 0, darkCount = 0;
-  const inJump = (_d: number) => false;
+  const inJump = (d: number) => jumpGaps.some(([from, to]) => d >= from && d <= to);
   for (let i = 0; i < 760; i++) {
     const d = (length * i) / 759;
     if (inJump(d)) continue;
@@ -345,9 +353,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
       const progress = Math.min(1, state.airElapsed / state.jumpDuration);
       // Fly from the exact hilltop take-off point to the landing point.
       // Do not let the descending track pull the cart down before its jump arc ends.
-      const flightBaseY = state.takeoffY + (state.landingY - state.takeoffY) * progress;
       state.airHeight = Math.sin(progress * Math.PI) * state.jumpHeight;
-      const flightY = flightBaseY + state.airHeight;
       if (state.holding) state.spin += dt * Math.PI * 2 * 1.65;
       if (progress >= 1) {
         state.airHeight = 0;
