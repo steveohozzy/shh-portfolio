@@ -214,6 +214,12 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     addRampDeck(landing, end);
   });
   const isInJumpGap = (distance: number) => jumpGaps.some(([from, to]) => distance >= from && distance <= to);
+  // The solid yellow ramp deck is the running surface on the hill. Do not
+  // place flat sleepers over it or they visually flatten the take-off slope.
+  const isOnRampDeck = (distance: number) => hillSections.some(({ start, crest, end }) => {
+    const landing = crest + jumpGapLength;
+    return (distance >= start && distance <= crest) || (distance >= landing && distance <= end);
+  });
   const railRanges: number[][] = [];
   let railCursor = 0;
   jumpGaps.forEach(([from, to]) => {
@@ -247,7 +253,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   let lightCount = 0, darkCount = 0;
   for (let i = 0; i < 760; i++) {
     const d = (length * i) / 759;
-    if (isInJumpGap(d)) continue;
+    if (isInJumpGap(d) || isOnRampDeck(d)) continue;
     const u = course.getUtoTmapping(0, d);
     const p = course.getPointAt(u);
     const f = frameAt(Math.min(segments, Math.round(u * segments)));
@@ -384,9 +390,12 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
         state.speed = Math.max(0, state.speed);
       }
       state.distance += state.speed * dt;
-      if (!state.airborne && state.speed >= 12) {
-        const launch = jumpTriggers.find((crest) => previousDistance < crest && state.distance >= crest);
+      if (!state.airborne) {
+        // Trigger from the hill's actual brow. Use an inclusive crossing so a
+        // frame landing exactly on the crest cannot miss the launch.
+        const launch = jumpTriggers.find((crest) => previousDistance <= crest && state.distance >= crest && state.speed >= 8);
         if (launch !== undefined) {
+          state.distance = launch;
           state.airborne = true;
           state.airHeight = 0;
           state.airElapsed = 0;
