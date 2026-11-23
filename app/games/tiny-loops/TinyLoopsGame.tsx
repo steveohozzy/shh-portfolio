@@ -97,11 +97,17 @@ function makeCourse(T: any) {
   curve.arcLengthDivisions = 3000;
   curve.updateArcLengths();
   const courseLength = curve.getLength();
+  const sampledLengths = curve.getLengths(curve.arcLengthDivisions);
   (curve as any).hillCrestDistances = hillCrestIndices.map((pointIndex) => {
-    // Map the exact authored hill point to its distance along the curve. A nearest-point
-    // search is ambiguous on loops where separate track sections pass close together.
-    const curveParameter = pointIndex / (points.length - 1);
-    return curve.getUtoTmapping(curveParameter) * courseLength;
+    // Convert the hill's curve parameter into its real travelled distance. getUtoTmapping()
+    // works in the opposite direction (distance fraction -> curve parameter), so using it
+    // here shifts launch triggers far away from their actual hilltops.
+    const curveParameter = (pointIndex / (points.length - 1)) * curve.arcLengthDivisions;
+    const lowerIndex = Math.floor(curveParameter);
+    const upperIndex = Math.min(curve.arcLengthDivisions, lowerIndex + 1);
+    const blend = curveParameter - lowerIndex;
+    return sampledLengths[lowerIndex] +
+      (sampledLengths[upperIndex] - sampledLengths[lowerIndex]) * blend;
   });
   return curve;
 }
