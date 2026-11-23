@@ -171,7 +171,6 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   // Build the take-off and landing ramps from solid, individually aligned
   // track sections. The open space between them is deliberately left empty.
   const rampMaterial = new T.MeshStandardMaterial({ color: 0xffc51e, roughness: 0.72 });
-  const rampSideMaterial = new T.MeshStandardMaterial({ color: 0xd68b12, roughness: 0.88 });
   const rampGeometry = new T.BoxGeometry(2.65, 0.42, 2.15);
   const addRampDeck = (from: number, to: number) => {
     const count = Math.max(4, Math.ceil((to - from) / 1.8));
