@@ -321,8 +321,11 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     const previousDistance = state.distance;
     if (state.status === "playing") {
       // The ride only advances while the player is holding. Releasing brakes the cart.
-      state.speed = Math.min(38, state.speed + (state.holding ? 26 : -12) * dt);
-      state.speed = Math.max(0, state.speed);
+      // Acceleration is for the run-up; in the air, hold controls the flip only.
+      if (!state.airborne) {
+        state.speed = Math.min(38, state.speed + (state.holding ? 26 : -12) * dt);
+        state.speed = Math.max(0, state.speed);
+      }
       state.distance += state.speed * dt;
       if (!state.airborne && state.speed >= 16) {
         const launch = jumpTriggers.find((crest) => previousDistance < crest && state.distance >= crest);
@@ -330,13 +333,13 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
           state.airborne = true;
           state.airHeight = 0;
           state.airElapsed = 0;
-          state.jumpDuration = Math.min(1.55, 0.95 + (state.speed - 16) * 0.022);
-          state.jumpHeight = 5 + state.speed * 0.19;
+          // Each jump spans the same clear gap: higher speed means a shorter,
+          // faster flight and a more powerful launch.
+          state.jumpDuration = Math.min(1.55, Math.max(0.68, 26 / state.speed));
+          state.jumpHeight = 4.5 + state.speed * 0.19;
           state.activeJumpEnd = Math.min(length - 2, launch + state.speed * state.jumpDuration);
           const takeoffPoint = course.getPointAt(course.getUtoTmapping(0, launch));
-          const landingPoint = course.getPointAt(course.getUtoTmapping(0, state.activeJumpEnd));
           state.takeoffY = takeoffPoint.y;
-          state.landingY = landingPoint.y;
           state.spin = 0;
         }
       }
@@ -378,7 +381,9 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     const frame = frameAt(index);
     if (state.airborne) {
       const progress = Math.min(1, state.airElapsed / state.jumpDuration);
-      point.y = state.takeoffY + (state.landingY - state.takeoffY) * progress + Math.sin(progress * Math.PI) * state.jumpHeight;
+      // Blend towards the track's actual height at the current distance so
+      // the wheels meet the landing track exactly as the jump finishes.
+      point.y = state.takeoffY + (point.y - state.takeoffY) * progress + Math.sin(progress * Math.PI) * state.jumpHeight;
     }
     cart.position.copy(point).addScaledVector(frame.normal, 0.25);
     const basis = new T.Matrix4().makeBasis(frame.side.clone().negate(), frame.normal, frame.tangent);
@@ -440,7 +445,6 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     state.airborne = false;
     state.airHeight = 0;
     state.takeoffY = 0;
-    state.landingY = 0;
     state.verticalVelocity = 0;
     state.airElapsed = 0;
     state.activeJumpEnd = 0;
