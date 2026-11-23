@@ -139,7 +139,7 @@ class LoopRushScene extends Phaser.Scene {
   private addLoop(entryX: number, y: number, radius: number) {
     const centerX = entryX;
     const centerY = y - radius;
-    const steps = 180;
+    const steps = Math.ceil((Math.PI * 2 * radius) / 5);
     for (let i = 1; i <= steps; i++) {
       const angle = Math.PI / 2 - (Math.PI * 2 * i) / steps;
       this.addPoint(centerX + Math.cos(angle) * radius, centerY + Math.sin(angle) * radius);
@@ -172,7 +172,14 @@ class LoopRushScene extends Phaser.Scene {
   }
 
   private buildLevel(index: number) {
-    const config = LEVELS[index % LEVELS.length];
+    const base = LEVELS[index % LEVELS.length];
+    const tier = Math.floor(index / LEVELS.length);
+    const config: Level = {
+      ...base,
+      pattern: base.pattern.concat(Array.from({ length: Math.min(tier, 5) }, (_, i) => i % 2 === 0 ? "jump" : "loop")),
+      minimumJumpSpeed: base.minimumJumpSpeed + tier * 20,
+      loopSpeed: base.loopSpeed + tier * 14,
+    };
     this.points = [{ x: 0, y: 365, airborne: false }];
     this.coins = [];
     this.coinCount = 0;
@@ -417,7 +424,7 @@ class LoopRushScene extends Phaser.Scene {
   }
 
   nextLevel() {
-    this.level = (this.level + 1) % LEVELS.length;
+    this.level += 1;
     this.holding = false;
     this.buildLevel(this.level);
     this.emit("ready");
