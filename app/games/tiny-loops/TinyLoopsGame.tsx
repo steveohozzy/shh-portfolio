@@ -42,13 +42,13 @@ function makeCourse(T: any) {
       const t = i / steps;
       // Make a recognisable take-off ramp: a long climb followed by a short
       // brow and a steeper drop. The launch point is the actual high point.
+      // A straight, clearly visible incline to a defined brow, followed
+      // by a steep drop into the section hidden by the jump gap.
       const rampProfile = launchable
-        ? (t <= 0.78
-          ? Math.sin((t / 0.78) * Math.PI * 0.5)
-          : Math.cos(((t - 0.78) / 0.22) * Math.PI * 0.5))
+        ? (t <= 0.55 ? t / 0.55 : Math.max(0, 1 - (t - 0.55) / 0.45))
         : Math.sin(Math.PI * t);
       add(from.clone().lerp(to, t).add(new T.Vector3(0, rampProfile * height, 0)));
-      if (launchable && i === Math.round(steps * 0.78)) hillCrestIndices.push(points.length - 1);
+      if (launchable && i === Math.round(steps * 0.55)) hillCrestIndices.push(points.length - 1);
     }
   };
   const bend = (control: any, to: any, steps = 56) => {
@@ -201,7 +201,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     const u = course.getUtoTmapping(0, d);
     const p = course.getPointAt(u);
     const f = frameAt(Math.min(segments, Math.round(u * segments)));
-    const matrix = new T.Matrix4().makeBasis(f.side.clone().negate(), f.normal, f.tangent);
+    const matrix = new T.Matrix4().makeBasis(f.side.clone().negate(), f.normal, f.forward);
     sleeperDummy.position.copy(p).addScaledVector(f.normal, 0.03);
     sleeperDummy.quaternion.setFromRotationMatrix(matrix);
     sleeperDummy.updateMatrix();
