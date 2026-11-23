@@ -4,18 +4,29 @@ import { useEffect, useRef, useState } from "react";
 import * as Phaser from "phaser";
 
 type GameState = "ready" | "playing" | "crashed" | "won";
-type GameEvent = { type: GameState; level: number; speed: number };
+type TrackPoint = { x: number; y: number; airborne: boolean };
+type Coin = { x: number; y: number; pointIndex: number; collected: boolean };
+type Level = { name: string; pattern: string[]; minimumJumpSpeed: number; loopSpeed: number };
+type GameEvent = { type: GameState; level: number; speed: number; coins: number; flips: number };
 
-const LEVELS = [
-  { name: "First Flight", loops: 1, hills: 2, target: 0.31 },
-  { name: "Double Trouble", loops: 2, hills: 2, target: 0.34 },
-  { name: "Sky High", loops: 2, hills: 3, target: 0.37 },
-  { name: "The Big Drop", loops: 3, hills: 2, target: 0.4 },
-  { name: "Loop Legend", loops: 3, hills: 3, target: 0.43 },
+const LEVELS: Level[] = [
+  { name: "First Run", pattern: ["hill", "jump"], minimumJumpSpeed: 250, loopSpeed: 180 },
+  { name: "Loop the Loop", pattern: ["loop", "hill", "jump"], minimumJumpSpeed: 270, loopSpeed: 205 },
+  { name: "Coin Chaser", pattern: ["jump", "hill", "loop"], minimumJumpSpeed: 285, loopSpeed: 210 },
+  { name: "Double Trouble", pattern: ["loop", "jump", "loop"], minimumJumpSpeed: 300, loopSpeed: 225 },
+  { name: "Big Air", pattern: ["hill", "jump", "jump"], minimumJumpSpeed: 315, loopSpeed: 225 },
+  { name: "The Corkscrew", pattern: ["loop", "hill", "loop", "jump"], minimumJumpSpeed: 330, loopSpeed: 240 },
+  { name: "High Voltage", pattern: ["jump", "loop", "jump", "hill"], minimumJumpSpeed: 345, loopSpeed: 250 },
+  { name: "Double Drop", pattern: ["dip", "jump", "loop", "jump"], minimumJumpSpeed: 360, loopSpeed: 260 },
+  { name: "Loop Fever", pattern: ["loop", "loop", "hill", "jump"], minimumJumpSpeed: 375, loopSpeed: 270 },
+  { name: "Sky Spinner", pattern: ["jump", "loop", "jump", "loop", "jump"], minimumJumpSpeed: 390, loopSpeed: 280 },
+  { name: "Full Throttle", pattern: ["dip", "loop", "jump", "loop", "jump"], minimumJumpSpeed: 405, loopSpeed: 290 },
+  { name: "Tiny Loops", pattern: ["loop", "jump", "loop", "dip", "jump", "loop"], minimumJumpSpeed: 420, loopSpeed: 300 },
 ];
 
 class LoopRushScene extends Phaser.Scene {
-  private points: Phaser.Math.Vector2[] = [];
+  private points: TrackPoint[] = [];
+  private coins: Coin[] = [];
   private progress = 0;
   private speed = 0;
   private holding = false;
@@ -24,11 +35,16 @@ class LoopRushScene extends Phaser.Scene {
   private cart!: Phaser.GameObjects.Container;
   private track!: Phaser.GameObjects.Graphics;
   private scenery!: Phaser.GameObjects.Graphics;
-  private hud!: Phaser.GameObjects.Graphics;
-  private onEvent: (event: GameEvent) => void;
-  private lastEvent = 0;
+  private coinGraphics!: Phaser.GameObjects.Graphics;
+  private progressGraphics!: Phaser.GameObjects.Graphics;
   private cameraX = 0;
-  private crashY = 0;
+  private airSpin = 0;
+  private airSpinVelocity = 0;
+  private flips = 0;
+  private coinCount = 0;
+  private lastEvent = 0;
+  private lastAirborne = false;
+  private onEvent: (event: GameEvent) => void;
 
   constructor(onEvent: (event: GameEvent) => void) {
     super("LoopRush");
@@ -36,185 +52,358 @@ class LoopRushScene extends Phaser.Scene {
   }
 
   create() {
-    this.cameras.main.setBackgroundColor("#bdeaff");
-    this.track = this.add.graphics();
+    this.cameras.main.setBackgroundColor("#9edcf3");
     this.scenery = this.add.graphics();
-    this.hud = this.add.graphics();
+    this.track = this.add.graphics();
+    this.coinGraphics = this.add.graphics();
+    this.progressGraphics = this.add.graphics();
     this.cart = this.add.container(0, 0);
-    const shadow = this.add.ellipse(0, 15, 56, 13, 0x365b70, 0.2);
-    const body = this.add.rectangle(0, 0, 48, 23, 0xff704d, 1).setStrokeStyle(3, 0x8f342d);
-    body.setOrigin(0.5);
-    const seat = this.add.rectangle(-3, -12, 19, 9, 0x263b54);
-    const head = this.add.circle(7, -24, 10, 0xffd2a3).setStrokeStyle(2, 0x9c684b);
-    const helmet = this.add.arc(7, -27, 11, 190, 350, false, 0x4d54c7).setStrokeStyle(5, 0x30378f);
-    const wheel1 = this.add.circle(-15, 13, 7, 0x253348).setStrokeStyle(2, 0xffffff);
-    const wheel2 = this.add.circle(15, 13, 7, 0x253348).setStrokeStyle(2, 0xffffff);
-    this.cart.add([shadow, body, seat, head, helmet, wheel1, wheel2]);
+
+    const wheels = this.add.graphics();
+    wheels.fillStyle(0x25364a, 1);
+    wheels.fillCircle(-17, 10, 8);
+    wheels.fillCircle(17, 10, 8);
+    wheels.lineStyle(2, 0xffffff, 0.9);
+    wheels.strokeCircle(-17, 10, 5);
+    wheels.strokeCircle(17, 10, 5);
+    const chassis = this.add.graphics();
+    chassis.fillStyle(0xf05d45, 1);
+    chassis.fillRoundedRect(-27, -7, 54, 19, 6);
+    chassis.lineStyle(3, 0x8f342d, 1);
+    chassis.strokeRoundedRect(-27, -7, 54, 19, 6);
+    chassis.fillStyle(0x263b54, 1);
+    chassis.fillRoundedRect(-11, -19, 22, 14, 4);
+    const rider = this.add.graphics();
+    rider.fillStyle(0xffd0a0, 1);
+    rider.fillCircle(7, -29, 10);
+    rider.lineStyle(2, 0x9c684b, 1);
+    rider.strokeCircle(7, -29, 10);
+    rider.fillStyle(0x4d54c7, 1);
+    rider.fillRoundedRect(-3, -41, 21, 9, 5);
+    rider.fillStyle(0x25364a, 1);
+    rider.fillRect(5, -16, 5, 13);
+    this.cart.add([wheels, chassis, rider]);
+
     this.buildLevel(0);
-    this.input.on("pointerdown", () => { if (this.state === "ready" || this.state === "playing") { this.holding = true; if (this.state === "ready") this.startRun(); } });
+    this.input.on("pointerdown", () => {
+      if (this.state === "ready" || this.state === "playing") {
+        this.holding = true;
+        if (this.state === "ready") this.startRun();
+      }
+    });
     this.input.on("pointerup", () => { this.holding = false; });
     this.input.on("pointerupoutside", () => { this.holding = false; });
+    this.input.on("gameout", () => { this.holding = false; });
     this.scale.on("resize", () => this.drawScene());
+    this.game.canvas.addEventListener("contextmenu", (event) => event.preventDefault());
     this.drawScene();
     this.emit("ready");
   }
 
   private emit(type: GameState) {
     this.state = type;
-    this.onEvent({ type, level: this.level, speed: this.speed });
+    this.onEvent({ type, level: this.level, speed: this.speed, coins: this.coinCount, flips: this.flips });
   }
 
-  private addLine(x1: number, y1: number, x2: number, y2: number, count = 35) {
-    for (let i = 1; i <= count; i++) {
-      const t = i / count;
-      this.points.push(new Phaser.Math.Vector2(Phaser.Math.Linear(x1, x2, t), Phaser.Math.Linear(y1, y2, t)));
+  private addPoint(x: number, y: number, airborne = false) {
+    this.points.push({ x, y, airborne });
+  }
+
+  private addLine(x1: number, y1: number, x2: number, y2: number, airborne = false) {
+    const length = Math.hypot(x2 - x1, y2 - y1);
+    const steps = Math.max(2, Math.ceil(length / 5));
+    for (let i = 1; i <= steps; i++) {
+      const t = i / steps;
+      this.addPoint(Phaser.Math.Linear(x1, x2, t), Phaser.Math.Linear(y1, y2, t), airborne);
     }
   }
 
-  private addLoop(cx: number, cy: number, radius: number) {
-    for (let i = 1; i <= 110; i++) {
-      const a = Math.PI + (Math.PI * 2 * i) / 110;
-      this.points.push(new Phaser.Math.Vector2(cx + Math.cos(a) * radius, cy + Math.sin(a) * radius));
+  private addHill(x: number, baseY: number, width: number, height: number) {
+    const steps = Math.ceil(width / 5);
+    for (let i = 1; i <= steps; i++) {
+      const t = i / steps;
+      this.addPoint(x + width * t, baseY - Math.sin(t * Math.PI) * height);
     }
+    return x + width;
   }
 
-  private addHill(x: number, width: number, height: number, baseY: number) {
-    for (let i = 1; i <= 45; i++) {
-      const t = i / 45;
-      this.points.push(new Phaser.Math.Vector2(x + width * t, baseY - Math.sin(t * Math.PI) * height));
+  private addDip(x: number, baseY: number, width: number, depth: number) {
+    const steps = Math.ceil(width / 5);
+    for (let i = 1; i <= steps; i++) {
+      const t = i / steps;
+      this.addPoint(x + width * t, baseY + Math.sin(t * Math.PI) * depth);
+    }
+    return x + width;
+  }
+
+  private addLoop(startX: number, y: number, radius: number) {
+    const centerX = startX + radius;
+    const centerY = y - radius;
+    const steps = 180;
+    for (let i = 1; i <= steps; i++) {
+      const angle = Math.PI / 2 - (Math.PI * 2 * i) / steps;
+      this.addPoint(centerX + Math.cos(angle) * radius, centerY + Math.sin(angle) * radius);
+    }
+    return startX + radius * 2;
+  }
+
+  private addJump(x: number, y: number, width: number, height: number) {
+    const rampLength = 75;
+    this.addLine(x, y, x + rampLength, y - 28);
+    const launchX = x + rampLength;
+    const landingX = x + width;
+    const flightWidth = landingX - launchX;
+    const steps = Math.ceil(flightWidth / 5);
+    for (let i = 1; i <= steps; i++) {
+      const t = i / steps;
+      const arc = Math.sin(t * Math.PI);
+      this.addPoint(launchX + flightWidth * t, y - 28 - arc * height, true);
+    }
+    this.addLine(landingX, y, landingX + 110, y);
+    return landingX + 110;
+  }
+
+  private addCoins(start: number, end: number, count: number, lift = 52) {
+    for (let i = 0; i < count; i++) {
+      const index = Math.round(Phaser.Math.Linear(start, end, (i + 1) / (count + 1)));
+      const point = this.points[index];
+      if (point) this.coins.push({ x: point.x, y: point.y - lift, pointIndex: index, collected: false });
     }
   }
 
   private buildLevel(index: number) {
     const config = LEVELS[index % LEVELS.length];
-    this.points = [new Phaser.Math.Vector2(0, 430)];
-    let x = 0;
-    const y = 430;
-    this.addLine(x, y, 380, y); x = 380;
-    for (let i = 0; i < config.loops; i++) {
-      this.addLoop(x + 150, y, 150);
-      x += 300;
-      this.addLine(x, y, x + 100, y + 35); x += 100;
-      this.addLine(x, y + 35, x + 180, y + 35); x += 180;
-      if (i < config.hills) { this.addHill(x, 260, 95 + i * 12, y + 35); x += 260; }
-      this.addLine(x, y + 35, x + 180, y); x += 180;
-    }
-    this.addLine(x, y, x + 700, y);
+    this.points = [{ x: 0, y: 365, airborne: false }];
+    this.coins = [];
+    this.coinCount = 0;
+    this.flips = 0;
     this.progress = 0;
     this.speed = 0;
+    this.airSpin = 0;
+    this.airSpinVelocity = 0;
+    this.lastAirborne = false;
+
+    let x = 0;
+    let y = 365;
+    this.addLine(x, y, x + 250, y);
+    x += 250;
+    for (let i = 0; i < config.pattern.length; i++) {
+      const feature = config.pattern[i];
+      const start = this.points.length;
+      if (feature === "loop") {
+        this.addLine(x, y, x + 100, y);
+        x += 100;
+        x = this.addLoop(x, y, 100);
+        this.addLine(x, y, x + 130, y);
+        x += 130;
+      } else if (feature === "hill") {
+        x = this.addHill(x, y, 280, 105 + (index % 3) * 12);
+        this.addLine(x, y, x + 100, y);
+        x += 100;
+      } else if (feature === "dip") {
+        x = this.addDip(x, y, 270, 105 + (index % 3) * 12);
+        this.addLine(x, y, x + 100, y);
+        x += 100;
+      } else {
+        x = this.addJump(x, y, 420 + (index % 3) * 35, 125 + (index % 4) * 15);
+      }
+      this.addCoins(start, this.points.length - 1, feature === "loop" ? 7 : 5, feature === "jump" ? 78 : 48);
+    }
+    this.addLine(x, y, x + 520, y);
+    this.addCoins(this.points.length - 170, this.points.length - 5, 9, 50);
     this.cameraX = 0;
     this.drawScene();
   }
 
   private startRun() {
     this.progress = 0;
-    this.speed = 180;
+    this.speed = 190;
     this.emit("playing");
   }
 
-  private sample(position: number) {
+  private sample(position: number): TrackPoint {
     const i = Phaser.Math.Clamp(Math.floor(position), 0, this.points.length - 2);
     const t = Phaser.Math.Clamp(position - i, 0, 1);
-    const from = this.points[i];
-    const to = this.points[i + 1];
+    const a = this.points[i];
+    const b = this.points[i + 1];
+    return {
+      x: Phaser.Math.Linear(a.x, b.x, t),
+      y: Phaser.Math.Linear(a.y, b.y, t),
+      airborne: t < 0.5 ? a.airborne : b.airborne,
+    };
+  }
 
-    return new Phaser.Math.Vector2(
-      Phaser.Math.Linear(from.x, to.x, t),
-      Phaser.Math.Linear(from.y, to.y, t)
-    );
+  private drawBackground(width: number, height: number) {
+    this.scenery.clear();
+    this.scenery.fillGradientStyle(0x8ed5f0, 0x8ed5f0, 0xd6f4ff, 0xd6f4ff, 1);
+    this.scenery.fillRect(0, 0, width, height);
+    const scale = Math.min(width / 960, height / 540, 1.25);
+    const groundY = height * 0.78;
+    this.scenery.fillStyle(0xffffff, 0.55);
+    for (let i = 0; i < 7; i++) {
+      const cloudX = ((i * 203 + 80 - this.cameraX * 0.16) % (width + 220) + width + 220) % (width + 220) - 110;
+      const cloudY = 55 + (i % 3) * 45;
+      this.scenery.fillCircle(cloudX, cloudY, 23 * scale);
+      this.scenery.fillCircle(cloudX + 24 * scale, cloudY - 8 * scale, 29 * scale);
+      this.scenery.fillCircle(cloudX + 53 * scale, cloudY + 2 * scale, 21 * scale);
+    }
+    this.scenery.fillStyle(0x82d69a, 1);
+    this.scenery.fillRect(0, groundY, width, height - groundY);
+    this.scenery.fillStyle(0x5cbd7a, 1);
+    this.scenery.fillRect(0, groundY, width, 8 * scale);
+    for (let i = 0; i < 12; i++) {
+      const treeX = ((i * 137 + 20 - this.cameraX * 0.35) % (width + 160) + width + 160) % (width + 160) - 80;
+      const treeY = groundY - (i % 3) * 13 * scale;
+      this.scenery.fillStyle(0x4b9d70, 1);
+      this.scenery.fillTriangle(treeX, treeY - 70 * scale, treeX - 28 * scale, treeY, treeX + 28 * scale, treeY);
+    }
   }
 
   private drawScene() {
     const width = this.scale.width;
     const height = this.scale.height;
-    this.scenery.clear();
-    this.scenery.fillStyle(0xffffff, 0.34);
-    for (let i = 0; i < 9; i++) {
-      const x = ((i * 177 + 50 - this.cameraX * 0.22) % (width + 160) + width + 160) % (width + 160) - 80;
-      this.scenery.fillCircle(x, 90 + (i % 3) * 48, 25 + (i % 3) * 7);
-      this.scenery.fillCircle(x + 25, 92 + (i % 3) * 48, 32 + (i % 3) * 5);
-    }
-    this.scenery.fillStyle(0x83d8a0);
-    this.scenery.fillRect(0, height - 55, width, 55);
+    const scale = Math.min(width / 960, height / 540, 1.25);
+    const baseY = height * 0.56;
+    const screenX = width * 0.24;
+    const screenY = (worldY: number) => baseY + (worldY - 365) * scale;
+    this.drawBackground(width, height);
+
     this.track.clear();
-    const scale = Math.min(width / 820, height / 560, 1.15);
-    const offsetY = height * 0.56 - 430 * scale;
-    const start = Math.max(0, Math.floor(this.progress - 100));
-    const end = Math.min(this.points.length - 1, start + Math.ceil(width / scale) + 180);
-    this.track.lineStyle(17 * scale, 0x314d68, 1);
+    const start = Math.max(0, Math.floor(this.progress - 180));
+    const end = Math.min(this.points.length - 1, start + Math.ceil(width / (5 * scale)) + 240);
+    let drawing = false;
+    this.track.lineStyle(16 * scale, 0x29435d, 1);
     this.track.beginPath();
     for (let i = start; i <= end; i++) {
-      const p = this.points[i];
-      const px = (p.x - this.cameraX) * scale + width * 0.24;
-      const py = p.y * scale + offsetY;
-      if (i === start) this.track.moveTo(px, py); else this.track.lineTo(px, py);
+      const point = this.points[i];
+      if (point.airborne) {
+        drawing = false;
+        continue;
+      }
+      const px = (point.x - this.cameraX) * scale + screenX;
+      const py = screenY(point.y);
+      if (!drawing) { this.track.moveTo(px, py); drawing = true; }
+      else this.track.lineTo(px, py);
     }
     this.track.strokePath();
-    this.track.lineStyle(9 * scale, 0xffc64d, 1);
+
+    drawing = false;
+    this.track.lineStyle(8 * scale, 0xffc64d, 1);
     this.track.beginPath();
     for (let i = start; i <= end; i++) {
-      const p = this.points[i];
-      const px = (p.x - this.cameraX) * scale + width * 0.24;
-      const py = p.y * scale + offsetY;
-      if (i === start) this.track.moveTo(px, py); else this.track.lineTo(px, py);
+      const point = this.points[i];
+      if (point.airborne) { drawing = false; continue; }
+      const px = (point.x - this.cameraX) * scale + screenX;
+      const py = screenY(point.y);
+      if (!drawing) { this.track.moveTo(px, py); drawing = true; }
+      else this.track.lineTo(px, py);
     }
     this.track.strokePath();
-    this.track.lineStyle(3 * scale, 0xffffff, 0.75);
+
+    drawing = false;
+    this.track.lineStyle(2 * scale, 0xffffff, 0.8);
     this.track.beginPath();
-    for (let i = start; i <= end; i += 3) {
-      const p = this.points[i];
-      const px = (p.x - this.cameraX) * scale + width * 0.24;
-      const py = p.y * scale + offsetY - 5 * scale;
-      if (i === start) this.track.moveTo(px, py); else this.track.lineTo(px, py);
+    for (let i = start; i <= end; i += 2) {
+      const point = this.points[i];
+      if (point.airborne) { drawing = false; continue; }
+      const px = (point.x - this.cameraX) * scale + screenX;
+      const py = screenY(point.y) - 5 * scale;
+      if (!drawing) { this.track.moveTo(px, py); drawing = true; }
+      else this.track.lineTo(px, py);
     }
     this.track.strokePath();
+
+    this.coinGraphics.clear();
+    this.coins.forEach((coin) => {
+      if (coin.collected || coin.x < this.cameraX - 40 || coin.x > this.cameraX + width / scale + 80) return;
+      const cx = (coin.x - this.cameraX) * scale + screenX;
+      const cy = screenY(coin.y);
+      this.coinGraphics.fillStyle(0xb87819, 1);
+      this.coinGraphics.fillCircle(cx, cy, 10 * scale);
+      this.coinGraphics.fillStyle(0xffd84e, 1);
+      this.coinGraphics.fillCircle(cx, cy, 7 * scale);
+      this.coinGraphics.fillStyle(0xfff3a4, 1);
+      this.coinGraphics.fillCircle(cx - 2 * scale, cy - 3 * scale, 2 * scale);
+    });
+
+    this.progressGraphics.clear();
+    this.progressGraphics.fillStyle(0x20364c, 0.25);
+    this.progressGraphics.fillRoundedRect(width * 0.34, 18, width * 0.32, 7, 4);
+    this.progressGraphics.fillStyle(0xffc64d, 1);
+    const ratio = this.progress / Math.max(1, this.points.length - 1);
+    this.progressGraphics.fillRoundedRect(width * 0.34, 18, width * 0.32 * ratio, 7, 4);
   }
 
-  update(_time: number, delta: number) {
+  update(time: number, delta: number) {
     const dt = Math.min(delta / 1000, 0.035);
     if (this.state === "playing") {
       const current = this.sample(this.progress);
-      const next = this.sample(this.progress + 1);
-      const tangent = next.clone().subtract(current).normalize();
-      const gravity = -440 * tangent.y;
-      this.speed += (this.holding ? 520 : -70) * dt;
-      this.speed += gravity * dt;
-      this.speed = Phaser.Math.Clamp(this.speed, 0, 760);
-      this.progress += this.speed * dt / 12;
-      const p = this.sample(this.progress);
-      const angle = Math.atan2(next.y - current.y, next.x - current.x);
-      this.cameraX = Math.max(0, p.x - 300);
-      const width = this.scale.width;
-      const height = this.scale.height;
-      const scale = Math.min(width / 820, height / 560, 1.15);
-      const offsetY = height * 0.56 - 430 * scale;
-      this.cart.setPosition(width * 0.24, p.y * scale + offsetY - 12 * scale);
-      this.cart.setScale(scale);
-      this.cart.setRotation(angle);
-      if (this.progress >= this.points.length - 3) {
-        this.emit("won");
-      } else if (this.speed < 65 && this.progress > 20) {
-        this.crashY = p.y;
-        this.emit("crashed");
-      } else {
-        const loopZone = this.points[Math.floor(this.progress)];
-        if (loopZone && p.y < 300 && this.speed < 185) {
+      const ahead = this.sample(Math.min(this.points.length - 2, this.progress + 1));
+      const tangentX = ahead.x - current.x;
+      const tangentY = ahead.y - current.y;
+      const tangentLength = Math.max(0.001, Math.hypot(tangentX, tangentY));
+      const tangentAngle = Math.atan2(tangentY, tangentX);
+      const previousSpeed = this.speed;
+
+      this.speed += (this.holding ? 300 : -82) * dt;
+      this.speed += (tangentY / tangentLength) * 390 * dt;
+      this.speed = Phaser.Math.Clamp(this.speed, 0, 790);
+      this.progress += (this.speed * dt) / 5;
+
+      const position = this.sample(this.progress);
+      const next = this.sample(Math.min(this.points.length - 2, this.progress + 1));
+      const isAirborne = position.airborne;
+      if (isAirborne) {
+        this.airSpinVelocity += (this.holding ? 8.2 : -5.5) * dt;
+        this.airSpinVelocity = Phaser.Math.Clamp(this.airSpinVelocity, -7, 9);
+        this.airSpin += this.airSpinVelocity * dt;
+      } else if (this.lastAirborne) {
+        const completedFlips = Math.floor(Math.abs(this.airSpin) / (Math.PI * 2));
+        const remainder = Math.atan2(Math.sin(this.airSpin), Math.cos(this.airSpin));
+        const levelConfig = LEVELS[this.level % LEVELS.length];
+        if (this.speed < levelConfig.minimumJumpSpeed * 0.62 || Math.abs(remainder) > 1.12) {
           this.emit("crashed");
+        } else {
+          this.flips += completedFlips;
+          this.airSpin = 0;
+          this.airSpinVelocity = 0;
         }
       }
-      if (_time - this.lastEvent > 120) {
-        this.lastEvent = _time;
-        this.onEvent({ type: "playing", level: this.level, speed: this.speed });
-      }
-      this.drawScene();
-    }
-    if (this.state === "ready") {
-      const p = this.sample(0);
-      const scale = Math.min(this.scale.width / 820, this.scale.height / 560, 1.15);
-      this.cart.setPosition(this.scale.width * 0.24, p.y * scale + this.scale.height * 0.56 - 430 * scale - 12);
+      this.lastAirborne = isAirborne;
+
+      const angle = Math.atan2(next.y - position.y, next.x - position.x);
+      const width = this.scale.width;
+      const height = this.scale.height;
+      const scale = Math.min(width / 960, height / 540, 1.25);
+      this.cameraX = Math.max(0, position.x - 300);
+      this.cart.setPosition(width * 0.24, height * 0.56 + (position.y - 365) * scale);
       this.cart.setScale(scale);
-    }
-    if (this.state === "crashed") {
+      this.cart.setRotation(isAirborne ? angle + this.airSpin : angle);
+
+      this.coins.forEach((coin) => {
+        if (!coin.collected && Math.abs(coin.pointIndex - this.progress) < 3) {
+          coin.collected = true;
+          this.coinCount += 1;
+        }
+      });
+
+      const levelConfig = LEVELS[this.level % LEVELS.length];
+      if (!isAirborne && this.progress > 30 && this.speed < 70) this.emit("crashed");
+      if (!isAirborne && this.speed < levelConfig.loopSpeed && position.y < 270 && this.progress > 40) this.emit("crashed");
+      if (this.progress >= this.points.length - 3) this.emit("won");
+
+      if (this.state === "playing" && time - this.lastEvent > 100) {
+        this.lastEvent = time;
+        this.onEvent({ type: "playing", level: this.level, speed: this.speed, coins: this.coinCount, flips: this.flips });
+      }
+      if (this.state === "playing" && previousSpeed > 0) this.drawScene();
+    } else if (this.state === "ready") {
+      const point = this.sample(0);
+      const scale = Math.min(this.scale.width / 960, this.scale.height / 540, 1.25);
+      this.cart.setPosition(this.scale.width * 0.24, this.scale.height * 0.56 + (point.y - 365) * scale);
+      this.cart.setScale(scale);
+      this.cart.setRotation(0);
+    } else if (this.state === "crashed") {
       this.cart.y += 260 * dt;
       this.cart.rotation += 2.8 * dt;
     }
@@ -241,6 +430,8 @@ export default function TinyLoopsGame() {
   const [gameState, setGameState] = useState<GameState>("ready");
   const [level, setLevel] = useState(0);
   const [speed, setSpeed] = useState(0);
+  const [coins, setCoins] = useState(0);
+  const [flips, setFlips] = useState(0);
 
   useEffect(() => {
     if (!mountRef.current) return;
@@ -248,11 +439,13 @@ export default function TinyLoopsGame() {
       setGameState(event.type);
       setLevel(event.level);
       setSpeed(event.speed);
+      setCoins(event.coins);
+      setFlips(event.flips);
     });
     const game = new Phaser.Game({
       type: Phaser.CANVAS,
       parent: mountRef.current,
-      backgroundColor: "#bdeaff",
+      backgroundColor: "#9edcf3",
       scale: { mode: Phaser.Scale.RESIZE, width: 960, height: 540, autoCenter: Phaser.Scale.CENTER_BOTH },
       render: { antialias: true, pixelArt: false },
       scene: [scene],
@@ -273,17 +466,21 @@ export default function TinyLoopsGame() {
       </header>
       <section className="loop-rush-shell">
         <div className="loop-rush-heading">
-          <div><span className="loop-rush-kicker">ONE TOUCH. BIG AIR.</span><h1>LOOP RUSH</h1><p>Hold to power up. Release to coast. Make every loop.</p></div>
+          <div><span className="loop-rush-kicker">ONE TOUCH. BIG AIR.</span><h1>TINY LOOPS</h1><p>Hold to build speed. Release to control your flips and landings.</p></div>
           <div className="loop-rush-level"><span>LEVEL {String(level + 1).padStart(2, "0")}</span><b>{levelName}</b></div>
         </div>
         <div className="loop-rush-game-frame">
           <div ref={mountRef} className="loop-rush-canvas" />
-          <div className="loop-rush-hud"><span>⚡ {Math.round(speed)} km/h</span><span>HOLD TO ACCELERATE</span></div>
-          {gameState === "ready" && <div className="loop-rush-overlay"><span className="loop-rush-pill">READY?</span><h2>LET'S RIDE</h2><p>Touch and hold anywhere to get moving.</p><button onClick={start}>START RIDE <span>→</span></button></div>}
-          {gameState === "crashed" && <div className="loop-rush-overlay"><span className="loop-rush-pill">OOPS!</span><h2>WIPEOUT</h2><p>You need a little more speed to clear that stunt.</p><button onClick={start}>TRY AGAIN <span>↻</span></button></div>}
-          {gameState === "won" && <div className="loop-rush-overlay"><span className="loop-rush-pill">NICE ONE!</span><h2>TRACK CLEARED</h2><p>You made it to the finish. Ready for the next track?</p><button onClick={next}>NEXT LEVEL <span>→</span></button></div>}
+          <div className="loop-rush-hud">
+            <span>⚡ {Math.round(speed)} SPEED</span>
+            <span>🟡 {coins} COINS</span>
+            <span>↻ {flips} FLIPS</span>
+          </div>
+          {gameState === "ready" && <div className="loop-rush-overlay"><span className="loop-rush-pill">READY?</span><h2>LET'S RIDE</h2><p>Press and hold to accelerate. Release to coast and control your flips.</p><button onClick={start}>START RIDE <span>→</span></button></div>}
+          {gameState === "crashed" && <div className="loop-rush-overlay"><span className="loop-rush-pill">WIPEOUT</span><h2>TRY AGAIN</h2><p>Build enough speed and time your release to land safely.</p><button onClick={start}>RETRY LEVEL <span>↻</span></button></div>}
+          {gameState === "won" && <div className="loop-rush-overlay"><span className="loop-rush-pill">TRACK CLEARED</span><h2>NICE FLIGHT!</h2><p>You collected {coins} coins and landed {flips} flips.</p><button onClick={next}>NEXT LEVEL <span>→</span></button></div>}
         </div>
-        <div className="loop-rush-controls"><span><i className="loop-rush-dot" /> PRESS & HOLD TO ACCELERATE</span><span>RELEASE TO COAST</span><span>DON'T LOSE YOUR MOMENTUM</span></div>
+        <div className="loop-rush-controls"><span><i className="loop-rush-dot" /> PRESS & HOLD TO ACCELERATE</span><span>RELEASE TO BRAKE THE SPIN</span><span>LAND UPRIGHT TO SURVIVE</span></div>
       </section>
       <footer className="loop-rush-footer">A LITTLE ARCADE FUN BY <b>SHH DESIGN</b></footer>
     </main>
