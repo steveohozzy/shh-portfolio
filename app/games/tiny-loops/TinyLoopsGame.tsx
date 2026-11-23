@@ -147,7 +147,7 @@ class LoopRushScene extends Phaser.Scene {
     for (let i = 1; i <= flightSteps; i++) {
       const t = i / flightSteps;
       const smooth = t * t * (3 - 2 * t);
-      const airtimeArc = Math.pow(Math.sin(Math.PI * t), 0.72) * height * 1.75;
+      const airtimeArc = 4 * t * (1 - t) * height * 1.75;
       this.addPoint(launchX + flightWidth * t, launchY + height * smooth - airtimeArc, true);
     }
     return landingX;
@@ -369,6 +369,50 @@ class LoopRushScene extends Phaser.Scene {
     }
     this.track.strokePath();
 
+    // Twin rails and cross ties give the track a proper rollercoaster
+    // silhouette instead of a single flat line.
+    this.track.lineStyle(4 * scale, 0x71869a, 1);
+    for (const side of [-1, 1]) {
+      drawing = false;
+      this.track.beginPath();
+      for (let i = start; i <= end; i++) {
+        const point = this.points[i];
+        if (point.airborne) { drawing = false; continue; }
+        const previous = this.points[Math.max(start, i - 1)];
+        const next = this.points[Math.min(end, i + 1)];
+        const ax = screenX(previous.x, previous.z);
+        const ay = screenY(previous.y, previous.z);
+        const bx = screenX(next.x, next.z);
+        const by = screenY(next.y, next.z);
+        const length = Math.max(1, Math.hypot(bx - ax, by - ay));
+        const nx = -(by - ay) / length;
+        const ny = (bx - ax) / length;
+        const px = screenX(point.x, point.z) + nx * 10 * scale * side;
+        const py = screenY(point.y, point.z) + ny * 10 * scale * side;
+        if (!drawing) { this.track.moveTo(px, py); drawing = true; }
+        else this.track.lineTo(px, py);
+      }
+      this.track.strokePath();
+    }
+
+    this.track.lineStyle(3 * scale, 0xdce8ef, 0.9);
+    for (let i = start + 4; i <= end; i += 12) {
+      const point = this.points[i];
+      const previous = this.points[Math.max(start, i - 1)];
+      const next = this.points[Math.min(end, i + 1)];
+      if (!point || point.airborne || !previous || !next) continue;
+      const ax = screenX(previous.x, previous.z);
+      const ay = screenY(previous.y, previous.z);
+      const bx = screenX(next.x, next.z);
+      const by = screenY(next.y, next.z);
+      const length = Math.max(1, Math.hypot(bx - ax, by - ay));
+      const nx = -(by - ay) / length;
+      const ny = (bx - ax) / length;
+      const cx = screenX(point.x, point.z);
+      const cy = screenY(point.y, point.z);
+      this.track.lineBetween(cx - nx * 16 * scale, cy - ny * 16 * scale, cx + nx * 16 * scale, cy + ny * 16 * scale);
+    }
+
     drawing = false;
     this.track.lineStyle(8 * scale, 0xffc64d, 1);
     this.track.beginPath();
@@ -464,7 +508,7 @@ class LoopRushScene extends Phaser.Scene {
       if (isAirborne) {
         // Tiny Loops uses one action in the air: keep holding to backflip.
         // Releasing freezes rotation immediately so the player can prepare to land.
-        if (this.holding) this.airSpin -= Math.PI * 2 * 1.65 * dt;
+        if (this.holding) this.airSpin -= Math.PI * 2 * 0.95 * dt;
       } else if (wasAirborne) {
         const completedFlips = Math.floor(Math.abs(this.airSpin) / (Math.PI * 2));
         const landingError = Math.atan2(
