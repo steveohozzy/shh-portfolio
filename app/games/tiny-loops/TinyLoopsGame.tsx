@@ -40,8 +40,15 @@ function makeCourse(T: any) {
     const from = points[points.length - 1];
     for (let i = 1; i <= steps; i++) {
       const t = i / steps;
-      add(from.clone().lerp(to, t).add(new T.Vector3(0, Math.sin(Math.PI * t) * height, 0)));
-      if (launchable && i === Math.round(steps / 2)) hillCrestIndices.push(points.length - 1);
+      // Make a recognisable take-off ramp: a long climb followed by a short
+      // brow and a steeper drop. The launch point is the actual high point.
+      const rampProfile = launchable
+        ? (t <= 0.78
+          ? Math.sin((t / 0.78) * Math.PI * 0.5)
+          : Math.cos(((t - 0.78) / 0.22) * Math.PI * 0.5))
+        : Math.sin(Math.PI * t);
+      add(from.clone().lerp(to, t).add(new T.Vector3(0, rampProfile * height, 0)));
+      if (launchable && i === Math.round(steps * 0.78)) hillCrestIndices.push(points.length - 1);
     }
   };
   const bend = (control: any, to: any, steps = 56) => {
@@ -99,6 +106,8 @@ function makeCourse(T: any) {
   curve.updateArcLengths();
   const sampledLengths = curve.getLengths(curve.arcLengthDivisions);
   (curve as any).hillCrestDistances = hillCrestIndices.map((pointIndex) => {
+    // CatmullRomCurve3's control-point parameter is uniform in t. Convert the
+    // crest's actual curve parameter to travelled metres using the arc table.
     const parameter = (pointIndex / (points.length - 1)) * curve.arcLengthDivisions;
     const lower = Math.floor(parameter);
     const upper = Math.min(curve.arcLengthDivisions, lower + 1);
@@ -312,20 +321,20 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
       // The ride only advances while the player is holding. Releasing brakes the cart.
       // Acceleration is for the run-up; in the air, hold controls the flip only.
       if (!state.airborne) {
-        state.speed = Math.min(38, state.speed + (state.holding ? 26 : -12) * dt);
+        state.speed = Math.min(54, state.speed + (state.holding ? 42 : -8) * dt);
         state.speed = Math.max(0, state.speed);
       }
       state.distance += state.speed * dt;
-      if (!state.airborne && state.speed >= 16) {
+      if (!state.airborne && state.speed >= 12) {
         const launch = jumpTriggers.find((crest) => previousDistance < crest && state.distance >= crest);
         if (launch !== undefined) {
           state.airborne = true;
           state.airHeight = 0;
           state.airElapsed = 0;
-          // Each jump spans the same clear gap: higher speed means a shorter,
-          // faster flight and a more powerful launch.
-          state.jumpDuration = Math.min(1.55, Math.max(0.68, 26 / state.speed));
-          state.jumpHeight = 4.5 + state.speed * 0.19;
+          // Give the cart enough airtime to visibly clear the downslope.
+          // Faster approaches travel further and get a slightly higher arc.
+          state.jumpDuration = Math.min(1.25, Math.max(0.95, 48 / state.speed));
+          state.jumpHeight = 7 + state.speed * 0.16;
           state.activeJumpEnd = Math.min(length - 2, launch + state.speed * state.jumpDuration);
           const takeoffPoint = course.getPointAt(course.getUtoTmapping(0, launch));
           state.takeoffY = takeoffPoint.y;
@@ -429,7 +438,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   const resetRun = () => {
     state.status = "playing";
     state.distance = 0;
-    state.speed = 12;
+    state.speed = 18;
     state.holding = false;
     state.flips = 0;
     state.spin = 0;
@@ -439,8 +448,8 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     state.takeoffY = 0;
     state.airElapsed = 0;
     state.activeJumpEnd = 0;
-    state.jumpDuration = 0.9;
-    state.jumpHeight = 5;
+    state.jumpDuration = 1.0;
+    state.jumpHeight = 9;
     state.lastTime = performance.now();
     coins.forEach((coin) => { coin.collected = false; coin.mesh.visible = true; });
     onHud({ speed: state.speed, coins: 0, flips: 0, status: "playing", airborne: false, holding: false, level: 1 });
