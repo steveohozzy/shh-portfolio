@@ -166,7 +166,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     const u = course.getUtoTmapping(0, d);
     const p = course.getPointAt(u);
     const f = frameAt(Math.min(segments, Math.round(u * segments)));
-    const matrix = new T.Matrix4().makeBasis(f.side, f.normal, f.tangent);
+    const matrix = new T.Matrix4().makeBasis(f.side.clone().negate(), f.normal, f.tangent);
     sleeperDummy.position.copy(p).addScaledVector(f.normal, 0.03);
     sleeperDummy.quaternion.setFromRotationMatrix(matrix);
     sleeperDummy.updateMatrix();
@@ -230,8 +230,11 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     wheel.position.set(x, 0.12, z);
     cart.add(wheel);
   }));
-  cart.scale.setScalar(3.1);
+  cart.scale.setScalar(1.15);
   scene.add(cart);
+  const baseCartQuaternion = new T.Quaternion();
+  const flipQuaternion = new T.Quaternion();
+  const flipAxis = new T.Vector3(1, 0, 0);
 
   const coinMat = new T.MeshStandardMaterial({ color: 0xffd52f, metalness: 0.75, roughness: 0.25, emissive: 0x6b4d00 });
   const coins: any[] = [];
@@ -299,9 +302,9 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
           state.speed = 0;
         }
         const completed = Math.floor(state.spin / (Math.PI * 2));
-        if (completed > state.flips) {
-          state.coins += (completed - state.flips) * 2;
-          state.flips = completed;
+        if (completed > 0) {
+          state.coins += completed * 2;
+          state.flips += completed;
         }
         state.spin = 0;
       }
@@ -313,12 +316,14 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     const index = Math.min(segments, Math.round(u * segments));
     const frame = frameAt(index);
     point.y += state.airHeight;
-    cart.position.copy(point).add(new T.Vector3(0, 0.72, 0));
-    const basis = new T.Matrix4().makeBasis(frame.side, frame.normal, frame.tangent);
-    cart.quaternion.setFromRotationMatrix(basis);
+    cart.position.copy(point).addScaledVector(frame.normal, 0.25);
+    const basis = new T.Matrix4().makeBasis(frame.side.clone().negate(), frame.normal, frame.tangent);
+    baseCartQuaternion.setFromRotationMatrix(basis);
+    cart.quaternion.copy(baseCartQuaternion);
     if (state.airborne) {
-      // The entire cart and rider rotate together around the direction of travel.
-      cart.rotateX(state.spin);
+      // Set the local pitch from the flight angle; do not accumulate rotation each frame.
+      flipQuaternion.setFromAxisAngle(flipAxis, -state.spin);
+      cart.quaternion.multiply(flipQuaternion);
     }
 
     // Keep the complete, enlarged cart visible in a stable third-person chase view.
@@ -348,9 +353,15 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   state.raf = requestAnimationFrame(animate);
 
   return {
-    start() { state.status = "playing"; state.speed = 0; state.distance = 0; state.airborne = false; state.airHeight = 0; state.verticalVelocity = 0; state.spin = 0; onHud({ speed: state.speed, coins: state.coins, flips: state.flips, status: state.status }); },
+    start() {
+      state.status = "playing"; state.distance = 0; state.speed = 8; state.holding = false;
+      state.flips = 0; state.spin = 0; state.coins = 0; state.airborne = false;
+      state.airHeight = 0; state.verticalVelocity = 0; state.airElapsed = 0; state.activeJumpEnd = 0;
+      coins.forEach((c) => { c.collected = false; c.mesh.visible = true; });
+      onHud({ speed: state.speed, coins: 0, flips: 0, status: state.status });
+    },
     restart() {
-      state.status = "playing"; state.distance = 0; state.speed = 0; state.holding = false;
+      state.status = "playing"; state.distance = 0; state.speed = 8; state.holding = false;
       state.flips = 0; state.spin = 0; state.coins = 0; state.airborne = false; state.airHeight = 0; state.verticalVelocity = 0; state.airElapsed = 0;
       coins.forEach((c) => { c.collected = false; c.mesh.visible = true; });
       onHud({ speed: state.speed, coins: 0, flips: 0, status: state.status });
@@ -399,7 +410,7 @@ export default function TinyLoopsGame() {
     };
   }, []);
 
-  const start = () => gameRef.current?.restart();
+  const start = () => gameRef.current?.start();
   const holdStart = (e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault();
     if (e.currentTarget.setPointerCapture) e.currentTarget.setPointerCapture(e.pointerId);
