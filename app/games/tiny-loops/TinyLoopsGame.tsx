@@ -391,23 +391,29 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
       }
       state.distance += state.speed * dt;
       if (!state.airborne) {
-        // Trigger from the hill's actual brow. Use an inclusive crossing so a
-        // frame landing exactly on the crest cannot miss the launch.
-        const launch = jumpTriggers.find((crest) => previousDistance <= crest && state.distance >= crest && state.speed >= 8);
+        // The cart must reach the lip with enough momentum to clear the gap.
+        // Crossing the brow too slowly is a failed jump, not an automatic flight.
+        const launch = jumpTriggers.find((crest) => previousDistance <= crest && state.distance >= crest);
         if (launch !== undefined) {
           state.distance = launch;
-          state.airborne = true;
-          state.airHeight = 0;
-          state.airElapsed = 0;
-          // Land at the far side of the actual visible track gap.
-          // The gap is fixed in course distance so the cart cannot land short
-          // or keep flying over the landing section at higher speeds.
-          state.activeJumpEnd = Math.min(length - 2, launch + jumpGapLength);
-          state.jumpDuration = Math.max(0.48, jumpGapLength / Math.max(1, state.speed));
-          state.jumpHeight = 7 + state.speed * 0.12;
-          const takeoffPoint = course.getPointAt(course.getUtoTmapping(0, launch));
-          state.takeoffY = takeoffPoint.y;
-          state.spin = 0;
+          if (state.speed < 24) {
+            state.status = "crashed";
+            state.speed = 0;
+            state.holding = false;
+          } else {
+            state.airborne = true;
+            state.airHeight = 0;
+            state.airElapsed = 0;
+            state.activeJumpEnd = Math.min(length - 2, launch + jumpGapLength);
+            // Flight time is tied to speed and the actual gap distance. Faster
+            // approaches cover the same gap in less time; there is no free
+            // minimum airtime that lets a slow cart magically clear it.
+            state.jumpDuration = jumpGapLength / Math.max(1, state.speed);
+            state.jumpHeight = 7 + state.speed * 0.12;
+            const takeoffPoint = course.getPointAt(course.getUtoTmapping(0, launch));
+            state.takeoffY = takeoffPoint.y;
+            state.spin = 0;
+          }
         }
       }
       if (state.distance >= length - 3) {
