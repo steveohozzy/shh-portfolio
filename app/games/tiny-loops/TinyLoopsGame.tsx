@@ -11,18 +11,18 @@ type Level = { name: string; pattern: string[]; minimumJumpSpeed: number; loopSp
 type GameEvent = { type: GameState; level: number; speed: number; coins: number; flips: number; score: number; carts: number; goldCarts: number; bonusCarts: number };
 
 const LEVELS: Level[] = [
-  { name: "First Run", pattern: ["hill", "bump", "dip", "jump", "hill", "loop", "jump"], minimumJumpSpeed: 220, loopSpeed: 160 },
-  { name: "Loop the Loop", pattern: ["loop", "hill", "bump", "jump", "dip", "hill", "loop", "jump"], minimumJumpSpeed: 230, loopSpeed: 175 },
-  { name: "Coin Chaser", pattern: ["jump", "hill", "loop", "bump", "dip", "jump", "hill", "loop"], minimumJumpSpeed: 240, loopSpeed: 185 },
-  { name: "Double Trouble", pattern: ["loop", "jump", "loop", "hill", "bump", "dip", "jump", "loop"], minimumJumpSpeed: 250, loopSpeed: 195 },
-  { name: "Big Air", pattern: ["hill", "jump", "jump", "bump", "dip", "loop", "hill", "jump", "loop"], minimumJumpSpeed: 260, loopSpeed: 200 },
-  { name: "The Corkscrew", pattern: ["loop", "hill", "loop", "jump", "dip", "hill", "loop", "jump"], minimumJumpSpeed: 270, loopSpeed: 210 },
-  { name: "High Voltage", pattern: ["jump", "loop", "jump", "hill", "dip", "loop", "hill", "jump"], minimumJumpSpeed: 280, loopSpeed: 220 },
-  { name: "Double Drop", pattern: ["dip", "jump", "loop", "bump", "jump", "hill", "dip", "loop", "jump"], minimumJumpSpeed: 290, loopSpeed: 230 },
-  { name: "Loop Fever", pattern: ["loop", "loop", "hill", "jump", "dip", "loop", "hill", "jump"], minimumJumpSpeed: 300, loopSpeed: 240 },
-  { name: "Sky Spinner", pattern: ["jump", "loop", "jump", "loop", "jump", "hill", "dip", "loop"], minimumJumpSpeed: 310, loopSpeed: 250 },
-  { name: "Full Throttle", pattern: ["dip", "loop", "jump", "loop", "jump", "hill", "dip", "loop", "jump"], minimumJumpSpeed: 320, loopSpeed: 260 },
-  { name: "Tiny Loops", pattern: ["loop", "jump", "loop", "dip", "jump", "loop", "hill", "jump", "dip", "loop"], minimumJumpSpeed: 330, loopSpeed: 270 },
+  { name: "First Run", pattern: ["hill", "bump", "dip", "smallJump", "turnLeft", "loop", "jump", "hill", "bigJump", "bump"], minimumJumpSpeed: 220, loopSpeed: 160 },
+  { name: "Loop the Loop", pattern: ["loop", "hill", "bump", "jump", "turnRight", "dip", "hill", "loop", "bigJump", "jump", "smallJump"], minimumJumpSpeed: 230, loopSpeed: 175 },
+  { name: "Coin Chaser", pattern: ["jump", "hill", "loop", "bump", "dip", "jump", "turnLeft", "hill", "loop", "corkscrew", "bigJump"], minimumJumpSpeed: 240, loopSpeed: 185 },
+  { name: "Double Trouble", pattern: ["loop", "smallJump", "jump", "loop", "hill", "bump", "dip", "jump", "turnRight", "loop", "bigJump"], minimumJumpSpeed: 250, loopSpeed: 195 },
+  { name: "Big Air", pattern: ["hill", "jump", "bigJump", "bump", "dip", "loop", "hill", "smallJump", "turnLeft", "jump", "loop", "corkscrew"], minimumJumpSpeed: 260, loopSpeed: 200 },
+  { name: "The Corkscrew", pattern: ["loop", "hill", "loop", "jump", "dip", "hill", "turnRight", "loop", "bigJump", "jump", "corkscrew"], minimumJumpSpeed: 270, loopSpeed: 210 },
+  { name: "High Voltage", pattern: ["jump", "loop", "jump", "hill", "dip", "loop", "hill", "bigJump", "turnLeft", "jump", "smallJump", "corkscrew"], minimumJumpSpeed: 280, loopSpeed: 220 },
+  { name: "Double Drop", pattern: ["dip", "jump", "loop", "bump", "jump", "hill", "dip", "loop", "bigJump", "turnRight", "jump", "corkscrew"], minimumJumpSpeed: 290, loopSpeed: 230 },
+  { name: "Loop Fever", pattern: ["loop", "loop", "hill", "jump", "dip", "loop", "hill", "bigJump", "turnLeft", "jump", "corkscrew", "smallJump"], minimumJumpSpeed: 300, loopSpeed: 240 },
+  { name: "Sky Spinner", pattern: ["jump", "loop", "jump", "loop", "bigJump", "hill", "dip", "loop", "turnRight", "corkscrew", "jump", "smallJump"], minimumJumpSpeed: 310, loopSpeed: 250 },
+  { name: "Full Throttle", pattern: ["dip", "loop", "jump", "loop", "bigJump", "jump", "hill", "dip", "loop", "turnLeft", "corkscrew", "jump", "smallJump"], minimumJumpSpeed: 320, loopSpeed: 260 },
+  { name: "Tiny Loops", pattern: ["loop", "jump", "loop", "dip", "jump", "loop", "hill", "bigJump", "turnRight", "jump", "dip", "corkscrew", "loop", "smallJump"], minimumJumpSpeed: 330, loopSpeed: 270 },
 ];
 
 class LoopRushScene extends Phaser.Scene {
@@ -232,7 +232,7 @@ class LoopRushScene extends Phaser.Scene {
       minimumJumpSpeed: base.minimumJumpSpeed + tier * 20,
       loopSpeed: base.loopSpeed + tier * 14,
     };
-    this.points = [{ x: 0, y: 365, airborne: false }];
+    this.points = [{ x: 0, y: 365, z: 0, airborne: false }];
     this.coins = [];
     this.coinCount = 0;
     this.flips = 0;
@@ -471,7 +471,7 @@ class LoopRushScene extends Phaser.Scene {
       if (isAirborne) {
         // Tiny Loops uses one action in the air: keep holding to backflip.
         // Releasing freezes rotation immediately so the player can prepare to land.
-        if (this.holding) this.airSpin -= Math.PI * 2 * 2.35 * dt;
+        if (this.holding) this.airSpin -= Math.PI * 2 * 1.65 * dt;
       } else if (wasAirborne) {
         const completedFlips = Math.floor(Math.abs(this.airSpin) / (Math.PI * 2));
         const landingError = Math.atan2(
@@ -503,7 +503,7 @@ class LoopRushScene extends Phaser.Scene {
       this.cart.setRotation(angle);
 
       this.flags.forEach((flag) => {
-        if (flag.triggeredAt === null && this.cameraX >= flag.x - 28) flag.triggeredAt = time;
+        if (flag.triggeredAt === null && this.cameraX >= flag.x - 105) flag.triggeredAt = time;
         if (!flag.rewarded && this.cameraX >= flag.x) {
           flag.rewarded = true;
           this.coinCount += 5;
