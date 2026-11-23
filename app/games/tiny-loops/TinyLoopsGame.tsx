@@ -42,16 +42,18 @@ function makeCourse(T: any) {
     let crestIndex = -1;
     for (let i = 1; i <= steps; i++) {
       const t = i / steps;
-      // Build a long, unmistakable climb with a short kicker at the end.
-      // The lip is deliberately late in the hill so the cart has a visible
-      // rising run-up before the track disappears into the jump.
+      // A proper stunt kicker: most of the hill is a run-up, then the
+      // final section rises sharply into a short, high lip. The track after
+      // the lip falls away; it is not part of the visible take-off ramp.
       const rampProfile = launchable
-        ? (t <= 0.72 ? t / 0.72 : Math.max(0, 1 - (t - 0.72) / 0.28))
+        ? (t <= 0.68
+          ? Math.pow(t / 0.68, 2.15)
+          : Math.max(0, 1 - Math.pow((t - 0.68) / 0.32, 0.58)))
         : Math.sin(Math.PI * t);
-      // Exaggerate the actual path elevation so the take-off face is steep
-      // and unmistakable in the chase camera, with a real downhill landing.
-      add(from.clone().lerp(to, t).add(new T.Vector3(0, rampProfile * (launchable ? Math.max(height, 17) : height), 0)));
-      if (launchable && i === Math.round(steps * 0.72)) crestIndex = points.length - 1;
+      add(from.clone().lerp(to, t).add(new T.Vector3(0, rampProfile * (launchable ? Math.max(height, 32) : height), 0)));
+      // Trigger before the mathematical peak, while the track is still
+      // pointing upwards, so the cart visibly leaves the end of the kicker.
+      if (launchable && i === Math.round(steps * 0.66)) crestIndex = points.length - 1;
     }
     if (launchable && crestIndex >= 0) hillSections.push({ start: startIndex, crest: crestIndex, end: points.length - 1 });
   };
@@ -173,7 +175,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   const jumpTriggers: number[] = hillSections.map((section) => section.crest);
   // Keep the missing section short enough that the cart lands on the
   // descending face of the hill, not on a flat section beyond it.
-  const jumpGapLength = 24;
+  const jumpGapLength = 30;
   const jumpGaps = jumpTriggers.map((crest) => [crest, Math.min(length - 3, crest + jumpGapLength)]);
 
   // Build the take-off and landing ramps from solid, individually aligned
@@ -412,10 +414,10 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
             // Flight time is tied to speed and the actual gap distance. Faster
             // approaches cover the same gap in less time; there is no free
             // minimum airtime that lets a slow cart magically clear it.
-            state.jumpDuration = Math.max(0.9, jumpGapLength / Math.max(1, state.speed));
+            state.jumpDuration = Math.max(1.15, jumpGapLength / Math.max(1, state.speed));
             // A higher approach gives a longer, higher arc, but the cart still
             // has to cover the real gap before the landing section.
-            state.jumpHeight = 8 + state.speed * 0.24;
+            state.jumpHeight = 10 + state.speed * 0.28;
             const takeoffPoint = course.getPointAt(course.getUtoTmapping(0, launch));
             state.takeoffY = takeoffPoint.y;
             state.spin = 0;
