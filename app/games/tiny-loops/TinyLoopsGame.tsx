@@ -45,10 +45,12 @@ function makeCourse(T: any) {
       // A straight, clearly visible incline to a defined brow, followed
       // by a steep drop into the section hidden by the jump gap.
       const rampProfile = launchable
-        ? (t <= 0.55 ? t / 0.55 : Math.max(0, 1 - (t - 0.55) / 0.45))
+        ? (t <= 0.46 ? t / 0.46 : Math.max(0, 1 - (t - 0.46) / 0.54))
         : Math.sin(Math.PI * t);
-      add(from.clone().lerp(to, t).add(new T.Vector3(0, rampProfile * height, 0)));
-      if (launchable && i === Math.round(steps * 0.55)) hillCrestIndices.push(points.length - 1);
+      // Exaggerate the actual path elevation so the take-off face is steep
+      // and unmistakable in the chase camera, with a real downhill landing.
+      add(from.clone().lerp(to, t).add(new T.Vector3(0, rampProfile * (launchable ? Math.max(height, 17) : height), 0)));
+      if (launchable && i === Math.round(steps * 0.46)) hillCrestIndices.push(points.length - 1);
     }
   };
   const bend = (control: any, to: any, steps = 56) => {
@@ -161,8 +163,53 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   // Every launch has a visible rising ramp, a real rail/sleeper gap, and a
   // separate landing section. Only these exact ramp brows can trigger flight.
   const jumpTriggers: number[] = (course as any).hillCrestDistances;
-  const jumpGapLength = 34;
+  // Keep the missing section short enough that the cart lands on the
+  // descending face of the hill, not on a flat section beyond it.
+  const jumpGapLength = 22;
   const jumpGaps = jumpTriggers.map((crest) => [crest, Math.min(length - 3, crest + jumpGapLength)]);
+
+  // Build solid, wide track decks over the take-off and landing slopes.
+  // These are real meshes (not just rails and crossbars), so each jump reads
+  // clearly as an up-ramp, open gap, then a down-ramp.
+  const rampTop = new T.MeshStandardMaterial({ color: 0xffc51e, roughness: 0.72, side: T.DoubleSide });
+  const rampSide = new T.MeshStandardMaterial({ color: 0xd68b12, roughness: 0.88 });
+  const addRampDeck = (from: number, to: number) => {
+    const steps = Math.max(12, Math.ceil((to - from) * 2));
+    const vertices: number[] = [];
+    const indices: number[] = [];
+    for (let i = 0; i <= steps; i++) {
+      const d = from + ((to - from) * i) / steps;
+      const u = course.getUtoTmapping(0, d);
+      const p = course.getPointAt(u);
+      const f = frameAt(Math.min(segments, Math.round(u * segments)));
+      const centre = p.clone().addScaledVector(f.normal, 0.1);
+      const left = centre.clone().addScaledVector(f.side, -1.28);
+      const right = centre.clone().addScaledVector(f.side, 1.28);
+      const underside = centre.clone().addScaledVector(f.normal, -0.42);
+      vertices.push(left.x, left.y, left.z, right.x, right.y, right.z,
+        left.x, underside.y, left.z, right.x, underside.y, right.z);
+      if (i < steps) {
+        const a = i * 4;
+        indices.push(a, a + 4, a + 1, a + 1, a + 4, a + 5);
+        indices.push(a + 2, a + 3, a + 6, a + 3, a + 7, a + 6);
+        indices.push(a, a + 2, a + 4, a + 2, a + 6, a + 4);
+        indices.push(a + 1, a + 5, a + 3, a + 3, a + 5, a + 7);
+      }
+    }
+    const geometry = new T.BufferGeometry();
+    geometry.setAttribute("position", new T.Float32BufferAttribute(vertices, 3));
+    geometry.setIndex(indices);
+    geometry.computeVertexNormals();
+    const deck = new T.Mesh(geometry, [rampTop, rampSide]);
+    deck.material = rampTop;
+    deck.castShadow = true;
+    deck.receiveShadow = true;
+    trackGroup.add(deck);
+  };
+  jumpGaps.forEach(([crest, landing]) => {
+    addRampDeck(Math.max(0, crest - 24), crest);
+    addRampDeck(landing, Math.min(length - 1, landing + 12));
+  });
   const isInJumpGap = (distance: number) => jumpGaps.some(([from, to]) => distance >= from && distance <= to);
   const railRanges: number[][] = [];
   let railCursor = 0;
