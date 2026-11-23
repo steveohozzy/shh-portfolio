@@ -159,7 +159,6 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   const sleeperMesh = new T.InstancedMesh(sleeperGeo, sleeperMaterials[0], 760);
   const sleeperDark = new T.InstancedMesh(sleeperGeo, sleeperMaterials[1], 760);
   let lightCount = 0, darkCount = 0;
-  const jumpZones = [[43, 51], [113, 123], [204, 214], [326, 336]]; // distances along the course
   const inJump = (d: number) => jumpZones.some(([a, b]) => d > a && d < b);
   for (let i = 0; i < 760; i++) {
     const d = (length * i) / 759;
