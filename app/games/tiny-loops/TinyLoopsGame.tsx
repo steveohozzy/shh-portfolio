@@ -30,7 +30,7 @@ function loadThree() {
 
 function makeCourse(T: any) {
   const points: any[] = [];
-  const hillCrestIndices: number[] = [];
+  const hillSections: Array<{ start: number; crest: number; end: number }> = [];
   const add = (p: any) => points.push(p.clone());
   const line = (to: any, steps = 24) => {
     const from = points[points.length - 1];
@@ -38,6 +38,8 @@ function makeCourse(T: any) {
   };
   const hill = (to: any, height: number, steps = 64, launchable = true) => {
     const from = points[points.length - 1];
+    const startIndex = points.length - 1;
+    let crestIndex = -1;
     for (let i = 1; i <= steps; i++) {
       const t = i / steps;
       // Make a recognisable take-off ramp: a long climb followed by a short
@@ -50,8 +52,9 @@ function makeCourse(T: any) {
       // Exaggerate the actual path elevation so the take-off face is steep
       // and unmistakable in the chase camera, with a real downhill landing.
       add(from.clone().lerp(to, t).add(new T.Vector3(0, rampProfile * (launchable ? Math.max(height, 17) : height), 0)));
-      if (launchable && i === Math.round(steps * 0.46)) hillCrestIndices.push(points.length - 1);
+      if (launchable && i === Math.round(steps * 0.46)) crestIndex = points.length - 1;
     }
+    if (launchable && crestIndex >= 0) hillSections.push({ start: startIndex, crest: crestIndex, end: points.length - 1 });
   };
   const bend = (control: any, to: any, steps = 56) => {
     const from = points[points.length - 1];
@@ -107,15 +110,20 @@ function makeCourse(T: any) {
   curve.arcLengthDivisions = 3000;
   curve.updateArcLengths();
   const sampledLengths = curve.getLengths(curve.arcLengthDivisions);
-  (curve as any).hillCrestDistances = hillCrestIndices.map((pointIndex) => {
-    // CatmullRomCurve3's control-point parameter is uniform in t. Convert the
-    // crest's actual curve parameter to travelled metres using the arc table.
+  const distanceAtPoint = (pointIndex: number) => {
+    // Convert each hill landmark from its control-point index to travelled distance.
     const parameter = (pointIndex / (points.length - 1)) * curve.arcLengthDivisions;
     const lower = Math.floor(parameter);
     const upper = Math.min(curve.arcLengthDivisions, lower + 1);
     const fraction = parameter - lower;
     return sampledLengths[lower] + (sampledLengths[upper] - sampledLengths[lower]) * fraction;
-  });
+  };
+  (curve as any).hillSections = hillSections.map(({ start, crest, end }) => ({
+    start: distanceAtPoint(start),
+    crest: distanceAtPoint(crest),
+    end: distanceAtPoint(end),
+  }));
+  (curve as any).hillCrestDistances = (curve as any).hillSections.map((section: any) => section.crest);
   return curve;
 }
 function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; coins: number; flips: number; status: GameStatus; airborne?: boolean; holding?: boolean; level?: number; landed?: boolean; landedFlips?: number }) => void) {
@@ -162,7 +170,8 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
 
   // Every launch has a visible rising ramp, a real rail/sleeper gap, and a
   // separate landing section. Only these exact ramp brows can trigger flight.
-  const jumpTriggers: number[] = (course as any).hillCrestDistances;
+  const hillSections: Array<{ start: number; crest: number; end: number }> = (course as any).hillSections;
+  const jumpTriggers: number[] = hillSections.map((section) => section.crest);
   // Keep the missing section short enough that the cart lands on the
   // descending face of the hill, not on a flat section beyond it.
   const jumpGapLength = 16;
@@ -180,11 +189,16 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
       const mid = (d0 + d1) / 2;
       const u = course.getUtoTmapping(0, mid);
       const p = course.getPointAt(u);
-      const f = frameAt(Math.min(segments, Math.round(u * segments)));
+      // The cart stays upright, but the physical track deck follows the true 3D slope.
+      const tangent = course.getTangentAt(u).normalize();
+      const worldUp = new T.Vector3(0, 1, 0);
+      const side = new T.Vector3().crossVectors(tangent, worldUp).normalize();
+      if (side.lengthSq() < 0.0001) side.set(1, 0, 0);
+      const up = new T.Vector3().crossVectors(side, tangent).normalize();
       const deck = new T.Mesh(rampGeometry, rampMaterial);
-      deck.position.copy(p).addScaledVector(f.normal, 0.04);
+      deck.position.copy(p).addScaledVector(up, 0.04);
       deck.quaternion.setFromRotationMatrix(new T.Matrix4().makeBasis(
-        f.side.clone().negate(), f.normal, f.forward
+        side.clone().negate(), up, tangent
       ));
       deck.scale.z = Math.max(1, d1 - d0 + 0.35);
       deck.castShadow = true;
@@ -192,11 +206,12 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
       trackGroup.add(deck);
     }
   };
-  jumpGaps.forEach(([crest, landing]) => {
-    // The last part of the climb forms the launch lip; the downhill side
-    // starts again immediately after the gap and is visibly sloped.
-    addRampDeck(Math.max(0, crest - 18), crest);
-    addRampDeck(landing, Math.min(length - 1, landing + 18));
+  hillSections.forEach(({ start, crest, end }) => {
+    const landing = Math.min(length - 1, crest + jumpGapLength);
+    // Solid yellow track follows the full uphill face to the launch lip,
+    // then resumes after the gap and follows the descending landing face.
+    addRampDeck(start, crest);
+    addRampDeck(landing, end);
   });
   const isInJumpGap = (distance: number) => jumpGaps.some(([from, to]) => distance >= from && distance <= to);
   const railRanges: number[][] = [];
