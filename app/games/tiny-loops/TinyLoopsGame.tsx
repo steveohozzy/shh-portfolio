@@ -438,6 +438,30 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     wheel.position.set(x, 0.14, z);
     cart.add(wheel);
   }));
+  const blueSpoiler = new T.Group();
+  const spoilerBar = new T.Mesh(new T.BoxGeometry(2.05, 0.16, 0.34), new T.MeshStandardMaterial({ color: 0x263b55, metalness: 0.35 }));
+  spoilerBar.position.set(0, 0.98, 0.78);
+  blueSpoiler.add(spoilerBar);
+  [-0.72, 0.72].forEach((x) => {
+    const support = new T.Mesh(new T.BoxGeometry(0.12, 0.42, 0.12), new T.MeshStandardMaterial({ color: 0x263b55 }));
+    support.position.set(x, 0.76, 0.78);
+    blueSpoiler.add(support);
+  });
+  cart.add(blueSpoiler);
+  const redFins = new T.Group();
+  [-1, 1].forEach((side) => {
+    const fin = new T.Mesh(new T.BoxGeometry(0.16, 0.62, 0.9), new T.MeshStandardMaterial({ color: 0xffe4e4, metalness: 0.2 }));
+    fin.position.set(side * 0.82, 0.55, 0.18);
+    redFins.add(fin);
+  });
+  cart.add(redFins);
+  blueSpoiler.visible = false;
+  redFins.visible = false;
+  const applyCartStyle = () => {
+    cartBodyMaterial.color.setHex(cartColours[selectedCart]);
+    blueSpoiler.visible = selectedCart === 1;
+    redFins.visible = selectedCart === 2;
+  };
   cart.scale.setScalar(1.15);
   scene.add(cart);
   const baseCartQuaternion = new T.Quaternion();
@@ -538,14 +562,14 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
         state.speed = 0;
         state.holding = false;
         const finishFlag = finishFlags[state.level - 1];
-        if (finishFlag) finishFlag.scale.y = 1;
+        if (finishFlag) finishFlag.userData.targetScale = 1;
         state.coins += 30 + state.level * 10;
         bankedCoins = state.coins;
         if (state.level < 3) {
           state.status = "levelComplete";
           unlockedCarts = Math.min(cartColours.length, unlockedCarts + 1);
           selectedCart = unlockedCarts - 1;
-          cartBodyMaterial.color.setHex(cartColours[selectedCart]);
+          applyCartStyle();
         } else {
           state.status = "won";
         }
@@ -653,7 +677,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
         state.coins++;
       }
     });
-    renderer.render(scene, camera);
+    finishFlags.forEach((flag) => {\n      const target = flag.userData.targetScale || 0.001;\n      flag.scale.y += (target - flag.scale.y) * Math.min(1, dt * 9);\n    });\n    renderer.render(scene, camera);
     if (now - state.elapsed > 120) {
       state.elapsed = now;
       const level = state.distance < length / 3 ? 1 : state.distance < (length * 2) / 3 ? 2 : 3;
@@ -682,7 +706,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     state.falling = false;
     state.lastTime = performance.now();
     coins.forEach((coin) => { coin.collected = false; coin.mesh.visible = true; });
-    finishFlags.forEach((flag) => { flag.scale.y = 0.001; });
+    finishFlags.forEach((flag) => { flag.userData.targetScale = 0.001; });
     onHud({ speed: state.speed, coins: state.coins, flips: 0, status: "playing", airborne: false, holding: false, level: 1 });
   };
 
@@ -698,7 +722,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     },
     cycleCart() {
       selectedCart = (selectedCart + 1) % unlockedCarts;
-      cartBodyMaterial.color.setHex(cartColours[selectedCart]);
+      applyCartStyle();
     },
     setHolding(value: boolean) { state.holding = value; },
     destroy() {
