@@ -31,7 +31,6 @@ function loadThree() {
 function makeCourse(T: any) {
   const points: any[] = [];
   const hillSections: Array<{ start: number; crest: number; end: number }> = [];
-  const popSections: Array<{ start: number; end: number }> = [];
   const loopSections: Array<{ start: number; end: number }> = [];
   const add = (p: any) => points.push(p.clone());
   const line = (to: any, steps = 24) => {
@@ -52,9 +51,6 @@ function makeCourse(T: any) {
         : Math.sin(Math.PI * t);
       add(from.clone().lerp(to, t).add(new T.Vector3(0, rampProfile * (launchable ? Math.max(height, 20) : height), 0)));
       if (launchable && i === steps) crestIndex = points.length - 1;
-      // Keep the whole rounded hill range; the final curve can shift its true
-      // visual peak slightly away from the midpoint of the control points.
-      if (!launchable && i === steps) popSections.push({ start: startIndex, end: points.length - 1 });
     }
     if (launchable && crestIndex >= 0) hillSections.push({ start: startIndex, crest: crestIndex, end: points.length - 1 });
   };
@@ -111,6 +107,10 @@ function makeCourse(T: any) {
   hill(new T.Vector3(-12, 0, -468), 5, 72, true);
   bend(new T.Vector3(4, 0, -492), new T.Vector3(18, 0, -516), 64);
   line(new T.Vector3(18, 0, -555), 55);
+  bend(new T.Vector3(45, 1, -575), new T.Vector3(58, 4, -604), 64);
+  hill(new T.Vector3(36, 5, -646), 8, 82, true);
+  bend(new T.Vector3(5, 7, -666), new T.Vector3(-20, 5, -690), 64);
+  line(new T.Vector3(-34, 5, -718), 38);
 
   // Level 2: a longer twisting section with two sharper take-off hills.
   bend(new T.Vector3(42, 2, -590), new T.Vector3(55, 5, -625), 72);
@@ -120,6 +120,10 @@ function makeCourse(T: any) {
   hill(new T.Vector3(-48, 3, -812), 8, 80, true);
   bend(new T.Vector3(-12, 1, -845), new T.Vector3(22, 1, -875), 72);
   line(new T.Vector3(35, 1, -910), 42);
+  bend(new T.Vector3(62, 3, -936), new T.Vector3(38, 7, -966), 68);
+  hill(new T.Vector3(-4, 7, -1008), 10, 88, true);
+  bend(new T.Vector3(-38, 8, -1032), new T.Vector3(-54, 4, -1062), 68);
+  line(new T.Vector3(-42, 3, -1090), 38);
 
   // Level 3: bigger hills, a fast S-bend and a final long jump.
   bend(new T.Vector3(70, 4, -945), new T.Vector3(72, 8, -985), 76);
@@ -128,7 +132,12 @@ function makeCourse(T: any) {
   hill(new T.Vector3(-12, 2, -1190), 11, 90, true);
   bend(new T.Vector3(35, 4, -1220), new T.Vector3(52, 4, -1260), 76);
   hill(new T.Vector3(0, 0, -1335), 13, 96, true);
-  line(new T.Vector3(0, 0, -1400), 64);
+  bend(new T.Vector3(-38, 5, -1370), new T.Vector3(-58, 9, -1410), 72);
+  loop(12, 112);
+  hill(new T.Vector3(22, 6, -1490), 15, 104, true);
+  bend(new T.Vector3(58, 3, -1520), new T.Vector3(35, 0, -1560), 76);
+  hill(new T.Vector3(-12, 0, -1635), 16, 112, true);
+  line(new T.Vector3(-12, 0, -1700), 64);
 
   const curve = new T.CatmullRomCurve3(points, false, "centripetal", 0.15);
   curve.arcLengthDivisions = 3000;
@@ -154,27 +163,6 @@ function makeCourse(T: any) {
   }));
   // Find the actual highest point on each smoothed hill, rather than using
   // the control-point midpoint (which can sit before the visible crest).
-  (curve as any).popTriggers = popSections
-    // The opening rise is scenery, not a launch hill. Only later small crests
-    // are allowed to give the cart a short hop.
-    .map(({ start, end }) => ({ startDistance: distanceAtPoint(start), endDistance: distanceAtPoint(end) }))
-    .filter(({ startDistance }) => startDistance > 70)
-    .map(({ startDistance, endDistance }) => {
-    let peakDistance = startDistance;
-    let peakHeight = -Infinity;
-    const samples = 48;
-    for (let i = 0; i <= samples; i++) {
-      const distance = startDistance + ((endDistance - startDistance) * i) / samples;
-      const safeDistance = Math.max(0, Math.min(curve.getLength() - 0.001, distance));
-      const u = curve.getUtoTmapping(0, safeDistance);
-      const point = curve.getPointAt(Math.max(0, Math.min(0.999999, u)));
-      if (point.y > peakHeight) {
-        peakHeight = point.y;
-        peakDistance = distance;
-      }
-    }
-    return peakDistance;
-  });
   return curve;
 }
 function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; coins: number; flips: number; status: GameStatus; airborne?: boolean; holding?: boolean; level?: number; landed?: boolean; landedFlips?: number }) => void) {
@@ -241,10 +229,11 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   const jumpTriggers: number[] = hillSections.map((section) => section.crest);
   // Keep the missing section short enough that the cart lands on the
   // descending face of the hill, not on a flat section beyond it.
-  const jumpGapLength = 42;
-  const popTriggers: number[] = (course as any).popTriggers || [];
-  const popDuration = 0.58;
-  const jumpGaps = jumpTriggers.map((crest) => [crest, Math.min(length - 3, crest + jumpGapLength)]);
+  // Each successive jump has a longer missing section. Rounded scenery hills
+  // never launch the cart: flight is only possible at these marked ramp lips.
+  const jumpGapFor = (index: number) => 42 + index * 2.4;
+  const jumpDurationFor = (index: number) => 1.08 + index * 0.035;
+  const jumpGaps = jumpTriggers.map((crest, index) => [crest, Math.min(length - 3, crest + jumpGapFor(index))]);
 
   // The ramp is the actual rising course geometry. Do not overlay a solid
   // yellow box deck: it hides the sleepers and makes the kicker look like a
@@ -562,7 +551,6 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
         // The cart must reach the lip with enough momentum to clear the gap.
         // Crossing the brow too slowly is a failed jump, not an automatic flight.
         const launch = jumpTriggers.find((crest) => previousDistance <= crest && state.distance >= crest);
-        const pop = popTriggers.find((crest) => previousDistance <= crest && state.distance >= crest);
         if (launch !== undefined) {
           state.distance = launch;
           const jumpNumber = jumpTriggers.indexOf(launch);
@@ -582,27 +570,16 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
             state.falling = false;
             state.airHeight = 0;
             state.airElapsed = 0;
-            state.jumpDuration = 1.1;
-            state.activeJumpEnd = Math.min(length - 2, launch + Math.max(jumpGapLength, state.speed * state.jumpDuration));
+            state.jumpDuration = jumpDurationFor(jumpNumber);
+            const gapLength = jumpGapFor(jumpNumber);
+            state.activeJumpEnd = Math.min(length - 2, launch + Math.max(gapLength, state.speed * state.jumpDuration));
             // A higher approach gives a longer, higher arc, but the cart still
             // has to cover the real gap before the landing section.
-            state.jumpHeight = 10 + state.speed * 0.28;
+            state.jumpHeight = 10 + state.speed * 0.28 + jumpNumber * 0.8;
             const takeoffPoint = course.getPointAt(courseUAtDistance(launch));
             state.takeoffY = takeoffPoint.y;
             state.spin = 0;
           }
-        } else if (pop !== undefined && state.speed >= 30) {
-          // Smaller rounded crests give a short hop without removing the track.
-          state.distance = pop;
-          state.airborne = true;
-          state.falling = false;
-          state.airHeight = 0;
-          state.airElapsed = 0;
-          state.activeJumpEnd = Math.min(length - 2, pop + state.speed * popDuration);
-          state.jumpDuration = popDuration;
-          state.jumpHeight = 3.5 + state.speed * 0.09;
-          state.takeoffY = course.getPointAt(courseUAtDistance(pop)).y;
-          state.spin = 0;
         }
       }
       const stageFinish = (length * state.level) / 3;
