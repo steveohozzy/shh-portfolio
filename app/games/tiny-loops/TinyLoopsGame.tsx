@@ -499,7 +499,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
       window.localStorage.setItem("shh-tiny-loops-progress", JSON.stringify({ coins: bankedCoins, unlockedCarts, selectedCart }));
     } catch {}
   };
-  const state = { status: "ready" as GameStatus, distance: 0, speed: 0, holding: false, flips: 0, spin: 0, coins: 0, airborne: false, falling: false, airHeight: 0, takeoffY: 0, airElapsed: 0, activeJumpEnd: 0, jumpDuration: 0.9, jumpHeight: 5, landedUntil: 0, landedFlips: 0, level: 1, elapsed: 0, lastTime: performance.now(), raf: 0 };
+  const state = { status: "ready" as GameStatus, distance: 0, speed: 0, holding: false, flips: 0, spin: 0, coins: bankedCoins, airborne: false, falling: false, airHeight: 0, takeoffY: 0, airElapsed: 0, activeJumpEnd: 0, jumpDuration: 0.9, jumpHeight: 5, landedUntil: 0, landedFlips: 0, level: 1, elapsed: 0, lastTime: performance.now(), raf: 0 };
   applyCartStyle();
   const resize = () => {
     const w = Math.max(1, mount.clientWidth), h = Math.max(1, mount.clientHeight);
@@ -589,6 +589,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
         } else {
           state.status = "won";
         }
+        saveProgress();
         onHud({ speed: state.speed, coins: state.coins, flips: state.flips, status: state.status, level: state.level });
       }
     }
