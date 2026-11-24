@@ -32,6 +32,7 @@ function makeCourse(T: any) {
   const points: any[] = [];
   const hillSections: Array<{ start: number; crest: number; end: number }> = [];
   const loopSections: Array<{ start: number; end: number }> = [];
+  const stagePointIndices: number[] = [];
   const add = (p: any) => points.push(p.clone());
   const line = (to: any, steps = 24) => {
     const from = points[points.length - 1];
@@ -110,7 +111,8 @@ function makeCourse(T: any) {
   hill(new T.Vector3(-12, 0, -468), 5, 72, true);
   bend(new T.Vector3(4, 0, -492), new T.Vector3(18, 0, -516), 64);
   line(new T.Vector3(18, 0, -555), 55);
-  // Level 2: a longer twisting section with two sharper take-off hills.
+  stagePointIndices.push(points.length - 1);
+  // Level 2: a longer twisting section with tighter turns, two loops and bigger jumps.
   bend(new T.Vector3(42, 2, -590), new T.Vector3(55, 5, -625), 72);
   hill(new T.Vector3(30, 5, -685), 10, 84, true);
   bend(new T.Vector3(-2, 8, -712), new T.Vector3(-28, 8, -748), 72);
@@ -118,19 +120,32 @@ function makeCourse(T: any) {
   hill(new T.Vector3(-48, 3, -812), 8, 80, true);
   bend(new T.Vector3(-12, 1, -845), new T.Vector3(22, 1, -875), 72);
   line(new T.Vector3(35, 1, -910), 42);
-  // Level 3: bigger hills, a fast S-bend and a final long jump.
-  bend(new T.Vector3(70, 4, -945), new T.Vector3(72, 8, -985), 76);
-  hill(new T.Vector3(22, 8, -1055), 12, 90, true);
-  bend(new T.Vector3(-18, 11, -1080), new T.Vector3(-42, 6, -1120), 76);
-  hill(new T.Vector3(-12, 2, -1190), 11, 90, true);
-  bend(new T.Vector3(35, 4, -1220), new T.Vector3(52, 4, -1260), 76);
-  hill(new T.Vector3(0, 0, -1335), 13, 96, true);
-  bend(new T.Vector3(-38, 5, -1370), new T.Vector3(-58, 9, -1410), 72);
-  loop(12, 112);
-  hill(new T.Vector3(22, 6, -1490), 15, 104, true);
-  bend(new T.Vector3(58, 3, -1520), new T.Vector3(35, 0, -1560), 76);
-  hill(new T.Vector3(-12, 0, -1635), 16, 112, true);
-  line(new T.Vector3(-12, 0, -1700), 64);
+  bend(new T.Vector3(62, 4, -945), new T.Vector3(48, 7, -980), 76);
+  hill(new T.Vector3(8, 7, -1045), 12, 92, true);
+  loop(11.5, 112);
+  bend(new T.Vector3(-35, 10, -1090), new T.Vector3(-55, 5, -1130), 76);
+  hill(new T.Vector3(-18, 3, -1190), 13, 96, true);
+  line(new T.Vector3(-18, 3, -1235), 48);
+  stagePointIndices.push(points.length - 1);
+  // Level 3: a much longer alpine night run with a fast S-bend, three huge
+  // launch ramps, two vertical loops and a final extended jump.
+  bend(new T.Vector3(45, 5, -1265), new T.Vector3(72, 8, -1310), 82);
+  hill(new T.Vector3(22, 8, -1380), 14, 96, true);
+  bend(new T.Vector3(-18, 11, -1405), new T.Vector3(-42, 6, -1445), 82);
+  hill(new T.Vector3(-12, 2, -1515), 14, 100, true);
+  bend(new T.Vector3(35, 4, -1545), new T.Vector3(52, 4, -1585), 82);
+  hill(new T.Vector3(0, 0, -1660), 16, 104, true);
+  bend(new T.Vector3(-38, 5, -1695), new T.Vector3(-58, 9, -1735), 80);
+  loop(12, 120);
+  hill(new T.Vector3(22, 6, -1815), 17, 112, true);
+  bend(new T.Vector3(58, 3, -1845), new T.Vector3(35, 0, -1885), 82);
+  hill(new T.Vector3(-12, 0, -1960), 18, 120, true);
+  bend(new T.Vector3(-42, 5, -1990), new T.Vector3(-58, 8, -2035), 82);
+  loop(13.5, 128);
+  hill(new T.Vector3(12, 8, -2130), 20, 128, true);
+  bend(new T.Vector3(48, 5, -2165), new T.Vector3(25, 1, -2210), 84);
+  hill(new T.Vector3(-18, 0, -2300), 21, 136, true);
+  line(new T.Vector3(-18, 0, -2380), 72);
 
   const curve = new T.CatmullRomCurve3(points, false, "centripetal", 0.15);
   curve.arcLengthDivisions = 3000;
@@ -150,6 +165,7 @@ function makeCourse(T: any) {
     end: distanceAtPoint(end),
   }));
   (curve as any).hillCrestDistances = (curve as any).hillSections.map((section: any) => section.crest);
+  (curve as any).stageDistances = [...stagePointIndices.map(distanceAtPoint), sampledLengths[sampledLengths.length - 1]];
   (curve as any).loopParameterRanges = loopSections.map(({ start, end }) => ({
     start: start / (points.length - 1),
     end: end / (points.length - 1),
@@ -225,7 +241,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   // Each successive jump has a longer missing section. Rounded scenery hills
   // never launch the cart: flight is only possible at these marked ramp lips.
   // Leave enough clear space to land beyond the low hill immediately after each jump.
-  const jumpGapFor = (index: number) => 60 + index * 2.5;
+  const jumpGapFor = (index: number) => 60 + index * 3.5;
   const jumpGaps = jumpTriggers.map((crest, index) => [crest, Math.min(length - 3, crest + jumpGapFor(index))]);
 
   // The ramp is the actual rising course geometry. Do not overlay a solid
@@ -330,6 +346,24 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   // Floating low-poly rock shelves and cliff faces beneath the course.
   const rockMat = new T.MeshStandardMaterial({ color: 0xffffff, roughness: 1, flatShading: true });
   const cliffMat = new T.MeshStandardMaterial({ color: 0xa9c5d8, roughness: 1, flatShading: true });
+  const levelThemes = [
+    { sky: 0x9cddff, fog: 0xb8e7ff, rail: 0xffc928, sleeper: 0xffe36a, dark: 0x343b4b, rock: 0xffffff, cliff: 0xa9c5d8 },
+    { sky: 0xffc28a, fog: 0xf4a77e, rail: 0xff7438, sleeper: 0xffd06b, dark: 0x633b58, rock: 0xf5c3a0, cliff: 0xb66f72 },
+    { sky: 0x101b45, fog: 0x263c70, rail: 0x45e4ff, sleeper: 0xa6f5ff, dark: 0x27345b, rock: 0xdceaff, cliff: 0x637db2 },
+  ];
+  let appliedThemeLevel = 0;
+  const applyLevelTheme = (level: number) => {
+    if (appliedThemeLevel === level) return;
+    const theme = levelThemes[Math.max(0, Math.min(levelThemes.length - 1, level - 1))];
+    scene.background.setHex(theme.sky);
+    scene.fog.color.setHex(theme.fog);
+    railMaterial.color.setHex(theme.rail);
+    sleeperMaterials[0].color.setHex(theme.sleeper);
+    sleeperMaterials[1].color.setHex(theme.dark);
+    rockMat.color.setHex(theme.rock);
+    cliffMat.color.setHex(theme.cliff);
+    appliedThemeLevel = level;
+  };
   const platformGeo = new T.BoxGeometry(1, 1, 1);
   const platformData = [
     [0, -5, -22, 17, 3, 25], [16, -8, -73, 23, 5, 24],
@@ -360,8 +394,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     new T.MeshStandardMaterial({ color, roughness: 0.8, side: T.DoubleSide })
   );
   const finishFlags: any[] = [];
-  [1 / 3, 2 / 3, 0.985].forEach((fraction, i) => {
-    const d = length * fraction;
+  ((course as any).stageDistances as number[]).forEach((d, i) => {
     const u = courseUAtDistance(d);
     const p = course.getPointAt(u);
     const f = frameAt(Math.min(segments, Math.max(0, Math.round(u * segments))));
@@ -550,6 +583,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     const dt = Math.min((now - state.lastTime) / 1000, 0.035);
     state.lastTime = now;
     const previousDistance = state.distance;
+    applyLevelTheme(state.level);
     if (state.status === "playing") {
       // The ride only advances while the player is holding. Releasing brakes the cart.
       // Acceleration is for the run-up; in the air, hold controls the flip only.
@@ -594,13 +628,13 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
           }
         }
       }
-      // Every level is a complete run of the longer course, not another third of it.
-      const stageFinish = length;
+      // Each level owns a different, progressively longer section of the course.
+      const stageFinish = ((course as any).stageDistances as number[])[state.level - 1] || length;
       if (!state.airborne && state.distance >= stageFinish) {
         state.distance = stageFinish;
         state.speed = 0;
         state.holding = false;
-        const finishFlag = finishFlags[finishFlags.length - 1];
+        const finishFlag = finishFlags[state.level - 1];
         if (finishFlag) finishFlag.userData.targetScale = 1;
         state.coins += 30 + state.level * 10;
         bankedCoins = state.coins;
@@ -738,8 +772,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     renderer.render(scene, camera);
     if (now - state.elapsed > 120) {
       state.elapsed = now;
-      const level = state.distance < length / 3 ? 1 : state.distance < (length * 2) / 3 ? 2 : 3;
-      onHud({ speed: state.speed, coins: state.coins, flips: state.flips, status: state.status, airborne: state.airborne, holding: state.holding, level, landed: now < state.landedUntil, landedFlips: state.landedFlips });
+      onHud({ speed: state.speed, coins: state.coins, flips: state.flips, status: state.status, airborne: state.airborne, holding: state.holding, level: state.level, landed: now < state.landedUntil, landedFlips: state.landedFlips });
     }
   };
   state.raf = requestAnimationFrame(animate);
@@ -751,6 +784,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     state.speed = 18;
     state.holding = false;
     state.level = 1;
+    applyLevelTheme(1);
     state.flips = 0;
     state.spin = 0;
     state.coins = bankedCoins;
@@ -777,8 +811,8 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     continueLevel() {
       if (state.status !== "levelComplete") return;
       state.level += 1;
-      // A new level starts from the beginning of the course, never at the old finish line.
-      state.distance = 0;
+      // Start at the beginning of this level's own course section, not the previous finish.
+      state.distance = ((course as any).stageDistances as number[])[state.level - 2] || 0;
       state.speed = 0;
       state.holding = false;
       state.airborne = false;
@@ -789,6 +823,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
       state.trailers.length = 0;
       coins.forEach((coin) => { coin.collected = false; coin.mesh.visible = true; });
       finishFlags.forEach((flag) => { flag.userData.targetScale = 0.001; });
+      applyLevelTheme(state.level);
       state.status = "playing";
       state.lastTime = performance.now();
       onHud({ speed: state.speed, coins: state.coins, flips: state.flips, status: state.status, airborne: false, holding: false, level: state.level });
