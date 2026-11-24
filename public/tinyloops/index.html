@@ -1,0 +1,3293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Tiny Loops 3D — Jumps & Flips</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #0f172a;
+      touch-action: manipulation;
+    }
+
+    #game-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: linear-gradient(180deg, #1d4ed8 0%, #38bdf8 46%, #fde68a 100%);
+      transition: background 1.2s ease;
+    }
+
+    #game-container.theme-sunset {
+      background: linear-gradient(180deg, #311042 0%, #db2777 48%, #fdba74 100%);
+    }
+
+    #game-container.theme-emerald {
+      background: linear-gradient(180deg, #0369a1 0%, #10b981 52%, #fef08a 100%);
+    }
+
+    #game-container.theme-cyber {
+      background: linear-gradient(180deg, #090d16 0%, #4c1d95 52%, #ec4899 100%);
+    }
+
+    @keyframes screen-shake {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      15% { transform: translate(-11px, 7px) rotate(-1deg); }
+      30% { transform: translate(10px, -8px) rotate(1deg); }
+      45% { transform: translate(-8px, -5px) rotate(-0.6deg); }
+      60% { transform: translate(7px, 6px) rotate(0.6deg); }
+      75% { transform: translate(-4px, 3px) rotate(-0.3deg); }
+    }
+
+    .shake {
+      animation: screen-shake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+    }
+
+    #speed-vignette {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(circle at center, transparent 58%, rgba(255, 255, 255, 0.34) 100%);
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      z-index: 12;
+    }
+
+    #speed-vignette.active {
+      opacity: 1;
+    }
+
+    #world-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      pointer-events: none;
+    }
+
+    #fx-layer {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 14;
+    }
+
+    .particle {
+      position: absolute;
+      border-radius: 999px;
+      pointer-events: none;
+      will-change: transform, opacity;
+    }
+
+    .floating-callout {
+      position: absolute;
+      font-weight: 900;
+      font-size: clamp(1rem, 2.5vw, 1.45rem);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #ffffff;
+      text-shadow: 0 3px 0 rgba(15, 23, 42, 0.45), 0 8px 18px rgba(0, 0, 0, 0.28);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      white-space: nowrap;
+      will-change: transform, opacity;
+      z-index: 16;
+    }
+
+    .callout-gold { color: #fde047; }
+    .callout-cyan { color: #67e8f9; }
+    .callout-pink { color: #f9a8d4; }
+    .callout-emerald { color: #6ee7b7; }
+
+    #hud {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      z-index: 20;
+      pointer-events: none;
+    }
+
+    .hud-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .hud-pill {
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(10px);
+      border-radius: 999px;
+      padding: 7px 14px;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.16);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #0f172a;
+      font-weight: 800;
+    }
+
+    .hud-stat {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.08;
+    }
+
+    .hud-label {
+      font-size: 0.62rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #64748b;
+    }
+
+    .hud-value {
+      font-size: 1.15rem;
+      font-weight: 900;
+      color: #0f172a;
+    }
+
+    .coin-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: linear-gradient(135deg, #fef08a, #fde047);
+      border: 2px solid #ffffff;
+      border-radius: 999px;
+      padding: 6px 13px;
+      box-shadow: 0 6px 16px rgba(234, 179, 8, 0.28);
+      font-weight: 900;
+      font-size: 0.98rem;
+      color: #713f12;
+    }
+
+    .progress-wrapper {
+      flex: 1;
+      max-width: 360px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .level-badge {
+      font-size: 0.75rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #ffffff;
+      text-shadow: 0 2px 8px rgba(15, 23, 42, 0.45);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dir-tag {
+      background: rgba(15, 23, 42, 0.4);
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.65rem;
+    }
+
+    .progress-bar-bg {
+      width: 100%;
+      height: 13px;
+      background: rgba(255, 255, 255, 0.35);
+      border-radius: 999px;
+      padding: 2px;
+      box-shadow: inset 0 2px 5px rgba(15, 23, 42, 0.22);
+      position: relative;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #facc15, #fb7185, #38bdf8);
+      border-radius: 999px;
+      transition: width 0.08s linear;
+    }
+
+    .cp-marker {
+      position: absolute;
+      top: 50%;
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: #ffffff;
+      border: 2px solid #0284c7;
+      transform: translate(-50%, -50%);
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+
+    .cp-marker.reached {
+      background: #4ade80;
+      border-color: #ffffff;
+      transform: translate(-50%, -50%) scale(1.25);
+    }
+
+    .icon-btn {
+      pointer-events: auto;
+      border: none;
+      background: rgba(255, 255, 255, 0.92);
+      color: #0f172a;
+      width: 42px;
+      height: 42px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.16);
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    .icon-btn:hover {
+      transform: scale(1.07);
+      background: #ffffff;
+    }
+
+    .icon-btn:active {
+      transform: scale(0.94);
+    }
+
+    #air-status {
+      position: absolute;
+      top: 78px;
+      left: 50%;
+      transform: translateX(-50%) scale(0.85);
+      background: linear-gradient(135deg, #f59e0b, #ec4899);
+      color: #ffffff;
+      font-weight: 900;
+      font-size: 1rem;
+      padding: 6px 18px;
+      border-radius: 999px;
+      box-shadow: 0 8px 22px rgba(236, 72, 153, 0.4);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease, transform 0.15s ease;
+      z-index: 18;
+      letter-spacing: 0.04em;
+    }
+
+    #air-status.visible {
+      opacity: 1;
+      transform: translateX(-50%) scale(1);
+    }
+
+    #air-status.hairpin-warning {
+      background: linear-gradient(135deg, #dc2626, #991b1b);
+      box-shadow: 0 8px 24px rgba(220, 38, 38, 0.55);
+      animation: hairpin-pulse 0.8s ease-in-out infinite alternate;
+    }
+
+    @keyframes hairpin-pulse {
+      from { filter: brightness(1); }
+      to { filter: brightness(1.3); }
+    }
+
+    #control-hint {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.48);
+      backdrop-filter: blur(8px);
+      color: #ffffff;
+      font-size: 0.82rem;
+      font-weight: 800;
+      padding: 8px 18px;
+      border-radius: 999px;
+      pointer-events: none;
+      letter-spacing: 0.03em;
+      transition: all 0.2s ease;
+      z-index: 18;
+      white-space: nowrap;
+    }
+
+    #control-hint.active-hold {
+      background: rgba(250, 204, 21, 0.95);
+      color: #0f172a;
+      transform: translateX(-50%) scale(1.05);
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.58);
+      backdrop-filter: blur(9px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 30;
+      opacity: 1;
+      transition: opacity 0.25s ease;
+    }
+
+    #garage-overlay {
+      z-index: 50;
+    }
+
+    .overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 28px;
+      padding: 28px 24px;
+      max-width: 440px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 26px 56px rgba(15, 23, 42, 0.36);
+      transform: translateY(0);
+      transition: transform 0.25s ease;
+      max-height: 92vh;
+      overflow-y: auto;
+    }
+
+    .overlay.hidden .card {
+      transform: translateY(18px);
+    }
+
+    .game-logo {
+      font-size: 2.35rem;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      line-height: 1.02;
+      background: linear-gradient(135deg, #f97316, #ec4899, #4f46e5);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 4px;
+    }
+
+    .logo-sub {
+      font-size: 0.76rem;
+      font-weight: 900;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #0284c7;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: #64748b;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 18px;
+      line-height: 1.42;
+    }
+
+    .how-to-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 18px;
+      text-align: left;
+    }
+
+    .how-box {
+      background: #f8fafc;
+      border: 2px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 11px;
+    }
+
+    .how-title {
+      font-size: 0.74rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      color: #0284c7;
+      margin-bottom: 3px;
+    }
+
+    .how-box:nth-child(2) .how-title {
+      color: #ec4899;
+    }
+
+    .how-desc {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #334155;
+      line-height: 1.32;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-around;
+      background: #f1f5f9;
+      border-radius: 18px;
+      padding: 12px;
+      margin-bottom: 18px;
+    }
+
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .stat-num {
+      font-size: 1.35rem;
+      font-weight: 900;
+      color: #0f172a;
+    }
+
+    .stat-lbl {
+      font-size: 0.66rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: #64748b;
+      letter-spacing: 0.06em;
+    }
+
+    .btn-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .primary-btn {
+      width: 100%;
+      border: none;
+      border-radius: 999px;
+      padding: 15px 22px;
+      font-size: 1.05rem;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #ffffff;
+      background: linear-gradient(135deg, #f97316, #ec4899);
+      box-shadow: 0 10px 24px rgba(236, 72, 153, 0.36);
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .primary-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 28px rgba(236, 72, 153, 0.44);
+    }
+
+    .primary-btn:active {
+      transform: translateY(1px) scale(0.98);
+    }
+
+    .checkpoint-btn {
+      background: linear-gradient(135deg, #0ea5e9, #10b981);
+      box-shadow: 0 10px 24px rgba(16, 185, 129, 0.34);
+    }
+
+    .garage-btn {
+      width: 100%;
+      border: 2px solid #e2e8f0;
+      border-radius: 999px;
+      padding: 12px 20px;
+      font-size: 0.92rem;
+      font-weight: 900;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #0f172a;
+      background: #f8fafc;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background 0.15s ease, transform 0.15s ease;
+    }
+
+    .garage-btn:hover {
+      background: #f1f5f9;
+      transform: translateY(-1px);
+    }
+
+    .secondary-btn {
+      width: 100%;
+      border: none;
+      border-radius: 999px;
+      padding: 11px 18px;
+      font-size: 0.86rem;
+      font-weight: 800;
+      color: #475569;
+      background: #f1f5f9;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .secondary-btn:hover {
+      background: #e2e8f0;
+    }
+
+    .garage-section-title {
+      text-align: left;
+      font-size: 0.75rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #64748b;
+      margin: 12px 0 8px;
+    }
+
+    .shop-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .shop-item {
+      background: #f8fafc;
+      border: 2px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 10px 6px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    }
+
+    .shop-item:hover {
+      transform: translateY(-2px);
+    }
+
+    .shop-item.equipped {
+      border-color: #ec4899;
+      background: #fdf2f8;
+    }
+
+    .shop-swatch {
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      border: 3px solid #ffffff;
+      box-shadow: 0 4px 10px rgba(15, 23, 42, 0.18);
+    }
+
+    .shop-name {
+      font-size: 0.74rem;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    .shop-price {
+      font-size: 0.7rem;
+      font-weight: 900;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #fef08a;
+      color: #713f12;
+    }
+
+    .shop-item.owned .shop-price {
+      background: #e2e8f0;
+      color: #334155;
+    }
+
+    .shop-item.equipped .shop-price {
+      background: #ec4899;
+      color: #ffffff;
+    }
+
+    @media (max-width: 540px) {
+      #hud {
+        padding: 10px 10px;
+        gap: 6px;
+      }
+      .hud-pill {
+        padding: 5px 10px;
+      }
+      .hud-value {
+        font-size: 1rem;
+      }
+      .coin-badge {
+        padding: 5px 10px;
+        font-size: 0.86rem;
+      }
+      .card {
+        padding: 22px 18px;
+      }
+      .game-logo {
+        font-size: 1.9rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <div id="speed-vignette"></div>
+
+    <svg id="world-svg" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+      <defs>
+        <radialGradient id="sun-glow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#fef9c3" stop-opacity="0.95" />
+          <stop offset="55%" stop-color="#fde047" stop-opacity="0.38" />
+          <stop offset="100%" stop-color="#fde047" stop-opacity="0" />
+        </radialGradient>
+
+        <linearGradient id="island-top" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#6ee7b7" />
+          <stop offset="100%" stop-color="#10b981" />
+        </linearGradient>
+
+        <linearGradient id="island-rock" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#94a3b8" />
+          <stop offset="100%" stop-color="#475569" />
+        </linearGradient>
+
+        <filter id="pod-shadow" x="-35%" y="-35%" width="170%" height="170%">
+          <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#0f172a" flood-opacity="0.32" />
+        </filter>
+      </defs>
+
+      <circle id="sky-sun" cx="76%" cy="20%" r="145" fill="url(#sun-glow)" />
+      <circle id="sky-sun-core" cx="76%" cy="20%" r="46" fill="#fef9c3" opacity="0.92" />
+
+      <g id="parallax-clouds"></g>
+      <g id="parallax-islands"></g>
+
+      <g id="world-3d-layer"></g>
+
+      <polyline id="rider-trail" fill="none" stroke="#ffffff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" opacity="0.65" />
+
+      <g id="rider-group" filter="url(#pod-shadow)">
+        <path id="boost-flame" d="M -22,2 L -52,-8 L -42,2 L -54,10 Z" fill="#fde047" opacity="0" />
+        <line id="angle-guide" x1="-34" y1="14" x2="34" y2="14" stroke="#ffffff" stroke-width="2.5" stroke-dasharray="5 4" opacity="0" />
+        <rect x="-24" y="-6" width="48" height="16" rx="8" fill="#1e293b" stroke="#ffffff" stroke-width="2" />
+        <circle id="pod-body" cx="0" cy="-10" r="18" fill="#f43f5e" stroke="#ffffff" stroke-width="3" />
+        <ellipse cx="-6" cy="-18" rx="6" ry="3.5" transform="rotate(-25 -6 -18)" fill="rgba(255,255,255,0.55)" />
+        <g id="pod-eyes">
+          <circle cx="7" cy="-12" r="4.2" fill="#ffffff" />
+          <circle cx="8.5" cy="-12" r="2.2" fill="#0f172a" />
+          <circle cx="15" cy="-11" r="3.6" fill="#ffffff" />
+          <circle cx="16.2" cy="-11" r="1.9" fill="#0f172a" />
+        </g>
+        <g id="pod-accessory"></g>
+        <g id="wheel-rear" transform="translate(-13, 10)">
+          <circle cx="0" cy="0" r="6.5" fill="#0f172a" stroke="#ffffff" stroke-width="2" />
+          <line x1="-4" y1="0" x2="4" y2="0" stroke="#94a3b8" stroke-width="1.6" />
+        </g>
+        <g id="wheel-front" transform="translate(13, 10)">
+          <circle cx="0" cy="0" r="6.5" fill="#0f172a" stroke="#ffffff" stroke-width="2" />
+          <line x1="-4" y1="0" x2="4" y2="0" stroke="#94a3b8" stroke-width="1.6" />
+        </g>
+      </g>
+
+      <g id="follower-carts-layer"></g>
+    </svg>
+
+    <div id="fx-layer"></div>
+
+    <div id="hud">
+      <div class="hud-group">
+        <div class="hud-pill">
+          <div class="hud-stat">
+            <span class="hud-label">Score</span>
+            <span class="hud-value" id="hud-score">0</span>
+          </div>
+          <div style="width: 1px; height: 24px; background: #e2e8f0;"></div>
+          <div class="hud-stat">
+            <span class="hud-label">Combo</span>
+            <span class="hud-value" id="hud-combo" style="color: #ec4899;">x1</span>
+          </div>
+        </div>
+
+        <div class="coin-badge" title="Collected Coins">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#f59e0b" stroke="#b45309" stroke-width="2.2">
+            <circle cx="12" cy="12" r="9"></circle>
+            <line x1="12" y1="8" x2="12" y2="16"></line>
+          </svg>
+          <span id="hud-coins">0</span>
+        </div>
+      </div>
+
+      <div class="progress-wrapper">
+        <div class="level-badge">
+          <span id="hud-level-title">STAGE 1 — SKYLINE SPIRALS</span>
+          <span class="dir-tag" id="hud-heading">EAST 0°</span>
+        </div>
+        <div class="progress-bar-bg" id="progress-bar-container">
+          <div class="progress-bar-fill" id="hud-progress"></div>
+        </div>
+      </div>
+
+      <div class="hud-group">
+        <button class="icon-btn" id="open-garage-hud-btn" title="Character & Trail Garage" aria-label="Garage">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
+
+        <button class="icon-btn" id="mute-btn" title="Toggle Sound" aria-label="Toggle Sound">
+          <svg id="sound-on-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+          </svg>
+          <svg id="sound-off-icon" style="display:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <line x1="23" y1="9" x2="17" y2="15"></line>
+            <line x1="17" y1="9" x2="23" y2="15"></line>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div id="air-status">FLIP 0%</div>
+
+    <div id="control-hint">HOLD TO ACCELERATE &amp; BACKFLIP • RELEASE TO COAST &amp; LAND</div>
+
+    <div class="overlay" id="start-overlay">
+      <div class="card">
+        <div class="game-logo">TINY LOOPS 3D</div>
+        <div class="logo-sub">Jumps &amp; Backflips • Multi-Direction Edition</div>
+        <p class="subtitle">Carve across winding 3D sky tracks, whip upside-down through 360° loops, collect coin arcs &amp; gems, and stick clean backflip landings!</p>
+        <div class="how-to-grid">
+          <div class="how-box">
+            <div class="how-title">On Track</div>
+            <div class="how-desc"><strong>Hold</strong> to build speed and clear loops. Fast hill crests launch; slow approaches stay glued to the rails.</div>
+          </div>
+          <div class="how-box">
+            <div class="how-title">Coaster Train &amp; Flips</div>
+            <div class="how-desc"><strong>Hold</strong> in air to backflip. Land cleanly to add <strong>trailing carts</strong> that multiply your score!</div>
+          </div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-item">
+            <span class="stat-num" id="start-best-score">0</span>
+            <span class="stat-lbl">Best Score</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-num" id="start-coins">0</span>
+            <span class="stat-lbl">Coins</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-num" id="start-best-level">1</span>
+            <span class="stat-lbl">Max Stage</span>
+          </div>
+        </div>
+        <div class="btn-stack">
+          <button class="primary-btn" id="start-btn">TAP TO RIDE</button>
+          <button class="garage-btn" id="start-garage-btn">
+            <span>POD &amp; TRAIL GARAGE</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay hidden" id="garage-overlay">
+      <div class="card">
+        <div class="game-logo" style="font-size: 1.9rem;">POD GARAGE</div>
+        <p class="subtitle" style="margin-bottom: 10px;">Spend your collected coins on new Tiny Pods &amp; ribbon trails!</p>
+        <div class="coin-badge" style="justify-content: center; margin: 0 auto 10px; width: fit-content;">
+          <span>BANK:</span>
+          <span id="garage-coins">0</span>
+          <span>COINS</span>
+        </div>
+
+        <div class="garage-section-title">Tiny Pods</div>
+        <div class="shop-grid" id="pod-shop-grid"></div>
+
+        <div class="garage-section-title">Ribbon Trails</div>
+        <div class="shop-grid" id="trail-shop-grid"></div>
+
+        <button class="primary-btn" id="close-garage-btn" style="margin-top: 8px;">DONE</button>
+      </div>
+    </div>
+
+    <div class="overlay hidden" id="level-overlay">
+      <div class="card">
+        <div class="game-logo" style="font-size: 2rem;">STAGE CLEAR!</div>
+        <p class="subtitle" id="level-clear-subtitle">Awesome rhythm across the winding sky rails!</p>
+        <div class="stat-row">
+          <div class="stat-item">
+            <span class="stat-num" id="clear-score">0</span>
+            <span class="stat-lbl">Total Score</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-num" id="clear-coins">0</span>
+            <span class="stat-lbl">Stage Coins</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-num" id="clear-flips">0</span>
+            <span class="stat-lbl">Backflips</span>
+          </div>
+        </div>
+        <div class="btn-stack">
+          <button class="primary-btn" id="next-level-btn">NEXT STAGE</button>
+          <button class="garage-btn" id="clear-garage-btn">POD &amp; TRAIL GARAGE</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay hidden" id="gameover-overlay">
+      <div class="card">
+        <div class="game-logo" style="font-size: 2rem; background: linear-gradient(135deg, #ef4444, #f97316); -webkit-background-clip: text;">WIPEOUT!</div>
+        <p class="subtitle" id="crash-reason">You landed too steep! Release earlier to align your rollers.</p>
+        <div class="stat-row">
+          <div class="stat-item">
+            <span class="stat-num" id="over-score">0</span>
+            <span class="stat-lbl">Score</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-num" id="over-coins">0</span>
+            <span class="stat-lbl">Total Coins</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-num" id="over-best">0</span>
+            <span class="stat-lbl">Best</span>
+          </div>
+        </div>
+        <div class="btn-stack">
+          <button class="primary-btn checkpoint-btn" id="respawn-cp-btn">CONTINUE FROM CHECKPOINT</button>
+          <button class="primary-btn" id="retry-btn">RESTART STAGE</button>
+          <button class="secondary-btn" id="restart-lvl1-btn">Back to Stage 1</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * TINY LOOPS 3D — Pseudo-3D Winding Spline Rollercoaster & Stunt Engine
+     * Pure HTML, CSS, SVG & Vanilla JS (zero <canvas>).
+     *
+     * HILL TAKE-OFF FIX (this revision):
+     *  - Crest launches now follow the track tangent and gain an upward "pop" that
+     *    scales with speed: faster = higher/longer jump, slow = stay on the rails.
+     *  - Launch carries a soft aim-assist that steers the rider's heading along the
+     *    curving hill so a turning track no longer slides out from under the flight path.
+     *  - Landing detection has a longer catch window for crest launches and a minimum
+     *    airtime so you can't re-land instantly or tunnel through the rails.
+     */
+
+    (() => {
+      'use strict';
+
+      /* 1. Web Audio Synthesizer */
+      class SoundEngine {
+        constructor() {
+          this.ctx = null;
+          this.muted = false;
+          this.coinCombo = 0;
+          this.lastCoinTime = 0;
+          this.thrusterOsc = null;
+          this.thrusterGain = null;
+        }
+
+        init() {
+          if (!this.ctx) {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (AudioCtx) this.ctx = new AudioCtx();
+          }
+          if (this.ctx && this.ctx.state === 'suspended') {
+            this.ctx.resume();
+          }
+          if (this.ctx && !this.thrusterOsc) {
+            try {
+              this.thrusterOsc = this.ctx.createOscillator();
+              this.thrusterGain = this.ctx.createGain();
+              this.thrusterOsc.type = 'sawtooth';
+              this.thrusterOsc.frequency.value = 65;
+              this.thrusterGain.gain.value = 0.0001;
+              this.thrusterOsc.connect(this.thrusterGain);
+              this.thrusterGain.connect(this.ctx.destination);
+              this.thrusterOsc.start();
+            } catch (e) {}
+          }
+        }
+
+        updateThruster(active, speedRatio) {
+          if (!this.ctx || !this.thrusterOsc || !this.thrusterGain) return;
+          try {
+            const now = this.ctx.currentTime;
+            if (this.muted || !active) {
+              this.thrusterGain.gain.setTargetAtTime(0.0001, now, 0.05);
+            } else {
+              const targetFreq = 68 + speedRatio * 105;
+              this.thrusterOsc.frequency.setTargetAtTime(targetFreq, now, 0.06);
+              this.thrusterGain.gain.setTargetAtTime(0.032, now, 0.05);
+            }
+          } catch (e) {}
+        }
+
+        toggleMute() {
+          this.muted = !this.muted;
+          if (this.muted) this.updateThruster(false, 0);
+          return this.muted;
+        }
+
+        playTone(freq, type, duration, gainVal = 0.14, slideTo = null) {
+          if (this.muted) return;
+          this.init();
+          if (!this.ctx) return;
+
+          try {
+            const now = this.ctx.currentTime;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, now);
+            if (slideTo) {
+              osc.frequency.exponentialRampToValueAtTime(slideTo, now + duration);
+            }
+            gain.gain.setValueAtTime(gainVal, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now);
+            osc.stop(now + duration);
+          } catch (e) {}
+        }
+
+        playCoin(isGem = false) {
+          const now = performance.now();
+          if (now - this.lastCoinTime < 420) {
+            this.coinCombo = Math.min(12, this.coinCombo + 1);
+          } else {
+            this.coinCombo = 0;
+          }
+          this.lastCoinTime = now;
+
+          const pitch = (isGem ? 880 : 660) * Math.pow(1.06, this.coinCombo);
+          this.playTone(pitch, 'sine', 0.14, 0.13, pitch * 1.35);
+          if (isGem) {
+            setTimeout(() => this.playTone(pitch * 1.5, 'triangle', 0.22, 0.14), 60);
+          }
+        }
+
+        playBoostPad() {
+          this.playTone(260, 'sawtooth', 0.28, 0.13, 780);
+        }
+
+        playCheckpoint() {
+          this.playTone(523.25, 'triangle', 0.16, 0.15);
+          setTimeout(() => this.playTone(783.99, 'triangle', 0.24, 0.15), 80);
+        }
+
+        playLaunch() {
+          this.playTone(230, 'sine', 0.24, 0.14, 540);
+        }
+
+        playFlip(flipCount) {
+          const baseFreq = Math.min(920, 440 + flipCount * 100);
+          this.playTone(baseFreq, 'triangle', 0.18, 0.15, baseFreq * 1.35);
+        }
+
+        playPerfectLand() {
+          this.playTone(523.25, 'sine', 0.16, 0.16, 783.99);
+          setTimeout(() => this.playTone(1046.5, 'triangle', 0.22, 0.14), 70);
+        }
+
+        playCleanLand() {
+          this.playTone(360, 'sine', 0.15, 0.12, 480);
+        }
+
+        playSketchyLand() {
+          this.playTone(250, 'triangle', 0.22, 0.14, 340);
+        }
+
+        playCrash() {
+          this.playTone(155, 'sawtooth', 0.36, 0.2, 42);
+        }
+
+        playStageClear() {
+          const notes = [523.25, 659.25, 783.99, 1046.5];
+          notes.forEach((n, idx) => {
+            setTimeout(() => this.playTone(n, 'triangle', 0.28, 0.16), idx * 95);
+          });
+        }
+      }
+
+      const sound = new SoundEngine();
+
+      /* 2. Unlockable Pods & Trails + LocalStorage */
+      const POD_SKINS = [
+        { id: 'coral', name: 'Classic Coral', color: '#f43f5e', price: 0, acc: 'none' },
+        { id: 'mint', name: 'Mint Robo', color: '#10b981', price: 40, acc: 'antenna' },
+        { id: 'gold', name: 'Royal Gold', color: '#f59e0b', price: 90, acc: 'crown' },
+        { id: 'fox', name: 'Neon Fox', color: '#f97316', price: 150, acc: 'ears' },
+        { id: 'galaxy', name: 'Galaxy Orb', color: '#6366f1', price: 240, acc: 'halo' },
+        { id: 'cyber', name: 'Cyber Pink', color: '#ec4899', price: 350, acc: 'visor' }
+      ];
+
+      const TRAIL_SKINS = [
+        { id: 'white', name: 'Cloud Mist', color: '#ffffff', price: 0 },
+        { id: 'gold', name: 'Sunbeam', color: '#fde047', price: 50 },
+        { id: 'cyan', name: 'Hyper Cyan', color: '#38bdf8', price: 110 },
+        { id: 'pink', name: 'Neon Pulse', color: '#f472b6', price: 180 },
+        { id: 'emerald', name: 'Plasma Mint', color: '#34d399', price: 260 },
+        { id: 'violet', name: 'Starlight', color: '#c084fc', price: 360 }
+      ];
+
+      const STORAGE_KEY = 'tiny_loops_3d_save_v1';
+      let saveData = {
+        bestScore: 0,
+        maxLevel: 1,
+        coins: 0,
+        ownedPods: ['coral'],
+        equippedPod: 'coral',
+        ownedTrails: ['white'],
+        equippedTrail: 'white'
+      };
+
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) saveData = { ...saveData, ...JSON.parse(raw) };
+      } catch (e) {}
+
+      function persistSave() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData));
+        } catch (e) {}
+      }
+
+      /* 3. DOM References */
+      const container = document.getElementById('game-container');
+      const speedVignette = document.getElementById('speed-vignette');
+      const world3dLayer = document.getElementById('world-3d-layer');
+      const riderGroup = document.getElementById('rider-group');
+      const followerCartsLayer = document.getElementById('follower-carts-layer');
+      const podBody = document.getElementById('pod-body');
+      const podAccessory = document.getElementById('pod-accessory');
+      const riderTrail = document.getElementById('rider-trail');
+      const boostFlame = document.getElementById('boost-flame');
+      const angleGuide = document.getElementById('angle-guide');
+      const wheelRear = document.getElementById('wheel-rear');
+      const wheelFront = document.getElementById('wheel-front');
+      const parallaxClouds = document.getElementById('parallax-clouds');
+      const parallaxIslands = document.getElementById('parallax-islands');
+      const fxLayer = document.getElementById('fx-layer');
+
+      const hudScore = document.getElementById('hud-score');
+      const hudCombo = document.getElementById('hud-combo');
+      const hudCoins = document.getElementById('hud-coins');
+      const hudLevelTitle = document.getElementById('hud-level-title');
+      const hudHeading = document.getElementById('hud-heading');
+      const hudProgress = document.getElementById('hud-progress');
+      const progressBarContainer = document.getElementById('progress-bar-container');
+      const airStatus = document.getElementById('air-status');
+      const controlHint = document.getElementById('control-hint');
+
+      const startOverlay = document.getElementById('start-overlay');
+      const garageOverlay = document.getElementById('garage-overlay');
+      const levelOverlay = document.getElementById('level-overlay');
+      const gameoverOverlay = document.getElementById('gameover-overlay');
+
+      const SVG_NS = 'http://www.w3.org/2000/svg';
+      function createSvgEl(tag, attrs = {}) {
+        const el = document.createElementNS(SVG_NS, tag);
+        for (const [k, v] of Object.entries(attrs)) {
+          el.setAttribute(k, v);
+        }
+        return el;
+      }
+
+      /* 4. Equipped Skin Visuals */
+      function applyEquippedSkins() {
+        const pod = POD_SKINS.find((p) => p.id === saveData.equippedPod) || POD_SKINS[0];
+        const trail = TRAIL_SKINS.find((t) => t.id === saveData.equippedTrail) || TRAIL_SKINS[0];
+
+        podBody.setAttribute('fill', pod.color);
+        riderTrail.setAttribute('stroke', trail.color);
+
+        podAccessory.innerHTML = '';
+        if (pod.acc === 'crown') {
+          podAccessory.appendChild(
+            createSvgEl('polygon', {
+              points: '-8,-26 -5,-35 0,-29 5,-35 8,-26',
+              fill: '#fde047',
+              stroke: '#ffffff',
+              'stroke-width': '1.5'
+            })
+          );
+        } else if (pod.acc === 'antenna') {
+          podAccessory.appendChild(
+            createSvgEl('line', { x1: 0, y1: -28, x2: 0, y2: -36, stroke: '#ffffff', 'stroke-width': '2.5' })
+          );
+          podAccessory.appendChild(
+            createSvgEl('circle', { cx: 0, cy: -38, r: 4, fill: '#fde047' })
+          );
+        } else if (pod.acc === 'ears') {
+          podAccessory.appendChild(
+            createSvgEl('polygon', { points: '-12,-23 -8,-35 -2,-26', fill: '#f97316', stroke: '#ffffff', 'stroke-width': '1.5' })
+          );
+          podAccessory.appendChild(
+            createSvgEl('polygon', { points: '2,-26 8,-35 12,-23', fill: '#f97316', stroke: '#ffffff', 'stroke-width': '1.5' })
+          );
+        } else if (pod.acc === 'halo') {
+          podAccessory.appendChild(
+            createSvgEl('ellipse', { cx: 0, cy: -32, rx: 12, ry: 3.5, fill: 'none', stroke: '#fde047', 'stroke-width': '2.5' })
+          );
+        } else if (pod.acc === 'visor') {
+          podAccessory.appendChild(
+            createSvgEl('rect', { x: 2, y: -16, width: 17, height: 7, rx: 3.5, fill: '#38bdf8', stroke: '#ffffff', 'stroke-width': '1.5' })
+          );
+        }
+      }
+
+      /* 5. 3D Winding Spline Track Builder */
+      class TrackBuilder3D {
+        constructor() {
+          this.ribbons = [];
+          this.current = [];
+          this.collectibles = [];
+          this.pads = [];
+          this.hazards = [];
+          this.x = 0;
+          this.y = 420;
+          this.z = 0;
+          this.yaw = 0;
+          this.totalTrackArc = 0;
+          this.startRibbon(0, 420, 0);
+        }
+
+        startRibbon(x, y, z) {
+          if (this.current.length > 1) {
+            this.ribbons.push(this.finalizeRibbon(this.current));
+          }
+          this.x = x;
+          this.y = y;
+          this.z = z;
+          this.current = [{ x, y, z, yaw: this.yaw }];
+        }
+
+        addSegment(length, dy = 0, dYaw = 0, step = 22, curveType = 'cosine') {
+          const steps = Math.max(3, Math.ceil(length / step));
+          const startY = this.y;
+          const startYaw = this.yaw;
+          const ds = length / steps;
+
+          for (let i = 1; i <= steps; i++) {
+            const t = i / steps;
+            const prevT = (i - 1) / steps;
+            const midT = (t + prevT) * 0.5;
+            const curYaw = startYaw + dYaw * midT;
+
+            this.x += Math.cos(curYaw) * ds;
+            this.z += Math.sin(curYaw) * ds;
+
+            if (curveType === 'ramp') {
+              this.y = startY + dy * (t * t);
+            } else {
+              const ease = 0.5 - 0.5 * Math.cos(Math.PI * t);
+              this.y = startY + dy * ease;
+            }
+
+            this.yaw = startYaw + dYaw * t;
+            this.current.push({ x: this.x, y: this.y, z: this.z, yaw: this.yaw });
+          }
+          return this;
+        }
+
+        addLoop3D(radius = 155, lateralShift = 85, exitTurnYaw = 0.35, samples = 60) {
+          const entryX = this.x;
+          const entryY = this.y;
+          const entryZ = this.z;
+          const entryYaw = this.yaw;
+
+          const fwdX = Math.cos(entryYaw);
+          const fwdZ = Math.sin(entryYaw);
+          const rightX = -Math.sin(entryYaw);
+          const rightZ = Math.cos(entryYaw);
+
+          const loopApexItems = [];
+
+          for (let i = 1; i <= samples; i++) {
+            const t = i / samples;
+            const theta = Math.PI / 2 - t * Math.PI * 2;
+            const forwardOffset = radius * Math.cos(theta) + 52 * t;
+            const upOffset = radius * (1 - Math.sin(theta));
+            const sideOffset = lateralShift * (0.5 - 0.5 * Math.cos(Math.PI * t));
+            const curYaw = entryYaw + exitTurnYaw * t;
+            const loopPitch = -t * Math.PI * 2;
+
+            const px = entryX + fwdX * forwardOffset + rightX * sideOffset;
+            const py = entryY - upOffset;
+            const pz = entryZ + fwdZ * forwardOffset + rightZ * sideOffset;
+
+            this.current.push({
+              x: px,
+              y: py,
+              z: pz,
+              yaw: curYaw,
+              loopPitch,
+              isLoop: true
+            });
+
+            if (i === Math.floor(samples * 0.5)) {
+              loopApexItems.push({ x: px, y: py + 24, z: pz, type: 'gem' });
+            } else if (i % 7 === 0 && t > 0.22 && t < 0.78) {
+              loopApexItems.push({ x: px, y: py + 22, z: pz, type: 'coin' });
+            }
+          }
+
+          loopApexItems.forEach((it) => this.addCollectible(it.x, it.y, it.z, it.type));
+
+          const lastPt = this.current[this.current.length - 1];
+          this.x = lastPt.x;
+          this.y = lastPt.y;
+          this.z = lastPt.z;
+          this.yaw = entryYaw + exitTurnYaw;
+          return this;
+        }
+
+        addGapJump(gapDist, dropDy = 115, turnYaw = 0.12) {
+          const startX = this.x;
+          const startY = this.y;
+          const startZ = this.z;
+          const midYaw = this.yaw + turnYaw * 0.5;
+
+          const numCoins = 6;
+          for (let i = 1; i <= numCoins; i++) {
+            const t = i / (numCoins + 1);
+            const dist = gapDist * t;
+            const arcLift = Math.sin(Math.PI * t) * 58;
+            const cx = startX + Math.cos(midYaw) * dist;
+            const cz = startZ + Math.sin(midYaw) * dist;
+            const cy = startY + dropDy * t - arcLift - 20;
+            this.addCollectible(cx, cy, cz, i === 3 ? 'gem' : 'coin');
+          }
+
+          this.yaw += turnYaw;
+          const nextX = startX + Math.cos(midYaw) * gapDist;
+          const nextZ = startZ + Math.sin(midYaw) * gapDist;
+          const nextY = startY + dropDy;
+          this.startRibbon(nextX, nextY, nextZ);
+          return this;
+        }
+
+        addCoinLine(count = 5, heightOffset = -22) {
+          const len = this.current.length;
+          if (len < count + 2) return this;
+          for (let i = 0; i < count; i++) {
+            const idx = len - 1 - i * 2;
+            if (idx >= 0) {
+              const pt = this.current[idx];
+              this.addCollectible(pt.x, pt.y + heightOffset, pt.z, 'coin');
+            }
+          }
+          return this;
+        }
+
+        addPad(type = 'boost') {
+          const rIdx = this.ribbons.length;
+          const ptIdx = this.current.length - 1;
+          const pt = this.current[ptIdx];
+          this.pads.push({
+            ribbonIdx: rIdx,
+            ptIdx,
+            approxPt: { x: pt.x, y: pt.y, z: pt.z },
+            type,
+            triggered: false
+          });
+          return this;
+        }
+
+        addHazard(type = 'spikes') {
+          this.hazards.push({
+            ribbonIdx: this.ribbons.length,
+            ptIdx: this.current.length - 1,
+            type
+          });
+          return this;
+        }
+
+        addCollectible(x, y, z, type = 'coin') {
+          this.collectibles.push({
+            x,
+            y,
+            z,
+            type,
+            collected: false,
+            phase: this.collectibles.length * 0.55
+          });
+        }
+
+        finalizeRibbon(pts) {
+          let s = 0;
+          const out = [];
+          for (let i = 0; i < pts.length; i++) {
+            if (i > 0) {
+              s += Math.hypot(
+                pts[i].x - pts[i - 1].x,
+                pts[i].y - pts[i - 1].y,
+                pts[i].z - pts[i - 1].z
+              );
+            }
+            const prev = pts[Math.max(0, i - 1)];
+            const next = pts[Math.min(pts.length - 1, i + 1)];
+            const dx = next.x - prev.x;
+            const dy = next.y - prev.y;
+            const dz = next.z - prev.z;
+
+            const fwdX = Math.cos(pts[i].yaw);
+            const fwdZ = Math.sin(pts[i].yaw);
+            const signedFwd = dx * fwdX + dz * fwdZ;
+            const pitch = typeof pts[i].loopPitch === 'number'
+              ? pts[i].loopPitch
+              : Math.atan2(dy, Math.max(0.0001, signedFwd));
+
+            out.push({
+              x: pts[i].x,
+              y: pts[i].y,
+              z: pts[i].z,
+              s,
+              globalS: this.totalTrackArc + s,
+              yaw: pts[i].yaw,
+              pitch,
+              isLoop: Boolean(pts[i].isLoop)
+            });
+          }
+          this.totalTrackArc += s;
+          return {
+            points: out,
+            totalLength: s,
+            startGlobalS: out[0].globalS,
+            endGlobalS: out[out.length - 1].globalS
+          };
+        }
+
+        build() {
+          if (this.current.length > 1) {
+            this.ribbons.push(this.finalizeRibbon(this.current));
+          }
+
+          this.pads.forEach((pad) => {
+            const r = this.ribbons[pad.ribbonIdx];
+            if (!r) return;
+            const bestPt = r.points[Math.min(r.points.length - 1, Math.max(0, pad.ptIdx || 0))];
+            pad.s = bestPt.s;
+            pad.x = bestPt.x;
+            pad.y = bestPt.y;
+            pad.z = bestPt.z;
+            pad.yaw = bestPt.yaw;
+            pad.pitch = bestPt.pitch;
+            pad.globalS = bestPt.globalS;
+          });
+
+          this.hazards.forEach((hz) => {
+            const r = this.ribbons[hz.ribbonIdx];
+            if (!r) return;
+            const pt = r.points[Math.min(r.points.length - 1, Math.max(0, hz.ptIdx || 0))];
+            hz.x = pt.x;
+            hz.y = pt.y;
+            hz.z = pt.z;
+            hz.s = pt.s;
+            hz.yaw = pt.yaw;
+            hz.pitch = pt.pitch;
+            hz.globalS = pt.globalS;
+          });
+
+          const lastRibbon = this.ribbons[this.ribbons.length - 1];
+          const finishIndex = Math.max(0, lastRibbon.points.length - 12);
+          const finishPt = lastRibbon.points[finishIndex];
+          const finishFlags = Array.from({ length: 7 }, (_, index) => {
+            const pointIndex = Math.max(0, finishIndex - (6 - index) * 7);
+            return lastRibbon.points[pointIndex];
+          });
+          let maxTrackY = 0;
+          this.ribbons.forEach((r) => {
+            r.points.forEach((p) => {
+              if (p.y > maxTrackY) maxTrackY = p.y;
+            });
+          });
+
+          return {
+            ribbons: this.ribbons,
+            collectibles: this.collectibles,
+            pads: this.pads,
+            hazards: this.hazards,
+            totalGlobalS: finishPt.globalS,
+            finishPt,
+            finishFlags,
+            maxTrackY
+          };
+        }
+      }
+
+      const LEVEL_THEMES = ['', 'theme-sunset', 'theme-emerald', 'theme-cyber'];
+      const LEVEL_NAMES = [
+        'SKYLINE SPIRALS', 'CANYON CORKSCREWS', 'NEON TWISTER',
+        'CLOUD CITADEL', 'HYPER APEX', 'SUNSET SWITCHBACKS',
+        'FROSTBITE FLIGHT', 'JUNGLE JUMBLE', 'LAVA LOOPWAY',
+        'STORM RIDGE', 'CRYSTAL CASCADE', 'MIDNIGHT MAYHEM',
+        'ORBITAL OUTRUN', 'THUNDER PEAK', 'INFINITY ISLES',
+        'VOLCANO VELOCITY', 'RAINBOW RUSH', 'SHADOW CIRCUIT',
+        'TURBO TEMPEST', 'COSMIC COASTER', 'SKYFALL SUMMIT',
+        'WILDERNESS WHIRL', 'PHANTOM FREEWAY', 'GALAXY GRAND PRIX',
+        'ULTIMATE LOOPFEST'
+      ];
+
+      function makeRng(seed) {
+        let a = seed >>> 0;
+        return () => {
+          a = (a + 0x6D2B79F5) | 0;
+          let t = Math.imul(a ^ (a >>> 15), 1 | a);
+          t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+      }
+
+      /**
+       * Endless procedural stages. Every stage number gets its own seeded layout that is
+       * longer, harder and more varied than the last:
+       *  - more sections (7 at stage 1, up to 64 by stage ~32)
+       *  - gap jumps get wider, drops get bigger, hills get taller
+       *  - spikes after hill crests (fast = fly over, slow = roll into them)
+       *  - hairpin turns with a speed limit (hold the whole way and you crash)
+       *  - slow zones that bleed your speed right before a jump
+       */
+      function generateLongStage(stageNum) {
+        const b = new TrackBuilder3D();
+        const rng = makeRng(stageNum * 7919 + 104729);
+        const rand = (lo, hi) => lo + (hi - lo) * rng();
+        const side = () => (rng() < 0.5 ? -1 : 1);
+
+        const d = Math.min(1, (stageNum - 1) / 24);
+        const sectionCount = Math.min(64, 6 + Math.floor(stageNum * 1.8));
+        const spikeChance = stageNum < 3 ? 0 : Math.min(0.75, 0.2 + d * 0.55);
+        const slowChance = stageNum < 4 ? 0 : Math.min(0.5, 0.1 + d * 0.4);
+
+        const runway = (len = rand(280, 340)) => b.addSegment(len, rand(-15, 35), rand(-0.2, 0.2));
+
+        const hillHop = () => {
+          const dir = side();
+          const h = rand(95, 130) + d * 70;
+          b.addSegment(rand(200, 250), -h, 0.3 * dir);
+          if (rng() < spikeChance) {
+            b.addSegment(130, h * 0.55, -0.2 * dir)
+             .addHazard('spikes')
+             .addSegment(rand(150, 210), h * 0.9, -0.3 * dir);
+          } else {
+            b.addSegment(rand(250, 300), h * 1.5, -0.4 * dir).addCoinLine(4);
+          }
+        };
+
+        const rollers = () => {
+          const n = 2 + Math.floor(rng() * (1 + d * 2));
+          for (let k = 0; k < n; k++) {
+            const dir = k % 2 ? 1 : -1;
+            const h = rand(70, 110) + d * 40;
+            b.addSegment(rand(170, 210), -h, 0.22 * dir)
+             .addSegment(rand(190, 230), h * rand(0.9, 1.2), -0.26 * dir);
+          }
+          b.addCoinLine(4);
+        };
+
+        const loopSection = (count = 1) => {
+          for (let k = 0; k < count; k++) {
+            if (rng() < 0.4 && d < 0.6) {
+              b.addSegment(rand(220, 260), rand(40, 80), rand(-0.2, 0.2)).addPad('boost');
+            }
+            b.addSegment(rand(200, 250), rand(20, 70), rand(-0.25, 0.25))
+             .addLoop3D(rand(138, 168) + d * 14, side() * rand(55, 100), side() * rand(0.3, 0.62))
+             .addSegment(rand(180, 240), rand(10, 50), rand(-0.3, 0.3));
+          }
+          b.addCoinLine(4);
+        };
+
+        const gapJump = (big = false) => {
+          if (rng() < slowChance) b.addSegment(160, 0, 0).addPad('slow');
+          runway(rand(300, 360));
+          const lift = rand(82, 115);
+          const frac = big ? rand(0.7, 1) : rng();
+          const gap = 190 + frac * (40 + d * 190);
+          b.addSegment(rand(230, 270), -lift, rand(-0.12, 0.12), 18, 'ramp')
+           .addGapJump(gap, rand(105, 150) + d * 40, 0)
+           .addSegment(rand(300, 360), rand(60, 120), rand(-0.45, 0.45));
+        };
+
+        // Sharp turn with a speed limit: carry too much speed and you fly off.
+        const hairpin = () => {
+          const dir = side();
+          runway(rand(280, 340));
+          b.addSegment(rand(110, 140), rand(0, 20), 0.6 * dir)
+           .addHazard('hairpin')
+           .addSegment(rand(110, 140), rand(0, 20), 0.6 * dir)
+           .addSegment(rand(300, 360), rand(0, 40), rand(-0.3, 0.3))
+           .addCoinLine(4);
+        };
+
+        const bigDrop = () => {
+          b.addSegment(rand(320, 400), rand(170, 240), rand(-0.4, 0.4))
+           .addSegment(rand(240, 280), rand(20, 60), rand(-0.3, 0.3))
+           .addCoinLine(5);
+        };
+
+        const climb = () => {
+          b.addSegment(rand(300, 380), -rand(100, 170), rand(-0.3, 0.3)).addCoinLine(4);
+        };
+
+        const pool = [
+          { fn: hillHop, w: 3, min: 1 },
+          { fn: rollers, w: 2, min: 1 },
+          { fn: () => loopSection(1), w: 3, min: 1 },
+          { fn: () => gapJump(false), w: 4, min: 1 },
+          { fn: hairpin, w: 2, min: 2 },
+          { fn: () => gapJump(true), w: 2, min: 5 },
+          { fn: () => loopSection(2), w: 2, min: 4 },
+          { fn: bigDrop, w: 1, min: 1 },
+          { fn: climb, w: 1, min: 1 }
+        ].filter((e) => stageNum >= e.min);
+        const totalW = pool.reduce((sum, e) => sum + e.w, 0);
+        const pickSection = (avoid) => {
+          for (let tries = 0; tries < 6; tries++) {
+            let r = rng() * totalW;
+            for (const e of pool) {
+              r -= e.w;
+              if (r <= 0) { if (e !== avoid) return e; break; }
+            }
+          }
+          return pool[0];
+        };
+
+        // Opening: a flat start, then the first hill crest so you can learn take-offs.
+        b.addSegment(360 + Math.min(120, stageNum * 6), 0, rand(-0.2, 0.2))
+         .addCoinLine(5)
+         .addSegment(rand(230, 270), -rand(105, 125), 0.3)
+         .addSegment(rand(290, 330), rand(190, 215), -0.4);
+
+        let last = null;
+        for (let i = 0; i < sectionCount; i++) {
+          const sec = pickSection(last);
+          sec.fn();
+          last = sec;
+          if (i % 4 === 3) b.addSegment(120, 0, 0).addPad('checkpoint');
+        }
+
+        // Finale: giant loop, then a victory jump.
+        b.addSegment(340, 180, -0.48)
+         .addSegment(230, 50, -0.15)
+         .addLoop3D(165 + Math.min(20, stageNum * 2), 105, 0.65)
+         .addSegment(300, 0, 0)
+         .addSegment(260, -108, 0.12, 18, 'ramp')
+         .addGapJump(305 + d * 85, 125 + d * 32, 0)
+         .addSegment(410, 115, 0.22)
+         .addCoinLine(6)
+         .addSegment(440, 0, 0);
+
+        return b.build();
+      }
+
+      /* 6. Ribbon Sampling & Projection */
+      function sampleRibbonAtS(ribbon, s) {
+        const pts = ribbon.points;
+        if (s <= 0) return pts[0];
+        if (s >= ribbon.totalLength) return pts[pts.length - 1];
+
+        let lo = 0;
+        let hi = pts.length - 1;
+        while (lo < hi - 1) {
+          const mid = (lo + hi) >> 1;
+          if (pts[mid].s <= s) lo = mid;
+          else hi = mid;
+        }
+
+        const p0 = pts[lo];
+        const p1 = pts[hi];
+        const segLen = Math.max(0.0001, p1.s - p0.s);
+        const t = (s - p0.s) / segLen;
+
+        let dYaw = p1.yaw - p0.yaw;
+        while (dYaw > Math.PI) dYaw -= Math.PI * 2;
+        while (dYaw < -Math.PI) dYaw += Math.PI * 2;
+
+        let dPitch = p1.pitch - p0.pitch;
+        while (dPitch > Math.PI) dPitch -= Math.PI * 2;
+        while (dPitch < -Math.PI) dPitch += Math.PI * 2;
+
+        return {
+          x: p0.x + (p1.x - p0.x) * t,
+          y: p0.y + (p1.y - p0.y) * t,
+          z: p0.z + (p1.z - p0.z) * t,
+          s,
+          globalS: p0.globalS + (p1.globalS - p0.globalS) * t,
+          yaw: p0.yaw + dYaw * t,
+          pitch: p0.pitch + dPitch * t,
+          isLoop: p0.isLoop || p1.isLoop
+        };
+      }
+
+      function project3D(wx, wy, wz, cam) {
+        const dx = wx - cam.x;
+        const dy = wy - cam.y;
+        const dz = wz - cam.z;
+
+        const cosY = Math.cos(cam.yaw);
+        const sinY = Math.sin(cam.yaw);
+
+        const along = dx * cosY + dz * sinY;
+        const depth = -dx * sinY + dz * cosY;
+
+        const fov = 920;
+        const zCam = fov + depth * 0.72;
+        if (zCam < 140) return null;
+
+        const persp = fov / zCam;
+        const scale = persp * cam.zoom;
+
+        const sx = cam.screenAnchorX + along * scale;
+        const sy = cam.screenAnchorY + (dy - depth * 0.24) * scale;
+
+        return { sx, sy, scale, depth };
+      }
+
+      /* 7. Parallax */
+      const clouds = [];
+      const islands = [];
+
+      function initParallax() {
+        parallaxClouds.innerHTML = '';
+        parallaxIslands.innerHTML = '';
+        clouds.length = 0;
+        islands.length = 0;
+
+        for (let i = 0; i < 9; i++) {
+          const cx = i * 310 + 40;
+          const cy = 65 + (i % 3) * 52;
+          const sc = 0.65 + (i % 3) * 0.28;
+          const g = createSvgEl('g', { opacity: '0.52' });
+          g.appendChild(createSvgEl('circle', { cx: 0, cy: 0, r: 30, fill: '#ffffff' }));
+          g.appendChild(createSvgEl('circle', { cx: 28, cy: -8, r: 36, fill: '#ffffff' }));
+          g.appendChild(createSvgEl('circle', { cx: 60, cy: 2, r: 28, fill: '#ffffff' }));
+          parallaxClouds.appendChild(g);
+          clouds.push({ el: g, baseX: cx, y: cy, sc, speed: 0.06 + (i % 3) * 0.025 });
+        }
+
+        for (let i = 0; i < 6; i++) {
+          const ix = i * 440 + 80;
+          const iy = 380 + (i % 3) * 75;
+          const sc = 0.6 + (i % 3) * 0.22;
+          const g = createSvgEl('g', { opacity: '0.45' });
+          g.appendChild(createSvgEl('polygon', {
+            points: '-70,0 70,0 24,78 -18,92',
+            fill: 'url(#island-rock)'
+          }));
+          g.appendChild(createSvgEl('polygon', {
+            points: '-76,0 76,0 64,-14 -64,-14',
+            fill: 'url(#island-top)'
+          }));
+          g.appendChild(createSvgEl('polygon', {
+            points: '-22,-14 -10,-46 2,-14',
+            fill: '#059669'
+          }));
+          parallaxIslands.appendChild(g);
+          islands.push({ el: g, baseX: ix, y: iy, sc, speed: 0.14 + (i % 2) * 0.05 });
+        }
+      }
+
+      function updateParallax(virtualScrollX, viewH) {
+        const spanClouds = 9 * 310;
+        clouds.forEach((c) => {
+          const x = ((c.baseX - virtualScrollX * c.speed) % spanClouds + spanClouds) % spanClouds - 140;
+          c.el.setAttribute('transform', `translate(${x.toFixed(1)}, ${c.y}) scale(${c.sc})`);
+        });
+
+        const spanIslands = 6 * 440;
+        const baseOffset = (viewH - 720) * 0.45;
+        islands.forEach((isl) => {
+          const x = ((isl.baseX - virtualScrollX * isl.speed) % spanIslands + spanIslands) % spanIslands - 160;
+          isl.el.setAttribute('transform', `translate(${x.toFixed(1)}, ${(isl.y + baseOffset).toFixed(1)}) scale(${isl.sc})`);
+        });
+      }
+
+      /* 8. DOM Particles & Popups */
+      const activeParticles = [];
+      const activeCallouts = [];
+
+      function spawnParticles(screenX, screenY, color, count = 14, speedScale = 1) {
+        for (let i = 0; i < count; i++) {
+          const el = document.createElement('div');
+          el.className = 'particle';
+          const size = 5 + Math.random() * 7;
+          el.style.width = `${size}px`;
+          el.style.height = `${size}px`;
+          el.style.background = color;
+          fxLayer.appendChild(el);
+
+          const ang = Math.random() * Math.PI * 2;
+          const spd = (95 + Math.random() * 240) * speedScale;
+          activeParticles.push({
+            el,
+            x: screenX,
+            y: screenY,
+            vx: Math.cos(ang) * spd,
+            vy: Math.sin(ang) * spd - 65,
+            life: 0.45 + Math.random() * 0.3,
+            maxLife: 0.75
+          });
+        }
+      }
+
+      function spawnCallout(screenX, screenY, text, extraClass = '') {
+        const el = document.createElement('div');
+        el.className = `floating-callout ${extraClass}`;
+        el.textContent = text;
+        fxLayer.appendChild(el);
+
+        activeCallouts.push({
+          el,
+          x: screenX,
+          y: screenY - 26,
+          vy: -68,
+          life: 0.95,
+          maxLife: 0.95
+        });
+      }
+
+      function updateFX(dt) {
+        for (let i = activeParticles.length - 1; i >= 0; i--) {
+          const p = activeParticles[i];
+          p.life -= dt;
+          if (p.life <= 0) {
+            p.el.remove();
+            activeParticles.splice(i, 1);
+            continue;
+          }
+          p.vy += 520 * dt;
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+          const alpha = Math.max(0, p.life / p.maxLife);
+          p.el.style.opacity = alpha.toFixed(2);
+          p.el.style.transform = `translate(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px) scale(${alpha.toFixed(2)})`;
+        }
+
+        for (let i = activeCallouts.length - 1; i >= 0; i--) {
+          const c = activeCallouts[i];
+          c.life -= dt;
+          if (c.life <= 0) {
+            c.el.remove();
+            activeCallouts.splice(i, 1);
+            continue;
+          }
+          c.y += c.vy * dt;
+          c.vy *= 0.96;
+          const progress = 1 - c.life / c.maxLife;
+          const alpha = progress < 0.7 ? 1 : 1 - (progress - 0.7) / 0.3;
+          const scale = progress < 0.15 ? 0.72 + (progress / 0.15) * 0.38 : 1.05;
+          c.el.style.opacity = Math.max(0, alpha).toFixed(2);
+          c.el.style.transform = `translate(${c.x.toFixed(1)}px, ${c.y.toFixed(1)}px) translate(-50%, -50%) scale(${scale.toFixed(2)})`;
+        }
+      }
+
+      function clearFX() {
+        activeParticles.forEach((p) => p.el.remove());
+        activeParticles.length = 0;
+        activeCallouts.forEach((c) => c.el.remove());
+        activeCallouts.length = 0;
+      }
+
+      /* 9. Core Game State */
+      const state = {
+        mode: 'START',
+        prevModeBeforeGarage: 'START',
+        level: 1,
+        score: 0,
+        stageCoins: 0,
+        stageFlips: 0,
+        combo: 1,
+        isHolding: false,
+
+        track: null,
+        ribbonIndex: 0,
+        s: 60,
+        globalS: 60,
+        speed: 390,
+        onTrack: true,
+        previousTrackPitch: 0,
+        crestLaunchArmed: false,
+
+        x: 60,
+        y: 420,
+        z: 0,
+        yaw: 0,
+        pitch: 0,
+        vx: 390,
+        vy: 0,
+        vz: 0,
+        wheelSpin: 0,
+
+        airRotationAccum: 0,
+        airFlipsCompleted: 0,
+        airGraceTimer: 0,
+        airTime: 0,
+        boostTimer: 0,
+        squashScaleY: 1,
+        wobbleTimer: 0,
+        wobblePhase: 0,
+        landVisualOffsetX: 0,
+        landVisualOffsetY: 0,
+
+        // Hill take-off aim assist: keeps flight path over the curving hill
+        assistActive: false,
+        assistS: 0,
+        airSpeed: 0,
+        crestWasAbove: false,
+        gapLen: 0,
+        gapU: 0,
+        gapX0: 0,
+        gapZ0: 0,
+        gapHeading: 0,
+
+        checkpoint: null,
+
+        cartCount: 0,
+        poseHistory: [],
+
+        camX: 60,
+        camY: 420,
+        camZ: 0,
+        camYaw: 0,
+        camZoom: 1,
+        virtualScroll: 0,
+        trailPoints: []
+      };
+
+      const PHYSICS = {
+        gravity: 1120,
+        holdThrust: 390,
+        coastDrag: 1.75,
+        minCoastSpeed: 205,
+        holdTargetTopSpeed: 675,
+        maxSpeed: 790,
+        flipAngularSpeed: 10,
+        perfectAngleRad: (26 * Math.PI) / 180,
+        greatAngleRad: (58 * Math.PI) / 180,
+        sketchyAngleRad: (132 * Math.PI) / 180,
+
+        // Hill crest launch tuning
+        crestMinSpeed: 540,      // below this you stay glued to the rails over the crest
+        crestPopBase: 480,       // speed at which the upward pop starts to grow
+        crestPopGain: 1.3,       // extra upward velocity per unit of speed above base
+        crestPopMin: 60,
+        crestPopMax: 340,
+        crestGrace: 0.14,        // min airtime before landing checks (prevents instant re-land)
+        assistLookahead: 150,    // how far ahead on the hill the flight path aims
+        assistTurnRate: 6.5,     // how quickly heading follows the hill
+        hairpinLimit: 560,
+        crestCatchDepth: 260     // how far below a rail a crest-launch rider is still caught
+      };
+
+      /* 10. Stage Lifecycle & Physics */
+      function normalizeAngle(rad) {
+        let a = rad;
+        while (a > Math.PI) a -= Math.PI * 2;
+        while (a < -Math.PI) a += Math.PI * 2;
+        return a;
+      }
+
+      function getCurrentCam() {
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        return {
+          x: state.camX,
+          y: state.camY,
+          z: state.camZ,
+          yaw: state.camYaw,
+          zoom: state.camZoom,
+          screenAnchorX: vw * (vw < 600 ? 0.24 : 0.28),
+          screenAnchorY: vh * 0.56
+        };
+      }
+
+      function buildCheckpointDots() {
+        const oldDots = progressBarContainer.querySelectorAll('.cp-marker');
+        oldDots.forEach((d) => d.remove());
+
+        const cpPads = state.track.pads.filter((p) => p.type === 'checkpoint');
+        cpPads.forEach((pad, idx) => {
+          const pct = Math.min(96, Math.max(4, (pad.globalS / state.track.totalGlobalS) * 100));
+          const dot = document.createElement('div');
+          dot.className = 'cp-marker';
+          dot.id = `cp-dot-${idx}`;
+          dot.style.left = `${pct.toFixed(1)}%`;
+          progressBarContainer.appendChild(dot);
+        });
+      }
+
+      function loadStage(stageNum, keepScore = false) {
+        state.level = stageNum;
+        if (!keepScore) {
+          state.score = 0;
+          state.combo = 1;
+          state.cartCount = 0;
+        }
+        state.stageCoins = 0;
+        state.stageFlips = 0;
+
+        const themeClass = LEVEL_THEMES[(stageNum - 1) % LEVEL_THEMES.length];
+        container.className = themeClass;
+
+        state.track = generateLongStage(stageNum);
+        state.ribbonIndex = 0;
+        state.s = 60;
+        state.speed = 390;
+        state.onTrack = true;
+        state.previousTrackPitch = 0;
+        state.crestLaunchArmed = false;
+        state.isHolding = false;
+        state.airRotationAccum = 0;
+        state.airFlipsCompleted = 0;
+        state.airGraceTimer = 0;
+        state.airTime = 0;
+        state.assistActive = false;
+        state.assistS = 0;
+        state.boostTimer = 0;
+        state.squashScaleY = 1;
+        state.wobbleTimer = 0;
+        state.wobblePhase = 0;
+        state.landVisualOffsetX = 0;
+        state.landVisualOffsetY = 0;
+        state.checkpoint = null;
+        state.trailPoints = [];
+        state.poseHistory = [];
+        state.virtualScroll = 0;
+
+        const startPt = sampleRibbonAtS(state.track.ribbons[0], state.s);
+        state.x = startPt.x;
+        state.y = startPt.y;
+        state.z = startPt.z;
+        state.yaw = startPt.yaw;
+        state.pitch = startPt.pitch;
+        state.globalS = startPt.globalS;
+
+        state.camX = state.x;
+        state.camY = state.y;
+        state.camZ = state.z;
+        state.camYaw = state.yaw;
+
+        const nameCycle = Math.floor((stageNum - 1) / LEVEL_NAMES.length);
+        const name = LEVEL_NAMES[(stageNum - 1) % LEVEL_NAMES.length] + (nameCycle > 0 ? ` ${nameCycle + 1}` : '');
+        hudLevelTitle.textContent = `STAGE ${stageNum} — ${name}`;
+        buildCheckpointDots();
+
+        airStatus.classList.remove('visible');
+        angleGuide.setAttribute('opacity', '0');
+        speedVignette.classList.remove('active');
+        controlHint.classList.remove('active-hold');
+        controlHint.textContent = 'HOLD TO ACCELERATE & BACKFLIP • RELEASE TO COAST & LAND';
+
+        applyEquippedSkins();
+        updateHUD();
+      }
+
+      function respawnAtCheckpoint() {
+        if (!state.checkpoint) {
+          retryCurrentStage();
+          return;
+        }
+        sound.init();
+        clearFX();
+        gameoverOverlay.classList.add('hidden');
+
+        const cp = state.checkpoint;
+        state.ribbonIndex = cp.ribbonIndex;
+        state.s = cp.s;
+        state.speed = 390;
+        state.onTrack = true;
+        state.crestLaunchArmed = false;
+        state.isHolding = false;
+        state.combo = 1;
+        state.cartCount = 0;
+        state.airRotationAccum = 0;
+        state.airFlipsCompleted = 0;
+        state.airGraceTimer = 0;
+        state.airTime = 0;
+        state.assistActive = false;
+        state.assistS = 0;
+        state.boostTimer = 0;
+        state.squashScaleY = 1;
+        state.wobbleTimer = 0;
+        state.landVisualOffsetX = 0;
+        state.landVisualOffsetY = 0;
+        state.trailPoints = [];
+        state.poseHistory = [];
+
+        const pt = sampleRibbonAtS(state.track.ribbons[state.ribbonIndex], state.s);
+        state.x = pt.x;
+        state.y = pt.y;
+        state.z = pt.z;
+        state.yaw = pt.yaw;
+        state.pitch = pt.pitch;
+        state.globalS = pt.globalS;
+
+        state.camX = state.x;
+        state.camY = state.y;
+        state.camZ = state.z;
+        state.camYaw = state.yaw;
+
+        airStatus.classList.remove('visible');
+        angleGuide.setAttribute('opacity', '0');
+        state.mode = 'PLAYING';
+        updateHUD();
+      }
+
+      function updateHUD() {
+        hudScore.textContent = Math.floor(state.score).toLocaleString();
+        hudCombo.textContent = `x${state.combo}`;
+        hudCoins.textContent = saveData.coins.toLocaleString();
+
+        const pct = Math.min(100, Math.max(0, (state.globalS / state.track.totalGlobalS) * 100));
+        hudProgress.style.width = `${pct.toFixed(1)}%`;
+
+        const deg = (((state.yaw * 180) / Math.PI) % 360 + 360) % 360;
+        const dirs = ['EAST', 'SE', 'SOUTH', 'SW', 'WEST', 'NW', 'NORTH', 'NE'];
+        const dirName = dirs[Math.round(deg / 45) % 8];
+        hudHeading.textContent = `${dirName} ${Math.round(deg)}°`;
+      }
+
+      function triggerWipeout(reasonText) {
+        if (state.mode !== 'PLAYING') return;
+        state.mode = 'GAME_OVER';
+        state.isHolding = false;
+        state.cartCount = 0;
+        state.assistActive = false;
+        sound.updateThruster(false, 0);
+        sound.playCrash();
+        airStatus.classList.remove('visible');
+        speedVignette.classList.remove('active');
+
+        const cam = getCurrentCam();
+        const proj = project3D(state.x, state.y, state.z, cam);
+        if (proj) {
+          spawnParticles(proj.sx, proj.sy, '#f43f5e', 28, 1.35);
+          spawnParticles(proj.sx, proj.sy, '#facc15', 16, 1.1);
+        }
+
+        container.classList.remove('shake');
+        void container.offsetWidth;
+        container.classList.add('shake');
+
+        if (state.score > saveData.bestScore) {
+          saveData.bestScore = Math.floor(state.score);
+        }
+        persistSave();
+
+        document.getElementById('crash-reason').textContent = reasonText;
+        document.getElementById('over-score').textContent = Math.floor(state.score).toLocaleString();
+        document.getElementById('over-coins').textContent = saveData.coins.toLocaleString();
+        document.getElementById('over-best').textContent = saveData.bestScore.toLocaleString();
+
+        const cpBtn = document.getElementById('respawn-cp-btn');
+        cpBtn.style.display = state.checkpoint ? 'block' : 'none';
+
+        setTimeout(() => {
+          gameoverOverlay.classList.remove('hidden');
+        }, 420);
+      }
+
+      function triggerStageClear() {
+        if (state.mode !== 'PLAYING') return;
+        state.mode = 'LEVEL_CLEAR';
+        state.isHolding = false;
+        sound.updateThruster(false, 0);
+        sound.playStageClear();
+        airStatus.classList.remove('visible');
+        speedVignette.classList.remove('active');
+
+        const cam = getCurrentCam();
+        const proj = project3D(state.x, state.y, state.z, cam);
+        if (proj) {
+          spawnParticles(proj.sx, proj.sy - 20, '#facc15', 34, 1.4);
+          spawnParticles(proj.sx, proj.sy - 20, '#38bdf8', 24, 1.25);
+        }
+
+        const stageBonus = 250 * state.level;
+        state.score += stageBonus;
+
+        if (state.score > saveData.bestScore) {
+          saveData.bestScore = Math.floor(state.score);
+        }
+        if (state.level + 1 > saveData.maxLevel) {
+          saveData.maxLevel = state.level + 1;
+        }
+        persistSave();
+
+        document.getElementById('level-clear-subtitle').textContent =
+          `Stage ${state.level} Complete! +${stageBonus} Stage Clear Bonus`;
+        document.getElementById('clear-score').textContent = Math.floor(state.score).toLocaleString();
+        document.getElementById('clear-coins').textContent = `+${state.stageCoins}`;
+        document.getElementById('clear-flips').textContent = state.stageFlips;
+
+        setTimeout(() => {
+          levelOverlay.classList.remove('hidden');
+        }, 500);
+      }
+
+      /**
+       * Steer the airborne rider's horizontal heading along the hill it just left,
+       * so a curving hill doesn't slide out from under a straight-line flight path.
+       * Speed magnitude is preserved; only direction is nudged.
+       */
+      function stepCrestHorizontal(dt) {
+        // Horizontal flight always follows a path (gap line, then the landing ribbon),
+        // so extra airtime from flips can never carry you off the side of a curving track.
+        state.airSpeed *= Math.pow(0.996, dt * 60);
+
+        // Phase 1: crossing a gap on a straight line to the next ribbon's start.
+        if (state.gapLen > 0) {
+          state.gapU += state.airSpeed * dt;
+          if (state.gapU < state.gapLen) {
+            state.x = state.gapX0 + Math.cos(state.gapHeading) * state.gapU;
+            state.z = state.gapZ0 + Math.sin(state.gapHeading) * state.gapU;
+            state.yaw = state.gapHeading;
+            return state.airSpeed;
+          }
+          state.assistS = state.gapU - state.gapLen;
+          state.gapLen = 0;
+          const entry = sampleRibbonAtS(state.track.ribbons[state.ribbonIndex], state.assistS);
+          // Arrived at the far side well below the rails: that's a genuine miss, so fall.
+          if (state.y > entry.y + 40) {
+            state.vx = Math.cos(state.gapHeading) * state.airSpeed;
+            state.vz = Math.sin(state.gapHeading) * state.airSpeed;
+            state.assistActive = false;
+            return state.airSpeed;
+          }
+        }
+
+        // Phase 2: following the ribbon's path; only height is ballistic.
+        const ribbon = state.track.ribbons[state.ribbonIndex];
+        const cur = sampleRibbonAtS(ribbon, state.assistS);
+        state.assistS += (state.airSpeed * dt) / Math.max(0.6, Math.cos(cur.pitch));
+
+        if (state.assistS >= ribbon.totalLength) {
+          // Ran out of this ribbon mid-flight: chain into a gap flight to the next one.
+          const endPt = ribbon.points[ribbon.points.length - 1];
+          const next = state.track.ribbons[state.ribbonIndex + 1];
+          const ls = next && next.points[0];
+          state.x = endPt.x;
+          state.z = endPt.z;
+          if (ls) {
+            state.gapX0 = endPt.x;
+            state.gapZ0 = endPt.z;
+            state.gapHeading = Math.atan2(ls.z - endPt.z, ls.x - endPt.x);
+            state.gapLen = Math.hypot(ls.x - endPt.x, ls.z - endPt.z);
+            state.gapU = 0;
+            state.assistS = 0;
+            state.ribbonIndex++;
+            state.crestWasAbove = false;
+          } else {
+            state.vx = Math.cos(endPt.yaw) * state.airSpeed;
+            state.vz = Math.sin(endPt.yaw) * state.airSpeed;
+            state.assistActive = false;
+          }
+          return state.airSpeed;
+        }
+
+        const p = sampleRibbonAtS(ribbon, state.assistS);
+        state.x = p.x;
+        state.z = p.z;
+        state.yaw = p.yaw;
+        state.globalS = p.globalS;
+        return state.airSpeed;
+      }
+
+      function checkCrestLanding(cam) {
+        if (state.gapLen > 0) return; // still over the gap: nothing to land on yet
+        const ribbon = state.track.ribbons[state.ribbonIndex];
+        const p = sampleRibbonAtS(ribbon, state.assistS);
+        if (state.y < p.y - 6) state.crestWasAbove = true;
+
+        // Land when we come back down to the rail surface (never from behind or sideways).
+        const touchedDown = state.vy > 0 && state.y >= p.y - 2;
+        if ((state.crestWasAbove && touchedDown) || (!state.crestWasAbove && state.airTime > 0.25 && touchedDown)) {
+          state.vx = Math.cos(p.yaw) * state.airSpeed;
+          state.vz = Math.sin(p.yaw) * state.airSpeed;
+          landAt(state.ribbonIndex, {
+            x: p.x, y: p.y, z: p.z, s: p.s, globalS: p.globalS, yaw: p.yaw, pitch: p.pitch
+          }, cam);
+        }
+      }
+
+      function updateHairpinWarning() {
+        // Warn every rider well before the bend, not only once they're already too fast.
+        let warn = false;
+        if (state.onTrack && state.mode === 'PLAYING') {
+          const hz = state.track.hazards;
+          for (let i = 0; i < hz.length; i++) {
+            const h = hz[i];
+            if (h.type !== 'hairpin') continue;
+            const ahead = h.globalS - state.globalS;
+            if (ahead > 0 && ahead < 1200) { warn = true; break; }
+          }
+        }
+        if (warn) {
+          state.hairpinWarn = true;
+          airStatus.textContent = 'HAIRPIN AHEAD • SLOW DOWN!';
+          airStatus.classList.add('visible', 'hairpin-warning');
+        } else if (state.hairpinWarn) {
+          state.hairpinWarn = false;
+          airStatus.classList.remove('visible', 'hairpin-warning');
+        }
+      }
+
+      function checkHazards() {
+        updateHairpinWarning();
+        const hz = state.track.hazards;
+        for (let i = 0; i < hz.length; i++) {
+          const h = hz[i];
+          if (Math.abs(state.x - h.x) > 90 || Math.abs(state.z - h.z) > 90) continue;
+          const hd = Math.hypot(state.x - h.x, state.z - h.z);
+          if (h.type === 'spikes') {
+            if (hd < 30 && state.y > h.y - 26 && state.y < h.y + 60) {
+              triggerWipeout('Spikes! Carry enough speed over the hill crest to fly past them.');
+              return true;
+            }
+          } else if (h.type === 'hairpin') {
+            if (state.onTrack && hd < 45 && state.speed > PHYSICS.hairpinLimit) {
+              triggerWipeout('Too fast into the hairpin! Release to coast before sharp turns.');
+              return true;
+            }
+          }
+        }
+        return false;
+      }
+
+      function stepPhysics(dt) {
+        if (state.mode !== 'PLAYING') {
+          if (state.mode === 'START') {
+            const ribbon = state.track.ribbons[0];
+            state.s += 260 * dt;
+            if (state.s > 680) state.s = 60;
+            const pt = sampleRibbonAtS(ribbon, state.s);
+            state.x = pt.x;
+            state.y = pt.y;
+            state.z = pt.z;
+            state.yaw = pt.yaw;
+            state.pitch = pt.pitch;
+            state.globalS = pt.globalS;
+            state.wheelSpin += (260 * dt) / 7;
+            state.virtualScroll += 260 * dt;
+          }
+          sound.updateThruster(false, 0);
+          return;
+        }
+
+        const cam = getCurrentCam();
+
+        state.squashScaleY += (1 - state.squashScaleY) * Math.min(1, dt * 14);
+        state.landVisualOffsetX *= Math.pow(0.0005, dt);
+        state.landVisualOffsetY *= Math.pow(0.0005, dt);
+        if (state.wobbleTimer > 0) {
+          state.wobbleTimer = Math.max(0, state.wobbleTimer - dt);
+          state.wobblePhase += dt * 36;
+        }
+        if (state.airGraceTimer > 0) {
+          state.airGraceTimer = Math.max(0, state.airGraceTimer - dt);
+        }
+
+        if (state.boostTimer > 0) {
+          state.boostTimer -= dt;
+          speedVignette.classList.add('active');
+        } else {
+          speedVignette.classList.remove('active');
+        }
+
+        if (state.onTrack) {
+          const ribbons = state.track.ribbons;
+          const ribbon = ribbons[state.ribbonIndex];
+          const curSample = sampleRibbonAtS(ribbon, state.s);
+
+          const slopeSin = Math.sin(curSample.pitch);
+          state.speed += (slopeSin > 0 ? slopeSin * 360 : slopeSin * 150) * dt;
+
+          if (state.isHolding) {
+            if (state.speed < PHYSICS.holdTargetTopSpeed) {
+              state.speed += PHYSICS.holdThrust * dt;
+            }
+          } else {
+            if (state.speed > PHYSICS.minCoastSpeed) {
+              state.speed -= (state.speed - PHYSICS.minCoastSpeed) * PHYSICS.coastDrag * dt;
+            } else {
+              state.speed += (PHYSICS.minCoastSpeed - state.speed) * 4.5 * dt;
+            }
+          }
+
+          if (state.boostTimer > 0) {
+            state.speed = Math.max(state.speed, 610);
+          }
+
+          const effectiveMax = state.boostTimer > 0 ? PHYSICS.maxSpeed : PHYSICS.holdTargetTopSpeed;
+          state.speed = Math.max(195, Math.min(effectiveMax, state.speed));
+          sound.updateThruster(state.isHolding, state.speed / PHYSICS.holdTargetTopSpeed);
+
+          const ds = state.speed * dt;
+          const prevSample = curSample;
+          const nextS = state.s + ds;
+          state.wheelSpin += ds / 7;
+          state.virtualScroll += ds;
+          state.score += ds * 0.045 * state.combo * (1 + state.cartCount * 0.25);
+
+          if (nextS >= ribbon.totalLength) {
+            const lastIdx = ribbon.points.length - 1;
+            const endPt = ribbon.points[lastIdx] || prevSample;
+            const beforeEndPt = ribbon.points[Math.max(0, lastIdx - 1)] || endPt;
+            const lipPitch = Math.atan2(
+              endPt.y - beforeEndPt.y,
+              Math.max(0.001, Math.hypot(endPt.x - beforeEndPt.x, endPt.z - beforeEndPt.z))
+            );
+
+            state.s = ribbon.totalLength;
+            state.x = endPt.x;
+            state.y = endPt.y;
+            state.z = endPt.z;
+            state.yaw = endPt.yaw;
+            state.pitch = lipPitch;
+            state.globalS = endPt.globalS;
+
+            const launchSpeed = Math.max(150, state.speed);
+            const nextRibbon = state.track.ribbons[state.ribbonIndex + 1];
+            const landingStart = nextRibbon?.points[0];
+            const launchYaw = landingStart
+              ? Math.atan2(landingStart.z - endPt.z, landingStart.x - endPt.x)
+              : state.yaw;
+            const horiz = Math.cos(lipPitch) * launchSpeed;
+            state.vx = Math.cos(launchYaw) * horiz;
+            state.vz = Math.sin(launchYaw) * horiz;
+            state.vy = Math.sin(lipPitch) * launchSpeed;
+
+            state.onTrack = false;
+            state.crestLaunchArmed = false;
+            state.assistActive = false;
+            state.gapLen = 0;
+            state.airRotationAccum = 0;
+            state.airFlipsCompleted = 0;
+            state.airGraceTimer = 0.06;
+            state.airTime = 0;
+            angleGuide.setAttribute('opacity', '0.85');
+            if (state.ribbonIndex < ribbons.length - 1) {
+              state.ribbonIndex++;
+            }
+            if (landingStart) {
+              // Gap jump: cross the gap on a straight line, then follow the landing ribbon's path.
+              state.assistActive = true;
+              state.gapX0 = endPt.x;
+              state.gapZ0 = endPt.z;
+              state.gapHeading = launchYaw;
+              state.gapLen = Math.max(1, Math.hypot(landingStart.x - endPt.x, landingStart.z - endPt.z));
+              state.gapU = 0;
+              state.assistS = 0;
+              state.airSpeed = Math.max(1, horiz);
+              state.crestWasAbove = false;
+            }
+            sound.playLaunch();
+          } else {
+            state.s = nextS;
+            const nextSample = sampleRibbonAtS(ribbon, state.s);
+            if (!curSample.isLoop && curSample.pitch < -0.14) {
+              state.crestLaunchArmed = true;
+            }
+            // Hill crest: track stops climbing (pitch <0 -> >=0). Fast enough = take off.
+            const crestLaunch = state.speed >= PHYSICS.crestMinSpeed && state.crestLaunchArmed &&
+              !curSample.isLoop && !nextSample.isLoop &&
+              curSample.pitch < 0 && nextSample.pitch >= 0;
+
+            state.x = nextSample.x;
+            state.y = nextSample.y;
+            state.z = nextSample.z;
+            state.yaw = nextSample.yaw;
+            state.pitch = nextSample.pitch;
+            state.globalS = nextSample.globalS;
+
+            if (crestLaunch) {
+              const launchSpeed = state.speed;
+              // Leave along the track tangent (heading), with an upward pop that grows with speed.
+              const pop = Math.min(
+                PHYSICS.crestPopMax,
+                Math.max(PHYSICS.crestPopMin, (launchSpeed - PHYSICS.crestPopBase) * PHYSICS.crestPopGain)
+              );
+              state.vx = Math.cos(state.yaw) * launchSpeed;
+              state.vz = Math.sin(state.yaw) * launchSpeed;
+              state.vy = -pop; // +Y is down, so negative = up
+              state.onTrack = false;
+              state.crestLaunchArmed = false;
+              state.assistActive = true;
+              state.gapLen = 0;
+              state.assistS = state.s;
+              state.airSpeed = launchSpeed;
+              state.crestWasAbove = false;
+              state.airRotationAccum = 0;
+              state.airFlipsCompleted = 0;
+              state.airGraceTimer = PHYSICS.crestGrace;
+              state.airTime = 0;
+              angleGuide.setAttribute('opacity', '0.85');
+              sound.playLaunch();
+            } else if (nextSample.pitch > 0.06) {
+              state.crestLaunchArmed = false;
+            }
+          }
+
+          state.previousTrackPitch = curSample.pitch;
+
+          state.track.pads.forEach((pad) => {
+            if (pad.triggered) return;
+            const dist = Math.hypot(state.x - pad.x, state.y - pad.y, state.z - pad.z);
+            if (dist < 62) {
+              pad.triggered = true;
+              const pProj = project3D(pad.x, pad.y, pad.z, cam);
+              const px = pProj ? pProj.sx : window.innerWidth * 0.5;
+              const py = pProj ? pProj.sy : window.innerHeight * 0.5;
+
+              if (pad.type === 'boost') {
+                state.boostTimer = 1.15;
+                state.speed = Math.max(state.speed + 165, 630);
+                state.score += 120 * state.combo;
+                sound.playBoostPad();
+                spawnParticles(px, py, '#38bdf8', 18, 1.2);
+                spawnCallout(px, py, 'TURBO BOOST!', 'callout-cyan');
+              } else if (pad.type === 'slow') {
+                state.boostTimer = 0;
+                state.speed = Math.min(state.speed, 235);
+                sound.playSketchyLand();
+                spawnParticles(px, py, '#ef4444', 14, 1.0);
+                spawnCallout(px, py, 'SLOW ZONE!', 'callout-pink');
+              } else if (pad.type === 'checkpoint') {
+                state.checkpoint = {
+                  ribbonIndex: state.ribbonIndex,
+                  s: state.s
+                };
+                state.score += 200 * state.combo;
+                sound.playCheckpoint();
+                spawnParticles(px, py, '#4ade80', 22, 1.15);
+                spawnCallout(px, py, 'CHECKPOINT!', 'callout-emerald');
+                const cpIdx = state.track.pads
+                  .filter((p) => p.type === 'checkpoint')
+                  .indexOf(pad);
+                const dot = document.getElementById(`cp-dot-${cpIdx}`);
+                if (dot) dot.classList.add('reached');
+              }
+            }
+          });
+        } else {
+          // Airborne ballistic trajectory & mid-air backflip control
+          const prevAirX = state.x;
+          const prevAirY = state.y;
+          const prevAirZ = state.z;
+          state.airTime += dt;
+
+          state.vy += PHYSICS.gravity * dt;
+          let groundSpeed;
+          if (state.assistActive) {
+            // Hill jump: stay over the rails sideways, free-fall in height.
+            groundSpeed = stepCrestHorizontal(dt);
+          } else {
+            const airDrag = Math.pow(0.994, dt * 60);
+            state.vx *= airDrag;
+            state.vz *= airDrag;
+            state.x += state.vx * dt;
+            state.z += state.vz * dt;
+            groundSpeed = Math.hypot(state.vx, state.vz);
+            const airYaw = Math.atan2(state.vz, state.vx);
+            state.yaw += normalizeAngle(airYaw - state.yaw) * Math.min(1, dt * 8);
+          }
+          state.y += state.vy * dt;
+          state.virtualScroll += groundSpeed * dt;
+          sound.updateThruster(state.isHolding, groundSpeed / PHYSICS.holdTargetTopSpeed);
+
+          if (state.isHolding) {
+            const dFlip = PHYSICS.flipAngularSpeed * dt;
+            state.pitch -= dFlip;
+            state.airRotationAccum += dFlip;
+            state.score += dFlip * 42 * state.combo * (1 + state.cartCount * 0.25);
+
+            const completed = Math.floor(state.airRotationAccum / (Math.PI * 2));
+            if (completed > state.airFlipsCompleted) {
+              const newlyCompleted = completed - state.airFlipsCompleted;
+              state.airFlipsCompleted = completed;
+              state.stageFlips += newlyCompleted;
+              state.cartCount = Math.min(8, state.cartCount + newlyCompleted);
+              sound.playFlip(completed);
+              const rProj = project3D(state.x, state.y, state.z, cam);
+              if (rProj) {
+                spawnParticles(rProj.sx, rProj.sy, '#f472b6', 14, 1.0);
+                spawnCallout(rProj.sx, rProj.sy - 16, `${completed}x BACKFLIP • CART ADDED!`, 'callout-gold');
+              }
+            }
+          } else {
+            const targetPitch = Math.atan2(state.vy, Math.max(120, groundSpeed));
+            state.pitch += normalizeAngle(targetPitch - state.pitch) * Math.min(1, dt * 5.5);
+          }
+
+          if (state.airFlipsCompleted > 0 || state.airRotationAccum > 0.25) {
+            airStatus.classList.add('visible');
+            const landingHint = state.isHolding ? 'RELEASE TO LAND' : 'ALIGN TO LAND';
+            airStatus.textContent = state.airFlipsCompleted > 0
+              ? `${state.airFlipsCompleted}x BACKFLIP COMPLETE • ${landingHint}`
+              : `FLIP ${Math.min(99, Math.round((state.airRotationAccum / (Math.PI * 2)) * 100))}% • ${landingHint}`;
+          } else {
+            airStatus.classList.remove('visible');
+          }
+
+          if (state.assistActive && state.gapLen > 0) {
+            const landingY = state.track.ribbons[state.ribbonIndex].points[0].y;
+            if (state.y > landingY + 260) {
+              triggerWipeout('Not enough speed for that gap! Hold to build speed before the ramp.');
+              return;
+            }
+          }
+          if (state.assistActive) {
+            checkCrestLanding(cam);
+          } else if (state.vy > 0 && state.airGraceTimer <= 0) {
+            checkMidAirLanding3D(prevAirX, prevAirY, prevAirZ, cam);
+          }
+        }
+
+        if (checkHazards()) return;
+
+        state.track.collectibles.forEach((item) => {
+          if (item.collected) return;
+          const dist = Math.hypot(state.x - item.x, state.y - item.y, state.z - item.z);
+          if (dist < 48) {
+            item.collected = true;
+            const isGem = item.type === 'gem';
+            const coinGain = isGem ? 5 : 1;
+            const ptsGain = (isGem ? 250 : 60) * state.combo;
+            saveData.coins += coinGain;
+            state.stageCoins += coinGain;
+            state.score += ptsGain;
+            persistSave();
+            sound.playCoin(isGem);
+
+            const cProj = project3D(item.x, item.y, item.z, cam);
+            if (cProj) {
+              spawnParticles(cProj.sx, cProj.sy, isGem ? '#38bdf8' : '#fde047', isGem ? 16 : 9, 0.9);
+              spawnCallout(cProj.sx, cProj.sy, isGem ? `+${ptsGain} GEM!` : `+${ptsGain}`, 'callout-gold');
+            }
+          }
+        });
+
+        const fin = state.track.finishPt;
+        const finalRibbonIndex = state.track.ribbons.length - 1;
+        if (state.onTrack && state.ribbonIndex === finalRibbonIndex && fin &&
+            Math.hypot(state.x - fin.x, state.y - fin.y, state.z - fin.z) < 95) {
+          triggerStageClear();
+          return;
+        }
+
+        const lowestY = state.track.maxTrackY + 620;
+        if (state.y > lowestY) {
+          triggerWipeout('You missed the sky rails! Release earlier before jump edges.');
+          return;
+        }
+
+        updateHUD();
+      }
+
+      function closestPointsOnSegments(a0, a1, b0, b1) {
+        const ux = a1.x - a0.x, uz = a1.z - a0.z;
+        const vx = b1.x - b0.x, vz = b1.z - b0.z;
+        const wx = a0.x - b0.x, wz = a0.z - b0.z;
+        const aa = ux * ux + uz * uz;
+        const bb = ux * vx + uz * vz;
+        const cc = vx * vx + vz * vz;
+        const dd = ux * wx + uz * wz;
+        const ee = vx * wx + vz * wz;
+        const denom = aa * cc - bb * bb;
+        let flightT = denom > 0.000001 ? (bb * ee - cc * dd) / denom : 0.5;
+        let trackT = cc > 0.000001 ? (bb * flightT + ee) / cc : 0;
+        flightT = Math.max(0, Math.min(1, flightT));
+        trackT = cc > 0.000001 ? Math.max(0, Math.min(1, trackT)) : 0;
+        if (aa > 0.000001) {
+          flightT = Math.max(0, Math.min(1, (bb * trackT - dd) / aa));
+        }
+        if (cc > 0.000001) {
+          trackT = Math.max(0, Math.min(1, (bb * flightT + ee) / cc));
+        }
+        const fx = a0.x + (a1.x - a0.x) * flightT;
+        const fy = a0.y + (a1.y - a0.y) * flightT;
+        const fz = a0.z + (a1.z - a0.z) * flightT;
+        const tx = b0.x + (b1.x - b0.x) * trackT;
+        const ty = b0.y + (b1.y - b0.y) * trackT;
+        const tz = b0.z + (b1.z - b0.z) * trackT;
+        return {
+          flightT, trackT,
+          distance: Math.hypot(fx - tx, fy - ty, fz - tz),
+          point: { x: tx, y: ty, z: tz }
+        };
+      }
+
+      function checkMidAirLanding3D(prevAirX, prevAirY, prevAirZ, cam) {
+        const flightStart = { x: prevAirX, y: prevAirY, z: prevAirZ };
+        const flightEnd = { x: state.x, y: state.y, z: state.z };
+        const dy = flightEnd.y - flightStart.y;
+        let contact = null;
+
+        for (let rIdx = state.ribbonIndex; rIdx < state.track.ribbons.length; rIdx++) {
+          const pts = state.track.ribbons[rIdx].points;
+          for (let i = 0; i < pts.length - 1; i++) {
+            const a = pts[i], b = pts[i + 1];
+            if (a.isLoop || b.isLoop) continue;
+
+            const sweep = closestPointsOnSegments(flightStart, flightEnd, a, b);
+            const t = sweep.trackT;
+            const flightY = flightStart.y + dy * sweep.flightT;
+            const verticalDistance = flightY - sweep.point.y;
+            const horizontalDistance = Math.hypot(
+              flightStart.x + (flightEnd.x - flightStart.x) * sweep.flightT - sweep.point.x,
+              flightStart.z + (flightEnd.z - flightStart.z) * sweep.flightT - sweep.point.z
+            );
+            // +Y is down. Match the rider's horizontal sweep against the rail first,
+            // then allow a forgiving vertical landing window for fast flips.
+            if (verticalDistance < -24 || verticalDistance > 78 || horizontalDistance > 96) continue;
+
+            const score = sweep.distance;
+            const earlierContact = !contact || sweep.flightT < contact.flightT - 0.0001;
+            const closerAtSameTime = contact && Math.abs(sweep.flightT - contact.flightT) <= 0.0001 && score < contact.score;
+            if (earlierContact || closerAtSameTime) contact = { score, flightT: sweep.flightT, rIdx, pt: {
+              x: sweep.point.x, y: sweep.point.y, z: sweep.point.z,
+              s: a.s + (b.s - a.s) * t,
+              globalS: a.globalS + (b.globalS - a.globalS) * t,
+              yaw: a.yaw + normalizeAngle(b.yaw - a.yaw) * t,
+              pitch: a.pitch + normalizeAngle(b.pitch - a.pitch) * t
+            }};
+          }
+        }
+        if (!contact) return;
+        landAt(contact.rIdx, contact.pt, cam);
+      }
+
+      function landAt(rIdx, pt, cam) {
+        if (Math.abs(normalizeAngle(state.pitch - pt.pitch)) > PHYSICS.sketchyAngleRad) {
+          state.x = pt.x; state.y = pt.y; state.z = pt.z;
+          triggerWipeout('You landed upside-down! Release to straighten up before touching the track.');
+          return;
+        }
+        state.onTrack = true; state.ribbonIndex = rIdx; state.s = pt.s;
+        state.x = pt.x; state.y = pt.y; state.z = pt.z; state.yaw = pt.yaw;
+        state.pitch = pt.pitch; state.globalS = pt.globalS;
+        state.landVisualOffsetX = 0; state.landVisualOffsetY = 0;
+        state.speed = Math.max(230, Math.min(PHYSICS.maxSpeed, Math.hypot(state.vx, state.vz)));
+        state.vx = 0; state.vy = 0; state.vz = 0; state.squashScaleY = 0.76;
+        state.airGraceTimer = 0; state.previousTrackPitch = pt.pitch;
+        state.assistActive = false;
+        state.crestLaunchArmed = false;
+        state.combo = Math.min(8, state.combo + 1);
+        state.score += 100 * Math.max(1, state.airFlipsCompleted) * state.combo;
+        airStatus.classList.remove('visible'); sound.playCleanLand();
+        const lp = project3D(pt.x, pt.y, pt.z, cam);
+        if (lp) {
+          spawnParticles(lp.sx, lp.sy, '#38bdf8', 16, 1.05);
+          spawnCallout(lp.sx, lp.sy - 18, state.airFlipsCompleted ? `${state.airFlipsCompleted}x FLIP LANDED!` : 'CLEAN LANDING!', 'callout-cyan');
+        }
+      }
+
+      function recordPoseHistory() {
+        const last = state.poseHistory[state.poseHistory.length - 1];
+        if (!last || Math.hypot(state.x - last.x, state.y - last.y, state.z - last.z) >= 8) {
+          state.poseHistory.push({
+            x: state.x,
+            y: state.y,
+            z: state.z,
+            yaw: state.yaw,
+            pitch: state.pitch
+          });
+          if (state.poseHistory.length > 260) {
+            state.poseHistory.shift();
+          }
+        }
+      }
+
+      function samplePoseAtArcDistance(targetDist) {
+        if (state.poseHistory.length === 0) {
+          return { x: state.x, y: state.y, z: state.z, yaw: state.yaw, pitch: state.pitch };
+        }
+        let acc = 0;
+        for (let i = state.poseHistory.length - 1; i > 0; i--) {
+          const pCurr = state.poseHistory[i];
+          const pPrev = state.poseHistory[i - 1];
+          const d = Math.hypot(pCurr.x - pPrev.x, pCurr.y - pPrev.y, pCurr.z - pPrev.z);
+          if (acc + d >= targetDist) {
+            const t = d > 0.0001 ? (targetDist - acc) / d : 0;
+            return {
+              x: pCurr.x + (pPrev.x - pCurr.x) * t,
+              y: pCurr.y + (pPrev.y - pCurr.y) * t,
+              z: pCurr.z + (pPrev.z - pCurr.z) * t,
+              yaw: pCurr.yaw + normalizeAngle(pPrev.yaw - pCurr.yaw) * t,
+              pitch: pCurr.pitch + normalizeAngle(pPrev.pitch - pCurr.pitch) * t
+            };
+          }
+          acc += d;
+        }
+        return state.poseHistory[0];
+      }
+
+      function renderPseudo3DWorld(dt) {
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        updateParallax(state.virtualScroll, vh);
+
+        const followRate = Math.min(1, dt * (state.onTrack ? 9.5 : 6.5));
+        state.camX += (state.x - state.camX) * followRate;
+        state.camY += (state.y - state.camY) * followRate;
+        state.camZ += (state.z - state.camZ) * followRate;
+        state.camYaw += normalizeAngle(state.yaw - state.camYaw) * Math.min(1, dt * 5.2);
+
+        const targetZoom = state.onTrack
+          ? 1.04 - Math.min(0.14, Math.max(0, (state.speed - 360) / 1400))
+          : 0.9;
+        state.camZoom += (targetZoom - state.camZoom) * Math.min(1, dt * 4.5);
+
+        const cam = getCurrentCam();
+        world3dLayer.innerHTML = '';
+
+        const drawList = [];
+
+        state.track.ribbons.forEach((ribbon, rIdx) => {
+          const pts = ribbon.points;
+          for (let i = 0; i < pts.length - 1; i++) {
+            const p0 = pts[i];
+            const p1 = pts[i + 1];
+
+            const distFromRider = Math.hypot(p0.x - state.x, p0.y - state.y, p0.z - state.z);
+            if (distFromRider > 1750) continue;
+
+            const pr0 = project3D(p0.x, p0.y, p0.z, cam);
+            const pr1 = project3D(p1.x, p1.y, p1.z, cam);
+            if (!pr0 || !pr1) continue;
+
+            const avgDepth = (pr0.depth + pr1.depth) * 0.5;
+            const avgScale = (pr0.scale + pr1.scale) * 0.5;
+            const isActive = rIdx === state.ribbonIndex && state.onTrack;
+            const hairpinApproach = !p0.isLoop && state.track.hazards.some((h) =>
+              h.type === 'hairpin' && h.globalS > p0.globalS && h.globalS - p0.globalS <= 1200
+            );
+
+            drawList.push({
+              depth: avgDepth,
+              draw: () => {
+                const railWidth = Math.max(1.5, 5.5 * avgScale);
+                const railColor = p0.isLoop ? '#f472b6' : hairpinApproach ? '#ef4444' : isActive ? '#ffffff' : '#e2e8f0';
+                const deckColor = p0.isLoop ? 'rgba(236, 72, 153, 0.28)' : hairpinApproach ? 'rgba(239, 68, 68, 0.42)' : 'rgba(15, 23, 42, 0.22)';
+
+                if (!p0.isLoop && i % 4 === 0 && avgScale > 0.28) {
+                  const strutH = Math.min(150, 75 * avgScale);
+                  world3dLayer.appendChild(
+                    createSvgEl('line', {
+                      x1: pr0.sx.toFixed(1),
+                      y1: pr0.sy.toFixed(1),
+                      x2: pr0.sx.toFixed(1),
+                      y2: (pr0.sy + strutH).toFixed(1),
+                      stroke: 'rgba(255, 255, 255, 0.35)',
+                      'stroke-width': Math.max(1.2, 2.5 * avgScale).toFixed(1)
+                    })
+                  );
+                }
+
+                if (i % 2 === 0 && avgScale > 0.22) {
+                  const sleeperSpan = 10 * avgScale;
+                  world3dLayer.appendChild(
+                    createSvgEl('line', {
+                      x1: (pr0.sx - sleeperSpan * 0.45).toFixed(1),
+                      y1: (pr0.sy + sleeperSpan * 0.35).toFixed(1),
+                      x2: (pr0.sx + sleeperSpan * 0.45).toFixed(1),
+                      y2: (pr0.sy - sleeperSpan * 0.35).toFixed(1),
+                      stroke: deckColor,
+                      'stroke-width': Math.max(1.5, 3 * avgScale).toFixed(1),
+                      'stroke-linecap': 'round'
+                    })
+                  );
+                }
+
+                const yOff = 4.5 * avgScale;
+                world3dLayer.appendChild(
+                  createSvgEl('line', {
+                    x1: pr0.sx.toFixed(1),
+                    y1: (pr0.sy - yOff).toFixed(1),
+                    x2: pr1.sx.toFixed(1),
+                    y2: (pr1.sy - yOff).toFixed(1),
+                    stroke: railColor,
+                    'stroke-width': railWidth.toFixed(1),
+                    'stroke-linecap': 'round'
+                  })
+                );
+                world3dLayer.appendChild(
+                  createSvgEl('line', {
+                    x1: pr0.sx.toFixed(1),
+                    y1: (pr0.sy + yOff).toFixed(1),
+                    x2: pr1.sx.toFixed(1),
+                    y2: (pr1.sy + yOff).toFixed(1),
+                    stroke: hairpinApproach ? 'rgba(127, 29, 29, 0.9)' : 'rgba(15, 23, 42, 0.38)',
+                    'stroke-width': Math.max(1.2, railWidth * 0.72).toFixed(1),
+                    'stroke-linecap': 'round'
+                  })
+                );
+              }
+            });
+          }
+        });
+
+        state.track.finishFlags.forEach((flag) => {
+          const progress = state.globalS - flag.globalS;
+          if (progress < -620 || progress > 260) return;
+          const distance = Math.hypot(flag.x - state.x, flag.y - state.y, flag.z - state.z);
+          if (distance > 1700) return;
+          const pop = Math.max(0.16, Math.min(1, (progress + 620) / 130));
+          const base = project3D(flag.x, flag.y, flag.z, cam);
+          const top = project3D(flag.x, flag.y - 118 * pop, flag.z, cam);
+          if (!base || !top) return;
+
+          drawList.push({
+            depth: base.depth,
+            draw: () => {
+              const clothWidth = Math.max(15, 38 * top.scale * pop);
+              const clothHeight = Math.max(9, 25 * top.scale * pop);
+              const cell = clothWidth / 2;
+              world3dLayer.appendChild(createSvgEl('line', {
+                x1: base.sx, y1: base.sy, x2: top.sx, y2: top.sy,
+                stroke: '#ffffff', 'stroke-width': Math.max(1.5, 3 * base.scale)
+              }));
+              world3dLayer.appendChild(createSvgEl('path', {
+                d: `M ${top.sx} ${top.sy} h ${clothWidth} v ${clothHeight} l ${-clothWidth / 2} ${-clothHeight * 0.18} l ${-clothWidth / 2} ${clothHeight * 0.18} Z`,
+                fill: '#facc15', stroke: '#ffffff', 'stroke-width': Math.max(1, 1.5 * top.scale)
+              }));
+              world3dLayer.appendChild(createSvgEl('rect', {
+                x: top.sx, y: top.sy, width: cell, height: clothHeight / 2,
+                fill: '#ec4899', opacity: pop.toFixed(2)
+              }));
+              world3dLayer.appendChild(createSvgEl('rect', {
+                x: top.sx + cell, y: top.sy + clothHeight / 2, width: cell, height: clothHeight / 2,
+                fill: '#ec4899', opacity: pop.toFixed(2)
+              }));
+            }
+          });
+        });
+
+        state.track.hazards.forEach((hz) => {
+          if (typeof hz.x !== 'number') return;
+          const dist = Math.hypot(hz.x - state.x, hz.y - state.y, hz.z - state.z);
+          if (dist > 1500) return;
+          const pr = project3D(hz.x, hz.y, hz.z, cam);
+          if (!pr) return;
+
+          drawList.push({
+            depth: pr.depth,
+            draw: () => {
+              const sc = pr.scale;
+              if (hz.type === 'spikes') {
+                for (let k = -1; k <= 1; k++) {
+                  const cx = pr.sx + k * 13 * sc;
+                  world3dLayer.appendChild(createSvgEl('polygon', {
+                    points: `${(cx - 7 * sc).toFixed(1)},${pr.sy.toFixed(1)} ${(cx + 7 * sc).toFixed(1)},${pr.sy.toFixed(1)} ${cx.toFixed(1)},${(pr.sy - 32 * sc).toFixed(1)}`,
+                    fill: '#ef4444',
+                    stroke: '#ffffff',
+                    'stroke-width': Math.max(1, 1.6 * sc).toFixed(1)
+                  }));
+                }
+              } else {
+                // Warning sign stands beside the track (not on the rails), well before the turn.
+                const signBack = Math.max(0, 1);
+                const sx0 = hz.x - Math.sin(hz.yaw) * 85 - Math.cos(hz.yaw) * 420 * signBack;
+                const sz0 = hz.z + Math.cos(hz.yaw) * 85 - Math.sin(hz.yaw) * 420 * signBack;
+                const sp = project3D(sx0, hz.y, sz0, cam);
+                if (!sp) return;
+                pr = sp;
+                const sc2 = sp.scale;
+                const top = sp.sy - 78 * sc2;
+                const half = 20 * sc2;
+                world3dLayer.appendChild(createSvgEl('line', {
+                  x1: pr.sx.toFixed(1), y1: pr.sy.toFixed(1), x2: pr.sx.toFixed(1), y2: top.toFixed(1),
+                  stroke: '#ffffff', 'stroke-width': Math.max(1.5, 3 * sc).toFixed(1)
+                }));
+                world3dLayer.appendChild(createSvgEl('polygon', {
+                  points: `${pr.sx.toFixed(1)},${(top - half).toFixed(1)} ${(pr.sx + half).toFixed(1)},${top.toFixed(1)} ${pr.sx.toFixed(1)},${(top + half).toFixed(1)} ${(pr.sx - half).toFixed(1)},${top.toFixed(1)}`,
+                  fill: '#facc15',
+                  stroke: '#0f172a',
+                  'stroke-width': Math.max(1.2, 2.2 * sc).toFixed(1)
+                }));
+                world3dLayer.appendChild(createSvgEl('line', {
+                  x1: pr.sx.toFixed(1), y1: (top - half * 0.5).toFixed(1), x2: pr.sx.toFixed(1), y2: (top + half * 0.15).toFixed(1),
+                  stroke: '#0f172a', 'stroke-width': Math.max(1.4, 3 * sc).toFixed(1), 'stroke-linecap': 'round'
+                }));
+                world3dLayer.appendChild(createSvgEl('circle', {
+                  cx: pr.sx.toFixed(1), cy: (top + half * 0.5).toFixed(1), r: Math.max(1, 1.8 * sc).toFixed(1), fill: '#0f172a'
+                }));
+              }
+            }
+          });
+        });
+
+        state.track.pads.forEach((pad) => {
+          if (typeof pad.x !== 'number') return;
+          const dist = Math.hypot(pad.x - state.x, pad.y - state.y, pad.z - state.z);
+          if (dist > 1500) return;
+          const pr = project3D(pad.x, pad.y, pad.z, cam);
+          if (!pr) return;
+
+          drawList.push({
+            depth: pr.depth,
+            draw: () => {
+              const r = Math.max(6, 18 * pr.scale);
+              const isCp = pad.type === 'checkpoint';
+              const fill = isCp
+                ? pad.triggered ? '#4ade80' : '#38bdf8'
+                : pad.type === 'slow' ? '#ef4444' : '#fde047';
+              world3dLayer.appendChild(
+                createSvgEl('circle', {
+                  cx: pr.sx.toFixed(1),
+                  cy: pr.sy.toFixed(1),
+                  r: r.toFixed(1),
+                  fill,
+                  stroke: '#ffffff',
+                  'stroke-width': Math.max(1.5, 3 * pr.scale).toFixed(1),
+                  opacity: '0.92'
+                })
+              );
+            }
+          });
+        });
+
+        const nowSec = performance.now() * 0.004;
+        state.track.collectibles.forEach((item) => {
+          if (item.collected) return;
+          const dist = Math.hypot(item.x - state.x, item.y - state.y, item.z - state.z);
+          if (dist > 1400) return;
+          const bobY = item.y + Math.sin(nowSec + item.phase) * 7;
+          const pr = project3D(item.x, bobY, item.z, cam);
+          if (!pr) return;
+
+          drawList.push({
+            depth: pr.depth,
+            draw: () => {
+              const isGem = item.type === 'gem';
+              const baseR = isGem ? 13 : 9.5;
+              const rx = Math.max(2.5, baseR * pr.scale * (0.45 + 0.55 * Math.abs(Math.cos(nowSec + item.phase))));
+              const ry = Math.max(3.5, baseR * pr.scale);
+              world3dLayer.appendChild(
+                createSvgEl('ellipse', {
+                  cx: pr.sx.toFixed(1),
+                  cy: pr.sy.toFixed(1),
+                  rx: rx.toFixed(1),
+                  ry: ry.toFixed(1),
+                  fill: isGem ? '#38bdf8' : '#fde047',
+                  stroke: '#ffffff',
+                  'stroke-width': Math.max(1.2, 2.2 * pr.scale).toFixed(1)
+                })
+              );
+            }
+          });
+        });
+
+        drawList.sort((a, b) => b.depth - a.depth);
+        drawList.forEach((entry) => {
+          try {
+            entry.draw();
+          } catch (e) {}
+        });
+
+        if (state.mode === 'PLAYING') {
+          recordPoseHistory();
+        }
+        followerCartsLayer.innerHTML = '';
+        const podSkin = POD_SKINS.find((p) => p.id === saveData.equippedPod) || POD_SKINS[0];
+        for (let c = 1; c <= state.cartCount; c++) {
+          const pose = samplePoseAtArcDistance(c * 54);
+          const cProj = project3D(pose.x, pose.y, pose.z, cam);
+          if (!cProj) continue;
+          const cScale = Math.max(0.35, cProj.scale * 0.84);
+          const deg = (pose.pitch * 180) / Math.PI;
+          const cartG = createSvgEl('g', {
+            transform: `translate(${cProj.sx.toFixed(1)}, ${cProj.sy.toFixed(1)}) rotate(${deg.toFixed(1)}) scale(${cScale.toFixed(2)})`
+          });
+          cartG.appendChild(
+            createSvgEl('rect', {
+              x: '-18',
+              y: '-6',
+              width: '36',
+              height: '13',
+              rx: '6',
+              fill: '#1e293b',
+              stroke: '#ffffff',
+              'stroke-width': '1.8'
+            })
+          );
+          cartG.appendChild(
+            createSvgEl('circle', {
+              cx: '0',
+              cy: '-9',
+              r: '13',
+              fill: podSkin.color,
+              stroke: '#ffffff',
+              'stroke-width': '2.4'
+            })
+          );
+          followerCartsLayer.appendChild(cartG);
+        }
+
+        const rProj = project3D(state.x, state.y, state.z, cam);
+        const rx = rProj ? rProj.sx + state.landVisualOffsetX : vw * 0.28;
+        const ry = rProj ? rProj.sy + state.landVisualOffsetY : vh * 0.56;
+        const rScale = rProj ? Math.max(0.45, rProj.scale) : 1;
+
+        const wobbleDeg = state.wobbleTimer > 0 ? Math.sin(state.wobblePhase) * 9 : 0;
+        const pitchDeg = (state.pitch * 180) / Math.PI + wobbleDeg;
+        const sx = rScale / Math.sqrt(Math.max(0.55, state.squashScaleY));
+        const sy = rScale * state.squashScaleY;
+
+        riderGroup.setAttribute(
+          'transform',
+          `translate(${rx.toFixed(1)}, ${ry.toFixed(1)}) rotate(${pitchDeg.toFixed(1)}) scale(${sx.toFixed(3)}, ${sy.toFixed(3)})`
+        );
+
+        const wheelDeg = (state.wheelSpin * 180) / Math.PI;
+        wheelRear.setAttribute('transform', `translate(-13, 10) rotate(${wheelDeg.toFixed(1)})`);
+        wheelFront.setAttribute('transform', `translate(13, 10) rotate(${wheelDeg.toFixed(1)})`);
+
+        const showFlame = state.mode === 'PLAYING' && (state.isHolding || state.boostTimer > 0);
+        boostFlame.setAttribute('opacity', showFlame ? '0.92' : '0');
+
+        if (state.mode === 'PLAYING') {
+          state.trailPoints.push({ x: rx, y: ry });
+          if (state.trailPoints.length > 14) state.trailPoints.shift();
+        } else if (state.mode === 'START') {
+          state.trailPoints.push({ x: rx, y: ry });
+          if (state.trailPoints.length > 10) state.trailPoints.shift();
+        }
+        const ptsStr = state.trailPoints.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+        riderTrail.setAttribute('points', ptsStr);
+      }
+
+      /* 12. Garage UI, Input & Loop */
+      function renderGarage() {
+        document.getElementById('garage-coins').textContent = saveData.coins.toLocaleString();
+        const podGrid = document.getElementById('pod-shop-grid');
+        const trailGrid = document.getElementById('trail-shop-grid');
+        podGrid.innerHTML = '';
+        trailGrid.innerHTML = '';
+
+        POD_SKINS.forEach((pod) => {
+          const owned = saveData.ownedPods.includes(pod.id);
+          const equipped = saveData.equippedPod === pod.id;
+          const item = document.createElement('button');
+          item.type = 'button';
+          item.className = `shop-item ${owned ? 'owned' : ''} ${equipped ? 'equipped' : ''}`;
+          item.innerHTML = `
+            <div class="shop-swatch" style="background:${pod.color};"></div>
+            <div class="shop-name">${pod.name}</div>
+            <div class="shop-price">${equipped ? 'EQUIPPED' : owned ? 'SELECT' : `${pod.price} COINS`}</div>
+          `;
+          item.addEventListener('click', () => {
+            if (equipped) return;
+            if (owned) {
+              saveData.equippedPod = pod.id;
+              persistSave();
+              applyEquippedSkins();
+              renderGarage();
+              sound.playCleanLand();
+            } else if (saveData.coins >= pod.price) {
+              saveData.coins -= pod.price;
+              saveData.ownedPods.push(pod.id);
+              saveData.equippedPod = pod.id;
+              persistSave();
+              applyEquippedSkins();
+              renderGarage();
+              updateHUD();
+              sound.playPerfectLand();
+            } else {
+              sound.playCrash();
+            }
+          });
+          podGrid.appendChild(item);
+        });
+
+        TRAIL_SKINS.forEach((trail) => {
+          const owned = saveData.ownedTrails.includes(trail.id);
+          const equipped = saveData.equippedTrail === trail.id;
+          const item = document.createElement('button');
+          item.type = 'button';
+          item.className = `shop-item ${owned ? 'owned' : ''} ${equipped ? 'equipped' : ''}`;
+          item.innerHTML = `
+            <div class="shop-swatch" style="background:${trail.color};"></div>
+            <div class="shop-name">${trail.name}</div>
+            <div class="shop-price">${equipped ? 'EQUIPPED' : owned ? 'SELECT' : `${trail.price} COINS`}</div>
+          `;
+          item.addEventListener('click', () => {
+            if (equipped) return;
+            if (owned) {
+              saveData.equippedTrail = trail.id;
+              persistSave();
+              applyEquippedSkins();
+              renderGarage();
+              sound.playCleanLand();
+            } else if (saveData.coins >= trail.price) {
+              saveData.coins -= trail.price;
+              saveData.ownedTrails.push(trail.id);
+              saveData.equippedTrail = trail.id;
+              persistSave();
+              applyEquippedSkins();
+              renderGarage();
+              updateHUD();
+              sound.playPerfectLand();
+            } else {
+              sound.playCrash();
+            }
+          });
+          trailGrid.appendChild(item);
+        });
+      }
+
+      function openGarage() {
+        state.prevModeBeforeGarage = state.mode;
+        state.mode = 'GARAGE';
+        state.isHolding = false;
+        sound.updateThruster(false, 0);
+        renderGarage();
+        garageOverlay.classList.remove('hidden');
+      }
+
+      function closeGarage() {
+        garageOverlay.classList.add('hidden');
+        state.mode = state.prevModeBeforeGarage || 'START';
+        updateHUD();
+      }
+
+      function setHoldState(holding) {
+        if (state.mode !== 'PLAYING') {
+          state.isHolding = false;
+          controlHint.classList.remove('active-hold');
+          return;
+        }
+        state.isHolding = Boolean(holding);
+        if (state.isHolding) {
+          sound.init();
+          controlHint.classList.add('active-hold');
+          controlHint.textContent = state.onTrack
+            ? 'ACCELERATING • KEEP SPEED FOR HILL AND GAP TAKEOFFS'
+            : 'BACKFLIPPING • RELEASE TO ALIGN LANDING';
+        } else {
+          controlHint.classList.remove('active-hold');
+          controlHint.textContent = 'HOLD TO ACCELERATE & BACKFLIP • RELEASE TO COAST & LAND';
+        }
+      }
+
+      function startGameFromMenu() {
+        sound.init();
+        clearFX();
+        startOverlay.classList.add('hidden');
+        gameoverOverlay.classList.add('hidden');
+        levelOverlay.classList.add('hidden');
+        loadStage(saveData.maxLevel || 1, false);
+        state.mode = 'PLAYING';
+      }
+
+      function retryCurrentStage() {
+        sound.init();
+        clearFX();
+        gameoverOverlay.classList.add('hidden');
+        loadStage(state.level, false);
+        state.mode = 'PLAYING';
+      }
+
+      function goToStage1() {
+        sound.init();
+        clearFX();
+        gameoverOverlay.classList.add('hidden');
+        loadStage(1, false);
+        state.mode = 'PLAYING';
+      }
+
+      function advanceNextStage() {
+        sound.init();
+        clearFX();
+        levelOverlay.classList.add('hidden');
+        loadStage(state.level + 1, true);
+        state.mode = 'PLAYING';
+      }
+
+      container.addEventListener('pointerdown', (e) => {
+        if (e.target.closest('button') || e.target.closest('.overlay:not(.hidden)')) return;
+        setHoldState(true);
+      });
+
+      window.addEventListener('pointerup', () => setHoldState(false));
+      window.addEventListener('pointercancel', () => setHoldState(false));
+      window.addEventListener('blur', () => setHoldState(false));
+
+      window.addEventListener('keydown', (e) => {
+        if (e.repeat) return;
+        if (e.code === 'Space' || e.code === 'ArrowDown' || e.code === 'KeyS') {
+          if (state.mode === 'PLAYING') {
+            e.preventDefault();
+            setHoldState(true);
+          } else if (state.mode === 'START') {
+            e.preventDefault();
+            startGameFromMenu();
+          }
+        }
+      });
+
+      window.addEventListener('keyup', (e) => {
+        if (e.code === 'Space' || e.code === 'ArrowDown' || e.code === 'KeyS') {
+          setHoldState(false);
+        }
+      });
+
+      document.getElementById('start-btn').addEventListener('click', startGameFromMenu);
+      document.getElementById('retry-btn').addEventListener('click', retryCurrentStage);
+      document.getElementById('respawn-cp-btn').addEventListener('click', respawnAtCheckpoint);
+      document.getElementById('restart-lvl1-btn').addEventListener('click', goToStage1);
+      document.getElementById('next-level-btn').addEventListener('click', advanceNextStage);
+
+      document.getElementById('open-garage-hud-btn').addEventListener('click', openGarage);
+      document.getElementById('start-garage-btn').addEventListener('click', openGarage);
+      document.getElementById('clear-garage-btn').addEventListener('click', openGarage);
+      document.getElementById('close-garage-btn').addEventListener('click', closeGarage);
+
+      const muteBtn = document.getElementById('mute-btn');
+      const soundOnIcon = document.getElementById('sound-on-icon');
+      const soundOffIcon = document.getElementById('sound-off-icon');
+      muteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const muted = sound.toggleMute();
+        soundOnIcon.style.display = muted ? 'none' : 'block';
+        soundOffIcon.style.display = muted ? 'block' : 'none';
+      });
+
+      document.getElementById('start-best-score').textContent = saveData.bestScore.toLocaleString();
+      document.getElementById('start-coins').textContent = saveData.coins.toLocaleString();
+      document.getElementById('start-best-level').textContent = saveData.maxLevel;
+
+      initParallax();
+      loadStage(1, false);
+
+      let lastTime = performance.now();
+      function frameLoop(now) {
+        const dt = Math.min(0.05, Math.max(0.001, (now - lastTime) / 1000));
+        lastTime = now;
+
+        stepPhysics(dt);
+        renderPseudo3DWorld(dt);
+        updateFX(dt);
+
+        requestAnimationFrame(frameLoop);
+      }
+
+      requestAnimationFrame(frameLoop);
+    })();
+  </script>
+</body>
+</html>
