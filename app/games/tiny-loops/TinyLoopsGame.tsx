@@ -568,7 +568,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
           // Later sections demand a faster run-up, while remaining achievable
           // below the cart's 48-unit top speed.
           const requiredSpeed = Math.min(46, 38.5 + Math.max(0, jumpNumber) * 1.2 + (state.level - 1) * 1.5);
-          if (state.speed < requiredSpeed) {
+          if (!state.holding || state.speed < requiredSpeed) {
             // Don't freeze at the lip: lose the track and fall below it.
             state.airborne = true;
             state.falling = true;
@@ -750,6 +750,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     state.distance = 0;
     state.speed = 18;
     state.holding = false;
+    state.level = 1;
     state.flips = 0;
     state.spin = 0;
     state.coins = bankedCoins;
