@@ -152,6 +152,14 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
 
   const course = makeCourse(T);
   const length = course.getLength();
+  // Curve.getUtoTmapping can produce an invalid interpolation at the exact
+  // final arc-length sample (distance === total length). Keep every sample
+  // just inside the curve so getPointAt never receives NaN at the endpoint.
+  const courseUAtDistance = (distance: number) => {
+    const safeDistance = Math.max(0, Math.min(length - 0.001, distance));
+    const mapped = course.getUtoTmapping(0, safeDistance);
+    return Number.isFinite(mapped) ? Math.max(0, Math.min(0.999999, mapped)) : 0.999999;
+  };
   const segments = 1800;
   const frames = course.computeFrenetFrames(segments, false);
   const railMaterial = new T.MeshStandardMaterial({ color: 0xffc928, metalness: 0.05, roughness: 0.72 });
@@ -199,7 +207,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
       const count = Math.max(8, Math.ceil((to - from) * 5));
       for (let j = 0; j <= count; j++) {
         const d = from + ((to - from) * j) / count;
-        const u = course.getUtoTmapping(0, d);
+        const u = courseUAtDistance(d);
         const p = course.getPointAt(u);
         const f = frameAt(Math.min(segments, Math.round(u * segments)));
         pts.push(p.addScaledVector(f.side, offset).addScaledVector(f.normal, 0.12));
@@ -220,7 +228,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   for (let i = 0; i < 760; i++) {
     const d = (length * i) / 759;
     if (isInJumpGap(d)) continue;
-    const u = course.getUtoTmapping(0, d);
+    const u = courseUAtDistance(d);
     const p = course.getPointAt(u);
     const f = frameAt(Math.min(segments, Math.round(u * segments)));
     // Sleepers must rotate with the true 3D track tangent. Using the
@@ -337,7 +345,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   for (let i = 0; i < 35; i++) {
     const d = 18 + i * 14;
     if (d >= length - 8) break;
-    const p = course.getPointAt(course.getUtoTmapping(0, d));
+    const p = course.getPointAt(courseUAtDistance(d));
     const coin = new T.Mesh(new T.TorusGeometry(0.42, 0.12, 8, 18), coinMat);
     coin.position.copy(p).add(new T.Vector3(0, 1.8, 0));
     coin.rotation.y = Math.PI / 2;
@@ -380,7 +388,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
             state.airborne = true;
             state.falling = true;
             state.airElapsed = 0;
-            state.takeoffY = course.getPointAt(course.getUtoTmapping(0, launch)).y;
+            state.takeoffY = course.getPointAt(courseUAtDistance(launch)).y;
             state.speed = 0;
             state.holding = false;
           } else {
@@ -396,7 +404,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
             // A higher approach gives a longer, higher arc, but the cart still
             // has to cover the real gap before the landing section.
             state.jumpHeight = 10 + state.speed * 0.28;
-            const takeoffPoint = course.getPointAt(course.getUtoTmapping(0, launch));
+            const takeoffPoint = course.getPointAt(courseUAtDistance(launch));
             state.takeoffY = takeoffPoint.y;
             state.spin = 0;
           }
@@ -455,7 +463,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     }
 
     const distance = Math.min(state.distance, length - 0.1);
-    const u = course.getUtoTmapping(0, distance);
+    const u = courseUAtDistance(distance);
     const point = course.getPointAt(u);
     const index = Math.min(segments, Math.round(u * segments));
     const frame = frameAt(index);
