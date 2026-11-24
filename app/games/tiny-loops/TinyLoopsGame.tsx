@@ -46,10 +46,13 @@ function makeCourse(T: any) {
       // A long low run-up followed by a short, steep kicker. The last
       // point is the lip; its rise is deliberately exaggerated so it reads
       // as an actual launch ramp rather than a rounded hill.
+      // A jump ramp must rise in the direction of travel. Start the climb
+      // earlier and keep the launch lip higher than the run-up, even when the
+      // following course section bends down sharply.
       const rampProfile = launchable
-        ? (t <= 0.68 ? 0 : Math.pow((t - 0.68) / 0.32, 1.08))
+        ? (t <= 0.48 ? 0 : Math.pow((t - 0.48) / 0.52, 1.35))
         : Math.sin(Math.PI * t);
-      add(from.clone().lerp(to, t).add(new T.Vector3(0, rampProfile * (launchable ? Math.max(height, 20) : height), 0)));
+      add(from.clone().lerp(to, t).add(new T.Vector3(0, rampProfile * (launchable ? Math.max(height, 26) : height), 0)));
       if (launchable && i === steps) crestIndex = points.length - 1;
     }
     if (launchable && crestIndex >= 0) hillSections.push({ start: startIndex, crest: crestIndex, end: points.length - 1 });
@@ -227,8 +230,8 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   // separate landing section. Only these exact ramp brows can trigger flight.
   const hillSections: Array<{ start: number; crest: number; end: number }> = (course as any).hillSections;
   const jumpTriggers: number[] = hillSections.map((section) => section.crest);
-  // Keep the missing section short enough that the cart lands on the
-  // descending face of the hill, not on a flat section beyond it.
+  // The gap begins at the top of the rising kicker; the far edge is the
+  // landing point on the next track section.
   // Each successive jump has a longer missing section. Rounded scenery hills
   // never launch the cart: flight is only possible at these marked ramp lips.
   const jumpGapFor = (index: number) => 42 + index * 2.4;
@@ -632,22 +635,16 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
         // middle of the hill. The gap ends exactly at activeJumpEnd.
         state.distance = state.activeJumpEnd;
         const completed = Math.floor(state.spin / (Math.PI * 2));
-        const landingAngle = Math.abs(Math.atan2(Math.sin(state.spin), Math.cos(state.spin)));
-        // A landing must be genuinely upright. The old 2.5-radian tolerance
-        // accepted carts that were visibly on their side or nearly inverted.
-        const landingUprightness = Math.cos(state.spin);
-        if (landingAngle > 0.7 || landingUprightness < 0.76) {
-          state.status = "crashed";
-          state.speed = 0;
-        } else {
-          state.landedUntil = now + 1100;
-          state.landedFlips = completed;
-          if (completed > 0) {
-            state.coins += completed * 2;
-            state.flips += completed;
-          }
+        // Reaching the far-side track is a successful landing. Do not turn a
+        // completed jump into a wipeout because of a tiny residual spin angle:
+        // the cart is realigned with the track frame immediately below.
+        state.landedUntil = now + 1100;
+        state.landedFlips = completed;
+        if (completed > 0) {
+          state.coins += completed * 2;
+          state.flips += completed;
         }
-          state.spin = 0;
+        state.spin = 0;
         }
       }
     }
