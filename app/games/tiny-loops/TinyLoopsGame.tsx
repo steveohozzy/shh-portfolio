@@ -1,0 +1,968 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+
+declare global {
+  interface Window { THREE?: any; }
+}
+
+type GameStatus = "ready" | "playing" | "levelComplete" | "crashed" | "won";
+const THREE_CDN = "https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.1/three.min.js";
+
+function loadThree() {
+  return new Promise<any>((resolve, reject) => {
+    if (window.THREE) return resolve(window.THREE);
+    const existing = document.querySelector<HTMLScriptElement>('script[data-tiny-loops-three]');
+    if (existing) {
+      existing.addEventListener("load", () => resolve(window.THREE));
+      existing.addEventListener("error", reject);
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = THREE_CDN;
+    script.async = true;
+    script.dataset.tinyLoopsThree = "true";
+    script.onload = () => window.THREE ? resolve(window.THREE) : reject(new Error("Three.js did not initialise"));
+    script.onerror = () => reject(new Error("Unable to load the 3D game engine"));
+    document.head.appendChild(script);
+  });
+}
+
+function makeCourse(T: any) {
+  const points: any[] = [];
+  const hillSections: Array<{ start: number; crest: number; end: number }> = [];
+  const loopSections: Array<{ start: number; end: number }> = [];
+  const stagePointIndices: number[] = [];
+  const add = (p: any) => points.push(p.clone());
+  const line = (to: any, steps = 24) => {
+    const from = points[points.length - 1];
+    for (let i = 1; i <= steps; i++) add(from.clone().lerp(to, i / steps));
+  };
+  const hill = (to: any, height: number, steps = 64, launchable = true) => {
+    const from = points[points.length - 1];
+    const startIndex = points.length - 1;
+    let crestIndex = -1;
+    for (let i = 1; i <= steps; i++) {
+      const t = i / steps;
+      // A long low run-up followed by a short, steep kicker. The last
+      // point is the lip; its rise is deliberately exaggerated so it reads
+      // as an actual launch ramp rather than a rounded hill.
+      // A jump ramp must rise in the direction of travel. Start the climb
+      // earlier and keep the launch lip higher than the run-up, even when the
+      // following course section bends down sharply.
+      const rampProfile = launchable
+        ? (t <= 0.48 ? 0 : Math.pow((t - 0.48) / 0.52, 1.35))
+        : Math.sin(Math.PI * t);
+      add(from.clone().lerp(to, t).add(new T.Vector3(0, rampProfile * (launchable ? Math.max(height, 26) : height), 0)));
+      if (launchable && i === steps) crestIndex = points.length - 1;
+    }
+    if (launchable && crestIndex >= 0) hillSections.push({ start: startIndex, crest: crestIndex, end: points.length - 1 });
+  };
+  const bend = (control: any, to: any, steps = 56) => {
+    const from = points[points.length - 1];
+    for (let i = 1; i <= steps; i++) {
+      const t = i / steps, u = 1 - t;
+      add(from.clone().multiplyScalar(u * u).add(control.clone().multiplyScalar(2 * u * t)).add(to.clone().multiplyScalar(t * t)));
+    }
+  };
+  const loop = (radius = 9, steps = 88) => {
+    const start = points.length - 1;
+    const origin = points[start].clone();
+    const previous = points[Math.max(0, start - 1)];
+    const forward = origin.clone().sub(previous).setY(0).normalize();
+    if (forward.lengthSq() < 0.001) forward.set(0, 0, -1);
+    const up = new T.Vector3(0, 1, 0);
+    // A complete vertical 360-degree loop, sampled densely so the rails,
+    // sleepers and cart all follow the same continuous piece of track.
+    for (let i = 1; i <= steps; i++) {
+      const angle = (Math.PI * 2 * i) / steps;
+      add(origin.clone()
+        .addScaledVector(up, radius * (1 - Math.cos(angle)))
+        .addScaledVector(forward, radius * Math.sin(angle)));
+    }
+    loopSections.push({ start, end: points.length - 1 });
+  };
+
+  // A deliberately simple, continuous coaster: gentle opening, clear ramps,
+  // broad turns and small changes in height. No vertical loops or corkscrews
+  // that can make the cart or chase camera appear to flip by themselves.
+  add(new T.Vector3(0, 0, 12));
+  hill(new T.Vector3(0, 0, -42), 3, 70, false);
+  bend(new T.Vector3(2, 0, -62), new T.Vector3(15, 0, -78));
+  line(new T.Vector3(18, 0, -94), 22);
+  hill(new T.Vector3(24, 0, -112), 5, 36, false);
+
+  // First proper jump: one clear, rounded ramp.
+  hill(new T.Vector3(28, 0, -145), 7, 76, true);
+  bend(new T.Vector3(42, 2, -166), new T.Vector3(48, 3, -190));
+  hill(new T.Vector3(48, 3, -202), 5, 36, false);
+  line(new T.Vector3(48, 3, -212), 16);
+  stagePointIndices.push(points.length - 1);
+
+  // A broad sweeping turn, a full vertical loop, and a second jump.
+  bend(new T.Vector3(68, 4, -235), new T.Vector3(64, 5, -260), 72);
+  loop(9.5, 96);
+  hill(new T.Vector3(38, 5, -302), 9, 84, true);
+  bend(new T.Vector3(16, 8, -326), new T.Vector3(8, 8, -350), 64);
+  hill(new T.Vector3(8, 8, -362), 6, 40, false);
+  line(new T.Vector3(8, 8, -374), 18);
+  stagePointIndices.push(points.length - 1);
+
+  // Level 1 finish section.
+  bend(new T.Vector3(-10, 5, -396), new T.Vector3(-18, 3, -420), 64);
+  hill(new T.Vector3(-12, 0, -468), 5, 72, true);
+  bend(new T.Vector3(4, 0, -492), new T.Vector3(18, 0, -516), 64);
+  line(new T.Vector3(18, 0, -555), 55);
+  stagePointIndices.push(points.length - 1);
+  // Level 2: a longer twisting section with tighter turns, two loops and bigger jumps.
+  bend(new T.Vector3(42, 2, -590), new T.Vector3(55, 5, -625), 72);
+  hill(new T.Vector3(30, 5, -685), 10, 84, true);
+  bend(new T.Vector3(-2, 8, -712), new T.Vector3(-28, 8, -748), 72);
+  loop(10.5, 104);
+  hill(new T.Vector3(-48, 3, -812), 8, 80, true);
+  bend(new T.Vector3(-12, 1, -845), new T.Vector3(22, 1, -875), 72);
+  line(new T.Vector3(35, 1, -910), 42);
+  stagePointIndices.push(points.length - 1);
+  bend(new T.Vector3(62, 4, -945), new T.Vector3(48, 7, -980), 76);
+  hill(new T.Vector3(8, 7, -1045), 12, 92, true);
+  loop(11.5, 112);
+  bend(new T.Vector3(-35, 10, -1090), new T.Vector3(-55, 5, -1130), 76);
+  hill(new T.Vector3(-18, 3, -1190), 13, 96, true);
+  line(new T.Vector3(-18, 3, -1235), 48);
+  line(new T.Vector3(12, 3, -1300), 42);
+  stagePointIndices.push(points.length - 1);
+  // Level 3: a much longer alpine night run with a fast S-bend, three huge
+  // launch ramps, two vertical loops and a final extended jump.
+  bend(new T.Vector3(45, 5, -1265), new T.Vector3(72, 8, -1310), 82);
+  hill(new T.Vector3(22, 8, -1380), 14, 96, true);
+  bend(new T.Vector3(-18, 11, -1405), new T.Vector3(-42, 6, -1445), 82);
+  hill(new T.Vector3(-12, 2, -1515), 14, 100, true);
+  bend(new T.Vector3(35, 4, -1545), new T.Vector3(52, 4, -1585), 82);
+  line(new T.Vector3(24, 2, -1625), 36);
+  stagePointIndices.push(points.length - 1);
+  hill(new T.Vector3(0, 0, -1660), 16, 104, true);
+  bend(new T.Vector3(-38, 5, -1695), new T.Vector3(-58, 9, -1735), 80);
+  loop(12, 120);
+  hill(new T.Vector3(22, 6, -1815), 17, 112, true);
+  bend(new T.Vector3(58, 3, -1845), new T.Vector3(35, 0, -1885), 82);
+  line(new T.Vector3(4, 0, -1925), 34);
+  stagePointIndices.push(points.length - 1);
+  hill(new T.Vector3(-12, 0, -1960), 18, 120, true);
+  bend(new T.Vector3(-42, 5, -1990), new T.Vector3(-58, 8, -2035), 82);
+  loop(13.5, 128);
+  hill(new T.Vector3(12, 8, -2130), 20, 128, true);
+  bend(new T.Vector3(48, 5, -2165), new T.Vector3(25, 1, -2210), 84);
+  hill(new T.Vector3(-18, 0, -2300), 21, 136, true);
+  line(new T.Vector3(-18, 0, -2380), 72);
+  line(new T.Vector3(-18, 0, -2450), 48);
+  stagePointIndices.push(points.length - 1);
+
+  // Level 9: a canyon night-run with a high launch, a long sweeping turn and a loop.
+  bend(new T.Vector3(18, 4, -2480), new T.Vector3(62, 7, -2525), 84);
+  hill(new T.Vector3(20, 7, -2595), 19, 124, true);
+  bend(new T.Vector3(-20, 10, -2630), new T.Vector3(-45, 6, -2675), 84);
+  loop(13, 124);
+  line(new T.Vector3(-45, 6, -2715), 48);
+  stagePointIndices.push(points.length - 1);
+
+  // Level 10: the final skyway, with the biggest ramps and a double-loop finale.
+  bend(new T.Vector3(-8, 4, -2760), new T.Vector3(42, 8, -2805), 88);
+  hill(new T.Vector3(10, 8, -2885), 22, 140, true);
+  bend(new T.Vector3(-40, 12, -2930), new T.Vector3(-65, 6, -2980), 88);
+  loop(14, 132);
+  hill(new T.Vector3(-20, 3, -3070), 24, 150, true);
+  line(new T.Vector3(-20, 3, -3210), 120);
+
+  const curve = new T.CatmullRomCurve3(points, false, "centripetal", 0.15);
+  curve.arcLengthDivisions = 3000;
+  curve.updateArcLengths();
+  const sampledLengths = curve.getLengths(curve.arcLengthDivisions);
+  const distanceAtPoint = (pointIndex: number) => {
+    // Convert each hill landmark from its control-point index to travelled distance.
+    const parameter = (pointIndex / (points.length - 1)) * curve.arcLengthDivisions;
+    const lower = Math.floor(parameter);
+    const upper = Math.min(curve.arcLengthDivisions, lower + 1);
+    const fraction = parameter - lower;
+    return sampledLengths[lower] + (sampledLengths[upper] - sampledLengths[lower]) * fraction;
+  };
+  (curve as any).hillSections = hillSections.map(({ start, crest, end }) => ({
+    start: distanceAtPoint(start),
+    crest: distanceAtPoint(crest),
+    end: distanceAtPoint(end),
+  }));
+  (curve as any).hillCrestDistances = (curve as any).hillSections.map((section: any) => section.crest);
+  (curve as any).stageDistances = [...stagePointIndices.map(distanceAtPoint), sampledLengths[sampledLengths.length - 1]];
+  (curve as any).loopParameterRanges = loopSections.map(({ start, end }) => ({
+    start: start / (points.length - 1),
+    end: end / (points.length - 1),
+  }));
+  // Find the actual highest point on each smoothed hill, rather than using
+  // the control-point midpoint (which can sit before the visible crest).
+  return curve;
+}
+function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; coins: number; flips: number; status: GameStatus; airborne?: boolean; holding?: boolean; level?: number; landed?: boolean; landedFlips?: number }) => void) {
+  const scene = new T.Scene();
+  scene.background = new T.Color(0x9cddff);
+  scene.fog = new T.Fog(0xb8e7ff, 95, 260);
+  const camera = new T.PerspectiveCamera(56, 1, 0.1, 500);
+  const renderer = new T.WebGLRenderer({ antialias: true, alpha: false });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = T.PCFSoftShadowMap;
+  renderer.outputColorSpace = T.SRGBColorSpace;
+  mount.appendChild(renderer.domElement);
+
+  scene.add(new T.HemisphereLight(0xffffff, 0x9ab5c9, 2.25));
+  const sun = new T.DirectionalLight(0xfff3d5, 2.4);
+  sun.position.set(-35, 65, 30);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  scene.add(sun);
+
+  const course = makeCourse(T);
+  const length = course.getLength();
+  // Curve.getUtoTmapping can produce an invalid interpolation at the exact
+  // final arc-length sample (distance === total length). Keep every sample
+  // just inside the curve so getPointAt never receives NaN at the endpoint.
+  const courseUAtDistance = (distance: number) => {
+    const safeDistance = Math.max(0, Math.min(length - 0.001, distance));
+    const mapped = course.getUtoTmapping(0, safeDistance);
+    return Number.isFinite(mapped) ? Math.max(0, Math.min(0.999999, mapped)) : 0.999999;
+  };
+  const segments = 1800;
+  const frames = course.computeFrenetFrames(segments, false);
+  const railMaterial = new T.MeshStandardMaterial({ color: 0xffc928, metalness: 0.05, roughness: 0.72 });
+  const sleeperMaterials = [
+    new T.MeshStandardMaterial({ color: 0xffe36a, roughness: 0.9 }),
+    new T.MeshStandardMaterial({ color: 0x343b4b, roughness: 0.95 }),
+  ];
+  const trackGroup = new T.Group();
+  scene.add(trackGroup);
+
+  const loopParameterRanges: Array<{ start: number; end: number }> = (course as any).loopParameterRanges || [];
+  const frameAt = (index: number) => {
+    const tangent = frames.tangents[index].clone().normalize();
+    const parameter = index / segments;
+    const inLoop = loopParameterRanges.some((range) => parameter >= range.start && parameter <= range.end);
+    if (inLoop) {
+      // Inside a real loop, use the transported track frame so the cart,
+      // rails and sleepers rotate with the vertical track instead of staying upright.
+      const normal = frames.normals[index].clone().normalize();
+      const side = new T.Vector3().crossVectors(tangent, normal).normalize();
+      return { tangent, normal, side, forward: tangent.clone() };
+    }
+    const worldUp = new T.Vector3(0, 1, 0);
+    const forward = new T.Vector3(tangent.x, 0, tangent.z).normalize();
+    if (forward.lengthSq() < 0.0001) forward.set(0, 0, -1);
+    const side = new T.Vector3().crossVectors(forward, worldUp).normalize();
+    return { tangent, normal: worldUp, side, forward };
+  };
+
+  // Every launch has a visible rising ramp, a real rail/sleeper gap, and a
+  // separate landing section. Only these exact ramp brows can trigger flight.
+  const hillSections: Array<{ start: number; crest: number; end: number }> = (course as any).hillSections;
+  const jumpTriggers: number[] = hillSections.map((section) => section.crest);
+  // The gap begins at the top of the rising kicker; the far edge is the
+  // landing point on the next track section.
+  // Each successive jump has a longer missing section. Rounded scenery hills
+  // never launch the cart: flight is only possible at these marked ramp lips.
+  // Leave enough clear space to land beyond the low hill immediately after each jump.
+  const jumpGapFor = (index: number) => 60 + index * 3.5;
+  const jumpGaps = jumpTriggers.map((crest, index) => [crest, Math.min(length - 3, crest + jumpGapFor(index))]);
+
+  // The ramp is the actual rising course geometry. Do not overlay a solid
+  // yellow box deck: it hides the sleepers and makes the kicker look like a
+  // flat yellow strip instead of a steep Tiny Loops launch ramp.
+  const isInJumpGap = (distance: number) => jumpGaps.some(([from, to]) => distance >= from && distance <= to);
+
+  // Give every jump a solid, visibly rising take-off surface. The normal
+  // track is rails and sleepers; this deck is restricted to the kicker only,
+  // so it cannot turn the whole course into a solid yellow strip.
+  const rampMaterial = new T.MeshStandardMaterial({ color: 0xffc928, roughness: 0.78, metalness: 0.03, side: T.DoubleSide });
+  hillSections.forEach((section) => {
+    const rampStart = section.start + (section.crest - section.start) * 0.48;
+    const rampEnd = section.crest;
+    const divisions = 36;
+    const positions: number[] = [];
+    const indices: number[] = [];
+    for (let i = 0; i <= divisions; i++) {
+      const d = rampStart + ((rampEnd - rampStart) * i) / divisions;
+      const u = courseUAtDistance(d);
+      const p = course.getPointAt(u);
+      const f = frameAt(Math.min(segments, Math.max(0, Math.round(u * segments))));
+      const centre = p.clone().addScaledVector(f.normal, 0.2);
+      const left = centre.clone().addScaledVector(f.side, -0.88);
+      const right = centre.clone().addScaledVector(f.side, 0.88);
+      positions.push(left.x, left.y, left.z, right.x, right.y, right.z);
+      if (i < divisions) {
+        const a = i * 2;
+        indices.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
+      }
+    }
+    const geometry = new T.BufferGeometry();
+    geometry.setAttribute("position", new T.Float32BufferAttribute(positions, 3));
+    geometry.setIndex(indices);
+    geometry.computeVertexNormals();
+    const ramp = new T.Mesh(geometry, rampMaterial);
+    ramp.castShadow = true;
+    ramp.receiveShadow = true;
+    trackGroup.add(ramp);
+  });
+
+  const railRanges: number[][] = [];
+  let railCursor = 0;
+  jumpGaps.forEach(([from, to]) => {
+    if (from > railCursor) railRanges.push([railCursor, from]);
+    railCursor = Math.max(railCursor, to);
+  });
+  if (railCursor < length) railRanges.push([railCursor, length]);
+  [-0.72, 0.72].forEach((offset) => {
+    railRanges.forEach(([from, to]) => {
+      const pts: any[] = [];
+      const count = Math.max(8, Math.ceil((to - from) * 5));
+      for (let j = 0; j <= count; j++) {
+        const d = from + ((to - from) * j) / count;
+        const u = courseUAtDistance(d);
+        const p = course.getPointAt(u);
+        const f = frameAt(Math.min(segments, Math.round(u * segments)));
+        pts.push(p.addScaledVector(f.side, offset).addScaledVector(f.normal, 0.12));
+      }
+      const railCurve = new T.CatmullRomCurve3(pts, false, "centripetal");
+      const mesh = new T.Mesh(new T.TubeGeometry(railCurve, Math.max(40, count), 0.16, 8, false), railMaterial);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      trackGroup.add(mesh);
+    });
+  });
+
+  const sleeperGeo = new T.BoxGeometry(2.05, 0.2, 0.42);
+  const sleeperDummy = new T.Object3D();
+  const sleeperMesh = new T.InstancedMesh(sleeperGeo, sleeperMaterials[0], 760);
+  const sleeperDark = new T.InstancedMesh(sleeperGeo, sleeperMaterials[1], 760);
+  let lightCount = 0, darkCount = 0;
+  for (let i = 0; i < 760; i++) {
+    const d = (length * i) / 759;
+    if (isInJumpGap(d)) continue;
+    const u = courseUAtDistance(d);
+    const p = course.getPointAt(u);
+    const f = frameAt(Math.min(segments, Math.round(u * segments)));
+    // Sleepers must rotate with the true 3D track tangent. Using the
+    // upright cart frame here makes steep ramps look horizontal/flat.
+    const tangentIndex = Math.min(segments, Math.max(0, Math.round(u * segments)));
+    const sampledTangent = frames.tangents[tangentIndex];
+    // Use the already-computed Frenet frame rather than asking the curve for
+    // a second tangent during construction. Guard against a missing sample
+    // so one malformed frame can never abort the whole game initialisation.
+    const trackTangent = sampledTangent
+      ? new T.Vector3(sampledTangent.x, sampledTangent.y, sampledTangent.z).normalize()
+      : new T.Vector3(0, 0, -1);
+    const trackSide = f.side.clone().normalize();
+    const trackUp = f.normal.clone().normalize();
+    const matrix = new T.Matrix4().makeBasis(trackSide.clone().negate(), trackUp, trackTangent);
+    sleeperDummy.position.copy(p).addScaledVector(trackUp, 0.03);
+    sleeperDummy.quaternion.setFromRotationMatrix(matrix);
+    sleeperDummy.updateMatrix();
+    if (i % 2 === 0) sleeperMesh.setMatrixAt(lightCount++, sleeperDummy.matrix);
+    else sleeperDark.setMatrixAt(darkCount++, sleeperDummy.matrix);
+  }
+  sleeperMesh.count = lightCount;
+  sleeperDark.count = darkCount;
+  trackGroup.add(sleeperMesh, sleeperDark);
+
+  // Floating low-poly rock shelves and cliff faces beneath the course.
+  const rockMat = new T.MeshStandardMaterial({ color: 0xffffff, roughness: 1, flatShading: true });
+  const cliffMat = new T.MeshStandardMaterial({ color: 0xa9c5d8, roughness: 1, flatShading: true });
+  const levelThemes = [
+    { sky: 0x9cddff, fog: 0xb8e7ff, rail: 0xffc928, sleeper: 0xffe36a, dark: 0x343b4b, rock: 0xffffff, cliff: 0xa9c5d8 },
+    { sky: 0xffc28a, fog: 0xf4a77e, rail: 0xff7438, sleeper: 0xffd06b, dark: 0x633b58, rock: 0xf5c3a0, cliff: 0xb66f72 },
+    { sky: 0x101b45, fog: 0x263c70, rail: 0x45e4ff, sleeper: 0xa6f5ff, dark: 0x27345b, rock: 0xdceaff, cliff: 0x637db2 },
+    { sky: 0x172b3a, fog: 0x31596a, rail: 0x45d6b5, sleeper: 0xb4f2d5, dark: 0x23434a, rock: 0xd1e9df, cliff: 0x6c9b91 },
+    { sky: 0x39234f, fog: 0x75466e, rail: 0xff83c5, sleeper: 0xffc4e4, dark: 0x472e55, rock: 0xf0d6ed, cliff: 0x9c709e },
+    { sky: 0x172d28, fog: 0x426b50, rail: 0xc5ed62, sleeper: 0xe4f7a0, dark: 0x344936, rock: 0xe0e8cb, cliff: 0x7c9872 },
+    { sky: 0x45251d, fog: 0x92513a, rail: 0xffb34d, sleeper: 0xffdf91, dark: 0x57372d, rock: 0xf3d0a7, cliff: 0xb77d58 },
+    { sky: 0x18233e, fog: 0x3b527c, rail: 0x9b8cff, sleeper: 0xc9c1ff, dark: 0x343b62, rock: 0xe0e4f5, cliff: 0x7c86b6 },
+    { sky: 0x17404b, fog: 0x367d83, rail: 0x5df4e7, sleeper: 0xb0fff6, dark: 0x24515c, rock: 0xd6f3ee, cliff: 0x68a5a4 },
+    { sky: 0x2d1b3f, fog: 0x654078, rail: 0xf5a6ff, sleeper: 0xf9d2ff, dark: 0x3c2b52, rock: 0xe9d9f2, cliff: 0x896d9f },
+  ];
+  let appliedThemeLevel = 0;
+  const applyLevelTheme = (level: number) => {
+    if (appliedThemeLevel === level) return;
+    const theme = levelThemes[(Math.max(1, level) - 1) % levelThemes.length];
+    scene.background.setHex(theme.sky);
+    scene.fog.color.setHex(theme.fog);
+    railMaterial.color.setHex(theme.rail);
+    sleeperMaterials[0].color.setHex(theme.sleeper);
+    sleeperMaterials[1].color.setHex(theme.dark);
+    rockMat.color.setHex(theme.rock);
+    cliffMat.color.setHex(theme.cliff);
+    appliedThemeLevel = level;
+  };
+  const platformGeo = new T.BoxGeometry(1, 1, 1);
+  const platformData = [
+    [0, -5, -22, 17, 3, 25], [16, -8, -73, 23, 5, 24],
+    [43, -7, -171, 26, 5, 34], [55, -9, -208, 28, 5, 24],
+    [20, 4, -260, 33, 5, 24], [-18, 9, -343, 27, 5, 29],
+    [3, -8, -448, 31, 5, 30], [34, -8, -520, 29, 5, 42],
+    [42, -8, -650, 35, 5, 38], [-45, -8, -790, 34, 5, 42],
+    [20, -9, -900, 38, 5, 42], [65, -8, -980, 40, 5, 44],
+    [-42, -8, -1110, 38, 5, 44], [0, -9, -1300, 42, 5, 48],
+    [35, -8, -1510, 42, 5, 46], [-25, -9, -1740, 46, 5, 50],
+    [30, -8, -1980, 48, 5, 52], [-38, -10, -2250, 50, 5, 54],
+    [25, -10, -2550, 54, 5, 58], [-48, -11, -2780, 56, 5, 60],
+    [18, -12, -3050, 58, 5, 62], [-20, -12, -3200, 60, 5, 64],
+  ];
+  platformData.forEach(([x, y, z, sx, sy, sz], i) => {
+    const platform = new T.Mesh(platformGeo, rockMat);
+    platform.position.set(x, y, z);
+    platform.scale.set(sx, sy, sz);
+    platform.castShadow = true;
+    platform.receiveShadow = true;
+    scene.add(platform);
+    const cliff = new T.Mesh(platformGeo, cliffMat);
+    cliff.position.set(x + (i % 2 ? 2 : -2), y - sy * 1.9, z);
+    cliff.scale.set(sx * 0.88, sy * 2.8, sz * 0.9);
+    cliff.castShadow = true;
+    cliff.receiveShadow = true;
+    scene.add(cliff);
+  });
+
+  // Colourful checkpoint flags and stunt rings make each section feel distinct.
+  const flagMaterials = [0xff5b45, 0x42c77a, 0x8b68ff].map((color: number) =>
+    new T.MeshStandardMaterial({ color, roughness: 0.8, side: T.DoubleSide })
+  );
+  const finishFlags: any[] = [];
+  ((course as any).stageDistances as number[]).forEach((d, i) => {
+    const u = courseUAtDistance(d);
+    const p = course.getPointAt(u);
+    const f = frameAt(Math.min(segments, Math.max(0, Math.round(u * segments))));
+    const pole = new T.Mesh(new T.CylinderGeometry(0.09, 0.09, 5.5, 8), new T.MeshStandardMaterial({ color: 0xf5f5f5, metalness: 0.2 }));
+    pole.position.copy(p).addScaledVector(f.side, 1.9).add(new T.Vector3(0, 2.75, 0));
+    scene.add(pole);
+    const flag = new T.Mesh(new T.PlaneGeometry(2.3, 1.35), flagMaterials[i]);
+    flag.position.copy(pole.position).add(new T.Vector3(1.05, 1.55, 0));
+    flag.rotation.y = Math.PI / 2;
+    flag.scale.y = 0.001;
+    flag.userData.baseY = flag.position.y;
+    finishFlags.push(flag);
+    scene.add(flag);
+    const ring = new T.Mesh(new T.TorusGeometry(2.2, 0.16, 10, 32), new T.MeshStandardMaterial({ color: 0xffd52f, metalness: 0.45, roughness: 0.3 }));
+    ring.position.copy(p).add(new T.Vector3(0, 3.5, 0));
+    ring.quaternion.setFromUnitVectors(new T.Vector3(0, 0, 1), f.forward);
+    scene.add(ring);
+  });
+
+  // Oversized stunt hoops frame the route so each section has a visual set-piece.
+  [0.16, 0.49, 0.82].forEach((fraction, i) => {
+    const d = length * fraction;
+    const u = courseUAtDistance(d);
+    const p = course.getPointAt(u);
+    const f = frameAt(Math.min(segments, Math.max(0, Math.round(u * segments))));
+    const hoop = new T.Mesh(
+      new T.TorusGeometry(5.2 + i * 0.65, 0.34, 12, 48),
+      new T.MeshStandardMaterial({ color: [0xffb52e, 0x45b9ee, 0xf06b79][i], metalness: 0.35, roughness: 0.35, emissive: [0x533000, 0x07334c, 0x4c1019][i] })
+    );
+    hoop.position.copy(p).add(new T.Vector3(0, 1.1, 0));
+    hoop.quaternion.setFromUnitVectors(new T.Vector3(0, 0, 1), f.forward);
+    scene.add(hoop);
+    const gate = new T.Mesh(
+      new T.BoxGeometry(3.8, 0.35, 0.45),
+      new T.MeshStandardMaterial({ color: 0xffffff, metalness: 0.2, roughness: 0.55 })
+    );
+    gate.position.copy(p).add(new T.Vector3(0, 5.7 + i * 0.5, 0));
+    scene.add(gate);
+  });
+
+  // Small yellow cart and rider, matching the tiny silhouette in the reference.
+  const cart = new T.Group();
+  const chassis = new T.Mesh(new T.BoxGeometry(1.65, 0.28, 1.95), new T.MeshStandardMaterial({ color: 0x343b4b, roughness: 0.95 }));
+  chassis.position.y = 0.12;
+  chassis.castShadow = true;
+  cart.add(chassis);
+  const cartBodyMaterial = new T.MeshStandardMaterial({ color: 0xffa928, roughness: 0.78 });
+  const body = new T.Mesh(new T.BoxGeometry(1.42, 0.55, 1.58), cartBodyMaterial);
+  body.position.y = 0.28;
+  body.castShadow = true;
+  cart.add(body);
+  const seat = new T.Mesh(new T.BoxGeometry(0.72, 0.48, 0.48), new T.MeshStandardMaterial({ color: 0x343b48, roughness: 0.85 }));
+  seat.position.set(0, 0.53, 0.25);
+  seat.castShadow = true;
+  cart.add(seat);
+  const head = new T.Mesh(new T.SphereGeometry(0.4, 16, 12), new T.MeshStandardMaterial({ color: 0xffd65a, roughness: 0.9, flatShading: true }));
+  head.position.set(0, 0.84, -0.18);
+  head.castShadow = true;
+  cart.add(head);
+  const eyeMaterial = new T.MeshStandardMaterial({ color: 0x263247, roughness: 1 });
+  [-0.13, 0.13].forEach((x) => {
+    const eye = new T.Mesh(new T.SphereGeometry(0.045, 8, 8), eyeMaterial);
+    eye.position.set(x, 0.88, -0.535);
+    cart.add(eye);
+  });
+  const riderBody = new T.Mesh(new T.CapsuleGeometry(0.25, 0.48, 4, 8), new T.MeshStandardMaterial({ color: 0x2e6ec8, roughness: 0.95 }));
+  riderBody.position.set(0, 0.55, 0.03);
+  riderBody.castShadow = true;
+  cart.add(riderBody);
+
+  // Long, visible cartoon arms on pivots so they can flap independently.
+  const armMaterial = new T.MeshStandardMaterial({ color: 0x2e6ec8, roughness: 0.95 });
+  const leftArm = new T.Group();
+  const rightArm = new T.Group();
+  [-1, 1].forEach((side) => {
+    const pivot = side < 0 ? leftArm : rightArm;
+    pivot.position.set(side * 0.24, 0.68, -0.02);
+    const upperArm = new T.Mesh(new T.CapsuleGeometry(0.105, 0.48, 4, 8), armMaterial);
+    upperArm.position.set(side * 0.23, -0.23, 0);
+    upperArm.rotation.z = side * -0.35;
+    pivot.add(upperArm);
+    const hand = new T.Mesh(new T.SphereGeometry(0.13, 10, 8), new T.MeshStandardMaterial({ color: 0xffd65a, roughness: 0.9 }));
+    hand.position.set(side * 0.34, -0.48, 0);
+    pivot.add(hand);
+    cart.add(pivot);
+  });
+  [-0.48, 0.48].forEach((x) => [-0.42, 0.42].forEach((z) => {
+    const wheel = new T.Mesh(new T.CylinderGeometry(0.24, 0.24, 0.16, 12), new T.MeshStandardMaterial({ color: 0x303747, roughness: 1 }));
+    wheel.rotation.z = Math.PI / 2;
+    wheel.position.set(x, 0.14, z);
+    cart.add(wheel);
+  }));
+  const blueSpoiler = new T.Group();
+  const spoilerBar = new T.Mesh(new T.BoxGeometry(2.05, 0.16, 0.34), new T.MeshStandardMaterial({ color: 0x263b55, metalness: 0.35 }));
+  spoilerBar.position.set(0, 0.98, 0.78);
+  blueSpoiler.add(spoilerBar);
+  [-0.72, 0.72].forEach((x) => {
+    const support = new T.Mesh(new T.BoxGeometry(0.12, 0.42, 0.12), new T.MeshStandardMaterial({ color: 0x263b55 }));
+    support.position.set(x, 0.76, 0.78);
+    blueSpoiler.add(support);
+  });
+  cart.add(blueSpoiler);
+  const redFins = new T.Group();
+  [-1, 1].forEach((side) => {
+    const fin = new T.Mesh(new T.BoxGeometry(0.16, 0.62, 0.9), new T.MeshStandardMaterial({ color: 0xffe4e4, metalness: 0.2 }));
+    fin.position.set(side * 0.82, 0.55, 0.18);
+    redFins.add(fin);
+  });
+  cart.add(redFins);
+  blueSpoiler.visible = false;
+  redFins.visible = false;
+  const applyCartStyle = () => {
+    cartBodyMaterial.color.setHex(cartColours[selectedCart]);
+    blueSpoiler.visible = selectedCart === 1;
+    redFins.visible = selectedCart === 2;
+  };
+  const addTrailer = () => {
+    const trailer = new T.Group();
+    const trailerChassis = new T.Mesh(new T.BoxGeometry(1.2, 0.2, 1.45), new T.MeshStandardMaterial({ color: 0x343b4b, roughness: 0.95 }));
+    trailerChassis.position.y = 0.1;
+    trailer.add(trailerChassis);
+    const trailerBody = new T.Mesh(new T.BoxGeometry(1.08, 0.42, 1.12), new T.MeshStandardMaterial({ color: cartColours[selectedCart], roughness: 0.8 }));
+    trailerBody.position.y = 0.32;
+    trailer.add(trailerBody);
+    [-0.42, 0.42].forEach((x) => [-0.34, 0.34].forEach((z) => {
+      const wheel = new T.Mesh(new T.CylinderGeometry(0.18, 0.18, 0.13, 10), new T.MeshStandardMaterial({ color: 0x303747, roughness: 1 }));
+      wheel.rotation.z = Math.PI / 2;
+      wheel.position.set(x, 0.13, z);
+      trailer.add(wheel);
+    }));
+    trailer.scale.setScalar(0.82);
+    scene.add(trailer);
+    state.trailers.push(trailer);
+  };
+  cart.scale.setScalar(1.15);
+  scene.add(cart);
+  const baseCartQuaternion = new T.Quaternion();
+  const flipQuaternion = new T.Quaternion();
+  const flipAxis = new T.Vector3(1, 0, 0);
+
+  const coinMat = new T.MeshStandardMaterial({ color: 0xffd52f, metalness: 0.75, roughness: 0.25, emissive: 0x6b4d00 });
+  const coins: any[] = [];
+  for (let i = 0; i < Math.floor(length / 28); i++) {
+    const d = 18 + i * 28;
+    if (d >= length - 8) break;
+    const p = course.getPointAt(courseUAtDistance(d));
+    const coin = new T.Mesh(new T.TorusGeometry(0.42, 0.12, 8, 18), coinMat);
+    coin.position.copy(p).add(new T.Vector3(0, 1.8, 0));
+    coin.rotation.y = Math.PI / 2;
+    scene.add(coin);
+    coins.push({ mesh: coin, distance: d, collected: false });
+  }
+
+  const cartColours = [0xffa928, 0x36a9e8, 0xf05252];
+  let unlockedCarts = 1;
+  let selectedCart = 0;
+  let bankedCoins = 0;
+  try {
+    const saved = window.localStorage.getItem("shh-tiny-loops-progress");
+    if (saved) {
+      const progress = JSON.parse(saved);
+      bankedCoins = Math.max(0, Number(progress.coins) || 0);
+      unlockedCarts = Math.max(1, Math.min(cartColours.length, Number(progress.unlockedCarts) || 1));
+      selectedCart = Math.max(0, Math.min(unlockedCarts - 1, Number(progress.selectedCart) || 0));
+    }
+  } catch {}
+  const saveProgress = () => {
+    try {
+      window.localStorage.setItem("shh-tiny-loops-progress", JSON.stringify({ coins: bankedCoins, unlockedCarts, selectedCart }));
+    } catch {}
+  };
+  const state = { status: "ready" as GameStatus, distance: 0, speed: 0, holding: false, flips: 0, spin: 0, coins: bankedCoins, airborne: false, falling: false, airHeight: 0, takeoffY: 0, airElapsed: 0, activeJumpEnd: 0, jumpDuration: 0.9, jumpHeight: 5, landedUntil: 0, landedFlips: 0, trailers: [] as any[], level: 1, elapsed: 0, lastTime: performance.now(), raf: 0 };
+  applyCartStyle();
+  const resize = () => {
+    const w = Math.max(1, mount.clientWidth), h = Math.max(1, mount.clientHeight);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h, false);
+  };
+  const observer = new ResizeObserver(resize);
+  observer.observe(mount);
+  resize();
+
+  const animate = (now: number) => {
+    state.raf = requestAnimationFrame(animate);
+    const dt = Math.min((now - state.lastTime) / 1000, 0.035);
+    state.lastTime = now;
+    const previousDistance = state.distance;
+    applyLevelTheme(state.level);
+    if (state.status === "playing") {
+      // The ride only advances while the player is holding. Releasing brakes the cart.
+      // Acceleration is for the run-up; in the air, hold controls the flip only.
+      if (!state.airborne) {
+        state.speed = Math.min(48, state.speed + (state.holding ? 28 : -11) * dt);
+        state.speed = Math.max(0, state.speed);
+      }
+      state.distance += state.speed * dt;
+      if (!state.airborne) {
+        // The cart must reach the lip with enough momentum to clear the gap.
+        // Crossing the brow too slowly is a failed jump, not an automatic flight.
+        const launch = jumpTriggers.find((crest) => previousDistance <= crest && state.distance >= crest);
+        if (launch !== undefined) {
+          state.distance = launch;
+          const jumpNumber = jumpTriggers.indexOf(launch);
+          // Later sections demand a faster run-up, while remaining achievable
+          // below the cart's 48-unit top speed.
+          const requiredSpeed = Math.min(47, 37 + Math.max(0, jumpNumber) * 1.05 + (state.level - 1) * 0.8);
+          if (!state.holding || state.speed < requiredSpeed) {
+            // Don't freeze at the lip: lose the track and fall below it.
+            state.airborne = true;
+            state.falling = true;
+            state.airElapsed = 0;
+            state.takeoffY = course.getPointAt(courseUAtDistance(launch)).y;
+            state.speed = 0;
+            state.holding = false;
+          } else {
+            state.airborne = true;
+            state.falling = false;
+            state.airHeight = 0;
+            state.airElapsed = 0;
+            const gapLength = jumpGapFor(jumpNumber);
+            // Match airtime to the actual missing track length at the current speed.
+            state.jumpDuration = gapLength / Math.max(1, state.speed);
+            state.activeJumpEnd = Math.min(length - 2, launch + gapLength);
+            // A higher approach gives a longer, higher arc, but the cart still
+            // has to cover the real gap before the landing section.
+            state.jumpHeight = 10 + state.speed * 0.28 + jumpNumber * 0.8;
+            const takeoffPoint = course.getPointAt(courseUAtDistance(launch));
+            state.takeoffY = takeoffPoint.y;
+            state.spin = 0;
+          }
+        }
+      }
+      // Each level owns a different, progressively longer section of the course.
+      const stageFinish = ((course as any).stageDistances as number[])[state.level - 1] || length;
+      if (!state.airborne && state.distance >= stageFinish) {
+        state.distance = stageFinish;
+        state.speed = 0;
+        state.holding = false;
+        const finishFlag = finishFlags[state.level - 1];
+        if (finishFlag) finishFlag.userData.targetScale = 1;
+        state.coins += 30 + state.level * 10;
+        bankedCoins = state.coins;
+        if (state.level < ((course as any).stageDistances as number[]).length) {
+          state.status = "levelComplete";
+          unlockedCarts = Math.min(cartColours.length, unlockedCarts + 1);
+          selectedCart = unlockedCarts - 1;
+          applyCartStyle();
+          saveProgress();
+        } else {
+          state.status = "won";
+        }
+        saveProgress();
+        onHud({ speed: state.speed, coins: state.coins, flips: state.flips, status: state.status, level: state.level });
+      }
+    }
+
+    // A predictable jump arc: the cart follows the track and rises above it.
+    // Holding during the arc rotates the cart; releasing immediately stops the flip.
+    if (state.airborne) {
+      state.airElapsed += dt;
+      if (state.falling) {
+        // A slow cart simply drops off the end of the ramp under gravity.
+        state.airHeight = -0.5 * 28 * state.airElapsed * state.airElapsed;
+        if (state.airElapsed >= 0.85) {
+          state.airborne = false;
+          state.falling = false;
+          state.status = "crashed";
+        }
+      } else {
+        const progress = Math.min(1, state.airElapsed / state.jumpDuration);
+        // A parabolic flight arc (rather than a sine-wave bounce) gives the
+        // cart a slower, more readable hang-time before it meets the landing.
+        state.airHeight = 4 * progress * (1 - progress) * state.jumpHeight;
+        // Tiny Loops flips are deliberate: holding rotates steadily, not at
+        // several full spins per second. Release freezes the current rotation.
+        // One controlled rotation takes roughly the length of a jump. The old
+        // rate exceeded two rotations per second at top speed, making the
+        // second jump land halfway through a spin even when held continuously.
+        if (state.holding) state.spin += dt * Math.PI * 2 * (0.72 + state.speed / 140);
+        if (progress >= 1) {
+          state.airHeight = 0;
+          state.airborne = false;
+        // Snap to the far-side landing track, not an arbitrary point on the
+        // middle of the hill. The gap ends exactly at activeJumpEnd.
+        state.distance = state.activeJumpEnd;
+        const completed = Math.floor(state.spin / (Math.PI * 2));
+        const landingAngle = Math.abs(Math.atan2(Math.sin(state.spin), Math.cos(state.spin)));
+        // Allow a generous landing window for a clean-looking recovery, but
+        // still wipe out if the cart reaches the track on its side or upside down.
+        if (landingAngle > 1.25) {
+          state.status = "crashed";
+          state.speed = 0;
+        } else {
+          state.landedUntil = now + 1100;
+          state.landedFlips = completed;
+          if (completed > 0) {
+            state.coins += completed * 2;
+            state.flips += completed;
+            for (let i = 0; i < completed; i++) addTrailer();
+          }
+        }
+        state.spin = 0;
+        }
+      }
+    }
+
+    const distance = Math.min(state.distance, length - 0.1);
+    const u = courseUAtDistance(distance);
+    const point = course.getPointAt(u);
+    const index = Math.min(segments, Math.round(u * segments));
+    const frame = frameAt(index);
+    if (state.airborne) {
+      if (state.falling) {
+        point.y = state.takeoffY + state.airHeight;
+      } else {
+        const progress = Math.min(1, state.airElapsed / state.jumpDuration);
+        // Blend to the far-side track height while following a parabolic arc.
+        point.y = state.takeoffY + (point.y - state.takeoffY) * progress + state.airHeight;
+      }
+    }
+    cart.position.copy(point).addScaledVector(frame.normal, 0.25);
+    state.trailers.forEach((trailer: any, i: number) => {
+      const trailerDistance = Math.max(0, distance - (i + 1) * 4.5);
+      const trailerU = courseUAtDistance(trailerDistance);
+      const trailerPoint = course.getPointAt(trailerU);
+      const trailerFrame = frameAt(Math.min(segments, Math.max(0, Math.round(trailerU * segments))));
+      trailer.position.copy(trailerPoint).addScaledVector(trailerFrame.normal, 0.22);
+      const trailerBasis = new T.Matrix4().makeBasis(trailerFrame.side.clone().negate(), trailerFrame.normal, trailerFrame.forward);
+      trailer.quaternion.setFromRotationMatrix(trailerBasis);
+    });
+    const basis = new T.Matrix4().makeBasis(frame.side.clone().negate(), frame.normal, frame.forward);
+    baseCartQuaternion.setFromRotationMatrix(basis);
+    cart.quaternion.copy(baseCartQuaternion);
+    if (state.airborne) {
+      // Set the local pitch from the flight angle; do not accumulate rotation each frame.
+      flipQuaternion.setFromAxisAngle(flipAxis, -state.spin);
+      cart.quaternion.multiply(flipQuaternion);
+    }
+
+    // Keep the complete, enlarged cart visible in a stable third-person chase view.
+    const cameraTarget = cart.position.clone();
+    cameraTarget.y += 0.25;
+    const cameraPosition = cart.position.clone()
+      .addScaledVector(frame.tangent, -14)
+      .addScaledVector(frame.normal, 7.5);
+    camera.position.lerp(cameraPosition, 1 - Math.exp(-dt * 5.5));
+    camera.up.set(0, 1, 0);
+    camera.lookAt(cameraTarget);
+
+    // The rider throws both arms around in the air, with extra frantic movement
+    // while the player is holding to perform flips.
+    if (leftArm && rightArm) {
+      const armSwing = state.airborne
+        ? Math.sin(state.airElapsed * 17) * (state.holding ? 1.05 : 0.72)
+        : Math.sin(now * 0.004) * 0.06;
+      leftArm.rotation.z = -0.25 - armSwing;
+      rightArm.rotation.z = 0.25 + armSwing;
+      leftArm.rotation.x = state.airborne ? Math.sin(state.airElapsed * 13) * 0.28 : 0;
+      rightArm.rotation.x = state.airborne ? -Math.sin(state.airElapsed * 13) * 0.28 : 0;
+    }
+
+    coins.forEach((coin) => {
+      coin.mesh.rotation.y += dt * 2;
+      if (!coin.collected && Math.abs(coin.distance - distance) < 1.5) {
+        coin.collected = true;
+        coin.mesh.visible = false;
+        state.coins++;
+      }
+    });
+    finishFlags.forEach((flag) => {
+      const target = flag.userData.targetScale || 0.001;
+      flag.scale.y += (target - flag.scale.y) * Math.min(1, dt * 9);
+    });
+    renderer.render(scene, camera);
+    if (now - state.elapsed > 120) {
+      state.elapsed = now;
+      onHud({ speed: state.speed, coins: state.coins, flips: state.flips, status: state.status, airborne: state.airborne, holding: state.holding, level: state.level, landed: now < state.landedUntil, landedFlips: state.landedFlips });
+    }
+  };
+  state.raf = requestAnimationFrame(animate);
+
+  const resetRun = () => {
+    state.status = "playing";
+    state.level = 1;
+    state.distance = 0;
+    state.speed = 18;
+    state.holding = false;
+    state.level = 1;
+    applyLevelTheme(1);
+    state.flips = 0;
+    state.spin = 0;
+    state.coins = bankedCoins;
+    state.airborne = false;
+    state.falling = false;
+    state.airHeight = 0;
+    state.takeoffY = 0;
+    state.airElapsed = 0;
+    state.activeJumpEnd = 0;
+    state.jumpDuration = 1.0;
+    state.jumpHeight = 9;
+    state.falling = false;
+    state.trailers.forEach((trailer: any) => scene.remove(trailer));
+    state.trailers.length = 0;
+    state.lastTime = performance.now();
+    coins.forEach((coin) => { coin.collected = false; coin.mesh.visible = true; });
+    finishFlags.forEach((flag) => { flag.userData.targetScale = 0.001; });
+    onHud({ speed: state.speed, coins: state.coins, flips: 0, status: "playing", airborne: false, holding: false, level: 1 });
+  };
+
+  return {
+    start: resetRun,
+    restart: resetRun,
+    continueLevel() {
+      if (state.status !== "levelComplete") return;
+      state.level += 1;
+      // Start at the beginning of this level's own course section, not the previous finish.
+      state.distance = ((course as any).stageDistances as number[])[state.level - 2] || 0;
+      state.speed = 0;
+      state.holding = false;
+      state.airborne = false;
+      state.falling = false;
+      state.airHeight = 0;
+      state.spin = 0;
+      state.trailers.forEach((trailer: any) => scene.remove(trailer));
+      state.trailers.length = 0;
+      coins.forEach((coin) => { coin.collected = false; coin.mesh.visible = true; });
+      finishFlags.forEach((flag) => { flag.userData.targetScale = 0.001; });
+      applyLevelTheme(state.level);
+      state.status = "playing";
+      state.lastTime = performance.now();
+      onHud({ speed: state.speed, coins: state.coins, flips: state.flips, status: state.status, airborne: false, holding: false, level: state.level });
+    },
+    cycleCart() {
+      selectedCart = (selectedCart + 1) % unlockedCarts;
+      applyCartStyle();
+      saveProgress();
+    },
+    setHolding(value: boolean) { state.holding = value; },
+    destroy() {
+      cancelAnimationFrame(state.raf);
+      observer.disconnect();
+      renderer.dispose();
+      renderer.domElement.remove();
+      scene.traverse((obj: any) => {
+        if (obj.geometry) obj.geometry.dispose();
+        if (obj.material) (Array.isArray(obj.material) ? obj.material : [obj.material]).forEach((m: any) => m.dispose());
+      });
+    },
+  };
+}
+
+export default function TinyLoopsGame() {
+  const mountRef = useRef<HTMLDivElement>(null);
+  const gameRef = useRef<ReturnType<typeof createWorld> | null>(null);
+  const [status, setStatus] = useState<GameStatus>("ready");
+  const [speed, setSpeed] = useState(0);
+  const [coins, setCoins] = useState(0);
+  const [flips, setFlips] = useState(0);
+  const [airborne, setAirborne] = useState(false);
+  const [landed, setLanded] = useState(false);
+  const [landedFlips, setLandedFlips] = useState(0);
+  const [level, setLevel] = useState(1);
+  const [error, setError] = useState("");
+  const [engineReady, setEngineReady] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    let world: ReturnType<typeof createWorld> | null = null;
+    loadThree().then((T) => {
+      if (cancelled || !mountRef.current) return;
+      world = createWorld(T, mountRef.current, (v) => {
+        setSpeed(Math.round(v.speed * 4));
+        setCoins(v.coins);
+        setFlips(v.flips);
+        setAirborne(Boolean(v.airborne));
+        setLanded(Boolean(v.landed));
+        setLandedFlips(v.landedFlips || 0);
+        setLevel(v.level || 1);
+        setStatus(v.status);
+      });
+      gameRef.current = world;
+      setEngineReady(true);
+    }).catch((e) => {
+      const message = e instanceof Error ? e.message : String(e);
+      const stack = e instanceof Error && e.stack ? e.stack : "No stack trace was provided by the browser.";
+      setError(message + "\n\n" + stack);
+    });
+    return () => {
+      cancelled = true;
+      world?.destroy();
+      gameRef.current = null;
+    };
+  }, []);
+
+  const start = () => {
+    if (!gameRef.current) return;
+    gameRef.current.start();
+  };
+  const holdStart = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (e.currentTarget.setPointerCapture) e.currentTarget.setPointerCapture(e.pointerId);
+    gameRef.current?.setHolding(true);
+  };
+  const holdEnd = (e?: React.PointerEvent<HTMLDivElement>) => {
+    if (e) e.preventDefault();
+    gameRef.current?.setHolding(false);
+  };
+
+  return (
+    <main className="loop-rush-page">
+      <header className="loop-rush-header">
+        <a href="/" className="loop-rush-back">← SHH Design</a>
+        <span className="loop-rush-brand">SHH <b>ARCADE</b></span>
+      </header>
+      <section className="loop-rush-shell">
+        <div className="loop-rush-heading">
+          <div><span className="loop-rush-kicker">THE ORIGINAL-STYLE 3D RIDE</span><h1>TINY LOOPS</h1><p>Hold to accelerate and flip through the air. Release to coast.</p></div>
+          <div className="loop-rush-level"><span>LEVEL {String(level).padStart(2, "0")}</span><b>{(["First Run", "Twisting Heights", "Big Air Finale", "Sunset Switchbacks", "Canyon Rush", "Alpine Ascent", "Moonlight Loop", "Storm Chaser", "Canyon Night Run", "Final Skyway"][level - 1] || "Bonus Run")}</b></div>
+        </div>
+        <div className="loop-rush-game-frame" onPointerDown={holdStart} onPointerUp={holdEnd} onPointerCancel={holdEnd} onLostPointerCapture={holdEnd} onContextMenu={(e) => e.preventDefault()}>
+          <div ref={mountRef} className="loop-rush-canvas" />
+          <div className="loop-rush-hud"><span>⚡ {speed} SPEED</span><span>🟡 {coins} COINS</span><span>↻ {flips} FLIPS</span><strong className="loop-rush-air-status">{airborne ? "AIRBORNE — HOLD TO FLIP!" : landed ? (landedFlips > 0 ? `LANDED! +${landedFlips} FLIPS` : "LANDED!") : "HOLD TO ACCELERATE"}</strong></div>
+          {error && <div className="loop-rush-overlay"><h2>3D ENGINE ERROR</h2><p style={{ whiteSpace: "pre-wrap", maxWidth: "min(900px, 90%)", maxHeight: "70%", overflow: "auto", textAlign: "left", fontFamily: "monospace", fontSize: "11px" }}>{error}</p></div>}
+          {status === "ready" && !error && <div className="loop-rush-overlay"><span className="loop-rush-pill">{engineReady ? "READY?" : "LOADING"}</span><h2>TINY LOOPS</h2><p>{engineReady ? "Hold START to accelerate. Build speed before each rising ramp, then hold in the air to flip." : "Loading the 3D track…"}</p><button disabled={!engineReady} onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); start(); gameRef.current?.setHolding(true); const frame = e.currentTarget.closest(".loop-rush-game-frame") as HTMLDivElement | null; frame?.setPointerCapture(e.pointerId); }}>{engineReady ? "HOLD TO START →" : "LOADING…"}</button></div>}
+          {status === "levelComplete" && <div className="loop-rush-overlay" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}><span className="loop-rush-pill">LEVEL {level} COMPLETE</span><h2>FINISH FLAG!</h2><p>+{30 + level * 10} coins · {level < 4 ? "A new cart has been unlocked!" : "Your next course is ready!"}</p><button onClick={(e) => { e.stopPropagation(); gameRef.current?.continueLevel(); }}>NEXT LEVEL →</button><button className="loop-rush-secondary" onClick={(e) => { e.stopPropagation(); gameRef.current?.cycleCart(); }}>CHANGE CART</button></div>}
+          {status === "crashed" && <div className="loop-rush-overlay" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}><span className="loop-rush-pill">WIPEOUT</span><h2>YOU MISSED THE LANDING</h2><p>Hold to build speed and try the jump again.</p><button onClick={(e) => { e.stopPropagation(); gameRef.current?.restart(); }}>TRY AGAIN ↻</button></div>}
+          {status === "won" && <div className="loop-rush-overlay" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}><span className="loop-rush-pill">TRACK CLEARED</span><h2>NICE RIDE!</h2><p>{coins} coins · {flips} flips · all 10 levels cleared</p><button onClick={(e) => { e.stopPropagation(); gameRef.current?.restart(); }}>RIDE AGAIN ↻</button><button className="loop-rush-secondary" onClick={(e) => { e.stopPropagation(); gameRef.current?.cycleCart(); }}>CHANGE CART</button></div>}
+        </div>
+        <div className="loop-rush-controls"><span><i className="loop-rush-dot" /> HOLD TO ACCELERATE / FLIP</span><span>RELEASE TO STOP FLIPPING</span></div>
+      </section>
+      <footer className="loop-rush-footer">A LITTLE ARCADE FUN BY <b>SHH DESIGN</b></footer>
+    </main>
+  );
+}
