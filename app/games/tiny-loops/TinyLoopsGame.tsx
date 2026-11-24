@@ -677,7 +677,11 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
         state.coins++;
       }
     });
-    finishFlags.forEach((flag) => {\n      const target = flag.userData.targetScale || 0.001;\n      flag.scale.y += (target - flag.scale.y) * Math.min(1, dt * 9);\n    });\n    renderer.render(scene, camera);
+    finishFlags.forEach((flag) => {
+      const target = flag.userData.targetScale || 0.001;
+      flag.scale.y += (target - flag.scale.y) * Math.min(1, dt * 9);
+    });
+    renderer.render(scene, camera);
     if (now - state.elapsed > 120) {
       state.elapsed = now;
       const level = state.distance < length / 3 ? 1 : state.distance < (length * 2) / 3 ? 2 : 3;
