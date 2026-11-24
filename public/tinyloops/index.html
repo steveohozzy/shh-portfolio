@@ -2,7 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="description" content="Ride the loops, pull off backflips and survive increasingly tricky tracks in Tiny Loops 3D." />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Tiny Loops" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" type="image/svg+xml" href="./icons/icon.svg" />
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
   <title>Tiny Loops 3D — Jumps & Flips</title>
   <style>
     * {
@@ -27,6 +36,7 @@
       position: relative;
       width: 100vw;
       height: 100vh;
+      height: 100dvh;
       overflow: hidden;
       background: linear-gradient(180deg, #1d4ed8 0%, #38bdf8 46%, #fde68a 100%);
       transition: background 1.2s ease;
@@ -792,6 +802,7 @@
         </div>
         <div class="btn-stack">
           <button class="primary-btn" id="start-btn">TAP TO RIDE</button>
+          <button class="secondary-btn" id="install-app-btn" type="button">INSTALL GAME</button>
           <button class="garage-btn" id="start-garage-btn">
             <span>POD &amp; TRAIL GARAGE</span>
           </button>
@@ -2520,7 +2531,7 @@
               const newlyCompleted = completed - state.airFlipsCompleted;
               state.airFlipsCompleted = completed;
               state.stageFlips += newlyCompleted;
-              state.cartCount = Math.min(8, state.cartCount + newlyCompleted);
+              state.cartCount += newlyCompleted;
               sound.playFlip(completed);
               const rProj = project3D(state.x, state.y, state.z, cam);
               if (rProj) {
@@ -2704,7 +2715,8 @@
             yaw: state.yaw,
             pitch: state.pitch
           });
-          if (state.poseHistory.length > 260) {
+          // Keep enough track history for every cart added by a completed flip.
+          if (state.poseHistory.length > 2000) {
             state.poseHistory.shift();
           }
         }
@@ -3243,6 +3255,44 @@
           setHoldState(false);
         }
       });
+
+      // PWA installation: Android/desktop uses the native install prompt.
+      // iPhone/iPad users are guided to Safari's Share > Add to Home Screen flow.
+      let deferredInstallPrompt = null;
+      const installAppBtn = document.getElementById('install-app-btn');
+      window.addEventListener('beforeinstallprompt', (event) => {
+        event.preventDefault();
+        deferredInstallPrompt = event;
+        installAppBtn.style.display = 'block';
+      });
+      window.addEventListener('appinstalled', () => {
+        deferredInstallPrompt = null;
+        installAppBtn.style.display = 'none';
+      });
+      installAppBtn.addEventListener('click', async () => {
+        if (deferredInstallPrompt) {
+          deferredInstallPrompt.prompt();
+          await deferredInstallPrompt.userChoice;
+          deferredInstallPrompt = null;
+          return;
+        }
+        const isAppleMobile = /iphone|ipad|ipod/i.test(navigator.userAgent);
+        if (isAppleMobile && !window.navigator.standalone) {
+          alert('To install Tiny Loops: tap the Share button in Safari, then choose “Add to Home Screen”.');
+        } else if (!window.matchMedia('(display-mode: standalone)').matches) {
+          alert('To install Tiny Loops, open your browser menu and choose “Install app” or “Add to Home screen”.');
+        }
+      });
+      if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+        installAppBtn.style.display = 'none';
+      }
+
+      // Cache the game shell so it can launch without a network connection.
+      if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js').catch(() => {});
+        });
+      }
 
       document.getElementById('start-btn').addEventListener('click', startGameFromMenu);
       document.getElementById('retry-btn').addEventListener('click', retryCurrentStage);
