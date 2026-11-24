@@ -110,11 +110,6 @@ function makeCourse(T: any) {
   hill(new T.Vector3(-12, 0, -468), 5, 72, true);
   bend(new T.Vector3(4, 0, -492), new T.Vector3(18, 0, -516), 64);
   line(new T.Vector3(18, 0, -555), 55);
-  bend(new T.Vector3(45, 1, -575), new T.Vector3(58, 4, -604), 64);
-  hill(new T.Vector3(36, 5, -646), 8, 82, true);
-  bend(new T.Vector3(5, 7, -666), new T.Vector3(-20, 5, -690), 64);
-  line(new T.Vector3(-34, 5, -718), 38);
-
   // Level 2: a longer twisting section with two sharper take-off hills.
   bend(new T.Vector3(42, 2, -590), new T.Vector3(55, 5, -625), 72);
   hill(new T.Vector3(30, 5, -685), 10, 84, true);
@@ -123,11 +118,6 @@ function makeCourse(T: any) {
   hill(new T.Vector3(-48, 3, -812), 8, 80, true);
   bend(new T.Vector3(-12, 1, -845), new T.Vector3(22, 1, -875), 72);
   line(new T.Vector3(35, 1, -910), 42);
-  bend(new T.Vector3(62, 3, -936), new T.Vector3(38, 7, -966), 68);
-  hill(new T.Vector3(-4, 7, -1008), 10, 88, true);
-  bend(new T.Vector3(-38, 8, -1032), new T.Vector3(-54, 4, -1062), 68);
-  line(new T.Vector3(-42, 3, -1090), 38);
-
   // Level 3: bigger hills, a fast S-bend and a final long jump.
   bend(new T.Vector3(70, 4, -945), new T.Vector3(72, 8, -985), 76);
   hill(new T.Vector3(22, 8, -1055), 12, 90, true);
@@ -248,7 +238,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   // so it cannot turn the whole course into a solid yellow strip.
   const rampMaterial = new T.MeshStandardMaterial({ color: 0xffc928, roughness: 0.78, metalness: 0.03, side: T.DoubleSide });
   hillSections.forEach((section) => {
-    const rampStart = section.start + (section.crest - section.start) * 0.68;
+    const rampStart = section.start + (section.crest - section.start) * 0.48;
     const rampEnd = section.crest;
     const divisions = 36;
     const positions: number[] = [];
@@ -635,14 +625,19 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
         // middle of the hill. The gap ends exactly at activeJumpEnd.
         state.distance = state.activeJumpEnd;
         const completed = Math.floor(state.spin / (Math.PI * 2));
-        // Reaching the far-side track is a successful landing. Do not turn a
-        // completed jump into a wipeout because of a tiny residual spin angle:
-        // the cart is realigned with the track frame immediately below.
-        state.landedUntil = now + 1100;
-        state.landedFlips = completed;
-        if (completed > 0) {
-          state.coins += completed * 2;
-          state.flips += completed;
+        const landingAngle = Math.abs(Math.atan2(Math.sin(state.spin), Math.cos(state.spin)));
+        // Allow a generous landing window for a clean-looking recovery, but
+        // still wipe out if the cart reaches the track on its side or upside down.
+        if (landingAngle > 1.25) {
+          state.status = "crashed";
+          state.speed = 0;
+        } else {
+          state.landedUntil = now + 1100;
+          state.landedFlips = completed;
+          if (completed > 0) {
+            state.coins += completed * 2;
+            state.flips += completed;
+          }
         }
         state.spin = 0;
         }
@@ -840,7 +835,7 @@ export default function TinyLoopsGame() {
           <div ref={mountRef} className="loop-rush-canvas" />
           <div className="loop-rush-hud"><span>⚡ {speed} SPEED</span><span>🟡 {coins} COINS</span><span>↻ {flips} FLIPS</span><strong className="loop-rush-air-status">{airborne ? "AIRBORNE — HOLD TO FLIP!" : landed ? (landedFlips > 0 ? `LANDED! +${landedFlips} FLIPS` : "LANDED!") : "HOLD TO ACCELERATE"}</strong></div>
           {error && <div className="loop-rush-overlay"><h2>3D ENGINE ERROR</h2><p style={{ whiteSpace: "pre-wrap", maxWidth: "min(900px, 90%)", maxHeight: "70%", overflow: "auto", textAlign: "left", fontFamily: "monospace", fontSize: "11px" }}>{error}</p></div>}
-          {status === "ready" && !error && <div className="loop-rush-overlay"><span className="loop-rush-pill">{engineReady ? "READY?" : "LOADING"}</span><h2>TINY LOOPS</h2><p>{engineReady ? "Hold START to launch and accelerate. Keep holding to build speed and flip from the jump ramps." : "Loading the 3D track…"}</p><button disabled={!engineReady} onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); start(); gameRef.current?.setHolding(true); const frame = e.currentTarget.closest(".loop-rush-game-frame") as HTMLDivElement | null; frame?.setPointerCapture(e.pointerId); }}>{engineReady ? "HOLD TO START →" : "LOADING…"}</button></div>}
+          {status === "ready" && !error && <div className="loop-rush-overlay"><span className="loop-rush-pill">{engineReady ? "READY?" : "LOADING"}</span><h2>TINY LOOPS</h2><p>{engineReady ? "Hold START to accelerate. Build speed before each rising ramp, then hold in the air to flip." : "Loading the 3D track…"}</p><button disabled={!engineReady} onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); start(); gameRef.current?.setHolding(true); const frame = e.currentTarget.closest(".loop-rush-game-frame") as HTMLDivElement | null; frame?.setPointerCapture(e.pointerId); }}>{engineReady ? "HOLD TO START →" : "LOADING…"}</button></div>}
           {status === "levelComplete" && <div className="loop-rush-overlay" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}><span className="loop-rush-pill">LEVEL {level} COMPLETE</span><h2>FINISH FLAG!</h2><p>+{30 + level * 10} coins · {level === 1 ? "New blue cart unlocked!" : "New red cart unlocked!"}</p><button onClick={(e) => { e.stopPropagation(); gameRef.current?.continueLevel(); }}>NEXT LEVEL →</button><button className="loop-rush-secondary" onClick={(e) => { e.stopPropagation(); gameRef.current?.cycleCart(); }}>CHANGE CART</button></div>}
           {status === "crashed" && <div className="loop-rush-overlay" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}><span className="loop-rush-pill">WIPEOUT</span><h2>YOU MISSED THE LANDING</h2><p>Hold to build speed and try the jump again.</p><button onClick={(e) => { e.stopPropagation(); gameRef.current?.restart(); }}>TRY AGAIN ↻</button></div>}
           {status === "won" && <div className="loop-rush-overlay" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}><span className="loop-rush-pill">TRACK CLEARED</span><h2>NICE RIDE!</h2><p>{coins} coins · {flips} flips · all carts unlocked</p><button onClick={(e) => { e.stopPropagation(); gameRef.current?.restart(); }}>RIDE AGAIN ↻</button><button className="loop-rush-secondary" onClick={(e) => { e.stopPropagation(); gameRef.current?.cycleCart(); }}>CHANGE CART</button></div>}
