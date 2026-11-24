@@ -11,6 +11,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
     // Interactive projects and games built for the SHH Design portfolio.
     { url: `${baseUrl}/games/alex-kidd`, changeFrequency: "monthly", priority: 0.7 },
+    { url: `${baseUrl}/games/tiny-loops`, changeFrequency: "monthly", priority: 0.7 },
     { url: `${baseUrl}/online-squishy-dumpling`, changeFrequency: "monthly", priority: 0.7 },
     { url: `${baseUrl}/squishy-dumpling-game`, changeFrequency: "monthly", priority: 0.7 },
     { url: `${baseUrl}/squishy-dumpling-adventure`, changeFrequency: "monthly", priority: 0.7 },
@@ -23,6 +24,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
     // Standalone HTML game demos in /public.
     { url: `${baseUrl}/squishy-dumpling-board-game/index.html`, changeFrequency: "weekly", priority: 0.7 },
+    { url: `${baseUrl}/tinyloops`, changeFrequency: "weekly", priority: 0.7 },
     { url: `${baseUrl}/squishy-dumpling-board-game-monetize/index.html`, changeFrequency: "monthly", priority: 0.5 },
     { url: `${baseUrl}/squishy-dumpling-poki-submission/index.html`, changeFrequency: "monthly", priority: 0.5 },
     { url: `${baseUrl}/snake-game/index.html`, changeFrequency: "monthly", priority: 0.5 },
