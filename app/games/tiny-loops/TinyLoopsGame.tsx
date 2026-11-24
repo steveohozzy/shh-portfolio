@@ -6,7 +6,7 @@ declare global {
   interface Window { THREE?: any; }
 }
 
-type GameStatus = "ready" | "playing" | "crashed" | "won";
+type GameStatus = "ready" | "playing" | "levelComplete" | "crashed" | "won";
 const THREE_CDN = "https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.1/three.min.js";
 
 function loadThree() {
@@ -322,7 +322,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   const flagMaterials = [0xff5b45, 0x42c77a, 0x8b68ff].map((color: number) =>
     new T.MeshStandardMaterial({ color, roughness: 0.8, side: T.DoubleSide })
   );
-  [0.33, 0.66, 0.985].forEach((fraction, i) => {
+  const finishFlags: any[] = [];\n  [1 / 3, 2 / 3, 0.985].forEach((fraction, i) => {
     const d = length * fraction;
     const u = courseUAtDistance(d);
     const p = course.getPointAt(u);
@@ -346,7 +346,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   chassis.position.y = 0.12;
   chassis.castShadow = true;
   cart.add(chassis);
-  const body = new T.Mesh(new T.BoxGeometry(1.42, 0.55, 1.58), new T.MeshStandardMaterial({ color: 0xffa928, roughness: 0.78 }));
+  const cartBodyMaterial = new T.MeshStandardMaterial({ color: 0xffa928, roughness: 0.78 });\n  const body = new T.Mesh(new T.BoxGeometry(1.42, 0.55, 1.58), cartBodyMaterial);
   body.position.y = 0.28;
   body.castShadow = true;
   cart.add(body);
@@ -410,7 +410,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     coins.push({ mesh: coin, distance: d, collected: false });
   }
 
-  const state = { status: "ready" as GameStatus, distance: 0, speed: 0, holding: false, flips: 0, spin: 0, coins: 0, airborne: false, falling: false, airHeight: 0, takeoffY: 0, airElapsed: 0, activeJumpEnd: 0, jumpDuration: 0.9, jumpHeight: 5, landedUntil: 0, landedFlips: 0, elapsed: 0, lastTime: performance.now(), raf: 0 };
+  const cartColours = [0xffa928, 0x36a9e8, 0xf05252];\n  let unlockedCarts = 1;\n  let selectedCart = 0;\n  const state = { status: "ready" as GameStatus, distance: 0, speed: 0, holding: false, flips: 0, spin: 0, coins: 0, airborne: false, falling: false, airHeight: 0, takeoffY: 0, airElapsed: 0, activeJumpEnd: 0, jumpDuration: 0.9, jumpHeight: 5, landedUntil: 0, landedFlips: 0, level: 1, elapsed: 0, lastTime: performance.now(), raf: 0 };
   const resize = () => {
     const w = Math.max(1, mount.clientWidth), h = Math.max(1, mount.clientHeight);
     camera.aspect = w / h;
@@ -707,8 +707,8 @@ export default function TinyLoopsGame() {
           <div className="loop-rush-hud"><span>⚡ {speed} SPEED</span><span>🟡 {coins} COINS</span><span>↻ {flips} FLIPS</span><strong className="loop-rush-air-status">{airborne ? "AIRBORNE — HOLD TO FLIP!" : landed ? (landedFlips > 0 ? `LANDED! +${landedFlips} FLIPS` : "LANDED!") : "HOLD TO ACCELERATE"}</strong></div>
           {error && <div className="loop-rush-overlay"><h2>3D ENGINE ERROR</h2><p style={{ whiteSpace: "pre-wrap", maxWidth: "min(900px, 90%)", maxHeight: "70%", overflow: "auto", textAlign: "left", fontFamily: "monospace", fontSize: "11px" }}>{error}</p></div>}
           {status === "ready" && !error && <div className="loop-rush-overlay"><span className="loop-rush-pill">{engineReady ? "READY?" : "LOADING"}</span><h2>TINY LOOPS</h2><p>{engineReady ? "Hold START to launch and accelerate. Keep holding to build speed and flip from hilltops." : "Loading the 3D track…"}</p><button disabled={!engineReady} onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); start(); gameRef.current?.setHolding(true); const frame = e.currentTarget.closest(".loop-rush-game-frame") as HTMLDivElement | null; frame?.setPointerCapture(e.pointerId); }}>{engineReady ? "HOLD TO START →" : "LOADING…"}</button></div>}
-          {status === "crashed" && <div className="loop-rush-overlay" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}><span className="loop-rush-pill">WIPEOUT</span><h2>YOU MISSED THE LANDING</h2><p>Hold to build speed and try the jump again.</p><button onClick={(e) => { e.stopPropagation(); gameRef.current?.restart(); }}>TRY AGAIN ↻</button></div>}
-          {status === "won" && <div className="loop-rush-overlay" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}><span className="loop-rush-pill">TRACK CLEARED</span><h2>NICE RIDE!</h2><p>{coins} coins · {flips} flips</p><button onClick={(e) => { e.stopPropagation(); gameRef.current?.restart(); }}>RIDE AGAIN ↻</button></div>}
+          {status === "levelComplete" && <div className="loop-rush-overlay" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}><span className="loop-rush-pill">LEVEL {level} COMPLETE</span><h2>FINISH FLAG!</h2><p>+{30 + level * 10} coins · {level === 1 ? "New blue cart unlocked!" : "New red cart unlocked!"}</p><button onClick={(e) => { e.stopPropagation(); gameRef.current?.continueLevel(); }}>NEXT LEVEL →</button><button className="loop-rush-secondary" onClick={(e) => { e.stopPropagation(); gameRef.current?.cycleCart(); }}>CHANGE CART</button></div>}\n          {status === "crashed" && <div className="loop-rush-overlay" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}><span className="loop-rush-pill">WIPEOUT</span><h2>YOU MISSED THE LANDING</h2><p>Hold to build speed and try the jump again.</p><button onClick={(e) => { e.stopPropagation(); gameRef.current?.restart(); }}>TRY AGAIN ↻</button></div>}
+          {status === "won" && <div className="loop-rush-overlay" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}><span className="loop-rush-pill">TRACK CLEARED</span><h2>NICE RIDE!</h2><p>{coins} coins · {flips} flips · all carts unlocked</p><button onClick={(e) => { e.stopPropagation(); gameRef.current?.restart(); }}>RIDE AGAIN ↻</button><button className="loop-rush-secondary" onClick={(e) => { e.stopPropagation(); gameRef.current?.cycleCart(); }}>CHANGE CART</button></div>}
         </div>
         <div className="loop-rush-controls"><span><i className="loop-rush-dot" /> HOLD TO ACCELERATE / FLIP</span><span>RELEASE TO STOP FLIPPING</span></div>
       </section>
