@@ -45,15 +45,19 @@ function makeCourse(T: any) {
       // A proper stunt kicker: most of the hill is a run-up, then the
       // final section rises sharply into a short, high lip. The track after
       // the lip falls away; it is not part of the visible take-off ramp.
+      // A real kicker profile: a low approach, a short steep rising face,
+      // then a short lip. This is deliberately NOT a rounded hill or hump.
       const rampProfile = launchable
-        ? (t <= 0.68
-          ? Math.pow(t / 0.68, 2.15)
-          : Math.max(0, 1 - Math.pow((t - 0.68) / 0.32, 0.58)))
+        ? (t < 0.58
+          ? 0.035 * (t / 0.58)
+          : t < 0.88
+            ? 0.035 + 0.965 * ((t - 0.58) / 0.30)
+            : 1)
         : Math.sin(Math.PI * t);
-      add(from.clone().lerp(to, t).add(new T.Vector3(0, rampProfile * (launchable ? Math.max(height, 32) : height), 0)));
-      // Trigger before the mathematical peak, while the track is still
-      // pointing upwards, so the cart visibly leaves the end of the kicker.
-      if (launchable && i === Math.round(steps * 0.66)) crestIndex = points.length - 1;
+      add(from.clone().lerp(to, t).add(new T.Vector3(0, rampProfile * (launchable ? Math.max(height, 30) : height), 0)));
+      // Leave from the upper part of the steep face, not after the hill has
+      // already rounded off into a flat crest.
+      if (launchable && i === Math.round(steps * 0.84)) crestIndex = points.length - 1;
     }
     if (launchable && crestIndex >= 0) hillSections.push({ start: startIndex, crest: crestIndex, end: points.length - 1 });
   };
@@ -175,52 +179,13 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   const jumpTriggers: number[] = hillSections.map((section) => section.crest);
   // Keep the missing section short enough that the cart lands on the
   // descending face of the hill, not on a flat section beyond it.
-  const jumpGapLength = 30;
+  const jumpGapLength = 22;
   const jumpGaps = jumpTriggers.map((crest) => [crest, Math.min(length - 3, crest + jumpGapLength)]);
 
-  // Build the take-off and landing ramps from solid, individually aligned
-  // track sections. The open space between them is deliberately left empty.
-  const rampMaterial = new T.MeshStandardMaterial({ color: 0xffc51e, roughness: 0.72 });
-  const rampGeometry = new T.BoxGeometry(2.65, 0.42, 2.15);
-  const addRampDeck = (from: number, to: number) => {
-    const count = Math.max(4, Math.ceil((to - from) / 1.8));
-    for (let i = 0; i < count; i++) {
-      const d0 = from + ((to - from) * i) / count;
-      const d1 = from + ((to - from) * (i + 1)) / count;
-      const mid = (d0 + d1) / 2;
-      const u = course.getUtoTmapping(0, mid);
-      const p = course.getPointAt(u);
-      // The cart stays upright, but the physical track deck follows the true 3D slope.
-      const tangent = course.getTangentAt(u).normalize();
-      const worldUp = new T.Vector3(0, 1, 0);
-      const side = new T.Vector3().crossVectors(tangent, worldUp).normalize();
-      if (side.lengthSq() < 0.0001) side.set(1, 0, 0);
-      const up = new T.Vector3().crossVectors(side, tangent).normalize();
-      const deck = new T.Mesh(rampGeometry, rampMaterial);
-      deck.position.copy(p).addScaledVector(up, 0.04);
-      deck.quaternion.setFromRotationMatrix(new T.Matrix4().makeBasis(
-        side.clone().negate(), up, tangent
-      ));
-      deck.scale.z = Math.max(1, d1 - d0 + 0.35);
-      deck.castShadow = true;
-      deck.receiveShadow = true;
-      trackGroup.add(deck);
-    }
-  };
-  hillSections.forEach(({ start, crest, end }) => {
-    const landing = Math.min(length - 1, crest + jumpGapLength);
-    // Solid yellow track follows the full uphill face to the launch lip,
-    // then resumes after the gap and follows the descending landing face.
-    addRampDeck(start, crest);
-    addRampDeck(landing, end);
-  });
+  // The ramp is the actual rising course geometry. Do not overlay a solid
+  // yellow box deck: it hides the sleepers and makes the kicker look like a
+  // flat yellow strip instead of a steep Tiny Loops launch ramp.
   const isInJumpGap = (distance: number) => jumpGaps.some(([from, to]) => distance >= from && distance <= to);
-  // The solid yellow ramp deck is the running surface on the hill. Do not
-  // place flat sleepers over it or they visually flatten the take-off slope.
-  const isOnRampDeck = (distance: number) => hillSections.some(({ start, crest, end }) => {
-    const landing = crest + jumpGapLength;
-    return (distance >= start && distance <= crest) || (distance >= landing && distance <= end);
-  });
   const railRanges: number[][] = [];
   let railCursor = 0;
   jumpGaps.forEach(([from, to]) => {
@@ -254,12 +219,18 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   let lightCount = 0, darkCount = 0;
   for (let i = 0; i < 760; i++) {
     const d = (length * i) / 759;
-    if (isInJumpGap(d) || isOnRampDeck(d)) continue;
+    if (isInJumpGap(d)) continue;
     const u = course.getUtoTmapping(0, d);
     const p = course.getPointAt(u);
     const f = frameAt(Math.min(segments, Math.round(u * segments)));
-    const matrix = new T.Matrix4().makeBasis(f.side.clone().negate(), f.normal, f.forward);
-    sleeperDummy.position.copy(p).addScaledVector(f.normal, 0.03);
+    // Sleepers must rotate with the true 3D track tangent. Using the
+    // upright cart frame here makes steep ramps look horizontal/flat.
+    const trackTangent = course.getTangentAt(u).normalize();
+    const trackSide = new T.Vector3().crossVectors(trackTangent, new T.Vector3(0, 1, 0)).normalize();
+    if (trackSide.lengthSq() < 0.0001) trackSide.set(1, 0, 0);
+    const trackUp = new T.Vector3().crossVectors(trackSide, trackTangent).normalize();
+    const matrix = new T.Matrix4().makeBasis(trackSide.clone().negate(), trackUp, trackTangent);
+    sleeperDummy.position.copy(p).addScaledVector(trackUp, 0.03);
     sleeperDummy.quaternion.setFromRotationMatrix(matrix);
     sleeperDummy.updateMatrix();
     if (i % 2 === 0) sleeperMesh.setMatrixAt(lightCount++, sleeperDummy.matrix);
@@ -449,7 +420,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
         state.airHeight = 4 * progress * (1 - progress) * state.jumpHeight;
         // Tiny Loops flips are deliberate: holding rotates steadily, not at
         // several full spins per second. Release freezes the current rotation.
-        if (state.holding) state.spin += dt * Math.PI * 2 * (0.8 + state.speed / 100);
+        if (state.holding) state.spin += dt * Math.PI * 2 * (0.38 + state.speed / 220);
         if (progress >= 1) {
           state.airHeight = 0;
           state.airborne = false;
