@@ -31,6 +31,7 @@ function loadThree() {
 function makeCourse(T: any) {
   const points: any[] = [];
   const hillSections: Array<{ start: number; crest: number; end: number }> = [];
+  const popSections: number[] = [];
   const add = (p: any) => points.push(p.clone());
   const line = (to: any, steps = 24) => {
     const from = points[points.length - 1];
@@ -50,6 +51,7 @@ function makeCourse(T: any) {
         : Math.sin(Math.PI * t);
       add(from.clone().lerp(to, t).add(new T.Vector3(0, rampProfile * (launchable ? Math.max(height, 20) : height), 0)));
       if (launchable && i === steps) crestIndex = points.length - 1;
+      if (!launchable && i === Math.round(steps * 0.5)) popSections.push(points.length - 1);
     }
     if (launchable && crestIndex >= 0) hillSections.push({ start: startIndex, crest: crestIndex, end: points.length - 1 });
   };
@@ -68,17 +70,20 @@ function makeCourse(T: any) {
   hill(new T.Vector3(0, 0, -42), 3, 70, false);
   bend(new T.Vector3(2, 0, -62), new T.Vector3(15, 0, -78));
   line(new T.Vector3(18, 0, -94), 22);
+  hill(new T.Vector3(24, 0, -112), 5, 36, false);
 
   // First proper jump: one clear, rounded ramp.
   hill(new T.Vector3(28, 0, -145), 7, 76, true);
   bend(new T.Vector3(42, 2, -166), new T.Vector3(48, 3, -190));
-  line(new T.Vector3(48, 3, -212), 28);
+  hill(new T.Vector3(48, 3, -202), 5, 36, false);
+  line(new T.Vector3(48, 3, -212), 16);
 
   // A broad sweeping turn and a second, slightly larger jump.
   bend(new T.Vector3(68, 4, -235), new T.Vector3(64, 5, -260), 72);
   hill(new T.Vector3(38, 5, -302), 9, 84, true);
   bend(new T.Vector3(16, 8, -326), new T.Vector3(8, 8, -350), 64);
-  line(new T.Vector3(8, 8, -374), 30);
+  hill(new T.Vector3(8, 8, -362), 6, 40, false);
+  line(new T.Vector3(8, 8, -374), 18);
 
   // Level 1 finish section.
   bend(new T.Vector3(-10, 5, -396), new T.Vector3(-18, 3, -420), 64);
@@ -121,6 +126,7 @@ function makeCourse(T: any) {
     end: distanceAtPoint(end),
   }));
   (curve as any).hillCrestDistances = (curve as any).hillSections.map((section: any) => section.crest);
+  (curve as any).popTriggers = popSections.map(distanceAtPoint);
   return curve;
 }
 function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; coins: number; flips: number; status: GameStatus; airborne?: boolean; holding?: boolean; level?: number; landed?: boolean; landedFlips?: number }) => void) {
@@ -180,6 +186,8 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   // Keep the missing section short enough that the cart lands on the
   // descending face of the hill, not on a flat section beyond it.
   const jumpGapLength = 42;
+  const popTriggers: number[] = (course as any).popTriggers || [];
+  const popDuration = 0.58;
   const jumpGaps = jumpTriggers.map((crest) => [crest, Math.min(length - 3, crest + jumpGapLength)]);
 
   // The ramp is the actual rising course geometry. Do not overlay a solid
@@ -310,6 +318,28 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     scene.add(cliff);
   });
 
+  // Colourful checkpoint flags and stunt rings make each section feel distinct.
+  const flagMaterials = [0xff5b45, 0x42c77a, 0x8b68ff].map((color: number) =>
+    new T.MeshStandardMaterial({ color, roughness: 0.8, side: T.DoubleSide })
+  );
+  [0.33, 0.66, 0.985].forEach((fraction, i) => {
+    const d = length * fraction;
+    const u = courseUAtDistance(d);
+    const p = course.getPointAt(u);
+    const f = frameAt(Math.min(segments, Math.max(0, Math.round(u * segments))));
+    const pole = new T.Mesh(new T.CylinderGeometry(0.09, 0.09, 5.5, 8), new T.MeshStandardMaterial({ color: 0xf5f5f5, metalness: 0.2 }));
+    pole.position.copy(p).addScaledVector(f.side, 1.9).add(new T.Vector3(0, 2.75, 0));
+    scene.add(pole);
+    const flag = new T.Mesh(new T.PlaneGeometry(2.3, 1.35), flagMaterials[i]);
+    flag.position.copy(pole.position).add(new T.Vector3(1.05, 1.55, 0));
+    flag.rotation.y = Math.PI / 2;
+    scene.add(flag);
+    const ring = new T.Mesh(new T.TorusGeometry(2.2, 0.16, 10, 32), new T.MeshStandardMaterial({ color: 0xffd52f, metalness: 0.45, roughness: 0.3 }));
+    ring.position.copy(p).add(new T.Vector3(0, 3.5, 0));
+    ring.quaternion.setFromUnitVectors(new T.Vector3(0, 0, 1), f.forward);
+    scene.add(ring);
+  });
+
   // Small yellow cart and rider, matching the tiny silhouette in the reference.
   const cart = new T.Group();
   const chassis = new T.Mesh(new T.BoxGeometry(1.65, 0.28, 1.95), new T.MeshStandardMaterial({ color: 0x343b4b, roughness: 0.95 }));
@@ -408,9 +438,11 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
         // The cart must reach the lip with enough momentum to clear the gap.
         // Crossing the brow too slowly is a failed jump, not an automatic flight.
         const launch = jumpTriggers.find((crest) => previousDistance <= crest && state.distance >= crest);
+        const pop = popTriggers.find((crest) => previousDistance <= crest && state.distance >= crest);
         if (launch !== undefined) {
           state.distance = launch;
-          if (state.speed < 24) {
+          const requiredSpeed = jumpGapLength / 1.1;
+          if (state.speed < requiredSpeed) {
             // Don't freeze at the lip: lose the track and fall below it.
             state.airborne = true;
             state.falling = true;
@@ -423,11 +455,8 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
             state.falling = false;
             state.airHeight = 0;
             state.airElapsed = 0;
-            state.activeJumpEnd = Math.min(length - 2, launch + jumpGapLength);
-            // Flight time is tied to speed and the actual gap distance. Faster
-            // approaches cover the same gap in less time; there is no free
-            // minimum airtime that lets a slow cart magically clear it.
-            state.jumpDuration = jumpGapLength / Math.max(1, state.speed);
+            state.jumpDuration = 1.1;
+            state.activeJumpEnd = Math.min(length - 2, launch + Math.max(jumpGapLength, state.speed * state.jumpDuration));
             // A higher approach gives a longer, higher arc, but the cart still
             // has to cover the real gap before the landing section.
             state.jumpHeight = 10 + state.speed * 0.28;
@@ -435,6 +464,18 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
             state.takeoffY = takeoffPoint.y;
             state.spin = 0;
           }
+        } else if (pop !== undefined && state.speed >= 30) {
+          // Smaller rounded crests give a short hop without removing the track.
+          state.distance = pop;
+          state.airborne = true;
+          state.falling = false;
+          state.airHeight = 0;
+          state.airElapsed = 0;
+          state.activeJumpEnd = Math.min(length - 2, pop + state.speed * popDuration);
+          state.jumpDuration = popDuration;
+          state.jumpHeight = 3.5 + state.speed * 0.09;
+          state.takeoffY = course.getPointAt(courseUAtDistance(pop)).y;
+          state.spin = 0;
         }
       }
       if (state.distance >= length - 3) {
