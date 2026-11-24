@@ -42,13 +42,13 @@ function makeCourse(T: any) {
     let crestIndex = -1;
     for (let i = 1; i <= steps; i++) {
       const t = i / steps;
-      // Keep the approach low, then rise continuously into a clearly
-      // upward-facing kicker. The final control point is the actual lip:
-      // launch is triggered there, never halfway up the ramp.
+      // A long low run-up followed by a short, steep kicker. The last
+      // point is the lip; its rise is deliberately exaggerated so it reads
+      // as an actual launch ramp rather than a rounded hill.
       const rampProfile = launchable
-        ? (t <= 0.62 ? 0 : Math.pow((t - 0.62) / 0.38, 1.12))
+        ? (t <= 0.68 ? 0 : Math.pow((t - 0.68) / 0.32, 1.08))
         : Math.sin(Math.PI * t);
-      add(from.clone().lerp(to, t).add(new T.Vector3(0, rampProfile * height, 0)));
+      add(from.clone().lerp(to, t).add(new T.Vector3(0, rampProfile * (launchable ? Math.max(height, 20) : height), 0)));
       if (launchable && i === steps) crestIndex = points.length - 1;
     }
     if (launchable && crestIndex >= 0) hillSections.push({ start: startIndex, crest: crestIndex, end: points.length - 1 });
@@ -179,13 +179,48 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   const jumpTriggers: number[] = hillSections.map((section) => section.crest);
   // Keep the missing section short enough that the cart lands on the
   // descending face of the hill, not on a flat section beyond it.
-  const jumpGapLength = 25;
+  const jumpGapLength = 42;
   const jumpGaps = jumpTriggers.map((crest) => [crest, Math.min(length - 3, crest + jumpGapLength)]);
 
   // The ramp is the actual rising course geometry. Do not overlay a solid
   // yellow box deck: it hides the sleepers and makes the kicker look like a
   // flat yellow strip instead of a steep Tiny Loops launch ramp.
   const isInJumpGap = (distance: number) => jumpGaps.some(([from, to]) => distance >= from && distance <= to);
+
+  // Give every jump a solid, visibly rising take-off surface. The normal
+  // track is rails and sleepers; this deck is restricted to the kicker only,
+  // so it cannot turn the whole course into a solid yellow strip.
+  const rampMaterial = new T.MeshStandardMaterial({ color: 0xffc928, roughness: 0.78, metalness: 0.03, side: T.DoubleSide });
+  hillSections.forEach((section) => {
+    const rampStart = section.start + (section.crest - section.start) * 0.68;
+    const rampEnd = section.crest;
+    const divisions = 36;
+    const positions: number[] = [];
+    const indices: number[] = [];
+    for (let i = 0; i <= divisions; i++) {
+      const d = rampStart + ((rampEnd - rampStart) * i) / divisions;
+      const u = courseUAtDistance(d);
+      const p = course.getPointAt(u);
+      const f = frameAt(Math.min(segments, Math.max(0, Math.round(u * segments))));
+      const centre = p.clone().addScaledVector(f.normal, 0.2);
+      const left = centre.clone().addScaledVector(f.side, -0.88);
+      const right = centre.clone().addScaledVector(f.side, 0.88);
+      positions.push(left.x, left.y, left.z, right.x, right.y, right.z);
+      if (i < divisions) {
+        const a = i * 2;
+        indices.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
+      }
+    }
+    const geometry = new T.BufferGeometry();
+    geometry.setAttribute("position", new T.Float32BufferAttribute(positions, 3));
+    geometry.setIndex(indices);
+    geometry.computeVertexNormals();
+    const ramp = new T.Mesh(geometry, rampMaterial);
+    ramp.castShadow = true;
+    ramp.receiveShadow = true;
+    trackGroup.add(ramp);
+  });
+
   const railRanges: number[][] = [];
   let railCursor = 0;
   jumpGaps.forEach(([from, to]) => {
@@ -427,7 +462,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
         state.airHeight = 4 * progress * (1 - progress) * state.jumpHeight;
         // Tiny Loops flips are deliberate: holding rotates steadily, not at
         // several full spins per second. Release freezes the current rotation.
-        if (state.holding) state.spin += dt * Math.PI * 2 * (1.35 + state.speed / 42);
+        if (state.holding) state.spin += dt * Math.PI * 2 * (0.75 + state.speed / 32);
         if (progress >= 1) {
           state.airHeight = 0;
           state.airborne = false;
@@ -438,7 +473,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
         const landingAngle = Math.abs(Math.atan2(Math.sin(state.spin), Math.cos(state.spin)));
         // Count complete rotations and allow a broad landing window. A clean
         // touchdown is shown explicitly instead of silently returning to play.
-        if (landingAngle > 0.9) {
+        if (landingAngle > 2.5) {
           state.status = "crashed";
           state.speed = 0;
         } else {
