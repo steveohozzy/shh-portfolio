@@ -1878,7 +1878,7 @@
         flipAngularSpeed: 10,
         perfectAngleRad: (26 * Math.PI) / 180,
         greatAngleRad: (58 * Math.PI) / 180,
-        sketchyAngleRad: (132 * Math.PI) / 180,
+        sketchyAngleRad: (55 * Math.PI) / 180,
 
         // Hill crest launch tuning
         crestMinSpeed: 540,      // below this you stay glued to the rails over the crest
@@ -2529,8 +2529,6 @@
               }
             }
           } else {
-            const targetPitch = Math.atan2(state.vy, Math.max(120, groundSpeed));
-            state.pitch += normalizeAngle(targetPitch - state.pitch) * Math.min(1, dt * 5.5);
           }
 
           if (state.airFlipsCompleted > 0 || state.airRotationAccum > 0.25) {
