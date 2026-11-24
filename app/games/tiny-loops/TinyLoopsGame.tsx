@@ -537,8 +537,8 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
 
   const coinMat = new T.MeshStandardMaterial({ color: 0xffd52f, metalness: 0.75, roughness: 0.25, emissive: 0x6b4d00 });
   const coins: any[] = [];
-  for (let i = 0; i < 35; i++) {
-    const d = 18 + i * 14;
+  for (let i = 0; i < Math.floor(length / 28); i++) {
+    const d = 18 + i * 28;
     if (d >= length - 8) break;
     const p = course.getPointAt(courseUAtDistance(d));
     const coin = new T.Mesh(new T.TorusGeometry(0.42, 0.12, 8, 18), coinMat);
