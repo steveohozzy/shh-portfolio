@@ -586,7 +586,11 @@ export default function TinyLoopsGame() {
       });
       gameRef.current = world;
       setEngineReady(true);
-    }).catch((e) => setError(e instanceof Error ? e.message : "Unable to start the 3D game"));
+    }).catch((e) => {
+      const message = e instanceof Error ? e.message : String(e);
+      const stack = e instanceof Error && e.stack ? e.stack : "No stack trace was provided by the browser.";
+      setError(message + "\\n\\n" + stack);
+    });
     return () => {
       cancelled = true;
       world?.destroy();
