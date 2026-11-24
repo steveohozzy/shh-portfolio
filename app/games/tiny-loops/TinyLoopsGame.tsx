@@ -224,8 +224,8 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   // landing point on the next track section.
   // Each successive jump has a longer missing section. Rounded scenery hills
   // never launch the cart: flight is only possible at these marked ramp lips.
-  const jumpGapFor = (index: number) => 42 + index * 2.4;
-  const jumpDurationFor = (index: number) => 1.08 + index * 0.035;
+  // Leave enough clear space to land beyond the low hill immediately after each jump.
+  const jumpGapFor = (index: number) => 60 + index * 2.5;
   const jumpGaps = jumpTriggers.map((crest, index) => [crest, Math.min(length - 3, crest + jumpGapFor(index))]);
 
   // The ramp is the actual rising course geometry. Do not overlay a solid
@@ -478,6 +478,24 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     blueSpoiler.visible = selectedCart === 1;
     redFins.visible = selectedCart === 2;
   };
+  const addTrailer = () => {
+    const trailer = new T.Group();
+    const trailerChassis = new T.Mesh(new T.BoxGeometry(1.2, 0.2, 1.45), new T.MeshStandardMaterial({ color: 0x343b4b, roughness: 0.95 }));
+    trailerChassis.position.y = 0.1;
+    trailer.add(trailerChassis);
+    const trailerBody = new T.Mesh(new T.BoxGeometry(1.08, 0.42, 1.12), new T.MeshStandardMaterial({ color: cartColours[selectedCart], roughness: 0.8 }));
+    trailerBody.position.y = 0.32;
+    trailer.add(trailerBody);
+    [-0.42, 0.42].forEach((x) => [-0.34, 0.34].forEach((z) => {
+      const wheel = new T.Mesh(new T.CylinderGeometry(0.18, 0.18, 0.13, 10), new T.MeshStandardMaterial({ color: 0x303747, roughness: 1 }));
+      wheel.rotation.z = Math.PI / 2;
+      wheel.position.set(x, 0.13, z);
+      trailer.add(wheel);
+    }));
+    trailer.scale.setScalar(0.82);
+    scene.add(trailer);
+    state.trailers.push(trailer);
+  };
   cart.scale.setScalar(1.15);
   scene.add(cart);
   const baseCartQuaternion = new T.Quaternion();
@@ -515,7 +533,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
       window.localStorage.setItem("shh-tiny-loops-progress", JSON.stringify({ coins: bankedCoins, unlockedCarts, selectedCart }));
     } catch {}
   };
-  const state = { status: "ready" as GameStatus, distance: 0, speed: 0, holding: false, flips: 0, spin: 0, coins: bankedCoins, airborne: false, falling: false, airHeight: 0, takeoffY: 0, airElapsed: 0, activeJumpEnd: 0, jumpDuration: 0.9, jumpHeight: 5, landedUntil: 0, landedFlips: 0, level: 1, elapsed: 0, lastTime: performance.now(), raf: 0 };
+  const state = { status: "ready" as GameStatus, distance: 0, speed: 0, holding: false, flips: 0, spin: 0, coins: bankedCoins, airborne: false, falling: false, airHeight: 0, takeoffY: 0, airElapsed: 0, activeJumpEnd: 0, jumpDuration: 0.9, jumpHeight: 5, landedUntil: 0, landedFlips: 0, trailers: [] as any[], level: 1, elapsed: 0, lastTime: performance.now(), raf: 0 };
   applyCartStyle();
   const resize = () => {
     const w = Math.max(1, mount.clientWidth), h = Math.max(1, mount.clientHeight);
@@ -549,7 +567,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
           const jumpNumber = jumpTriggers.indexOf(launch);
           // Later sections demand a faster run-up, while remaining achievable
           // below the cart's 48-unit top speed.
-          const requiredSpeed = Math.min(45, 38.5 + Math.max(0, jumpNumber) * 1.2);
+          const requiredSpeed = Math.min(46, 38.5 + Math.max(0, jumpNumber) * 1.2 + (state.level - 1) * 1.5);
           if (state.speed < requiredSpeed) {
             // Don't freeze at the lip: lose the track and fall below it.
             state.airborne = true;
@@ -563,9 +581,10 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
             state.falling = false;
             state.airHeight = 0;
             state.airElapsed = 0;
-            state.jumpDuration = jumpDurationFor(jumpNumber);
             const gapLength = jumpGapFor(jumpNumber);
-            state.activeJumpEnd = Math.min(length - 2, launch + Math.max(gapLength, state.speed * state.jumpDuration));
+            // Match airtime to the actual missing track length at the current speed.
+            state.jumpDuration = gapLength / Math.max(1, state.speed);
+            state.activeJumpEnd = Math.min(length - 2, launch + gapLength);
             // A higher approach gives a longer, higher arc, but the cart still
             // has to cover the real gap before the landing section.
             state.jumpHeight = 10 + state.speed * 0.28 + jumpNumber * 0.8;
@@ -575,12 +594,13 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
           }
         }
       }
-      const stageFinish = (length * state.level) / 3;
+      // Every level is a complete run of the longer course, not another third of it.
+      const stageFinish = length;
       if (!state.airborne && state.distance >= stageFinish) {
         state.distance = stageFinish;
         state.speed = 0;
         state.holding = false;
-        const finishFlag = finishFlags[state.level - 1];
+        const finishFlag = finishFlags[finishFlags.length - 1];
         if (finishFlag) finishFlag.userData.targetScale = 1;
         state.coins += 30 + state.level * 10;
         bankedCoins = state.coins;
@@ -620,7 +640,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
         // One controlled rotation takes roughly the length of a jump. The old
         // rate exceeded two rotations per second at top speed, making the
         // second jump land halfway through a spin even when held continuously.
-        if (state.holding) state.spin += dt * Math.PI * 2 * (0.62 + state.speed / 150);
+        if (state.holding) state.spin += dt * Math.PI * 2 * (0.72 + state.speed / 140);
         if (progress >= 1) {
           state.airHeight = 0;
           state.airborne = false;
@@ -640,6 +660,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
           if (completed > 0) {
             state.coins += completed * 2;
             state.flips += completed;
+            for (let i = 0; i < completed; i++) addTrailer();
           }
         }
         state.spin = 0;
@@ -662,6 +683,15 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
       }
     }
     cart.position.copy(point).addScaledVector(frame.normal, 0.25);
+    state.trailers.forEach((trailer: any, i: number) => {
+      const trailerDistance = Math.max(0, distance - (i + 1) * 4.5);
+      const trailerU = courseUAtDistance(trailerDistance);
+      const trailerPoint = course.getPointAt(trailerU);
+      const trailerFrame = frameAt(Math.min(segments, Math.max(0, Math.round(trailerU * segments))));
+      trailer.position.copy(trailerPoint).addScaledVector(trailerFrame.normal, 0.22);
+      const trailerBasis = new T.Matrix4().makeBasis(trailerFrame.side.clone().negate(), trailerFrame.normal, trailerFrame.forward);
+      trailer.quaternion.setFromRotationMatrix(trailerBasis);
+    });
     const basis = new T.Matrix4().makeBasis(frame.side.clone().negate(), frame.normal, frame.forward);
     baseCartQuaternion.setFromRotationMatrix(basis);
     cart.quaternion.copy(baseCartQuaternion);
@@ -732,6 +762,8 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     state.jumpDuration = 1.0;
     state.jumpHeight = 9;
     state.falling = false;
+    state.trailers.forEach((trailer: any) => scene.remove(trailer));
+    state.trailers.length = 0;
     state.lastTime = performance.now();
     coins.forEach((coin) => { coin.collected = false; coin.mesh.visible = true; });
     finishFlags.forEach((flag) => { flag.userData.targetScale = 0.001; });
@@ -744,9 +776,21 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     continueLevel() {
       if (state.status !== "levelComplete") return;
       state.level += 1;
+      // A new level starts from the beginning of the course, never at the old finish line.
+      state.distance = 0;
+      state.speed = 0;
+      state.holding = false;
+      state.airborne = false;
+      state.falling = false;
+      state.airHeight = 0;
+      state.spin = 0;
+      state.trailers.forEach((trailer: any) => scene.remove(trailer));
+      state.trailers.length = 0;
+      coins.forEach((coin) => { coin.collected = false; coin.mesh.visible = true; });
+      finishFlags.forEach((flag) => { flag.userData.targetScale = 0.001; });
       state.status = "playing";
       state.lastTime = performance.now();
-      onHud({ speed: state.speed, coins: state.coins, flips: state.flips, status: state.status, level: state.level });
+      onHud({ speed: state.speed, coins: state.coins, flips: state.flips, status: state.status, airborne: false, holding: false, level: state.level });
     },
     cycleCart() {
       selectedCart = (selectedCart + 1) % unlockedCarts;
