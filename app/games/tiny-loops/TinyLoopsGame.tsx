@@ -365,6 +365,27 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     scene.add(ring);
   });
 
+  // Oversized stunt hoops frame the route so each section has a visual set-piece.
+  [0.16, 0.49, 0.82].forEach((fraction, i) => {
+    const d = length * fraction;
+    const u = courseUAtDistance(d);
+    const p = course.getPointAt(u);
+    const f = frameAt(Math.min(segments, Math.max(0, Math.round(u * segments))));
+    const hoop = new T.Mesh(
+      new T.TorusGeometry(5.2 + i * 0.65, 0.34, 12, 48),
+      new T.MeshStandardMaterial({ color: [0xffb52e, 0x45b9ee, 0xf06b79][i], metalness: 0.35, roughness: 0.35, emissive: [0x533000, 0x07334c, 0x4c1019][i] })
+    );
+    hoop.position.copy(p).add(new T.Vector3(0, 1.1, 0));
+    hoop.quaternion.setFromUnitVectors(new T.Vector3(0, 0, 1), f.forward);
+    scene.add(hoop);
+    const gate = new T.Mesh(
+      new T.BoxGeometry(3.8, 0.35, 0.45),
+      new T.MeshStandardMaterial({ color: 0xffffff, metalness: 0.2, roughness: 0.55 })
+    );
+    gate.position.copy(p).add(new T.Vector3(0, 5.7 + i * 0.5, 0));
+    scene.add(gate);
+  });
+
   // Small yellow cart and rider, matching the tiny silhouette in the reference.
   const cart = new T.Group();
   const chassis = new T.Mesh(new T.BoxGeometry(1.65, 0.28, 1.95), new T.MeshStandardMaterial({ color: 0x343b4b, roughness: 0.95 }));
@@ -439,6 +460,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   const cartColours = [0xffa928, 0x36a9e8, 0xf05252];
   let unlockedCarts = 1;
   let selectedCart = 0;
+  let bankedCoins = 0;
   const state = { status: "ready" as GameStatus, distance: 0, speed: 0, holding: false, flips: 0, spin: 0, coins: 0, airborne: false, falling: false, airHeight: 0, takeoffY: 0, airElapsed: 0, activeJumpEnd: 0, jumpDuration: 0.9, jumpHeight: 5, landedUntil: 0, landedFlips: 0, level: 1, elapsed: 0, lastTime: performance.now(), raf: 0 };
   const resize = () => {
     const w = Math.max(1, mount.clientWidth), h = Math.max(1, mount.clientHeight);
@@ -511,13 +533,14 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
         }
       }
       const stageFinish = (length * state.level) / 3;
-      if (state.distance >= stageFinish) {
+      if (!state.airborne && state.distance >= stageFinish) {
         state.distance = stageFinish;
         state.speed = 0;
         state.holding = false;
         const finishFlag = finishFlags[state.level - 1];
         if (finishFlag) finishFlag.scale.y = 1;
         state.coins += 30 + state.level * 10;
+        bankedCoins = state.coins;
         if (state.level < 3) {
           state.status = "levelComplete";
           unlockedCarts = Math.min(cartColours.length, unlockedCarts + 1);
@@ -647,7 +670,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     state.holding = false;
     state.flips = 0;
     state.spin = 0;
-    state.coins = 0;
+    state.coins = bankedCoins;
     state.airborne = false;
     state.falling = false;
     state.airHeight = 0;
@@ -666,6 +689,17 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   return {
     start: resetRun,
     restart: resetRun,
+    continueLevel() {
+      if (state.status !== "levelComplete") return;
+      state.level += 1;
+      state.status = "playing";
+      state.lastTime = performance.now();
+      onHud({ speed: state.speed, coins: state.coins, flips: state.flips, status: state.status, level: state.level });
+    },
+    cycleCart() {
+      selectedCart = (selectedCart + 1) % unlockedCarts;
+      cartBodyMaterial.color.setHex(cartColours[selectedCart]);
+    },
     setHolding(value: boolean) { state.holding = value; },
     destroy() {
       cancelAnimationFrame(state.raf);
