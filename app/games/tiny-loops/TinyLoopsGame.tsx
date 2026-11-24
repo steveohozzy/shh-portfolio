@@ -154,23 +154,24 @@ function makeCourse(T: any) {
   bend(new T.Vector3(48, 5, -2165), new T.Vector3(25, 1, -2210), 84);
   hill(new T.Vector3(-18, 0, -2300), 21, 136, true);
   line(new T.Vector3(-18, 0, -2380), 72);
+  line(new T.Vector3(-18, 0, -2450), 48);
   stagePointIndices.push(points.length - 1);
 
   // Level 9: a canyon night-run with a high launch, a long sweeping turn and a loop.
-  bend(new T.Vector3(18, 4, -2420), new T.Vector3(62, 7, -2465), 84);
-  hill(new T.Vector3(20, 7, -2535), 19, 124, true);
-  bend(new T.Vector3(-20, 10, -2570), new T.Vector3(-45, 6, -2615), 84);
+  bend(new T.Vector3(18, 4, -2480), new T.Vector3(62, 7, -2525), 84);
+  hill(new T.Vector3(20, 7, -2595), 19, 124, true);
+  bend(new T.Vector3(-20, 10, -2630), new T.Vector3(-45, 6, -2675), 84);
   loop(13, 124);
-  line(new T.Vector3(-45, 6, -2655), 48);
+  line(new T.Vector3(-45, 6, -2715), 48);
   stagePointIndices.push(points.length - 1);
 
   // Level 10: the final skyway, with the biggest ramps and a double-loop finale.
-  bend(new T.Vector3(-8, 4, -2700), new T.Vector3(42, 8, -2745), 88);
-  hill(new T.Vector3(10, 8, -2825), 22, 140, true);
-  bend(new T.Vector3(-40, 12, -2870), new T.Vector3(-65, 6, -2920), 88);
+  bend(new T.Vector3(-8, 4, -2760), new T.Vector3(42, 8, -2805), 88);
+  hill(new T.Vector3(10, 8, -2885), 22, 140, true);
+  bend(new T.Vector3(-40, 12, -2930), new T.Vector3(-65, 6, -2980), 88);
   loop(14, 132);
-  hill(new T.Vector3(-20, 3, -3010), 24, 150, true);
-  line(new T.Vector3(-20, 3, -3150), 120);
+  hill(new T.Vector3(-20, 3, -3070), 24, 150, true);
+  line(new T.Vector3(-20, 3, -3210), 120);
 
   const curve = new T.CatmullRomCurve3(points, false, "centripetal", 0.15);
   curve.arcLengthDivisions = 3000;
@@ -381,6 +382,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     { sky: 0x45251d, fog: 0x92513a, rail: 0xffb34d, sleeper: 0xffdf91, dark: 0x57372d, rock: 0xf3d0a7, cliff: 0xb77d58 },
     { sky: 0x18233e, fog: 0x3b527c, rail: 0x9b8cff, sleeper: 0xc9c1ff, dark: 0x343b62, rock: 0xe0e4f5, cliff: 0x7c86b6 },
     { sky: 0x17404b, fog: 0x367d83, rail: 0x5df4e7, sleeper: 0xb0fff6, dark: 0x24515c, rock: 0xd6f3ee, cliff: 0x68a5a4 },
+    { sky: 0x2d1b3f, fog: 0x654078, rail: 0xf5a6ff, sleeper: 0xf9d2ff, dark: 0x3c2b52, rock: 0xe9d9f2, cliff: 0x896d9f },
   ];
   let appliedThemeLevel = 0;
   const applyLevelTheme = (level: number) => {
@@ -406,8 +408,8 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     [-42, -8, -1110, 38, 5, 44], [0, -9, -1300, 42, 5, 48],
     [35, -8, -1510, 42, 5, 46], [-25, -9, -1740, 46, 5, 50],
     [30, -8, -1980, 48, 5, 52], [-38, -10, -2250, 50, 5, 54],
-    [25, -10, -2490, 54, 5, 58], [-48, -11, -2720, 56, 5, 60],
-    [18, -12, -2990, 58, 5, 62],
+    [25, -10, -2550, 54, 5, 58], [-48, -11, -2780, 56, 5, 60],
+    [18, -12, -3050, 58, 5, 62], [-20, -12, -3200, 60, 5, 64],
   ];
   platformData.forEach(([x, y, z, sx, sy, sz], i) => {
     const platform = new T.Mesh(platformGeo, rockMat);
