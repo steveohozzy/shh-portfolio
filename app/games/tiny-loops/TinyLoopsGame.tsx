@@ -130,9 +130,12 @@ function makeCourse(T: any) {
   (curve as any).hillCrestDistances = (curve as any).hillSections.map((section: any) => section.crest);
   // Find the actual highest point on each smoothed hill, rather than using
   // the control-point midpoint (which can sit before the visible crest).
-  (curve as any).popTriggers = popSections.map(({ start, end }) => {
-    const startDistance = distanceAtPoint(start);
-    const endDistance = distanceAtPoint(end);
+  (curve as any).popTriggers = popSections
+    // The opening rise is scenery, not a launch hill. Only later small crests
+    // are allowed to give the cart a short hop.
+    .map(({ start, end }) => ({ startDistance: distanceAtPoint(start), endDistance: distanceAtPoint(end) }))
+    .filter(({ startDistance }) => startDistance > 70)
+    .map(({ startDistance, endDistance }) => {
     let peakDistance = startDistance;
     let peakHeight = -Infinity;
     const samples = 48;
@@ -622,9 +625,10 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
         state.distance = state.activeJumpEnd;
         const completed = Math.floor(state.spin / (Math.PI * 2));
         const landingAngle = Math.abs(Math.atan2(Math.sin(state.spin), Math.cos(state.spin)));
-        // Count complete rotations and allow a broad landing window. A clean
-        // touchdown is shown explicitly instead of silently returning to play.
-        if (landingAngle > 2.5) {
+        // A landing must be genuinely upright. The old 2.5-radian tolerance
+        // accepted carts that were visibly on their side or nearly inverted.
+        const landingUprightness = Math.cos(state.spin);
+        if (landingAngle > 0.7 || landingUprightness < 0.76) {
           state.status = "crashed";
           state.speed = 0;
         } else {
