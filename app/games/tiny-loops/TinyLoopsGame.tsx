@@ -42,22 +42,14 @@ function makeCourse(T: any) {
     let crestIndex = -1;
     for (let i = 1; i <= steps; i++) {
       const t = i / steps;
-      // A proper stunt kicker: most of the hill is a run-up, then the
-      // final section rises sharply into a short, high lip. The track after
-      // the lip falls away; it is not part of the visible take-off ramp.
-      // A real kicker profile: a low approach, a short steep rising face,
-      // then a short lip. This is deliberately NOT a rounded hill or hump.
+      // Keep the approach low, then rise continuously into a clearly
+      // upward-facing kicker. The final control point is the actual lip:
+      // launch is triggered there, never halfway up the ramp.
       const rampProfile = launchable
-        ? (t < 0.58
-          ? 0.035 * (t / 0.58)
-          : t < 0.88
-            ? 0.035 + 0.965 * ((t - 0.58) / 0.30)
-            : 1)
+        ? (t <= 0.62 ? 0 : Math.pow((t - 0.62) / 0.38, 1.12))
         : Math.sin(Math.PI * t);
-      add(from.clone().lerp(to, t).add(new T.Vector3(0, rampProfile * (launchable ? Math.max(height, 30) : height), 0)));
-      // Leave from the upper part of the steep face, not after the hill has
-      // already rounded off into a flat crest.
-      if (launchable && i === Math.round(steps * 0.84)) crestIndex = points.length - 1;
+      add(from.clone().lerp(to, t).add(new T.Vector3(0, rampProfile * height, 0)));
+      if (launchable && i === steps) crestIndex = points.length - 1;
     }
     if (launchable && crestIndex >= 0) hillSections.push({ start: startIndex, crest: crestIndex, end: points.length - 1 });
   };
@@ -187,7 +179,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   const jumpTriggers: number[] = hillSections.map((section) => section.crest);
   // Keep the missing section short enough that the cart lands on the
   // descending face of the hill, not on a flat section beyond it.
-  const jumpGapLength = 22;
+  const jumpGapLength = 25;
   const jumpGaps = jumpTriggers.map((crest) => [crest, Math.min(length - 3, crest + jumpGapLength)]);
 
   // The ramp is the actual rising course geometry. Do not overlay a solid
@@ -400,7 +392,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
             // Flight time is tied to speed and the actual gap distance. Faster
             // approaches cover the same gap in less time; there is no free
             // minimum airtime that lets a slow cart magically clear it.
-            state.jumpDuration = Math.max(1.15, jumpGapLength / Math.max(1, state.speed));
+            state.jumpDuration = jumpGapLength / Math.max(1, state.speed);
             // A higher approach gives a longer, higher arc, but the cart still
             // has to cover the real gap before the landing section.
             state.jumpHeight = 10 + state.speed * 0.28;
@@ -435,7 +427,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
         state.airHeight = 4 * progress * (1 - progress) * state.jumpHeight;
         // Tiny Loops flips are deliberate: holding rotates steadily, not at
         // several full spins per second. Release freezes the current rotation.
-        if (state.holding) state.spin += dt * Math.PI * 2 * (0.38 + state.speed / 220);
+        if (state.holding) state.spin += dt * Math.PI * 2 * (1.35 + state.speed / 42);
         if (progress >= 1) {
           state.airHeight = 0;
           state.airborne = false;
