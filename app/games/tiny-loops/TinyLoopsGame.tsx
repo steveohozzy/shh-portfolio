@@ -51,7 +51,9 @@ function makeCourse(T: any) {
         : Math.sin(Math.PI * t);
       add(from.clone().lerp(to, t).add(new T.Vector3(0, rampProfile * (launchable ? Math.max(height, 20) : height), 0)));
       if (launchable && i === steps) crestIndex = points.length - 1;
-      // Keep the whole rounded hill range; the final curve can shift its true\n      // visual peak slightly away from the midpoint of the control points.\n      if (!launchable && i === steps) popSections.push({ start: startIndex, end: points.length - 1 });
+      // Keep the whole rounded hill range; the final curve can shift its true
+      // visual peak slightly away from the midpoint of the control points.
+      if (!launchable && i === steps) popSections.push({ start: startIndex, end: points.length - 1 });
     }
     if (launchable && crestIndex >= 0) hillSections.push({ start: startIndex, crest: crestIndex, end: points.length - 1 });
   };
@@ -126,7 +128,26 @@ function makeCourse(T: any) {
     end: distanceAtPoint(end),
   }));
   (curve as any).hillCrestDistances = (curve as any).hillSections.map((section: any) => section.crest);
-  // Find the actual highest point on each smoothed hill, rather than using\n  // the control-point midpoint (which can sit before the visible crest).\n  (curve as any).popTriggers = popSections.map(({ start, end }) => {\n    const startDistance = distanceAtPoint(start);\n    const endDistance = distanceAtPoint(end);\n    let peakDistance = startDistance;\n    let peakHeight = -Infinity;\n    const samples = 48;\n    for (let i = 0; i <= samples; i++) {\n      const distance = startDistance + ((endDistance - startDistance) * i) / samples;\n      const safeDistance = Math.max(0, Math.min(curve.getLength() - 0.001, distance));\n      const u = curve.getUtoTmapping(0, safeDistance);\n      const point = curve.getPointAt(Math.max(0, Math.min(0.999999, u)));\n      if (point.y > peakHeight) {\n        peakHeight = point.y;\n        peakDistance = distance;\n      }\n    }\n    return peakDistance;\n  });
+  // Find the actual highest point on each smoothed hill, rather than using
+  // the control-point midpoint (which can sit before the visible crest).
+  (curve as any).popTriggers = popSections.map(({ start, end }) => {
+    const startDistance = distanceAtPoint(start);
+    const endDistance = distanceAtPoint(end);
+    let peakDistance = startDistance;
+    let peakHeight = -Infinity;
+    const samples = 48;
+    for (let i = 0; i <= samples; i++) {
+      const distance = startDistance + ((endDistance - startDistance) * i) / samples;
+      const safeDistance = Math.max(0, Math.min(curve.getLength() - 0.001, distance));
+      const u = curve.getUtoTmapping(0, safeDistance);
+      const point = curve.getPointAt(Math.max(0, Math.min(0.999999, u)));
+      if (point.y > peakHeight) {
+        peakHeight = point.y;
+        peakDistance = distance;
+      }
+    }
+    return peakDistance;
+  });
   return curve;
 }
 function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; coins: number; flips: number; status: GameStatus; airborne?: boolean; holding?: boolean; level?: number; landed?: boolean; landedFlips?: number }) => void) {
@@ -322,7 +343,8 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   const flagMaterials = [0xff5b45, 0x42c77a, 0x8b68ff].map((color: number) =>
     new T.MeshStandardMaterial({ color, roughness: 0.8, side: T.DoubleSide })
   );
-  const finishFlags: any[] = [];\n  [1 / 3, 2 / 3, 0.985].forEach((fraction, i) => {
+  const finishFlags: any[] = [];
+  [1 / 3, 2 / 3, 0.985].forEach((fraction, i) => {
     const d = length * fraction;
     const u = courseUAtDistance(d);
     const p = course.getPointAt(u);
@@ -333,6 +355,9 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     const flag = new T.Mesh(new T.PlaneGeometry(2.3, 1.35), flagMaterials[i]);
     flag.position.copy(pole.position).add(new T.Vector3(1.05, 1.55, 0));
     flag.rotation.y = Math.PI / 2;
+    flag.scale.y = 0.001;
+    flag.userData.baseY = flag.position.y;
+    finishFlags.push(flag);
     scene.add(flag);
     const ring = new T.Mesh(new T.TorusGeometry(2.2, 0.16, 10, 32), new T.MeshStandardMaterial({ color: 0xffd52f, metalness: 0.45, roughness: 0.3 }));
     ring.position.copy(p).add(new T.Vector3(0, 3.5, 0));
@@ -346,7 +371,8 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   chassis.position.y = 0.12;
   chassis.castShadow = true;
   cart.add(chassis);
-  const cartBodyMaterial = new T.MeshStandardMaterial({ color: 0xffa928, roughness: 0.78 });\n  const body = new T.Mesh(new T.BoxGeometry(1.42, 0.55, 1.58), cartBodyMaterial);
+  const cartBodyMaterial = new T.MeshStandardMaterial({ color: 0xffa928, roughness: 0.78 });
+  const body = new T.Mesh(new T.BoxGeometry(1.42, 0.55, 1.58), cartBodyMaterial);
   body.position.y = 0.28;
   body.castShadow = true;
   cart.add(body);
@@ -410,7 +436,10 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     coins.push({ mesh: coin, distance: d, collected: false });
   }
 
-  const cartColours = [0xffa928, 0x36a9e8, 0xf05252];\n  let unlockedCarts = 1;\n  let selectedCart = 0;\n  const state = { status: "ready" as GameStatus, distance: 0, speed: 0, holding: false, flips: 0, spin: 0, coins: 0, airborne: false, falling: false, airHeight: 0, takeoffY: 0, airElapsed: 0, activeJumpEnd: 0, jumpDuration: 0.9, jumpHeight: 5, landedUntil: 0, landedFlips: 0, level: 1, elapsed: 0, lastTime: performance.now(), raf: 0 };
+  const cartColours = [0xffa928, 0x36a9e8, 0xf05252];
+  let unlockedCarts = 1;
+  let selectedCart = 0;
+  const state = { status: "ready" as GameStatus, distance: 0, speed: 0, holding: false, flips: 0, spin: 0, coins: 0, airborne: false, falling: false, airHeight: 0, takeoffY: 0, airElapsed: 0, activeJumpEnd: 0, jumpDuration: 0.9, jumpHeight: 5, landedUntil: 0, landedFlips: 0, level: 1, elapsed: 0, lastTime: performance.now(), raf: 0 };
   const resize = () => {
     const w = Math.max(1, mount.clientWidth), h = Math.max(1, mount.clientHeight);
     camera.aspect = w / h;
@@ -481,9 +510,23 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
           state.spin = 0;
         }
       }
-      if (state.distance >= length - 3) {
-        state.status = "won";
-        onHud({ speed: state.speed, coins: state.coins, flips: state.flips, status: state.status, level: 3 });
+      const stageFinish = (length * state.level) / 3;
+      if (state.distance >= stageFinish) {
+        state.distance = stageFinish;
+        state.speed = 0;
+        state.holding = false;
+        const finishFlag = finishFlags[state.level - 1];
+        if (finishFlag) finishFlag.scale.y = 1;
+        state.coins += 30 + state.level * 10;
+        if (state.level < 3) {
+          state.status = "levelComplete";
+          unlockedCarts = Math.min(cartColours.length, unlockedCarts + 1);
+          selectedCart = unlockedCarts - 1;
+          cartBodyMaterial.color.setHex(cartColours[selectedCart]);
+        } else {
+          state.status = "won";
+        }
+        onHud({ speed: state.speed, coins: state.coins, flips: state.flips, status: state.status, level: state.level });
       }
     }
 
@@ -598,6 +641,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
 
   const resetRun = () => {
     state.status = "playing";
+    state.level = 1;
     state.distance = 0;
     state.speed = 18;
     state.holding = false;
@@ -615,7 +659,8 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     state.falling = false;
     state.lastTime = performance.now();
     coins.forEach((coin) => { coin.collected = false; coin.mesh.visible = true; });
-    onHud({ speed: state.speed, coins: 0, flips: 0, status: "playing", airborne: false, holding: false, level: 1 });
+    finishFlags.forEach((flag) => { flag.scale.y = 0.001; });
+    onHud({ speed: state.speed, coins: state.coins, flips: 0, status: "playing", airborne: false, holding: false, level: 1 });
   };
 
   return {
@@ -668,7 +713,9 @@ export default function TinyLoopsGame() {
     }).catch((e) => {
       const message = e instanceof Error ? e.message : String(e);
       const stack = e instanceof Error && e.stack ? e.stack : "No stack trace was provided by the browser.";
-      setError(message + "\n\n" + stack);
+      setError(message + "
+
+" + stack);
     });
     return () => {
       cancelled = true;
@@ -707,7 +754,8 @@ export default function TinyLoopsGame() {
           <div className="loop-rush-hud"><span>⚡ {speed} SPEED</span><span>🟡 {coins} COINS</span><span>↻ {flips} FLIPS</span><strong className="loop-rush-air-status">{airborne ? "AIRBORNE — HOLD TO FLIP!" : landed ? (landedFlips > 0 ? `LANDED! +${landedFlips} FLIPS` : "LANDED!") : "HOLD TO ACCELERATE"}</strong></div>
           {error && <div className="loop-rush-overlay"><h2>3D ENGINE ERROR</h2><p style={{ whiteSpace: "pre-wrap", maxWidth: "min(900px, 90%)", maxHeight: "70%", overflow: "auto", textAlign: "left", fontFamily: "monospace", fontSize: "11px" }}>{error}</p></div>}
           {status === "ready" && !error && <div className="loop-rush-overlay"><span className="loop-rush-pill">{engineReady ? "READY?" : "LOADING"}</span><h2>TINY LOOPS</h2><p>{engineReady ? "Hold START to launch and accelerate. Keep holding to build speed and flip from hilltops." : "Loading the 3D track…"}</p><button disabled={!engineReady} onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); start(); gameRef.current?.setHolding(true); const frame = e.currentTarget.closest(".loop-rush-game-frame") as HTMLDivElement | null; frame?.setPointerCapture(e.pointerId); }}>{engineReady ? "HOLD TO START →" : "LOADING…"}</button></div>}
-          {status === "levelComplete" && <div className="loop-rush-overlay" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}><span className="loop-rush-pill">LEVEL {level} COMPLETE</span><h2>FINISH FLAG!</h2><p>+{30 + level * 10} coins · {level === 1 ? "New blue cart unlocked!" : "New red cart unlocked!"}</p><button onClick={(e) => { e.stopPropagation(); gameRef.current?.continueLevel(); }}>NEXT LEVEL →</button><button className="loop-rush-secondary" onClick={(e) => { e.stopPropagation(); gameRef.current?.cycleCart(); }}>CHANGE CART</button></div>}\n          {status === "crashed" && <div className="loop-rush-overlay" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}><span className="loop-rush-pill">WIPEOUT</span><h2>YOU MISSED THE LANDING</h2><p>Hold to build speed and try the jump again.</p><button onClick={(e) => { e.stopPropagation(); gameRef.current?.restart(); }}>TRY AGAIN ↻</button></div>}
+          {status === "levelComplete" && <div className="loop-rush-overlay" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}><span className="loop-rush-pill">LEVEL {level} COMPLETE</span><h2>FINISH FLAG!</h2><p>+{30 + level * 10} coins · {level === 1 ? "New blue cart unlocked!" : "New red cart unlocked!"}</p><button onClick={(e) => { e.stopPropagation(); gameRef.current?.continueLevel(); }}>NEXT LEVEL →</button><button className="loop-rush-secondary" onClick={(e) => { e.stopPropagation(); gameRef.current?.cycleCart(); }}>CHANGE CART</button></div>}
+          {status === "crashed" && <div className="loop-rush-overlay" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}><span className="loop-rush-pill">WIPEOUT</span><h2>YOU MISSED THE LANDING</h2><p>Hold to build speed and try the jump again.</p><button onClick={(e) => { e.stopPropagation(); gameRef.current?.restart(); }}>TRY AGAIN ↻</button></div>}
           {status === "won" && <div className="loop-rush-overlay" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}><span className="loop-rush-pill">TRACK CLEARED</span><h2>NICE RIDE!</h2><p>{coins} coins · {flips} flips · all carts unlocked</p><button onClick={(e) => { e.stopPropagation(); gameRef.current?.restart(); }}>RIDE AGAIN ↻</button><button className="loop-rush-secondary" onClick={(e) => { e.stopPropagation(); gameRef.current?.cycleCart(); }}>CHANGE CART</button></div>}
         </div>
         <div className="loop-rush-controls"><span><i className="loop-rush-dot" /> HOLD TO ACCELERATE / FLIP</span><span>RELEASE TO STOP FLIPPING</span></div>
