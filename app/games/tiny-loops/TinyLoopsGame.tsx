@@ -793,9 +793,7 @@ export default function TinyLoopsGame() {
     }).catch((e) => {
       const message = e instanceof Error ? e.message : String(e);
       const stack = e instanceof Error && e.stack ? e.stack : "No stack trace was provided by the browser.";
-      setError(message + "
-
-" + stack);
+      setError(message + "\n\n" + stack);
     });
     return () => {
       cancelled = true;
