@@ -462,7 +462,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     blueSpoiler.visible = selectedCart === 1;
     redFins.visible = selectedCart === 2;
   };
-  cart.scale.setScalar(1.15);\n  applyCartStyle();
+  cart.scale.setScalar(1.15);
   scene.add(cart);
   const baseCartQuaternion = new T.Quaternion();
   const flipQuaternion = new T.Quaternion();
@@ -500,6 +500,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     } catch {}
   };
   const state = { status: "ready" as GameStatus, distance: 0, speed: 0, holding: false, flips: 0, spin: 0, coins: 0, airborne: false, falling: false, airHeight: 0, takeoffY: 0, airElapsed: 0, activeJumpEnd: 0, jumpDuration: 0.9, jumpHeight: 5, landedUntil: 0, landedFlips: 0, level: 1, elapsed: 0, lastTime: performance.now(), raf: 0 };
+  applyCartStyle();
   const resize = () => {
     const w = Math.max(1, mount.clientWidth), h = Math.max(1, mount.clientHeight);
     camera.aspect = w / h;
@@ -584,6 +585,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
           unlockedCarts = Math.min(cartColours.length, unlockedCarts + 1);
           selectedCart = unlockedCarts - 1;
           applyCartStyle();
+          saveProgress();
         } else {
           state.status = "won";
         }
@@ -741,6 +743,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     cycleCart() {
       selectedCart = (selectedCart + 1) % unlockedCarts;
       applyCartStyle();
+      saveProgress();
     },
     setHolding(value: boolean) { state.holding = value; },
     destroy() {
