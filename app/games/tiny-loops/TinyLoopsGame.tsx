@@ -31,7 +31,7 @@ function loadThree() {
 function makeCourse(T: any) {
   const points: any[] = [];
   const hillSections: Array<{ start: number; crest: number; end: number }> = [];
-  const popSections: number[] = [];
+  const popSections: Array<{ start: number; end: number }> = [];
   const add = (p: any) => points.push(p.clone());
   const line = (to: any, steps = 24) => {
     const from = points[points.length - 1];
@@ -51,7 +51,7 @@ function makeCourse(T: any) {
         : Math.sin(Math.PI * t);
       add(from.clone().lerp(to, t).add(new T.Vector3(0, rampProfile * (launchable ? Math.max(height, 20) : height), 0)));
       if (launchable && i === steps) crestIndex = points.length - 1;
-      if (!launchable && i === Math.round(steps * 0.5)) popSections.push(points.length - 1);
+      // Keep the whole rounded hill range; the final curve can shift its true\n      // visual peak slightly away from the midpoint of the control points.\n      if (!launchable && i === steps) popSections.push({ start: startIndex, end: points.length - 1 });
     }
     if (launchable && crestIndex >= 0) hillSections.push({ start: startIndex, crest: crestIndex, end: points.length - 1 });
   };
@@ -126,7 +126,7 @@ function makeCourse(T: any) {
     end: distanceAtPoint(end),
   }));
   (curve as any).hillCrestDistances = (curve as any).hillSections.map((section: any) => section.crest);
-  (curve as any).popTriggers = popSections.map(distanceAtPoint);
+  // Find the actual highest point on each smoothed hill, rather than using\n  // the control-point midpoint (which can sit before the visible crest).\n  (curve as any).popTriggers = popSections.map(({ start, end }) => {\n    const startDistance = distanceAtPoint(start);\n    const endDistance = distanceAtPoint(end);\n    let peakDistance = startDistance;\n    let peakHeight = -Infinity;\n    const samples = 48;\n    for (let i = 0; i <= samples; i++) {\n      const distance = startDistance + ((endDistance - startDistance) * i) / samples;\n      const safeDistance = Math.max(0, Math.min(curve.getLength() - 0.001, distance));\n      const u = curve.getUtoTmapping(0, safeDistance);\n      const point = curve.getPointAt(Math.max(0, Math.min(0.999999, u)));\n      if (point.y > peakHeight) {\n        peakHeight = point.y;\n        peakDistance = distance;\n      }\n    }\n    return peakDistance;\n  });
   return curve;
 }
 function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; coins: number; flips: number; status: GameStatus; airborne?: boolean; holding?: boolean; level?: number; landed?: boolean; landedFlips?: number }) => void) {
