@@ -589,7 +589,7 @@ export default function TinyLoopsGame() {
     }).catch((e) => {
       const message = e instanceof Error ? e.message : String(e);
       const stack = e instanceof Error && e.stack ? e.stack : "No stack trace was provided by the browser.";
-      setError(message + "\\n\\n" + stack);
+      setError(message + "\n\n" + stack);
     });
     return () => {
       cancelled = true;
@@ -626,7 +626,7 @@ export default function TinyLoopsGame() {
         <div className="loop-rush-game-frame" onPointerDown={holdStart} onPointerUp={holdEnd} onPointerCancel={holdEnd} onLostPointerCapture={holdEnd} onContextMenu={(e) => e.preventDefault()}>
           <div ref={mountRef} className="loop-rush-canvas" />
           <div className="loop-rush-hud"><span>⚡ {speed} SPEED</span><span>🟡 {coins} COINS</span><span>↻ {flips} FLIPS</span><strong className="loop-rush-air-status">{airborne ? "AIRBORNE — HOLD TO FLIP!" : landed ? (landedFlips > 0 ? `LANDED! +${landedFlips} FLIPS` : "LANDED!") : "HOLD TO ACCELERATE"}</strong></div>
-          {error && <div className="loop-rush-overlay"><h2>3D ENGINE ERROR</h2><p>{error}</p></div>}
+          {error && <div className="loop-rush-overlay"><h2>3D ENGINE ERROR</h2><p style={{ whiteSpace: "pre-wrap", maxWidth: "min(900px, 90%)", maxHeight: "70%", overflow: "auto", textAlign: "left", fontFamily: "monospace", fontSize: "11px" }}>{error}</p></div>}
           {status === "ready" && !error && <div className="loop-rush-overlay"><span className="loop-rush-pill">{engineReady ? "READY?" : "LOADING"}</span><h2>TINY LOOPS</h2><p>{engineReady ? "Hold START to launch and accelerate. Keep holding to build speed and flip from hilltops." : "Loading the 3D track…"}</p><button disabled={!engineReady} onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); start(); gameRef.current?.setHolding(true); const frame = e.currentTarget.closest(".loop-rush-game-frame") as HTMLDivElement | null; frame?.setPointerCapture(e.pointerId); }}>{engineReady ? "HOLD TO START →" : "LOADING…"}</button></div>}
           {status === "crashed" && <div className="loop-rush-overlay" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}><span className="loop-rush-pill">WIPEOUT</span><h2>YOU MISSED THE LANDING</h2><p>Hold to build speed and try the jump again.</p><button onClick={(e) => { e.stopPropagation(); gameRef.current?.restart(); }}>TRY AGAIN ↻</button></div>}
           {status === "won" && <div className="loop-rush-overlay" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}><span className="loop-rush-pill">TRACK CLEARED</span><h2>NICE RIDE!</h2><p>{coins} coins · {flips} flips</p><button onClick={(e) => { e.stopPropagation(); gameRef.current?.restart(); }}>RIDE AGAIN ↻</button></div>}
