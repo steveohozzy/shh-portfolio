@@ -32,6 +32,7 @@ function makeCourse(T: any) {
   const points: any[] = [];
   const hillSections: Array<{ start: number; crest: number; end: number }> = [];
   const popSections: Array<{ start: number; end: number }> = [];
+  const loopSections: Array<{ start: number; end: number }> = [];
   const add = (p: any) => points.push(p.clone());
   const line = (to: any, steps = 24) => {
     const from = points[points.length - 1];
@@ -64,6 +65,23 @@ function makeCourse(T: any) {
       add(from.clone().multiplyScalar(u * u).add(control.clone().multiplyScalar(2 * u * t)).add(to.clone().multiplyScalar(t * t)));
     }
   };
+  const loop = (radius = 9, steps = 88) => {
+    const start = points.length - 1;
+    const origin = points[start].clone();
+    const previous = points[Math.max(0, start - 1)];
+    const forward = origin.clone().sub(previous).setY(0).normalize();
+    if (forward.lengthSq() < 0.001) forward.set(0, 0, -1);
+    const up = new T.Vector3(0, 1, 0);
+    // A complete vertical 360-degree loop, sampled densely so the rails,
+    // sleepers and cart all follow the same continuous piece of track.
+    for (let i = 1; i <= steps; i++) {
+      const angle = (Math.PI * 2 * i) / steps;
+      add(origin.clone()
+        .addScaledVector(up, radius * (1 - Math.cos(angle)))
+        .addScaledVector(forward, radius * Math.sin(angle)));
+    }
+    loopSections.push({ start, end: points.length - 1 });
+  };
 
   // A deliberately simple, continuous coaster: gentle opening, clear ramps,
   // broad turns and small changes in height. No vertical loops or corkscrews
@@ -80,8 +98,9 @@ function makeCourse(T: any) {
   hill(new T.Vector3(48, 3, -202), 5, 36, false);
   line(new T.Vector3(48, 3, -212), 16);
 
-  // A broad sweeping turn and a second, slightly larger jump.
+  // A broad sweeping turn, a full vertical loop, and a second jump.
   bend(new T.Vector3(68, 4, -235), new T.Vector3(64, 5, -260), 72);
+  loop(9.5, 96);
   hill(new T.Vector3(38, 5, -302), 9, 84, true);
   bend(new T.Vector3(16, 8, -326), new T.Vector3(8, 8, -350), 64);
   hill(new T.Vector3(8, 8, -362), 6, 40, false);
@@ -97,6 +116,7 @@ function makeCourse(T: any) {
   bend(new T.Vector3(42, 2, -590), new T.Vector3(55, 5, -625), 72);
   hill(new T.Vector3(30, 5, -685), 10, 84, true);
   bend(new T.Vector3(-2, 8, -712), new T.Vector3(-28, 8, -748), 72);
+  loop(10.5, 104);
   hill(new T.Vector3(-48, 3, -812), 8, 80, true);
   bend(new T.Vector3(-12, 1, -845), new T.Vector3(22, 1, -875), 72);
   line(new T.Vector3(35, 1, -910), 42);
@@ -128,6 +148,10 @@ function makeCourse(T: any) {
     end: distanceAtPoint(end),
   }));
   (curve as any).hillCrestDistances = (curve as any).hillSections.map((section: any) => section.crest);
+  (curve as any).loopParameterRanges = loopSections.map(({ start, end }) => ({
+    start: start / (points.length - 1),
+    end: end / (points.length - 1),
+  }));
   // Find the actual highest point on each smoothed hill, rather than using
   // the control-point midpoint (which can sit before the visible crest).
   (curve as any).popTriggers = popSections
@@ -192,11 +216,19 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   const trackGroup = new T.Group();
   scene.add(trackGroup);
 
+  const loopParameterRanges: Array<{ start: number; end: number }> = (course as any).loopParameterRanges || [];
   const frameAt = (index: number) => {
     const tangent = frames.tangents[index].clone().normalize();
+    const parameter = index / segments;
+    const inLoop = loopParameterRanges.some((range) => parameter >= range.start && parameter <= range.end);
+    if (inLoop) {
+      // Inside a real loop, use the transported track frame so the cart,
+      // rails and sleepers rotate with the vertical track instead of staying upright.
+      const normal = frames.normals[index].clone().normalize();
+      const side = new T.Vector3().crossVectors(tangent, normal).normalize();
+      return { tangent, normal, side, forward: tangent.clone() };
+    }
     const worldUp = new T.Vector3(0, 1, 0);
-    // Keep the cart upright through bends. Frenet normals can roll around a
-    // twisting curve and look exactly like an unrequested backflip.
     const forward = new T.Vector3(tangent.x, 0, tangent.z).normalize();
     if (forward.lengthSq() < 0.0001) forward.set(0, 0, -1);
     const side = new T.Vector3().crossVectors(forward, worldUp).normalize();
@@ -300,9 +332,8 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     const trackTangent = sampledTangent
       ? new T.Vector3(sampledTangent.x, sampledTangent.y, sampledTangent.z).normalize()
       : new T.Vector3(0, 0, -1);
-    const trackSide = new T.Vector3().crossVectors(trackTangent, new T.Vector3(0, 1, 0)).normalize();
-    if (trackSide.lengthSq() < 0.0001) trackSide.set(1, 0, 0);
-    const trackUp = new T.Vector3().crossVectors(trackSide, trackTangent).normalize();
+    const trackSide = f.side.clone().normalize();
+    const trackUp = f.normal.clone().normalize();
     const matrix = new T.Matrix4().makeBasis(trackSide.clone().negate(), trackUp, trackTangent);
     sleeperDummy.position.copy(p).addScaledVector(trackUp, 0.03);
     sleeperDummy.quaternion.setFromRotationMatrix(matrix);
