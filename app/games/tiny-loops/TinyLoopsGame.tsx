@@ -225,7 +225,14 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     const f = frameAt(Math.min(segments, Math.round(u * segments)));
     // Sleepers must rotate with the true 3D track tangent. Using the
     // upright cart frame here makes steep ramps look horizontal/flat.
-    const trackTangent = course.getTangentAt(u).normalize();
+    const tangentIndex = Math.min(segments, Math.max(0, Math.round(u * segments)));
+    const sampledTangent = frames.tangents[tangentIndex];
+    // Use the already-computed Frenet frame rather than asking the curve for
+    // a second tangent during construction. Guard against a missing sample
+    // so one malformed frame can never abort the whole game initialisation.
+    const trackTangent = sampledTangent
+      ? new T.Vector3(sampledTangent.x, sampledTangent.y, sampledTangent.z).normalize()
+      : new T.Vector3(0, 0, -1);
     const trackSide = new T.Vector3().crossVectors(trackTangent, new T.Vector3(0, 1, 0)).normalize();
     if (trackSide.lengthSq() < 0.0001) trackSide.set(1, 0, 0);
     const trackUp = new T.Vector3().crossVectors(trackSide, trackTangent).normalize();
