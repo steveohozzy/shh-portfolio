@@ -441,7 +441,10 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
         const pop = popTriggers.find((crest) => previousDistance <= crest && state.distance >= crest);
         if (launch !== undefined) {
           state.distance = launch;
-          const requiredSpeed = jumpGapLength / 1.1;
+          const jumpNumber = jumpTriggers.indexOf(launch);
+          // Later sections demand a faster run-up, while remaining achievable
+          // below the cart's 48-unit top speed.
+          const requiredSpeed = Math.min(45, 38.5 + Math.max(0, jumpNumber) * 1.2);
           if (state.speed < requiredSpeed) {
             // Don't freeze at the lip: lose the track and fall below it.
             state.airborne = true;
