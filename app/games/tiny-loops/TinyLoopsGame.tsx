@@ -97,6 +97,7 @@ function makeCourse(T: any) {
   bend(new T.Vector3(42, 2, -166), new T.Vector3(48, 3, -190));
   hill(new T.Vector3(48, 3, -202), 5, 36, false);
   line(new T.Vector3(48, 3, -212), 16);
+  stagePointIndices.push(points.length - 1);
 
   // A broad sweeping turn, a full vertical loop, and a second jump.
   bend(new T.Vector3(68, 4, -235), new T.Vector3(64, 5, -260), 72);
@@ -105,6 +106,7 @@ function makeCourse(T: any) {
   bend(new T.Vector3(16, 8, -326), new T.Vector3(8, 8, -350), 64);
   hill(new T.Vector3(8, 8, -362), 6, 40, false);
   line(new T.Vector3(8, 8, -374), 18);
+  stagePointIndices.push(points.length - 1);
 
   // Level 1 finish section.
   bend(new T.Vector3(-10, 5, -396), new T.Vector3(-18, 3, -420), 64);
@@ -120,12 +122,14 @@ function makeCourse(T: any) {
   hill(new T.Vector3(-48, 3, -812), 8, 80, true);
   bend(new T.Vector3(-12, 1, -845), new T.Vector3(22, 1, -875), 72);
   line(new T.Vector3(35, 1, -910), 42);
+  stagePointIndices.push(points.length - 1);
   bend(new T.Vector3(62, 4, -945), new T.Vector3(48, 7, -980), 76);
   hill(new T.Vector3(8, 7, -1045), 12, 92, true);
   loop(11.5, 112);
   bend(new T.Vector3(-35, 10, -1090), new T.Vector3(-55, 5, -1130), 76);
   hill(new T.Vector3(-18, 3, -1190), 13, 96, true);
   line(new T.Vector3(-18, 3, -1235), 48);
+  line(new T.Vector3(12, 3, -1300), 42);
   stagePointIndices.push(points.length - 1);
   // Level 3: a much longer alpine night run with a fast S-bend, three huge
   // launch ramps, two vertical loops and a final extended jump.
@@ -134,11 +138,15 @@ function makeCourse(T: any) {
   bend(new T.Vector3(-18, 11, -1405), new T.Vector3(-42, 6, -1445), 82);
   hill(new T.Vector3(-12, 2, -1515), 14, 100, true);
   bend(new T.Vector3(35, 4, -1545), new T.Vector3(52, 4, -1585), 82);
+  line(new T.Vector3(24, 2, -1625), 36);
+  stagePointIndices.push(points.length - 1);
   hill(new T.Vector3(0, 0, -1660), 16, 104, true);
   bend(new T.Vector3(-38, 5, -1695), new T.Vector3(-58, 9, -1735), 80);
   loop(12, 120);
   hill(new T.Vector3(22, 6, -1815), 17, 112, true);
   bend(new T.Vector3(58, 3, -1845), new T.Vector3(35, 0, -1885), 82);
+  line(new T.Vector3(4, 0, -1925), 34);
+  stagePointIndices.push(points.length - 1);
   hill(new T.Vector3(-12, 0, -1960), 18, 120, true);
   bend(new T.Vector3(-42, 5, -1990), new T.Vector3(-58, 8, -2035), 82);
   loop(13.5, 128);
@@ -146,6 +154,23 @@ function makeCourse(T: any) {
   bend(new T.Vector3(48, 5, -2165), new T.Vector3(25, 1, -2210), 84);
   hill(new T.Vector3(-18, 0, -2300), 21, 136, true);
   line(new T.Vector3(-18, 0, -2380), 72);
+  stagePointIndices.push(points.length - 1);
+
+  // Level 9: a canyon night-run with a high launch, a long sweeping turn and a loop.
+  bend(new T.Vector3(18, 4, -2420), new T.Vector3(62, 7, -2465), 84);
+  hill(new T.Vector3(20, 7, -2535), 19, 124, true);
+  bend(new T.Vector3(-20, 10, -2570), new T.Vector3(-45, 6, -2615), 84);
+  loop(13, 124);
+  line(new T.Vector3(-45, 6, -2655), 48);
+  stagePointIndices.push(points.length - 1);
+
+  // Level 10: the final skyway, with the biggest ramps and a double-loop finale.
+  bend(new T.Vector3(-8, 4, -2700), new T.Vector3(42, 8, -2745), 88);
+  hill(new T.Vector3(10, 8, -2825), 22, 140, true);
+  bend(new T.Vector3(-40, 12, -2870), new T.Vector3(-65, 6, -2920), 88);
+  loop(14, 132);
+  hill(new T.Vector3(-20, 3, -3010), 24, 150, true);
+  line(new T.Vector3(-20, 3, -3150), 120);
 
   const curve = new T.CatmullRomCurve3(points, false, "centripetal", 0.15);
   curve.arcLengthDivisions = 3000;
@@ -350,11 +375,17 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     { sky: 0x9cddff, fog: 0xb8e7ff, rail: 0xffc928, sleeper: 0xffe36a, dark: 0x343b4b, rock: 0xffffff, cliff: 0xa9c5d8 },
     { sky: 0xffc28a, fog: 0xf4a77e, rail: 0xff7438, sleeper: 0xffd06b, dark: 0x633b58, rock: 0xf5c3a0, cliff: 0xb66f72 },
     { sky: 0x101b45, fog: 0x263c70, rail: 0x45e4ff, sleeper: 0xa6f5ff, dark: 0x27345b, rock: 0xdceaff, cliff: 0x637db2 },
+    { sky: 0x172b3a, fog: 0x31596a, rail: 0x45d6b5, sleeper: 0xb4f2d5, dark: 0x23434a, rock: 0xd1e9df, cliff: 0x6c9b91 },
+    { sky: 0x39234f, fog: 0x75466e, rail: 0xff83c5, sleeper: 0xffc4e4, dark: 0x472e55, rock: 0xf0d6ed, cliff: 0x9c709e },
+    { sky: 0x172d28, fog: 0x426b50, rail: 0xc5ed62, sleeper: 0xe4f7a0, dark: 0x344936, rock: 0xe0e8cb, cliff: 0x7c9872 },
+    { sky: 0x45251d, fog: 0x92513a, rail: 0xffb34d, sleeper: 0xffdf91, dark: 0x57372d, rock: 0xf3d0a7, cliff: 0xb77d58 },
+    { sky: 0x18233e, fog: 0x3b527c, rail: 0x9b8cff, sleeper: 0xc9c1ff, dark: 0x343b62, rock: 0xe0e4f5, cliff: 0x7c86b6 },
+    { sky: 0x17404b, fog: 0x367d83, rail: 0x5df4e7, sleeper: 0xb0fff6, dark: 0x24515c, rock: 0xd6f3ee, cliff: 0x68a5a4 },
   ];
   let appliedThemeLevel = 0;
   const applyLevelTheme = (level: number) => {
     if (appliedThemeLevel === level) return;
-    const theme = levelThemes[Math.max(0, Math.min(levelThemes.length - 1, level - 1))];
+    const theme = levelThemes[(Math.max(1, level) - 1) % levelThemes.length];
     scene.background.setHex(theme.sky);
     scene.fog.color.setHex(theme.fog);
     railMaterial.color.setHex(theme.rail);
@@ -373,6 +404,10 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     [42, -8, -650, 35, 5, 38], [-45, -8, -790, 34, 5, 42],
     [20, -9, -900, 38, 5, 42], [65, -8, -980, 40, 5, 44],
     [-42, -8, -1110, 38, 5, 44], [0, -9, -1300, 42, 5, 48],
+    [35, -8, -1510, 42, 5, 46], [-25, -9, -1740, 46, 5, 50],
+    [30, -8, -1980, 48, 5, 52], [-38, -10, -2250, 50, 5, 54],
+    [25, -10, -2490, 54, 5, 58], [-48, -11, -2720, 56, 5, 60],
+    [18, -12, -2990, 58, 5, 62],
   ];
   platformData.forEach(([x, y, z, sx, sy, sz], i) => {
     const platform = new T.Mesh(platformGeo, rockMat);
@@ -601,7 +636,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
           const jumpNumber = jumpTriggers.indexOf(launch);
           // Later sections demand a faster run-up, while remaining achievable
           // below the cart's 48-unit top speed.
-          const requiredSpeed = Math.min(47, 37 + Math.max(0, jumpNumber) * 1.35 + (state.level - 1) * 3.5);
+          const requiredSpeed = Math.min(47, 37 + Math.max(0, jumpNumber) * 1.05 + (state.level - 1) * 0.8);
           if (!state.holding || state.speed < requiredSpeed) {
             // Don't freeze at the lip: lose the track and fall below it.
             state.airborne = true;
@@ -638,7 +673,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
         if (finishFlag) finishFlag.userData.targetScale = 1;
         state.coins += 30 + state.level * 10;
         bankedCoins = state.coins;
-        if (state.level < 3) {
+        if (state.level < ((course as any).stageDistances as number[]).length) {
           state.status = "levelComplete";
           unlockedCarts = Math.min(cartColours.length, unlockedCarts + 1);
           selectedCart = unlockedCarts - 1;
@@ -912,16 +947,16 @@ export default function TinyLoopsGame() {
       <section className="loop-rush-shell">
         <div className="loop-rush-heading">
           <div><span className="loop-rush-kicker">THE ORIGINAL-STYLE 3D RIDE</span><h1>TINY LOOPS</h1><p>Hold to accelerate and flip through the air. Release to coast.</p></div>
-          <div className="loop-rush-level"><span>LEVEL 0{level}</span><b>{level === 1 ? "First Run" : level === 2 ? "Twisting Heights" : "Big Air Finale"}</b></div>
+          <div className="loop-rush-level"><span>LEVEL {String(level).padStart(2, "0")}</span><b>{(["First Run", "Twisting Heights", "Big Air Finale", "Sunset Switchbacks", "Canyon Rush", "Alpine Ascent", "Moonlight Loop", "Storm Chaser", "Canyon Night Run", "Final Skyway"][level - 1] || "Bonus Run")}</b></div>
         </div>
         <div className="loop-rush-game-frame" onPointerDown={holdStart} onPointerUp={holdEnd} onPointerCancel={holdEnd} onLostPointerCapture={holdEnd} onContextMenu={(e) => e.preventDefault()}>
           <div ref={mountRef} className="loop-rush-canvas" />
           <div className="loop-rush-hud"><span>⚡ {speed} SPEED</span><span>🟡 {coins} COINS</span><span>↻ {flips} FLIPS</span><strong className="loop-rush-air-status">{airborne ? "AIRBORNE — HOLD TO FLIP!" : landed ? (landedFlips > 0 ? `LANDED! +${landedFlips} FLIPS` : "LANDED!") : "HOLD TO ACCELERATE"}</strong></div>
           {error && <div className="loop-rush-overlay"><h2>3D ENGINE ERROR</h2><p style={{ whiteSpace: "pre-wrap", maxWidth: "min(900px, 90%)", maxHeight: "70%", overflow: "auto", textAlign: "left", fontFamily: "monospace", fontSize: "11px" }}>{error}</p></div>}
           {status === "ready" && !error && <div className="loop-rush-overlay"><span className="loop-rush-pill">{engineReady ? "READY?" : "LOADING"}</span><h2>TINY LOOPS</h2><p>{engineReady ? "Hold START to accelerate. Build speed before each rising ramp, then hold in the air to flip." : "Loading the 3D track…"}</p><button disabled={!engineReady} onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); start(); gameRef.current?.setHolding(true); const frame = e.currentTarget.closest(".loop-rush-game-frame") as HTMLDivElement | null; frame?.setPointerCapture(e.pointerId); }}>{engineReady ? "HOLD TO START →" : "LOADING…"}</button></div>}
-          {status === "levelComplete" && <div className="loop-rush-overlay" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}><span className="loop-rush-pill">LEVEL {level} COMPLETE</span><h2>FINISH FLAG!</h2><p>+{30 + level * 10} coins · {level === 1 ? "New blue cart unlocked!" : "New red cart unlocked!"}</p><button onClick={(e) => { e.stopPropagation(); gameRef.current?.continueLevel(); }}>NEXT LEVEL →</button><button className="loop-rush-secondary" onClick={(e) => { e.stopPropagation(); gameRef.current?.cycleCart(); }}>CHANGE CART</button></div>}
+          {status === "levelComplete" && <div className="loop-rush-overlay" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}><span className="loop-rush-pill">LEVEL {level} COMPLETE</span><h2>FINISH FLAG!</h2><p>+{30 + level * 10} coins · {level < 4 ? "A new cart has been unlocked!" : "Your next course is ready!"}</p><button onClick={(e) => { e.stopPropagation(); gameRef.current?.continueLevel(); }}>NEXT LEVEL →</button><button className="loop-rush-secondary" onClick={(e) => { e.stopPropagation(); gameRef.current?.cycleCart(); }}>CHANGE CART</button></div>}
           {status === "crashed" && <div className="loop-rush-overlay" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}><span className="loop-rush-pill">WIPEOUT</span><h2>YOU MISSED THE LANDING</h2><p>Hold to build speed and try the jump again.</p><button onClick={(e) => { e.stopPropagation(); gameRef.current?.restart(); }}>TRY AGAIN ↻</button></div>}
-          {status === "won" && <div className="loop-rush-overlay" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}><span className="loop-rush-pill">TRACK CLEARED</span><h2>NICE RIDE!</h2><p>{coins} coins · {flips} flips · all carts unlocked</p><button onClick={(e) => { e.stopPropagation(); gameRef.current?.restart(); }}>RIDE AGAIN ↻</button><button className="loop-rush-secondary" onClick={(e) => { e.stopPropagation(); gameRef.current?.cycleCart(); }}>CHANGE CART</button></div>}
+          {status === "won" && <div className="loop-rush-overlay" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}><span className="loop-rush-pill">TRACK CLEARED</span><h2>NICE RIDE!</h2><p>{coins} coins · {flips} flips · all 10 levels cleared</p><button onClick={(e) => { e.stopPropagation(); gameRef.current?.restart(); }}>RIDE AGAIN ↻</button><button className="loop-rush-secondary" onClick={(e) => { e.stopPropagation(); gameRef.current?.cycleCart(); }}>CHANGE CART</button></div>}
         </div>
         <div className="loop-rush-controls"><span><i className="loop-rush-dot" /> HOLD TO ACCELERATE / FLIP</span><span>RELEASE TO STOP FLIPPING</span></div>
       </section>
