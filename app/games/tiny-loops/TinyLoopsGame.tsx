@@ -462,7 +462,7 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
     blueSpoiler.visible = selectedCart === 1;
     redFins.visible = selectedCart === 2;
   };
-  cart.scale.setScalar(1.15);
+  cart.scale.setScalar(1.15);\n  applyCartStyle();
   scene.add(cart);
   const baseCartQuaternion = new T.Quaternion();
   const flipQuaternion = new T.Quaternion();
@@ -485,6 +485,20 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
   let unlockedCarts = 1;
   let selectedCart = 0;
   let bankedCoins = 0;
+  try {
+    const saved = window.localStorage.getItem("shh-tiny-loops-progress");
+    if (saved) {
+      const progress = JSON.parse(saved);
+      bankedCoins = Math.max(0, Number(progress.coins) || 0);
+      unlockedCarts = Math.max(1, Math.min(cartColours.length, Number(progress.unlockedCarts) || 1));
+      selectedCart = Math.max(0, Math.min(unlockedCarts - 1, Number(progress.selectedCart) || 0));
+    }
+  } catch {}
+  const saveProgress = () => {
+    try {
+      window.localStorage.setItem("shh-tiny-loops-progress", JSON.stringify({ coins: bankedCoins, unlockedCarts, selectedCart }));
+    } catch {}
+  };
   const state = { status: "ready" as GameStatus, distance: 0, speed: 0, holding: false, flips: 0, spin: 0, coins: 0, airborne: false, falling: false, airHeight: 0, takeoffY: 0, airElapsed: 0, activeJumpEnd: 0, jumpDuration: 0.9, jumpHeight: 5, landedUntil: 0, landedFlips: 0, level: 1, elapsed: 0, lastTime: performance.now(), raf: 0 };
   const resize = () => {
     const w = Math.max(1, mount.clientWidth), h = Math.max(1, mount.clientHeight);
