@@ -617,7 +617,10 @@ function createWorld(T: any, mount: HTMLDivElement, onHud: (v: { speed: number; 
         state.airHeight = 4 * progress * (1 - progress) * state.jumpHeight;
         // Tiny Loops flips are deliberate: holding rotates steadily, not at
         // several full spins per second. Release freezes the current rotation.
-        if (state.holding) state.spin += dt * Math.PI * 2 * (0.75 + state.speed / 32);
+        // One controlled rotation takes roughly the length of a jump. The old
+        // rate exceeded two rotations per second at top speed, making the
+        // second jump land halfway through a spin even when held continuously.
+        if (state.holding) state.spin += dt * Math.PI * 2 * (0.62 + state.speed / 150);
         if (progress >= 1) {
           state.airHeight = 0;
           state.airborne = false;
