@@ -9,9 +9,9 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Tiny Loops" />
   <meta name="mobile-web-app-capable" content="yes" />
-  <link rel="manifest" href="./manifest.webmanifest" />
-  <link rel="icon" type="image/svg+xml" href="./icons/icon.svg" />
-  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+  <link rel="manifest" href="/tinyloops/manifest.webmanifest" />
+  <link rel="icon" type="image/svg+xml" href="/tinyloops/icons/icon.svg" />
+  <link rel="apple-touch-icon" href="/tinyloops/icons/apple-touch-icon.png" />
   <title>Tiny Loops 3D — Jumps & Flips</title>
   <style>
     * {
@@ -3568,10 +3568,13 @@
         installAppBtn.style.display = 'none';
       }
 
-      // Cache the game shell so it can launch without a network connection.
+      // Register from an absolute URL. The game is also visited without a trailing
+      // slash (/tinyloops), where a relative ./sw.js incorrectly resolves to /sw.js.
       if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js').catch(() => {});
+          navigator.serviceWorker.register('/tinyloops/sw.js', { scope: '/tinyloops/' }).catch((error) => {
+            console.error('Tiny Loops offline support could not be registered:', error);
+          });
         });
       }
 

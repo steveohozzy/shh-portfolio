@@ -20,5 +20,4 @@ IMPORTANT
 A PWA must be served from HTTPS (localhost is also supported for development). Opening index.html directly as a file will not enable installation or offline caching.
 
 
-OFFLINE PLAY
-The game shell and required local icons are precached by the service worker. After uploading an update, open the game once while online and wait for it to finish loading before testing airplane mode. Then close the installed app completely and reopen it offline.
+Offline support note: open https://www.shhdesign.co.uk/tinyloops/ once while online and allow the page to finish loading before installing the home-screen app. The manifest and service worker use absolute /tinyloops/ paths so the no-trailing-slash URL cannot accidentally register the worker at the site root.
