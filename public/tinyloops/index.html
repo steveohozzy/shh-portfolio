@@ -843,6 +843,7 @@
           <circle cx="16.2" cy="-11" r="1.9" fill="#0f172a" />
         </g>
         <g id="pod-accessory"></g>
+        <g id="pod-hat" transform="translate(0 3)"></g>
         <g id="wheel-rear" transform="translate(-13, 10)">
           <circle cx="0" cy="0" r="6.5" fill="#0f172a" stroke="#ffffff" stroke-width="2" />
           <line x1="-4" y1="0" x2="4" y2="0" stroke="#94a3b8" stroke-width="1.6" />
@@ -1497,6 +1498,7 @@
       const followerCartsLayer = document.getElementById('follower-carts-layer');
       const podBody = document.getElementById('pod-body');
       const podAccessory = document.getElementById('pod-accessory');
+      const podHat = document.getElementById('pod-hat');
       const riderTrail = document.getElementById('rider-trail');
       const boostFlame = document.getElementById('boost-flame');
       const angleGuide = document.getElementById('angle-guide');
@@ -1539,6 +1541,7 @@
         riderTrail.setAttribute('stroke', trail.color);
 
         podAccessory.innerHTML = '';
+        podHat.innerHTML = '';
         if (pod.acc === 'crown') {
           podAccessory.appendChild(
             createSvgEl('polygon', {
@@ -1574,7 +1577,7 @@
 
         const hat = HAT_TOPPERS.find((item) => item.id === saveData.equippedHat);
         if (hat) {
-          const addHatPart = (tag, attrs) => podAccessory.appendChild(createSvgEl(tag, attrs));
+          const addHatPart = (tag, attrs) => podHat.appendChild(createSvgEl(tag, attrs));
           if (hat.type === 'party') {
             addHatPart('polygon', { points: '-7,-29 0,-49 7,-29', fill: hat.color, stroke: '#fff', 'stroke-width': '1.5' });
             addHatPart('circle', { cx: 0, cy: -50, r: 2.5, fill: '#fde047' });
