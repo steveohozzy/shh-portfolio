@@ -976,6 +976,18 @@
           <div class="stat-item" style="grid-column:1 / -1;"><span class="stat-num" id="career-gems">0</span><span class="stat-lbl">Gems collected</span></div>
         </div>
 
+        <div class="garage-section-title">Sound &amp; Music</div>
+        <div class="stat-item" style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin-bottom:8px;">
+          <label for="music-toggle" class="stat-lbl">Arcade soundtrack</label>
+          <input id="music-toggle" type="checkbox" checked style="width:22px;height:22px;accent-color:#8b5cf6;">
+          <label for="music-volume" class="stat-lbl">Music volume</label>
+          <input id="music-volume" type="range" min="0" max="100" value="35" style="width:120px;accent-color:#8b5cf6;">
+          <label for="sfx-toggle" class="stat-lbl">Game sound effects</label>
+          <input id="sfx-toggle" type="checkbox" checked style="width:22px;height:22px;accent-color:#8b5cf6;">
+          <label for="sfx-volume" class="stat-lbl">Effects volume</label>
+          <input id="sfx-volume" type="range" min="0" max="100" value="75" style="width:120px;accent-color:#8b5cf6;">
+        </div>
+
         <div class="garage-section-title">Tiny Pods</div>
         <div class="shop-grid" id="pod-shop-grid"></div>
 
@@ -1064,10 +1076,44 @@
         constructor() {
           this.ctx = null;
           this.muted = false;
+          this.sfxEnabled = true;
+          this.musicEnabled = true;
+          this.sfxVolume = 0.75;
+          this.musicVolume = 0.35;
           this.coinCombo = 0;
           this.lastCoinTime = 0;
           this.thrusterOsc = null;
           this.thrusterGain = null;
+          this.windSource = null;
+          this.windFilter = null;
+          this.windGain = null;
+          this.spinOsc = null;
+          this.spinGain = null;
+          this.musicTimer = null;
+          this.musicStep = 0;
+          this.musicGain = null;
+          this.musicFilter = null;
+          this.nextTrackClackAt = 0;
+          this.loadSettings();
+        }
+
+        loadSettings() {
+          try {
+            const saved = JSON.parse(localStorage.getItem('tiny_loops_audio_settings_v1') || '{}');
+            if (typeof saved.musicEnabled === 'boolean') this.musicEnabled = saved.musicEnabled;
+            if (typeof saved.sfxEnabled === 'boolean') this.sfxEnabled = saved.sfxEnabled;
+            if (typeof saved.musicVolume === 'number') this.musicVolume = Math.max(0, Math.min(1, saved.musicVolume));
+            if (typeof saved.sfxVolume === 'number') this.sfxVolume = Math.max(0, Math.min(1, saved.sfxVolume));
+          } catch (e) {}
+        }
+
+        saveSettings() {
+          try {
+            localStorage.setItem('tiny_loops_audio_settings_v1', JSON.stringify({
+              musicEnabled: this.musicEnabled, sfxEnabled: this.sfxEnabled,
+              musicVolume: this.musicVolume, sfxVolume: this.sfxVolume
+            }));
+          } catch (e) {}
         }
 
         init() {
@@ -1075,10 +1121,9 @@
             const AudioCtx = window.AudioContext || window.webkitAudioContext;
             if (AudioCtx) this.ctx = new AudioCtx();
           }
-          if (this.ctx && this.ctx.state === 'suspended') {
-            this.ctx.resume();
-          }
-          if (this.ctx && !this.thrusterOsc) {
+          if (!this.ctx) return;
+          if (this.ctx.state === 'suspended') this.ctx.resume();
+          if (!this.thrusterOsc) {
             try {
               this.thrusterOsc = this.ctx.createOscillator();
               this.thrusterGain = this.ctx.createGain();
@@ -1088,45 +1133,180 @@
               this.thrusterOsc.connect(this.thrusterGain);
               this.thrusterGain.connect(this.ctx.destination);
               this.thrusterOsc.start();
+
+              const bufferSize = this.ctx.sampleRate * 2;
+              const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+              const data = noiseBuffer.getChannelData(0);
+              for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+              this.windSource = this.ctx.createBufferSource();
+              this.windSource.buffer = noiseBuffer;
+              this.windSource.loop = true;
+              this.windFilter = this.ctx.createBiquadFilter();
+              this.windFilter.type = 'lowpass';
+              this.windFilter.frequency.value = 500;
+              this.windGain = this.ctx.createGain();
+              this.windGain.gain.value = 0.0001;
+              this.windSource.connect(this.windFilter);
+              this.windFilter.connect(this.windGain);
+              this.windGain.connect(this.ctx.destination);
+              this.windSource.start();
+
+              this.spinOsc = this.ctx.createOscillator();
+              this.spinGain = this.ctx.createGain();
+              this.spinOsc.type = 'sine';
+              this.spinOsc.frequency.value = 180;
+              this.spinGain.gain.value = 0.0001;
+              this.spinOsc.connect(this.spinGain);
+              this.spinGain.connect(this.ctx.destination);
+              this.spinOsc.start();
             } catch (e) {}
           }
+          this.ensureMusic();
+          this.applyMusicLevel();
         }
+
+        applyMusicLevel() {
+          if (!this.ctx || !this.musicGain) return;
+          const level = (!this.muted && this.musicEnabled) ? this.musicVolume * 0.16 : 0;
+          this.musicGain.gain.setTargetAtTime(level, this.ctx.currentTime, 0.12);
+        }
+
+        ensureMusic() {
+          if (!this.ctx || this.musicTimer || !this.musicEnabled) return;
+          try {
+            if (!this.musicGain) {
+              this.musicGain = this.ctx.createGain();
+              this.musicFilter = this.ctx.createBiquadFilter();
+              this.musicFilter.type = 'lowpass';
+              this.musicFilter.frequency.value = 2600;
+              this.musicGain.gain.value = 0;
+              this.musicFilter.connect(this.musicGain);
+              this.musicGain.connect(this.ctx.destination);
+            }
+            this.musicStep = 0;
+            const melody = [0, 7, 12, 7, 4, 7, 14, 7, 0, 7, 12, 16, 4, 7, 12, 7];
+            const bass = [0, 0, 5, 5, 7, 7, 3, 3];
+            const root = 110;
+            const tick = () => {
+              if (!this.ctx || !this.musicEnabled) { this.musicTimer = null; return; }
+              if (!this.muted && this.musicGain) {
+                const step = this.musicStep % melody.length;
+                const now = this.ctx.currentTime;
+                const midi = 60 + melody[step];
+                const freq = 440 * Math.pow(2, (midi - 69) / 12);
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(freq, now);
+                gain.gain.setValueAtTime(0.0001, now);
+                gain.gain.linearRampToValueAtTime(0.22, now + 0.025);
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+                osc.connect(gain);
+                gain.connect(this.musicFilter);
+                osc.start(now);
+                osc.stop(now + 0.24);
+                if (step % 2 === 0) {
+                  const bassOsc = this.ctx.createOscillator();
+                  const bassGain = this.ctx.createGain();
+                  const bf = root * Math.pow(2, bass[Math.floor(step / 2) % bass.length] / 12);
+                  bassOsc.type = 'sawtooth';
+                  bassOsc.frequency.setValueAtTime(bf, now);
+                  bassGain.gain.setValueAtTime(0.0001, now);
+                  bassGain.gain.linearRampToValueAtTime(0.16, now + 0.02);
+                  bassGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
+                  bassOsc.connect(bassGain);
+                  bassGain.connect(this.musicFilter);
+                  bassOsc.start(now);
+                  bassOsc.stop(now + 0.3);
+                }
+                this.applyMusicLevel();
+              }
+              this.musicStep++;
+              this.musicTimer = setTimeout(tick, 190);
+            };
+            tick();
+          } catch (e) {}
+        }
+
+        stopMusic() {
+          if (this.musicTimer) clearTimeout(this.musicTimer);
+          this.musicTimer = null;
+          this.applyMusicLevel();
+        }
+
+        setMusicEnabled(enabled) {
+          this.musicEnabled = Boolean(enabled);
+          if (this.musicEnabled) { this.init(); this.ensureMusic(); }
+          else this.stopMusic();
+          this.applyMusicLevel();
+          this.saveSettings();
+        }
+
+        setSfxEnabled(enabled) {
+          this.sfxEnabled = Boolean(enabled);
+          if (!this.sfxEnabled) this.updateRideAudio(false, 0, false, false);
+          this.saveSettings();
+        }
+
+        setMusicVolume(value) { this.musicVolume = Math.max(0, Math.min(1, value)); this.applyMusicLevel(); this.saveSettings(); }
+        setSfxVolume(value) { this.sfxVolume = Math.max(0, Math.min(1, value)); this.saveSettings(); }
 
         updateThruster(active, speedRatio) {
           if (!this.ctx || !this.thrusterOsc || !this.thrusterGain) return;
           try {
             const now = this.ctx.currentTime;
-            if (this.muted || !active) {
-              this.thrusterGain.gain.setTargetAtTime(0.0001, now, 0.05);
-            } else {
-              const targetFreq = 68 + speedRatio * 105;
-              this.thrusterOsc.frequency.setTargetAtTime(targetFreq, now, 0.06);
-              this.thrusterGain.gain.setTargetAtTime(0.032, now, 0.05);
+            if (this.muted || !this.sfxEnabled || !active) this.thrusterGain.gain.setTargetAtTime(0.0001, now, 0.05);
+            else {
+              this.thrusterOsc.frequency.setTargetAtTime(68 + speedRatio * 105, now, 0.06);
+              this.thrusterGain.gain.setTargetAtTime(0.018 * this.sfxVolume, now, 0.05);
             }
           } catch (e) {}
+        }
+
+        updateRideAudio(active, speedRatio, airborne, flipping) {
+          if (!this.ctx || !this.windGain || !this.spinGain) return;
+          const now = this.ctx.currentTime;
+          const enabled = !this.muted && this.sfxEnabled && active;
+          const speed = Math.max(0, Math.min(1.5, speedRatio));
+          const rushing = airborne || speed > 0.42;
+          const windLevel = airborne ? (0.018 + speed * 0.035) : Math.max(0, speed - 0.42) * 0.025;
+          this.windGain.gain.setTargetAtTime(enabled && rushing ? windLevel * this.sfxVolume : 0.0001, now, 0.12);
+          this.windFilter.frequency.setTargetAtTime(420 + speed * 1900, now, 0.12);
+          this.spinGain.gain.setTargetAtTime(enabled && airborne && flipping ? 0.018 * this.sfxVolume : 0.0001, now, 0.06);
+          if (enabled && flipping) this.spinOsc.frequency.setTargetAtTime(150 + speed * 300, now, 0.08);
+
+          // Rhythmic wheel-on-rail clacks: faster track rhythm as the coaster accelerates.
+          if (enabled && !airborne && speed > 0.18) {
+            const time = performance.now();
+            if (time >= this.nextTrackClackAt) {
+              this.playTrackClack(speed);
+              this.nextTrackClackAt = time + Math.max(115, 390 - speed * 175);
+            }
+          } else {
+            this.nextTrackClackAt = 0;
+          }
         }
 
         toggleMute() {
           this.muted = !this.muted;
           if (this.muted) this.updateThruster(false, 0);
+          else this.init();
+          this.applyMusicLevel();
           return this.muted;
         }
 
         playTone(freq, type, duration, gainVal = 0.14, slideTo = null) {
-          if (this.muted) return;
+          if (this.muted || !this.sfxEnabled) return;
           this.init();
           if (!this.ctx) return;
-
           try {
             const now = this.ctx.currentTime;
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
             osc.type = type;
             osc.frequency.setValueAtTime(freq, now);
-            if (slideTo) {
-              osc.frequency.exponentialRampToValueAtTime(slideTo, now + duration);
-            }
-            gain.gain.setValueAtTime(gainVal, now);
+            if (slideTo) osc.frequency.exponentialRampToValueAtTime(slideTo, now + duration);
+            gain.gain.setValueAtTime(Math.max(0.0001, gainVal * this.sfxVolume), now);
             gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
             osc.connect(gain);
             gain.connect(this.ctx.destination);
@@ -1137,60 +1317,64 @@
 
         playCoin(isGem = false) {
           const now = performance.now();
-          if (now - this.lastCoinTime < 420) {
-            this.coinCombo = Math.min(12, this.coinCombo + 1);
-          } else {
-            this.coinCombo = 0;
-          }
+          this.coinCombo = now - this.lastCoinTime < 420 ? Math.min(12, this.coinCombo + 1) : 0;
           this.lastCoinTime = now;
-
-          const pitch = (isGem ? 880 : 660) * Math.pow(1.06, this.coinCombo);
-          this.playTone(pitch, 'sine', 0.14, 0.13, pitch * 1.35);
+          const pitch = (isGem ? 1046.5 : 784) * Math.pow(1.055, this.coinCombo);
+          this.playTone(pitch, 'sine', 0.11, 0.16, pitch * 1.28);
+          this.playTone(pitch * 0.5, 'triangle', 0.075, 0.075, pitch * 0.72);
           if (isGem) {
-            setTimeout(() => this.playTone(pitch * 1.5, 'triangle', 0.22, 0.14), 60);
+            setTimeout(() => this.playTone(pitch * 1.5, 'triangle', 0.2, 0.17), 55);
+            setTimeout(() => this.playTone(pitch * 2, 'sine', 0.26, 0.11), 115);
           }
         }
-
-        playBoostPad() {
-          this.playTone(260, 'sawtooth', 0.28, 0.13, 780);
+        playTrackClack(speedRatio) {
+          const strength = Math.min(1, 0.45 + speedRatio * 0.35);
+          this.playTone(92 + speedRatio * 22, 'square', 0.055, 0.075 * strength, 68 + speedRatio * 12);
+          setTimeout(() => this.playTone(168 + speedRatio * 30, 'triangle', 0.045, 0.045 * strength), 24);
         }
-
-        playCheckpoint() {
-          this.playTone(523.25, 'triangle', 0.16, 0.15);
-          setTimeout(() => this.playTone(783.99, 'triangle', 0.24, 0.15), 80);
+        playCartAdded(count = 1) {
+          // A chunky steel coupling latch, followed by a bright reward chime.
+          for (let i = 0; i < Math.min(4, count); i++) {
+            const delay = i * 105;
+            setTimeout(() => {
+              this.playTone(118, 'square', 0.075, 0.2, 72);
+              setTimeout(() => this.playTone(245, 'triangle', 0.065, 0.12, 185), 42);
+            }, delay);
+          }
+          const chimeDelay = Math.min(4, count) * 105 + 35;
+          setTimeout(() => this.playTone(880, 'sine', 0.2, 0.16, 1174.66), chimeDelay);
+          setTimeout(() => this.playTone(1318.51, 'triangle', 0.28, 0.13), chimeDelay + 95);
         }
-
+        playBoostPad() { this.playTone(260, 'sawtooth', 0.28, 0.13, 780); }
+        playCheckpoint() { this.playTone(523.25, 'triangle', 0.16, 0.15); setTimeout(() => this.playTone(783.99, 'triangle', 0.24, 0.15), 80); }
         playLaunch() {
-          this.playTone(230, 'sine', 0.24, 0.14, 540);
+          this.playTone(145, 'sawtooth', 0.32, 0.16, 620);
+          setTimeout(() => this.playTone(310, 'sine', 0.22, 0.11, 760), 65);
         }
-
         playFlip(flipCount) {
-          const baseFreq = Math.min(920, 440 + flipCount * 100);
-          this.playTone(baseFreq, 'triangle', 0.18, 0.15, baseFreq * 1.35);
+          const f = Math.min(1050, 430 + flipCount * 115);
+          this.playTone(f, 'triangle', 0.2, 0.16, f * 1.55);
+          this.playTone(f * 0.48, 'sine', 0.16, 0.07, f * 0.8);
         }
-
         playPerfectLand() {
-          this.playTone(523.25, 'sine', 0.16, 0.16, 783.99);
-          setTimeout(() => this.playTone(1046.5, 'triangle', 0.22, 0.14), 70);
+          this.playTone(105, 'square', 0.09, 0.2, 72);
+          setTimeout(() => this.playTone(523.25, 'sine', 0.16, 0.18, 783.99), 45);
+          setTimeout(() => this.playTone(1046.5, 'triangle', 0.25, 0.17), 125);
         }
-
         playCleanLand() {
-          this.playTone(360, 'sine', 0.15, 0.12, 480);
+          this.playTone(125, 'square', 0.075, 0.15, 85);
+          setTimeout(() => this.playTone(360, 'sine', 0.15, 0.12, 480), 45);
         }
-
-        playSketchyLand() {
-          this.playTone(250, 'triangle', 0.22, 0.14, 340);
-        }
-
-        playCrash() {
-          this.playTone(155, 'sawtooth', 0.36, 0.2, 42);
-        }
-
+        playSketchyLand() { this.playTone(250, 'triangle', 0.22, 0.14, 340); }
+        playCrash() { this.playTone(155, 'sawtooth', 0.36, 0.2, 42); }
         playStageClear() {
           const notes = [523.25, 659.25, 783.99, 1046.5];
-          notes.forEach((n, idx) => {
-            setTimeout(() => this.playTone(n, 'triangle', 0.28, 0.16), idx * 95);
-          });
+          notes.forEach((n, idx) => setTimeout(() => this.playTone(n, 'triangle', 0.28, 0.16), idx * 95));
+        }
+        playMilestone() {
+          const notes = [523.25, 659.25, 783.99, 1046.5, 1318.51];
+          notes.forEach((n, idx) => setTimeout(() => this.playTone(n, 'sine', 0.38, 0.19), idx * 115));
+          setTimeout(() => this.playTone(1567.98, 'triangle', 0.65, 0.2), 620);
         }
       }
 
@@ -2420,6 +2604,7 @@
           saveData.maxLevel = state.level + 1;
         }
         const milestoneUnlocks = unlockMilestoneRewards();
+        if (milestoneUnlocks.length) sound.playMilestone();
         persistSave();
 
         const milestoneMessage = milestoneUnlocks.length
@@ -2989,6 +3174,7 @@
           state.stageFlips += newlyEarnedFlips;
           saveData.lifetimeFlips = (saveData.lifetimeFlips || 0) + newlyEarnedFlips;
           state.cartCount += newlyEarnedFlips;
+          sound.playCartAdded(newlyEarnedFlips);
           const flipCoinBonus = newlyEarnedFlips * 25;
           saveData.coins += flipCoinBonus;
           saveData.lifetimeCoinsEarned = (saveData.lifetimeCoinsEarned || 0) + flipCoinBonus;
@@ -3535,6 +3721,7 @@
       }
 
       function openGarage() {
+        sound.init();
         state.prevModeBeforeGarage = state.mode;
         state.mode = 'GARAGE';
         state.isHolding = false;
@@ -3685,6 +3872,18 @@
       const muteBtn = document.getElementById('mute-btn');
       const soundOnIcon = document.getElementById('sound-on-icon');
       const soundOffIcon = document.getElementById('sound-off-icon');
+      const musicToggle = document.getElementById('music-toggle');
+      const sfxToggle = document.getElementById('sfx-toggle');
+      const musicVolume = document.getElementById('music-volume');
+      const sfxVolume = document.getElementById('sfx-volume');
+      musicToggle.checked = sound.musicEnabled;
+      sfxToggle.checked = sound.sfxEnabled;
+      musicVolume.value = Math.round(sound.musicVolume * 100);
+      sfxVolume.value = Math.round(sound.sfxVolume * 100);
+      musicToggle.addEventListener('change', () => sound.setMusicEnabled(musicToggle.checked));
+      sfxToggle.addEventListener('change', () => sound.setSfxEnabled(sfxToggle.checked));
+      musicVolume.addEventListener('input', () => sound.setMusicVolume(Number(musicVolume.value) / 100));
+      sfxVolume.addEventListener('input', () => sound.setSfxVolume(Number(sfxVolume.value) / 100));
       muteBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         const muted = sound.toggleMute();
@@ -3705,6 +3904,9 @@
         lastTime = now;
 
         stepPhysics(dt);
+        sound.updateRideAudio(state.mode === 'PLAYING', state.speed / PHYSICS.holdTargetTopSpeed,
+          state.mode === 'PLAYING' && !state.onTrack && state.airTime > 0.12,
+          state.mode === 'PLAYING' && !state.onTrack && state.isHolding);
         renderPseudo3DWorld(dt);
         updateFX(dt);
 
