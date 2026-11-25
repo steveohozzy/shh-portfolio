@@ -1,6 +1,6 @@
 'use strict';
 
-const CACHE_NAME = 'tiny-loops-pwa-v2';
+const CACHE_NAME = 'tiny-loops-pwa-v8';
 const APP_SHELL = [
   './',
   './index.html',

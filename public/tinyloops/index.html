@@ -335,6 +335,20 @@
       white-space: nowrap;
     }
 
+    @media (max-width: 540px) {
+      #control-hint {
+        width: calc(100% - 28px);
+        max-width: 420px;
+        box-sizing: border-box;
+        padding: 6px 10px;
+        font-size: 0.62rem;
+        line-height: 1.35;
+        letter-spacing: 0.015em;
+        white-space: normal;
+        text-align: center;
+      }
+    }
+
     #control-hint.active-hold {
       background: rgba(250, 204, 21, 0.95);
       color: #0f172a;
@@ -769,7 +783,7 @@
 
     <div id="air-status">FLIP 0%</div>
 
-    <div id="control-hint">HOLD TO ACCELERATE &amp; BACKFLIP</div>
+    <div id="control-hint">HOLD TO ACCELERATE &amp; BACKFLIP • RELEASE TO COAST &amp; LAND</div>
 
     <div class="overlay" id="start-overlay">
       <div class="card">
@@ -825,6 +839,10 @@
 
         <div class="garage-section-title">Ribbon Trails</div>
         <div class="shop-grid" id="trail-shop-grid"></div>
+
+        <div class="garage-section-title">Hats &amp; Topper Collection</div>
+        <p class="subtitle" style="margin:0 0 8px;font-size:0.78rem;">Rare looks for your rider. Collect them all!</p>
+        <div class="shop-grid" id="hat-shop-grid"></div>
 
         <button class="primary-btn" id="close-garage-btn" style="margin-top: 8px;">DONE</button>
       </div>
@@ -1039,20 +1057,34 @@
       /* 2. Unlockable Pods & Trails + LocalStorage */
       const POD_SKINS = [
         { id: 'coral', name: 'Classic Coral', color: '#f43f5e', price: 0, acc: 'none' },
-        { id: 'mint', name: 'Mint Robo', color: '#10b981', price: 40, acc: 'antenna' },
-        { id: 'gold', name: 'Royal Gold', color: '#f59e0b', price: 90, acc: 'crown' },
-        { id: 'fox', name: 'Neon Fox', color: '#f97316', price: 150, acc: 'ears' },
-        { id: 'galaxy', name: 'Galaxy Orb', color: '#6366f1', price: 240, acc: 'halo' },
-        { id: 'cyber', name: 'Cyber Pink', color: '#ec4899', price: 350, acc: 'visor' }
+        { id: 'mint', name: 'Mint Robo', color: '#10b981', price: 1200, acc: 'antenna' },
+        { id: 'gold', name: 'Royal Gold', color: '#f59e0b', price: 4500, acc: 'crown' },
+        { id: 'fox', name: 'Neon Fox', color: '#f97316', price: 8500, acc: 'ears' },
+        { id: 'galaxy', name: 'Galaxy Orb', color: '#6366f1', price: 18000, acc: 'halo' },
+        { id: 'cyber', name: 'Cyber Pink', color: '#ec4899', price: 32000, acc: 'visor' }
       ];
 
       const TRAIL_SKINS = [
         { id: 'white', name: 'Cloud Mist', color: '#ffffff', price: 0 },
-        { id: 'gold', name: 'Sunbeam', color: '#fde047', price: 50 },
-        { id: 'cyan', name: 'Hyper Cyan', color: '#38bdf8', price: 110 },
-        { id: 'pink', name: 'Neon Pulse', color: '#f472b6', price: 180 },
-        { id: 'emerald', name: 'Plasma Mint', color: '#34d399', price: 260 },
-        { id: 'violet', name: 'Starlight', color: '#c084fc', price: 360 }
+        { id: 'gold', name: 'Sunbeam', color: '#fde047', price: 900 },
+        { id: 'cyan', name: 'Hyper Cyan', color: '#38bdf8', price: 3000 },
+        { id: 'pink', name: 'Neon Pulse', color: '#f472b6', price: 7000 },
+        { id: 'emerald', name: 'Plasma Mint', color: '#34d399', price: 14000 },
+        { id: 'violet', name: 'Starlight', color: '#c084fc', price: 28000 }
+      ];
+
+      const HAT_TOPPERS = [
+        { id: 'party', name: 'Party Cone', icon: '🎉', price: 1800, type: 'party', color: '#fb7185' },
+        { id: 'beanie', name: 'Cosy Beanie', icon: '🧢', price: 3500, type: 'beanie', color: '#38bdf8' },
+        { id: 'cowboy', name: 'Cowboy Hat', icon: '🤠', price: 6500, type: 'cowboy', color: '#b45309' },
+        { id: 'top-hat', name: 'Top Hat', icon: '🎩', price: 9500, type: 'top', color: '#1e293b' },
+        { id: 'headphones', name: 'Headphones', icon: '🎧', price: 14000, type: 'phones', color: '#a855f7' },
+        { id: 'viking', name: 'Viking Horns', icon: '⚔️', price: 21000, type: 'horns', color: '#f8fafc' },
+        { id: 'halo-hat', name: 'Golden Halo', icon: '😇', price: 28000, type: 'halo', color: '#facc15' },
+        { id: 'crown-hat', name: 'Champion Crown', icon: '👑', price: 38000, type: 'crown', color: '#facc15' },
+        { id: 'flame', name: 'Flame Topper', icon: '🔥', price: 48000, type: 'flame', color: '#f97316' },
+        { id: 'crystal', name: 'Crystal Spire', icon: '💎', price: 60000, type: 'crystal', color: '#67e8f9' },
+        { id: 'star', name: 'Superstar', icon: '⭐', price: 75000, type: 'star', color: '#fde047' }
       ];
 
       const STORAGE_KEY = 'tiny_loops_3d_save_v1';
@@ -1063,7 +1095,9 @@
         ownedPods: ['coral'],
         equippedPod: 'coral',
         ownedTrails: ['white'],
-        equippedTrail: 'white'
+        equippedTrail: 'white',
+        ownedHats: [],
+        equippedHat: 'none'
       };
 
       try {
@@ -1158,6 +1192,40 @@
           podAccessory.appendChild(
             createSvgEl('rect', { x: 2, y: -16, width: 17, height: 7, rx: 3.5, fill: '#38bdf8', stroke: '#ffffff', 'stroke-width': '1.5' })
           );
+        }
+
+        const hat = HAT_TOPPERS.find((item) => item.id === saveData.equippedHat);
+        if (hat) {
+          const addHatPart = (tag, attrs) => podAccessory.appendChild(createSvgEl(tag, attrs));
+          if (hat.type === 'party') {
+            addHatPart('polygon', { points: '-7,-29 0,-49 7,-29', fill: hat.color, stroke: '#fff', 'stroke-width': '1.5' });
+            addHatPart('circle', { cx: 0, cy: -50, r: 2.5, fill: '#fde047' });
+          } else if (hat.type === 'beanie') {
+            addHatPart('path', { d: 'M-10 -29 Q-10 -45 0 -45 Q10 -45 10 -29 Z', fill: hat.color, stroke: '#fff', 'stroke-width': '1.5' });
+            addHatPart('circle', { cx: 0, cy: -47, r: 3, fill: '#fff' });
+          } else if (hat.type === 'cowboy') {
+            addHatPart('ellipse', { cx: 0, cy: -30, rx: 15, ry: 3, fill: '#92400e', stroke: '#fff', 'stroke-width': '1' });
+            addHatPart('path', { d: 'M-8 -31 Q-8 -45 0 -44 Q8 -45 8 -31 Z', fill: hat.color, stroke: '#fff', 'stroke-width': '1.5' });
+          } else if (hat.type === 'top') {
+            addHatPart('rect', { x: -8, y: -45, width: 16, height: 15, rx: 2, fill: hat.color, stroke: '#fff', 'stroke-width': '1.5' });
+            addHatPart('rect', { x: -12, y: -31, width: 24, height: 3, rx: 1.5, fill: '#64748b' });
+          } else if (hat.type === 'phones') {
+            addHatPart('path', { d: 'M-11 -28 V-38 Q-11 -49 0 -49 Q11 -49 11 -38 V-28', fill: 'none', stroke: hat.color, 'stroke-width': '4' });
+            addHatPart('rect', { x: -14, y: -36, width: 5, height: 10, rx: 2, fill: hat.color });
+            addHatPart('rect', { x: 9, y: -36, width: 5, height: 10, rx: 2, fill: hat.color });
+          } else if (hat.type === 'horns') {
+            addHatPart('path', { d: 'M-9 -29 Q-18 -39 -14 -47 Q-6 -43 -5 -32 M9 -29 Q18 -39 14 -47 Q6 -43 5 -32', fill: 'none', stroke: hat.color, 'stroke-width': '4', 'stroke-linecap': 'round' });
+          } else if (hat.type === 'halo') {
+            addHatPart('ellipse', { cx: 0, cy: -45, rx: 12, ry: 3, fill: 'none', stroke: hat.color, 'stroke-width': '3' });
+          } else if (hat.type === 'crown') {
+            addHatPart('polygon', { points: '-11,-30 -9,-44 -3,-37 0,-47 4,-37 10,-44 12,-30', fill: hat.color, stroke: '#fff', 'stroke-width': '1.5' });
+          } else if (hat.type === 'flame') {
+            addHatPart('path', { d: 'M-8 -29 Q-14 -42 -4 -50 Q-4 -40 2 -44 Q10 -50 8 -29 Z', fill: hat.color, stroke: '#fde047', 'stroke-width': '1.5' });
+          } else if (hat.type === 'crystal') {
+            addHatPart('polygon', { points: '0,-52 9,-41 0,-29 -9,-41', fill: hat.color, stroke: '#fff', 'stroke-width': '1.5' });
+          } else if (hat.type === 'star') {
+            addHatPart('polygon', { points: '0,-52 4,-42 14,-41 6,-34 8,-24 0,-30 -8,-24 -6,-34 -14,-41 -4,-42', fill: hat.color, stroke: '#fff', 'stroke-width': '1.5' });
+          }
         }
       }
 
@@ -1869,6 +1937,7 @@
 
         cartCount: 0,
         poseHistory: [],
+        cartVisuals: [],
 
         camX: 60,
         camY: 420,
@@ -1889,7 +1958,7 @@
         flipAngularSpeed: 10,
         perfectAngleRad: (26 * Math.PI) / 180,
         greatAngleRad: (58 * Math.PI) / 180,
-        sketchyAngleRad: (55 * Math.PI) / 180,
+        sketchyAngleRad: (72 * Math.PI) / 180, // More forgiving on slightly crooked landings; still rejects near-sideways/upside-down impacts.
 
         // Hill crest launch tuning
         crestMinSpeed: 540,      // below this you stay glued to the rails over the crest
@@ -1977,6 +2046,7 @@
         state.checkpoint = null;
         state.trailPoints = [];
         state.poseHistory = [];
+        state.cartVisuals = [];
         state.virtualScroll = 0;
 
         const startPt = sampleRibbonAtS(state.track.ribbons[0], state.s);
@@ -2001,7 +2071,7 @@
         angleGuide.setAttribute('opacity', '0');
         speedVignette.classList.remove('active');
         controlHint.classList.remove('active-hold');
-        controlHint.textContent = 'HOLD TO ACCELERATE & BACKFLIP';
+        controlHint.textContent = 'HOLD TO ACCELERATE & BACKFLIP • RELEASE TO COAST & LAND';
 
         applyEquippedSkins();
         updateHUD();
@@ -2038,6 +2108,7 @@
         state.landVisualOffsetY = 0;
         state.trailPoints = [];
         state.poseHistory = [];
+        state.cartVisuals = [];
 
         const pt = sampleRibbonAtS(state.track.ribbons[state.ribbonIndex], state.s);
         state.x = pt.x;
@@ -2129,6 +2200,9 @@
         }
 
         const stageBonus = 250 * state.level;
+        const stageCoinBonus = 100 * state.level;
+        saveData.coins += stageCoinBonus;
+        state.stageCoins += stageCoinBonus;
         state.score += stageBonus;
 
         if (state.score > saveData.bestScore) {
@@ -2140,7 +2214,7 @@
         persistSave();
 
         document.getElementById('level-clear-subtitle').textContent =
-          `Stage ${state.level} Complete! +${stageBonus} Stage Clear Bonus`;
+          `Stage ${state.level} Complete! +${stageBonus} Score & +${stageCoinBonus} Coins`;
         document.getElementById('clear-score').textContent = Math.floor(state.score).toLocaleString();
         document.getElementById('clear-coins').textContent = `+${state.stageCoins}`;
         document.getElementById('clear-flips').textContent = state.stageFlips;
@@ -2528,15 +2602,12 @@
 
             const completed = Math.floor(state.airRotationAccum / (Math.PI * 2));
             if (completed > state.airFlipsCompleted) {
-              const newlyCompleted = completed - state.airFlipsCompleted;
               state.airFlipsCompleted = completed;
-              state.stageFlips += newlyCompleted;
-              state.cartCount += newlyCompleted;
               sound.playFlip(completed);
               const rProj = project3D(state.x, state.y, state.z, cam);
               if (rProj) {
                 spawnParticles(rProj.sx, rProj.sy, '#f472b6', 14, 1.0);
-                spawnCallout(rProj.sx, rProj.sy - 16, `${completed}x BACKFLIP • CART ADDED!`, 'callout-gold');
+                spawnCallout(rProj.sx, rProj.sy - 16, `${completed}x BACKFLIP!`, 'callout-gold');
               }
             }
           } else {
@@ -2574,7 +2645,7 @@
           if (dist < 48) {
             item.collected = true;
             const isGem = item.type === 'gem';
-            const coinGain = isGem ? 5 : 1;
+            const coinGain = isGem ? 15 : 2;
             const ptsGain = (isGem ? 250 : 60) * state.combo;
             saveData.coins += coinGain;
             state.stageCoins += coinGain;
@@ -2686,6 +2757,25 @@
           triggerWipeout('You landed upside-down! Release to straighten up before touching the track.');
           return;
         }
+
+        // Reward a flip once the rider has completed at least 75% of the
+        // rotation and successfully lands back within the normal landing angle.
+        // This avoids requiring the rider to finish the final few degrees while airborne.
+        const radiansPerFlip = Math.PI * 2;
+        const earnedFlipCount = Math.floor((state.airRotationAccum + 0.0001) / (radiansPerFlip * 0.75));
+        // airFlipsCompleted is updated during the trick for the HUD, so do not
+        // subtract it here: every qualifying flip must still be paid out on landing.
+        const newlyEarnedFlips = earnedFlipCount;
+        if (newlyEarnedFlips > 0) {
+          state.airFlipsCompleted = Math.max(state.airFlipsCompleted, earnedFlipCount);
+          state.stageFlips += newlyEarnedFlips;
+          state.cartCount += newlyEarnedFlips;
+          const flipCoinBonus = newlyEarnedFlips * 25;
+          saveData.coins += flipCoinBonus;
+          state.stageCoins += flipCoinBonus;
+          persistSave();
+        }
+
         state.onTrack = true; state.ribbonIndex = rIdx; state.s = pt.s;
         state.x = pt.x; state.y = pt.y; state.z = pt.z; state.yaw = pt.yaw;
         state.pitch = pt.pitch; state.globalS = pt.globalS;
@@ -2701,7 +2791,14 @@
         const lp = project3D(pt.x, pt.y, pt.z, cam);
         if (lp) {
           spawnParticles(lp.sx, lp.sy, '#38bdf8', 16, 1.05);
-          spawnCallout(lp.sx, lp.sy - 18, state.airFlipsCompleted ? `${state.airFlipsCompleted}x FLIP LANDED!` : 'CLEAN LANDING!', 'callout-cyan');
+          spawnCallout(
+            lp.sx,
+            lp.sy - 18,
+            newlyEarnedFlips > 0
+              ? `${state.airFlipsCompleted}x FLIP LANDED • CART ADDED!`
+              : (state.airFlipsCompleted ? `${state.airFlipsCompleted}x FLIP LANDED!` : 'CLEAN LANDING!'),
+            newlyEarnedFlips > 0 ? 'callout-gold' : 'callout-cyan'
+          );
         }
       }
 
@@ -2743,7 +2840,9 @@
           }
           acc += d;
         }
-        return state.poseHistory[0];
+        // Do not pin a new cart to the oldest available point. Wait until its
+        // full trailing distance exists, otherwise it visibly snaps backwards.
+        return null;
       }
 
       function renderPseudo3DWorld(dt) {
@@ -3014,39 +3113,47 @@
         }
         followerCartsLayer.innerHTML = '';
         const podSkin = POD_SKINS.find((p) => p.id === saveData.equippedPod) || POD_SKINS[0];
+        const cartSmooth = 1 - Math.exp(-Math.max(0, dt) * 18);
         for (let c = 1; c <= state.cartCount; c++) {
           const pose = samplePoseAtArcDistance(c * 54);
+          if (!pose) continue;
           const cProj = project3D(pose.x, pose.y, pose.z, cam);
           if (!cProj) continue;
-          const cScale = Math.max(0.35, cProj.scale * 0.84);
-          const deg = (pose.pitch * 180) / Math.PI;
+
+          const target = {
+            x: cProj.sx,
+            y: cProj.sy,
+            deg: (pose.pitch * 180) / Math.PI,
+            scale: Math.max(0.35, cProj.scale * 0.84)
+          };
+          let visual = state.cartVisuals[c - 1];
+          if (!visual) {
+            visual = state.cartVisuals[c - 1] = { ...target };
+          } else {
+            visual.x += (target.x - visual.x) * cartSmooth;
+            visual.y += (target.y - visual.y) * cartSmooth;
+            visual.deg += normalizeAngle((target.deg - visual.deg) * Math.PI / 180) * cartSmooth * 180 / Math.PI;
+            visual.scale += (target.scale - visual.scale) * cartSmooth;
+          }
+
           const cartG = createSvgEl('g', {
-            transform: `translate(${cProj.sx.toFixed(1)}, ${cProj.sy.toFixed(1)}) rotate(${deg.toFixed(1)}) scale(${cScale.toFixed(2)})`
+            transform: `translate(${visual.x.toFixed(1)}, ${visual.y.toFixed(1)}) rotate(${visual.deg.toFixed(1)}) scale(${visual.scale.toFixed(2)})`
           });
           cartG.appendChild(
             createSvgEl('rect', {
-              x: '-18',
-              y: '-6',
-              width: '36',
-              height: '13',
-              rx: '6',
-              fill: '#1e293b',
-              stroke: '#ffffff',
-              'stroke-width': '1.8'
+              x: '-18', y: '-6', width: '36', height: '13', rx: '6',
+              fill: '#1e293b', stroke: '#ffffff', 'stroke-width': '1.8'
             })
           );
           cartG.appendChild(
             createSvgEl('circle', {
-              cx: '0',
-              cy: '-9',
-              r: '13',
-              fill: podSkin.color,
-              stroke: '#ffffff',
-              'stroke-width': '2.4'
+              cx: '0', cy: '-9', r: '13', fill: podSkin.color,
+              stroke: '#ffffff', 'stroke-width': '2.4'
             })
           );
           followerCartsLayer.appendChild(cartG);
         }
+        state.cartVisuals.length = Math.min(state.cartVisuals.length, state.cartCount);
 
         const rProj = project3D(state.x, state.y, state.z, cam);
         const rx = rProj ? rProj.sx + state.landVisualOffsetX : vw * 0.28;
@@ -3086,8 +3193,10 @@
         document.getElementById('garage-coins').textContent = saveData.coins.toLocaleString();
         const podGrid = document.getElementById('pod-shop-grid');
         const trailGrid = document.getElementById('trail-shop-grid');
+        const hatGrid = document.getElementById('hat-shop-grid');
         podGrid.innerHTML = '';
         trailGrid.innerHTML = '';
+        hatGrid.innerHTML = '';
 
         POD_SKINS.forEach((pod) => {
           const owned = saveData.ownedPods.includes(pod.id);
@@ -3158,6 +3267,45 @@
           });
           trailGrid.appendChild(item);
         });
+
+        HAT_TOPPERS.forEach((hat) => {
+          const owned = saveData.ownedHats.includes(hat.id);
+          const equipped = saveData.equippedHat === hat.id;
+          const item = document.createElement('button');
+          item.type = 'button';
+          item.className = `shop-item ${owned ? 'owned' : ''} ${equipped ? 'equipped' : ''}`;
+          item.innerHTML = `
+            <div class="shop-swatch" style="background:linear-gradient(135deg,${hat.color},#ffffff);display:flex;align-items:center;justify-content:center;font-size:1.35rem;">${hat.icon}</div>
+            <div class="shop-name">${hat.name}</div>
+            <div class="shop-price">${equipped ? 'EQUIPPED' : owned ? 'SELECT' : `${hat.price.toLocaleString()} COINS`}</div>
+          `;
+          item.addEventListener('click', () => {
+            if (equipped) return;
+            if (owned) {
+              saveData.equippedHat = hat.id;
+              persistSave();
+              applyEquippedSkins();
+              renderGarage();
+              sound.playCleanLand();
+            } else if (saveData.coins >= hat.price) {
+              saveData.coins -= hat.price;
+              saveData.ownedHats.push(hat.id);
+              saveData.equippedHat = hat.id;
+              persistSave();
+              applyEquippedSkins();
+              renderGarage();
+              updateHUD();
+              sound.playPerfectLand();
+              const badge = document.getElementById('air-status');
+              badge.textContent = `${hat.name.toUpperCase()} UNLOCKED!`;
+              badge.classList.add('visible');
+              setTimeout(() => badge.classList.remove('visible'), 1500);
+            } else {
+              sound.playCrash();
+            }
+          });
+          hatGrid.appendChild(item);
+        });
       }
 
       function openGarage() {
@@ -3190,7 +3338,7 @@
             : 'BACKFLIPPING • RELEASE TO ALIGN LANDING';
         } else {
           controlHint.classList.remove('active-hold');
-          controlHint.textContent = 'HOLD TO ACCELERATE & BACKFLIP';
+          controlHint.textContent = 'HOLD TO ACCELERATE & BACKFLIP • RELEASE TO COAST & LAND';
         }
       }
 
