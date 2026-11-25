@@ -1,6 +1,6 @@
 'use strict';
 
-const CACHE_NAME = 'tiny-loops-pwa-v12';
+const CACHE_NAME = 'tiny-loops-pwa-v13';
 const BASE = '/tinyloops/';
 const APP_URL = new URL(BASE, self.location.origin).href;
 const INDEX_URL = new URL(BASE + 'index.html', self.location.origin).href;

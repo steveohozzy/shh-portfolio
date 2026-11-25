@@ -967,6 +967,15 @@
           <span>COINS</span>
         </div>
 
+        <div class="garage-section-title">Career Stats</div>
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:0 0 14px;">
+          <div class="stat-item"><span class="stat-num" id="career-stages">0</span><span class="stat-lbl">Stages cleared</span></div>
+          <div class="stat-item"><span class="stat-num" id="career-flips">0</span><span class="stat-lbl">Successful flips</span></div>
+          <div class="stat-item"><span class="stat-num" id="career-landings">0</span><span class="stat-lbl">Clean landings</span></div>
+          <div class="stat-item"><span class="stat-num" id="career-coins">0</span><span class="stat-lbl">Coins earned</span></div>
+          <div class="stat-item" style="grid-column:1 / -1;"><span class="stat-num" id="career-gems">0</span><span class="stat-lbl">Gems collected</span></div>
+        </div>
+
         <div class="garage-section-title">Tiny Pods</div>
         <div class="shop-grid" id="pod-shop-grid"></div>
 
@@ -1217,7 +1226,12 @@
         { id: 'crown-hat', name: 'Champion Crown', icon: '👑', price: 38000, type: 'crown', color: '#facc15' },
         { id: 'flame', name: 'Flame Topper', icon: '🔥', price: 48000, type: 'flame', color: '#f97316' },
         { id: 'crystal', name: 'Crystal Spire', icon: '💎', price: 60000, type: 'crystal', color: '#67e8f9' },
-        { id: 'star', name: 'Superstar', icon: '⭐', price: 75000, type: 'star', color: '#fde047' }
+        { id: 'star', name: 'Superstar', icon: '⭐', price: 75000, type: 'star', color: '#fde047' },
+        { id: 'milestone-10', name: 'Sky Rookie Wings', icon: '🪽', price: 0, type: 'wings', color: '#7dd3fc', unlockLevel: 10 },
+        { id: 'milestone-25', name: 'Aurora Antlers', icon: '🌌', price: 0, type: 'antlers', color: '#a78bfa', unlockLevel: 25 },
+        { id: 'milestone-50', name: 'Storm Crown', icon: '⚡', price: 0, type: 'storm', color: '#38bdf8', unlockLevel: 50 },
+        { id: 'milestone-75', name: 'Phoenix Crest', icon: '🔥', price: 0, type: 'phoenix', color: '#fb7185', unlockLevel: 75 },
+        { id: 'milestone-100', name: 'LEGEND 100 Crown', icon: '👑', price: 0, type: 'legend', color: '#facc15', unlockLevel: 100 }
       ];
 
       const STORAGE_KEY = 'tiny_loops_3d_save_v1';
@@ -1230,7 +1244,14 @@
         ownedTrails: ['white'],
         equippedTrail: 'white',
         ownedHats: [],
-        equippedHat: 'none'
+        equippedHat: 'none',
+        unlockedMilestones: [],
+        lifetimeCoinsEarned: 0,
+        lifetimeFlips: 0,
+        cleanLandings: 0,
+        stagesCompleted: 0,
+        collectiblesCollected: 0,
+        gemsCollected: 0
       };
 
       try {
@@ -1243,6 +1264,46 @@
           localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData));
         } catch (e) {}
       }
+
+      const MILESTONE_REWARDS = [
+        { level: 10, id: 'milestone-10', name: 'Sky Rookie Wings' },
+        { level: 25, id: 'milestone-25', name: 'Aurora Antlers' },
+        { level: 50, id: 'milestone-50', name: 'Storm Crown' },
+        { level: 75, id: 'milestone-75', name: 'Phoenix Crest' },
+        { level: 100, id: 'milestone-100', name: 'LEGEND 100 Crown' }
+      ];
+
+      function unlockMilestoneRewards() {
+        const newlyUnlocked = [];
+        if (!Array.isArray(saveData.ownedHats)) saveData.ownedHats = [];
+        if (!Array.isArray(saveData.unlockedMilestones)) saveData.unlockedMilestones = [];
+        MILESTONE_REWARDS.forEach((reward) => {
+          if (saveData.maxLevel >= reward.level && !saveData.unlockedMilestones.includes(reward.level)) {
+            saveData.unlockedMilestones.push(reward.level);
+            if (!saveData.ownedHats.includes(reward.id)) saveData.ownedHats.push(reward.id);
+            newlyUnlocked.push(reward);
+          }
+        });
+        return newlyUnlocked;
+      }
+
+      function updateCareerStats() {
+        const values = {
+          'career-stages': saveData.stagesCompleted || 0,
+          'career-flips': saveData.lifetimeFlips || 0,
+          'career-landings': saveData.cleanLandings || 0,
+          'career-coins': saveData.lifetimeCoinsEarned || 0,
+          'career-gems': saveData.gemsCollected || 0
+        };
+        Object.keys(values).forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) el.textContent = Number(values[id]).toLocaleString();
+        });
+      }
+
+      // Backfill milestone cosmetics for existing saves that have already reached these levels.
+      unlockMilestoneRewards();
+      persistSave();
 
       /* 3. DOM References */
       const container = document.getElementById('game-container');
@@ -1358,6 +1419,18 @@
             addHatPart('polygon', { points: '0,-52 9,-41 0,-29 -9,-41', fill: hat.color, stroke: '#fff', 'stroke-width': '1.5' });
           } else if (hat.type === 'star') {
             addHatPart('polygon', { points: '0,-52 4,-42 14,-41 6,-34 8,-24 0,-30 -8,-24 -6,-34 -14,-41 -4,-42', fill: hat.color, stroke: '#fff', 'stroke-width': '1.5' });
+          } else if (hat.type === 'wings') {
+            addHatPart('path', { d: 'M-2 -31 Q-20 -51 -19 -34 Q-15 -25 -3 -27 M2 -31 Q20 -51 19 -34 Q15 -25 3 -27', fill: 'none', stroke: hat.color, 'stroke-width': '4', 'stroke-linecap': 'round' });
+          } else if (hat.type === 'antlers') {
+            addHatPart('path', { d: 'M-6 -29 Q-18 -39 -15 -49 M-15 -43 L-21 -48 M6 -29 Q18 -39 15 -49 M15 -43 L21 -48', fill: 'none', stroke: hat.color, 'stroke-width': '3.5', 'stroke-linecap': 'round' });
+          } else if (hat.type === 'storm') {
+            addHatPart('polygon', { points: '-11,-30 -8,-43 -2,-37 2,-49 6,-37 12,-43 11,-30', fill: hat.color, stroke: '#fff', 'stroke-width': '1.5' });
+            addHatPart('path', { d: 'M2 -43 L-3 -35 L2 -35 L-1 -28', fill: 'none', stroke: '#fef08a', 'stroke-width': '2.5' });
+          } else if (hat.type === 'phoenix') {
+            addHatPart('path', { d: 'M0 -28 Q-17 -40 -10 -53 Q-7 -42 0 -45 Q7 -42 10 -53 Q17 -40 0 -28 Z', fill: hat.color, stroke: '#fde68a', 'stroke-width': '1.5' });
+          } else if (hat.type === 'legend') {
+            addHatPart('polygon', { points: '-14,-30 -12,-48 -5,-39 0,-54 5,-39 12,-48 14,-30', fill: hat.color, stroke: '#fff', 'stroke-width': '1.8' });
+            addHatPart('circle', { cx: 0, cy: -45, r: 2.5, fill: '#fff' });
           }
         }
       }
@@ -2335,6 +2408,8 @@
         const stageBonus = 250 * state.level;
         const stageCoinBonus = 100 * state.level;
         saveData.coins += stageCoinBonus;
+        saveData.lifetimeCoinsEarned = (saveData.lifetimeCoinsEarned || 0) + stageCoinBonus;
+        saveData.stagesCompleted = (saveData.stagesCompleted || 0) + 1;
         state.stageCoins += stageCoinBonus;
         state.score += stageBonus;
 
@@ -2344,10 +2419,14 @@
         if (state.level + 1 > saveData.maxLevel) {
           saveData.maxLevel = state.level + 1;
         }
+        const milestoneUnlocks = unlockMilestoneRewards();
         persistSave();
 
+        const milestoneMessage = milestoneUnlocks.length
+          ? ` • MILESTONE UNLOCKED: ${milestoneUnlocks.map((item) => item.name).join(', ')}`
+          : '';
         document.getElementById('level-clear-subtitle').textContent =
-          `Stage ${state.level} Complete! +${stageBonus} Score & +${stageCoinBonus} Coins`;
+          `Stage ${state.level} Complete! +${stageBonus} Score & +${stageCoinBonus} Coins${milestoneMessage}`;
         document.getElementById('clear-score').textContent = Math.floor(state.score).toLocaleString();
         document.getElementById('clear-coins').textContent = `+${state.stageCoins}`;
         document.getElementById('clear-flips').textContent = state.stageFlips;
@@ -2781,6 +2860,9 @@
             const coinGain = isGem ? 15 : 2;
             const ptsGain = (isGem ? 250 : 60) * state.combo;
             saveData.coins += coinGain;
+            saveData.lifetimeCoinsEarned = (saveData.lifetimeCoinsEarned || 0) + coinGain;
+            saveData.collectiblesCollected = (saveData.collectiblesCollected || 0) + 1;
+            if (isGem) saveData.gemsCollected = (saveData.gemsCollected || 0) + 1;
             state.stageCoins += coinGain;
             state.score += ptsGain;
             persistSave();
@@ -2891,6 +2973,9 @@
           return;
         }
 
+        saveData.cleanLandings = (saveData.cleanLandings || 0) + 1;
+        persistSave();
+
         // Reward a flip once the rider has completed at least 75% of the
         // rotation and successfully lands back within the normal landing angle.
         // This avoids requiring the rider to finish the final few degrees while airborne.
@@ -2902,9 +2987,11 @@
         if (newlyEarnedFlips > 0) {
           state.airFlipsCompleted = Math.max(state.airFlipsCompleted, earnedFlipCount);
           state.stageFlips += newlyEarnedFlips;
+          saveData.lifetimeFlips = (saveData.lifetimeFlips || 0) + newlyEarnedFlips;
           state.cartCount += newlyEarnedFlips;
           const flipCoinBonus = newlyEarnedFlips * 25;
           saveData.coins += flipCoinBonus;
+          saveData.lifetimeCoinsEarned = (saveData.lifetimeCoinsEarned || 0) + flipCoinBonus;
           state.stageCoins += flipCoinBonus;
           persistSave();
         }
@@ -3324,6 +3411,7 @@
       /* 12. Garage UI, Input & Loop */
       function renderGarage() {
         document.getElementById('garage-coins').textContent = saveData.coins.toLocaleString();
+        updateCareerStats();
         const podGrid = document.getElementById('pod-shop-grid');
         const trailGrid = document.getElementById('trail-shop-grid');
         const hatGrid = document.getElementById('hat-shop-grid');
@@ -3407,13 +3495,18 @@
           const item = document.createElement('button');
           item.type = 'button';
           item.className = `shop-item ${owned ? 'owned' : ''} ${equipped ? 'equipped' : ''}`;
+          const milestoneLocked = !!hat.unlockLevel && !owned;
           item.innerHTML = `
             <div class="shop-swatch" style="background:linear-gradient(135deg,${hat.color},#ffffff);display:flex;align-items:center;justify-content:center;font-size:1.35rem;">${hat.icon}</div>
             <div class="shop-name">${hat.name}</div>
-            <div class="shop-price">${equipped ? 'EQUIPPED' : owned ? 'SELECT' : `${hat.price.toLocaleString()} COINS`}</div>
+            <div class="shop-price">${equipped ? 'EQUIPPED' : owned ? 'SELECT' : milestoneLocked ? `REACH LEVEL ${hat.unlockLevel}` : `${hat.price.toLocaleString()} COINS`}</div>
           `;
           item.addEventListener('click', () => {
             if (equipped) return;
+            if (milestoneLocked) {
+              sound.playCrash();
+              return;
+            }
             if (owned) {
               saveData.equippedHat = hat.id;
               persistSave();
