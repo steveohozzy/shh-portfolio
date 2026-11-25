@@ -1593,16 +1593,18 @@
             addHatPart('rect', { x: -8, y: -38, width: 16, height: 3, rx: 0.8, fill: '#94a3b8', stroke: '#334155', 'stroke-width': '0.6' });
             addHatPart('rect', { x: -12, y: -31, width: 24, height: 3, rx: 1.5, fill: '#0f172a', stroke: '#fff', 'stroke-width': '1' });
           } else if (hat.type === 'phones') {
-            // Chunky over-ear headphones with a padded, layered headband and detailed ear cups.
-            addHatPart('path', { d: 'M-12 -27 V-38 Q-12 -51 0 -51 Q12 -51 12 -38 V-27', fill: 'none', stroke: '#1e1b4b', 'stroke-width': '7', 'stroke-linecap': 'round' });
-            addHatPart('path', { d: 'M-12 -28 V-38 Q-12 -48 0 -48 Q12 -48 12 -38 V-28', fill: 'none', stroke: hat.color, 'stroke-width': '4.5', 'stroke-linecap': 'round' });
-            addHatPart('path', { d: 'M-7 -45 Q0 -49 7 -45', fill: 'none', stroke: '#ffffff', 'stroke-width': '1.2', 'stroke-linecap': 'round', opacity: '0.8' });
-            addHatPart('rect', { x: -16, y: -38, width: 8, height: 14, rx: 3.5, fill: '#1e1b4b', stroke: '#ffffff', 'stroke-width': '1' });
-            addHatPart('rect', { x: 8, y: -38, width: 8, height: 14, rx: 3.5, fill: '#1e1b4b', stroke: '#ffffff', 'stroke-width': '1' });
-            addHatPart('rect', { x: -14.5, y: -36.5, width: 5, height: 11, rx: 2.2, fill: hat.color });
-            addHatPart('rect', { x: 9.5, y: -36.5, width: 5, height: 11, rx: 2.2, fill: hat.color });
-            addHatPart('circle', { cx: -12, cy: -31, r: 1.6, fill: '#ffffff', opacity: '0.95' });
-            addHatPart('circle', { cx: 12, cy: -31, r: 1.6, fill: '#ffffff', opacity: '0.95' });
+            // Over-ear headphones: the padded cups sit against the left and right sides of the pod.
+            // Keep the arch close to the head instead of making the cups look like front/back clips.
+            addHatPart('path', { d: 'M-15 -12 V-24 C-15 -43 15 -43 15 -24 V-12', fill: 'none', stroke: '#1e1b4b', 'stroke-width': '7', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
+            addHatPart('path', { d: 'M-15 -13 V-24 C-15 -39 15 -39 15 -24 V-13', fill: 'none', stroke: hat.color, 'stroke-width': '4.2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
+            addHatPart('path', { d: 'M-7 -38 Q0 -42 7 -38', fill: 'none', stroke: '#ffffff', 'stroke-width': '1.2', 'stroke-linecap': 'round', opacity: '0.85' });
+            // Ear pads hug the outer edges of the head at ear height.
+            addHatPart('rect', { x: -20, y: -19, width: 8, height: 15, rx: 3.5, fill: '#1e1b4b', stroke: '#ffffff', 'stroke-width': '1' });
+            addHatPart('rect', { x: 12, y: -19, width: 8, height: 15, rx: 3.5, fill: '#1e1b4b', stroke: '#ffffff', 'stroke-width': '1' });
+            addHatPart('rect', { x: -18.5, y: -17.5, width: 5, height: 12, rx: 2.2, fill: hat.color });
+            addHatPart('rect', { x: 13.5, y: -17.5, width: 5, height: 12, rx: 2.2, fill: hat.color });
+            addHatPart('circle', { cx: -16, cy: -11, r: 1.5, fill: '#ffffff', opacity: '0.95' });
+            addHatPart('circle', { cx: 16, cy: -11, r: 1.5, fill: '#ffffff', opacity: '0.95' });
           } else if (hat.type === 'horns') {
             addHatPart('path', { d: 'M-9 -29 Q-18 -39 -14 -47 Q-6 -43 -5 -32 M9 -29 Q18 -39 14 -47 Q6 -43 5 -32', fill: 'none', stroke: hat.color, 'stroke-width': '4', 'stroke-linecap': 'round' });
           } else if (hat.type === 'halo') {
