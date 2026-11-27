@@ -143,9 +143,8 @@ export function HeroSection() {
                     lg:text-left
                   "
                 >
-                  Hello, I'm{" "}
                   <span className="text-primary block">
-                    Steven Hoskins
+                    SHH Design
                   </span>
                 </h1>
               </div>
@@ -157,7 +156,7 @@ export function HeroSection() {
               >
                 <div className="h-px flex-1 max-w-20 bg-gradient-to-r from-primary to-transparent" />
                 <h2 className="text-muted-foreground font-mono text-sm">
-                  Senior Frontend Developer · SHH Design
+                  Frontend Development by Steven Hoskins
                 </h2>
               </div>
             </div>
