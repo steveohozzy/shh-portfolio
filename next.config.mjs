@@ -25,22 +25,6 @@ const nextConfig = {
 
   async redirects() {
     return [
-      // Clean catch-alls for old WordPress paths
-      {
-        source: '/blog/:path*',
-        destination: '/',
-        permanent: true,
-      },
-      {
-        source: '/author/hoskinshozzy/:path*',
-        destination: '/',
-        permanent: true,
-      },
-      {
-        source: '/the-use-of-basic-shapes-and-colour-in-design-the-influence-of-the-bauhaus/:path*',
-        destination: '/',
-        permanent: true,
-      },
       // Old files/pages
       {
         source: '/wp-content/uploads/2016/07/May-the-film-be-with-you.pdf',
