@@ -27,11 +27,6 @@ const nextConfig = {
     return [
       // Clean catch-alls for old WordPress paths
       {
-        source: '/posts/:path*',
-        destination: '/',
-        permanent: true,
-      },
-      {
         source: '/blog/:path*',
         destination: '/',
         permanent: true,
